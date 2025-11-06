@@ -1515,8 +1515,8 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
       char *restrict const sr_min_asc =
           Numeric_to_char(w_ctx->p_cnf->sr_min, 2);
 
-      wout("%s: %s->%s: %s: Sample rate %s samples/minute lower than rate-min "
-           "%s samples/minute\n",
+      wout("%s: %s->%s: %s: Tick rate %s ticks/minute lower than tick-rate-min "
+           "%s ticks/minute\n",
            String_chars(w_ctx->ex->nm), String_chars(t->q_id),
            String_chars(t->b_id), String_chars(t->id), sr_asc, sr_min_asc);
 
@@ -1534,8 +1534,8 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
       char *restrict const sr_max_asc =
           Numeric_to_char(w_ctx->p_cnf->sr_max, 2);
 
-      wout("%s: %s->%s: %s: Sample rate %s samples/minute greater than "
-           "rate-max %s samples/minute\n",
+      wout("%s: %s->%s: %s: Tick rate %s ticks/minute greater than "
+           "tick-rate-max %s sticks/minute\n",
            String_chars(w_ctx->ex->nm), String_chars(t->q_id),
            String_chars(t->b_id), String_chars(t->id), sr_asc, sr_max_asc);
 
