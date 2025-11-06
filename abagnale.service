@@ -7,8 +7,8 @@ After=postgresql.service
 ExecStart=/usr/bin/abagnale
 Restart=always
 RestartSec=300
-User=schulte
-Group=schulte
+User=abagnale
+Group=abagnale
 Environment=PATH=/usr/bin:/usr/local/bin
 Environment=TZ=UTC
 Environment=LC_CTYPE=C.UTF-8
