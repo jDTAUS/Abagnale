@@ -2533,10 +2533,10 @@ static int samples_process(void *restrict const arg) {
     }
     Map_unlock(product_trades);
     Array_lock(trades);
-    items = Array_items(trades);
     bool betting = false;
     bool pending = false;
   again:
+    items = Array_items(trades);
     for (size_t i = Array_size(trades); i > 0; i--) {
       struct Trade *restrict const t = items[i - 1];
       t->a = ctx->a;
