@@ -1535,7 +1535,7 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
           Numeric_to_char(w_ctx->p_cnf->sr_max, 2);
 
       wout("%s: %s->%s: %s: Tick rate %s ticks/minute greater than "
-           "tick-rate-max %s sticks/minute\n",
+           "tick-rate-max %s ticks/minute\n",
            String_chars(w_ctx->ex->nm), String_chars(t->q_id),
            String_chars(t->b_id), String_chars(t->id), sr_asc, sr_max_asc);
 
