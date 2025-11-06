@@ -1408,7 +1408,7 @@ static void coinbase_start(void) {
           mg_ws_connect(mgr, ABAG_COINBASE_WEBSOCKET_URL, ws_listener,
                         &ws_channels[i - 1], NULL);
 
-      ws_channels[i - 1].last_message = time(NULL);
+      ws_channels[i - 1].last_message = mg_millis();
 
       if (!c) {
         werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__,
