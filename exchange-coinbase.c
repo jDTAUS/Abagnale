@@ -1119,7 +1119,8 @@ static void ws_listener(struct mg_connection *restrict c, int ev,
       mg_millis() - channel->last_message > WEBSOCKET_STALL_MILLIS) {
     channel->reconnect = true;
     channel->last_message = mg_millis();
-    werr("coinbase: %s: Stalled\n", channel->name);
+    if (verbose)
+      wout("coinbase: %s: No events\n", channel->name);
   }
 
   if (channel->reconnect) {
