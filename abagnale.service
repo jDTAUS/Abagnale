@@ -1,0 +1,22 @@
+[Unit]
+Description=Abagnale Algorithmic Trading
+Requires=postgresql.service
+After=postgresql.service
+
+[Service]
+ExecStart=/usr/bin/abagnale
+Restart=always
+RestartSec=300
+User=schulte
+Group=schulte
+Environment=PATH=/usr/bin:/usr/local/bin
+Environment=TZ=UTC
+Environment=LC_CTYPE=C.UTF-8
+WorkingDirectory=/tmp
+KillMode=process
+TimeoutSec=600
+OOMPolicy=continue
+OOMScoreAdjust=-1000
+LimitCORE=infinity
+[Install]
+WantedBy=multi-user.target

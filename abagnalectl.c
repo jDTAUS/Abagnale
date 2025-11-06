@@ -1,0 +1,633 @@
+/* $SchulteIT: abagnalectl.c 15262 2025-11-04 03:42:05Z schulte $ */
+/* $JDTAUS$ */
+
+/*
+ * Copyright (c) 2018 - 2025 Christian Schulte <cs@schulte.it>
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
+#include "abagnale.h"
+#include "array.h"
+#include "database.h"
+#include "heap.h"
+#include "math.h"
+#include "proc.h"
+#include "time.h"
+
+#include <errno.h>
+#include <locale.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <unistd.h>
+
+#include "optparse.h"
+
+#ifndef nitems
+#define nitems(_a) (sizeof((_a)) / sizeof((_a)[0]))
+#endif
+
+extern char *__progname;
+extern bool terminated;
+
+extern const struct Algorithm *restrict const all_algorithms;
+extern const size_t all_algorithms_nitems;
+extern const struct Array *restrict const algorithms;
+
+extern const struct Exchange *restrict const all_exchanges;
+extern const size_t all_exchanges_nitems;
+extern const struct Array *restrict const exchanges;
+
+static const struct {
+  const enum product_type type;
+  const char *const name;
+} product_types[] = {{PRODUCT_TYPE_UNKNOWN, "UNKNOWN"},
+                     {PRODUCT_TYPE_SPOT, "SPOT"},
+                     {PRODUCT_TYPE_FUTURE, "FUTURE"}};
+
+static const struct {
+  const enum product_status status;
+  const char *const name;
+} product_status[] = {{PRODUCT_STATUS_UNKNOWN, "UNKNOWN"},
+                      {PRODUCT_STATUS_ONLINE, "ONLINE"},
+                      {PRODUCT_STATUS_DELISTED, "DELISTED"}};
+
+static const struct {
+  const enum account_type type;
+  const char *const name;
+} account_types[] = {{ACCOUNT_TYPE_UNSPECIFIED, "UNSPECIFIED"},
+                     {ACCOUNT_TYPE_CRYPTO, "CRYPTO"},
+                     {ACCOUNT_TYPE_FIAT, "FIAT"},
+                     {ACCOUNT_TYPE_VAULT, "VAULT"},
+                     {ACCOUNT_TYPE_PERP_FUTURES, "PERP_FUTURES"}};
+
+static const struct {
+  const enum order_status status;
+  const char *const name;
+} order_status[] = {{ORDER_STATUS_PENDING, "PENDING"},
+                    {ORDER_STATUS_OPEN, "OPEN"},
+                    {ORDER_STATUS_FILLED, "FILLED"},
+                    {ORDER_STATUS_CANCELLED, "CANCELLED"},
+                    {ORDER_STATUS_EXPIRED, "EXPIRED"},
+                    {ORDER_STATUS_FAILED, "FAILED"},
+                    {ORDER_STATUS_UNKNOWN, "UNKNOWN"},
+                    {ORDER_STATUS_QUEUED, "QUEUED"},
+                    {ORDER_STATUS_CANCEL_QUEUED, "CANCEL_QUEUED"}};
+
+int abagnalectl(int argc, char *argv[]);
+static int cmd_vacuum(int, char *[]);
+static int cmd_algorithms(int, char *[]);
+static int cmd_exchanges(int, char *[]);
+static int cmd_markets(int, char *[]);
+static int cmd_market(int, char *[]);
+static int cmd_accounts(int, char *[]);
+static int cmd_account(int, char *[]);
+static int cmd_order(int, char *[]);
+static int cmd_plot(int, char *[]);
+
+static const struct {
+  const char *restrict name;
+  const char *restrict usage;
+  int (*cmd)(int, char *[]);
+} cmd_tab[] = {
+    {"vacuum", "-f file", cmd_vacuum},
+    {"algorithms", "", cmd_algorithms},
+    {"exchanges", "", cmd_exchanges},
+    {"markets",
+     "-e exchange [-s UNKNOWN|ONLINE|DELISTED] [-t UNKNOWN|SPOT|FUTURE]",
+     cmd_markets},
+    {"market", "-e exchange -i id", cmd_market},
+    {"accounts", "-e exchange [-t UNSPECIFIED|CRYPTO|FIAT|VAULT|PERP_FUTURES]",
+     cmd_accounts},
+    {"account", "-e exchange -i id", cmd_account},
+    {"order", "-e exchange -i id", cmd_order},
+    {"plot", "-e exchange -m market -a algorithm [-f file]", cmd_plot},
+};
+
+static const char *product_type_name(const enum product_type type) {
+  for (size_t i = nitems(product_types); i > 0; i--)
+    if (product_types[i - 1].type == type)
+      return product_types[i - 1].name;
+
+  return "NOT FOUND";
+}
+
+static const enum product_type product_type_value(const char *restrict type) {
+  for (size_t i = nitems(product_types); i > 0; i--)
+    if (!strcmp(type, product_types[i - 1].name))
+      return product_types[i - 1].type;
+
+  return 0;
+}
+
+static const char *product_status_name(const enum product_status status) {
+  for (size_t i = nitems(product_status); i > 0; i--)
+    if (product_status[i - 1].status == status)
+      return product_status[i - 1].name;
+
+  return "NOT FOUND";
+}
+
+static const enum product_status
+product_status_value(const char *restrict status) {
+  for (size_t i = nitems(product_status); i > 0; i--)
+    if (!strcmp(status, product_status[i - 1].name))
+      return product_status[i - 1].status;
+
+  return 0;
+}
+
+static const char *account_type_name(const enum account_type type) {
+  for (size_t i = nitems(account_types); i > 0; i--)
+    if (account_types[i - 1].type == type)
+      return account_types[i - 1].name;
+
+  return "NOT FOUND";
+}
+
+static const enum account_type account_type_value(const char *restrict type) {
+  for (size_t i = nitems(account_types); i > 0; i--)
+    if (!strcmp(type, account_types[i - 1].name))
+      return account_types[i - 1].type;
+
+  return 0;
+}
+
+static const char *order_status_name(const enum order_status status) {
+  for (size_t i = nitems(order_status); i > 0; i--)
+    if (status == order_status[i - 1].status)
+      return order_status[i - 1].name;
+
+  return "NOT FOUND";
+}
+
+static void print_account(const struct Account *restrict const a) {
+  printf("%s\t%s\t%s\t%s\t%lf\t%d\t%d\n", String_chars(a->id),
+         String_chars(a->nm), String_chars(a->c_id), account_type_name(a->type),
+         Numeric_to_double(a->avail), a->is_active ? 1 : 0,
+         a->is_ready ? 1 : 0);
+}
+
+static void print_product(const struct Product *restrict const p) {
+  printf("%s\t%s\t%s\t%s\t%s\t%s\t%zu\t%zu\t%zu\t%d\t%d\n", String_chars(p->id),
+         String_chars(p->nm), product_type_name(p->type),
+         product_status_name(p->status), String_chars(p->b_id),
+         String_chars(p->q_id), p->p_sc, p->b_sc, p->q_sc,
+         p->is_tradeable ? 1 : 0, p->is_active ? 1 : 0);
+}
+
+static _Noreturn void usage(void) {
+  werr("usage: %s\n", __progname);
+
+  for (size_t i = nitems(cmd_tab); i > 0; i--)
+    werr("       %s %s %s\n", __progname, cmd_tab[i - 1].name,
+         cmd_tab[i - 1].usage);
+
+  time_terminate();
+  proc_terminate();
+  fatal();
+}
+
+static int cmd_vacuum(int argc, char *argv[]) {
+  int ch;
+  const char *restrict file = NULL;
+  struct optparse options = {0};
+  optparse_init(&options, argv);
+
+  while ((ch = optparse(&options, "o:")) != -1) {
+    switch (ch) {
+    case 'o':
+      file = options.optarg;
+      break;
+    default:
+      usage();
+    }
+  }
+  argc -= options.optind;
+
+  if (argc > 0 || file == NULL)
+    usage();
+
+  db_connect(__progname);
+  db_samples_vacuum(__progname, file);
+  db_disconnect(__progname);
+
+  return EXIT_SUCCESS;
+}
+
+static int cmd_algorithms(int argc, char *argv[]) {
+  if (argc > 1)
+    usage();
+
+  for (size_t i = all_algorithms_nitems; i > 0; i--)
+    printf("%s\n", String_chars(all_algorithms[i - 1].nm));
+
+  return EXIT_SUCCESS;
+}
+
+static int cmd_exchanges(int argc, char *argv[]) {
+  if (argc > 1)
+    usage();
+
+  for (size_t i = all_exchanges_nitems; i > 0; i--)
+    printf("%s\n", String_chars(all_exchanges[i - 1].nm));
+
+  return EXIT_SUCCESS;
+}
+
+static int cmd_markets(int argc, char *argv[]) {
+  int ch, r = EXIT_FAILURE;
+  struct String *restrict exc_name = NULL;
+  enum product_status status = 0;
+  enum product_type type = 0;
+  struct optparse options = {0};
+  void **items;
+
+  optparse_init(&options, argv);
+
+  while ((ch = optparse(&options, "e:s:t:")) != -1) {
+    switch (ch) {
+    case 'e':
+      exc_name = String_new(options.optarg);
+      break;
+    case 's':
+      status = product_status_value(options.optarg);
+      if (!status)
+        usage();
+      break;
+    case 't':
+      type = product_type_value(options.optarg);
+      if (!type)
+        usage();
+      break;
+    default:
+      usage();
+    }
+  }
+  argc -= options.optind;
+
+  if (argc > 0 || exc_name == NULL)
+    usage();
+
+  const struct Exchange *restrict const exc = exchange(exc_name);
+
+  if (exc == NULL) {
+    werr("%s: %s: Exchange not found\n", __progname, String_chars(exc_name));
+    goto ret;
+  }
+
+  const struct Array *restrict const products = exc->products();
+  items = Array_items(products);
+  for (size_t i = Array_size(products); i > 0; i--) {
+    const struct Product *restrict const p = items[i - 1];
+
+    if ((status && p->status == status) || (type && p->type == type) ||
+        !(status || type))
+      print_product(p);
+  }
+
+  r = EXIT_SUCCESS;
+ret:
+  String_delete(exc_name);
+  return r;
+}
+
+static int cmd_market(int argc, char *argv[]) {
+  int ch, r = EXIT_FAILURE;
+  struct String *restrict exc_name = NULL;
+  struct String *restrict p_id = NULL;
+  struct Product *restrict p = NULL;
+  struct optparse options = {0};
+  optparse_init(&options, argv);
+
+  while ((ch = optparse(&options, "e:i:")) != -1) {
+    switch (ch) {
+    case 'e':
+      exc_name = String_new(options.optarg);
+      break;
+    case 'i':
+      p_id = String_new(options.optarg);
+      break;
+    default:
+      usage();
+    }
+  }
+  argc -= options.optind;
+
+  if (argc > 0 || exc_name == NULL || p_id == NULL)
+    usage();
+
+  const struct Exchange *restrict const exc = exchange(exc_name);
+
+  if (exc == NULL) {
+    werr("%s: %s: Exchange not found\n", __progname, String_chars(exc_name));
+    goto ret;
+  }
+
+  p = exc->product(p_id);
+
+  if (p != NULL)
+    print_product(p);
+
+  r = EXIT_SUCCESS;
+ret:
+  String_delete(exc_name);
+  String_delete(p_id);
+  Product_delete(p);
+  return r;
+}
+
+static int cmd_accounts(int argc, char *argv[]) {
+  int ch, r = EXIT_FAILURE;
+  struct String *restrict exc_name = NULL;
+  enum account_type type = 0;
+  struct optparse options = {0};
+  void **items;
+
+  optparse_init(&options, argv);
+
+  while ((ch = optparse(&options, "e:t:")) != -1) {
+    switch (ch) {
+    case 'e':
+      exc_name = String_new(options.optarg);
+      break;
+    case 't':
+      type = account_type_value(options.optarg);
+      if (!type)
+        usage();
+      break;
+    default:
+      usage();
+    }
+  }
+  argc -= options.optind;
+
+  if (argc > 0 || exc_name == NULL)
+    usage();
+
+  const struct Exchange *restrict const exc = exchange(exc_name);
+
+  if (exc == NULL) {
+    werr("%s: %s: Exchange not found\n", __progname, String_chars(exc_name));
+    goto ret;
+  }
+
+  const struct Array *restrict const accounts = exc->accounts();
+  items = Array_items(accounts);
+  for (size_t i = Array_size(accounts); i > 0; i--) {
+    const struct Account *restrict const a = items[i - 1];
+
+    if ((type && a->type == type) || !type)
+      print_account(a);
+  }
+
+  r = EXIT_SUCCESS;
+ret:
+  String_delete(exc_name);
+  return r;
+}
+
+static int cmd_account(int argc, char *argv[]) {
+  int ch, r = EXIT_FAILURE;
+  struct String *restrict exc_name = NULL;
+  struct String *restrict a_id = NULL;
+  struct Account *restrict a = NULL;
+  struct optparse options = {0};
+  optparse_init(&options, argv);
+
+  while ((ch = optparse(&options, "e:i:")) != -1) {
+    switch (ch) {
+    case 'e':
+      exc_name = String_new(options.optarg);
+      break;
+    case 'i':
+      a_id = String_new(options.optarg);
+      break;
+    default:
+      usage();
+    }
+  }
+  argc -= options.optind;
+
+  if (argc > 0 || exc_name == NULL || a_id == NULL)
+    usage();
+
+  const struct Exchange *restrict const exc = exchange(exc_name);
+
+  if (exc == NULL) {
+    werr("%s: %s: Exchange not found\n", __progname, String_chars(exc_name));
+    goto ret;
+  }
+
+  a = exc->account(a_id);
+
+  if (a != NULL)
+    print_account(a);
+
+  r = EXIT_SUCCESS;
+ret:
+  String_delete(exc_name);
+  String_delete(a_id);
+  Account_delete(a);
+  return r;
+}
+
+static int cmd_order(int argc, char *argv[]) {
+  int ch, r = EXIT_FAILURE;
+  struct String *restrict exc_name = NULL;
+  struct String *restrict o_id = NULL;
+  struct Order *restrict o = NULL;
+  struct Product *restrict p = NULL;
+  char *restrict c_iso8601 = NULL;
+  char *restrict d_iso8601 = NULL;
+  char *restrict b_ordered = NULL;
+  char *restrict p_ordered = NULL;
+  char *restrict b_filled = NULL;
+  char *restrict q_filled = NULL;
+  char *restrict q_fees = NULL;
+  struct optparse options = {0};
+  optparse_init(&options, argv);
+
+  while ((ch = optparse(&options, "e:i:")) != -1) {
+    switch (ch) {
+    case 'e':
+      exc_name = String_new(options.optarg);
+      break;
+    case 'i':
+      o_id = String_new(options.optarg);
+      break;
+    default:
+      usage();
+    }
+  }
+  argc -= options.optind;
+
+  if (argc > 0 || exc_name == NULL || o_id == NULL)
+    usage();
+
+  const struct Exchange *restrict const exc = exchange(exc_name);
+
+  if (exc == NULL) {
+    werr("%s: %s: Exchange not found\n", __progname, String_chars(exc_name));
+    goto ret;
+  }
+
+  o = exc->order(o_id);
+
+  if (o == NULL) {
+    werr("%s: %s: Order not found\n", __progname, String_chars(o_id));
+    goto ret;
+  }
+
+  p = exc->product(o->p_id);
+
+  if (p == NULL) {
+    werr("%s: %s: Product not found\n", __progname, String_chars(o->p_id));
+    goto ret;
+  }
+
+  c_iso8601 = nanos_to_iso8601(o->cnanos);
+  d_iso8601 = nanos_to_iso8601(o->dnanos);
+  b_ordered = Numeric_to_char(o->b_ordered, p->b_sc);
+  p_ordered = Numeric_to_char(o->p_ordered, p->p_sc);
+  b_filled = Numeric_to_char(o->b_filled, p->b_sc);
+  q_filled = Numeric_to_char(o->q_filled, p->q_sc);
+  q_fees = Numeric_to_char(o->q_fees, p->q_sc);
+
+  printf("%s\t%s\t%s\t%d\t%s\t%s\t%s%s@%s%s\t%s%s\t%s%s\t%s%s\t%s\n",
+         String_chars(o->id), String_chars(p->id), order_status_name(o->status),
+         o->settled ? 1 : 0, c_iso8601, d_iso8601, b_ordered,
+         String_chars(p->b_id), p_ordered, String_chars(p->q_id), b_filled,
+         String_chars(p->b_id), q_filled, String_chars(p->q_id), q_fees,
+         String_chars(p->q_id), o->msg ? String_chars(o->msg) : "");
+
+  r = EXIT_SUCCESS;
+ret:
+  String_delete(exc_name);
+  String_delete(o_id);
+  Order_delete(o);
+  Product_delete(p);
+  Numeric_char_free(b_ordered);
+  Numeric_char_free(p_ordered);
+  Numeric_char_free(b_filled);
+  Numeric_char_free(q_filled);
+  Numeric_char_free(q_fees);
+  heap_free(c_iso8601);
+  heap_free(d_iso8601);
+  return r;
+}
+
+static int cmd_plot(int argc, char *argv[]) {
+  int ch, r = EXIT_FAILURE;
+  struct String *restrict exc_name = NULL;
+  struct String *restrict p_name = NULL;
+  struct String *restrict a_name = NULL;
+  char *restrict f_name = NULL;
+  struct Product *restrict p = NULL;
+  const struct Algorithm *restrict a = NULL;
+  struct optparse options = {0};
+  void **items;
+
+  optparse_init(&options, argv);
+
+  while ((ch = optparse(&options, "e:p:a:f:")) != -1) {
+    switch (ch) {
+    case 'e':
+      exc_name = String_new(options.optarg);
+      break;
+    case 'm':
+      p_name = String_new(options.optarg);
+      break;
+    case 'a':
+      a_name = String_new(options.optarg);
+      break;
+    case 'f':
+      f_name = options.optarg;
+      break;
+    default:
+      usage();
+    }
+  }
+  argc -= options.optind;
+
+  if (argc > 0 || exc_name == NULL || p_name == NULL || a_name == NULL ||
+      f_name == NULL)
+    usage();
+
+  const struct Exchange *restrict const exc = exchange(exc_name);
+
+  if (exc == NULL) {
+    werr("%s: %s: Exchange not found\n", __progname, String_chars(exc_name));
+    goto ret;
+  }
+
+  struct Array *restrict const products = exc->products();
+  Array_lock(products);
+  items = Array_items(products);
+  for (size_t i = Array_size(products); i > 0; i--) {
+    struct Product *restrict const needle = items[i - 1];
+    if (String_equals(needle->nm, p_name)) {
+      p = Product_copy(needle);
+      break;
+    }
+  }
+  Array_unlock(products);
+
+  if (p == NULL) {
+    werr("%s: %s: Market not found\n", __progname, String_chars(p_name));
+    goto ret;
+  }
+
+  a = algorithm(a_name);
+
+  if (a == NULL) {
+    werr("%s: %s: Algorithm not found\n", __progname, String_chars(a_name));
+    goto ret;
+  }
+
+  db_connect(__progname);
+
+  if (!a->product_plot(f_name, __progname, exc, p)) {
+    werr("%s: %s: Algortihm does not provide plots\n", __progname,
+         String_chars(a_name));
+    db_disconnect(__progname);
+    goto ret;
+  }
+
+  db_disconnect(__progname);
+
+  r = EXIT_SUCCESS;
+ret:
+  String_delete(exc_name);
+  String_delete(p_name);
+  String_delete(a_name);
+  Product_delete(p);
+  return r;
+}
+
+int abagnalectl(int argc, char *argv[]) {
+  int (*cmd)(int, char *[]) = NULL;
+
+  if (argv[0] != NULL)
+    for (size_t i = nitems(cmd_tab); i > 0; i--)
+      if (!strcmp(argv[0], cmd_tab[i - 1].name)) {
+        cmd = cmd_tab[i - 1].cmd;
+        break;
+      }
+
+  if (cmd == NULL)
+    usage();
+
+  return cmd(argc, argv);
+}

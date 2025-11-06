@@ -1,0 +1,136 @@
+/* $SchulteIT: LICENSES.txt 15211 2025-10-27 10:26:10Z schulte $ */
+/* $JDTAUS$ */
+
+#1: License applying to files not mentioned otherwise
+
+/*
+ * Copyright (c) 2018 - 2025 Christian Schulte <cs@schulte.it>
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
+#2: License applying to file optparse.h
+
+/* Optparse --- portable, reentrant, embeddable, getopt-like option parser
+ *
+ * This is free and unencumbered software released into the public domain.
+ *
+ * To get the implementation, define OPTPARSE_IMPLEMENTATION.
+ * Optionally define OPTPARSE_API to control the API's visibility
+ * and/or linkage (static, __attribute__, __declspec).
+ *
+ * The POSIX getopt() option parser has three fatal flaws. These flaws
+ * are solved by Optparse.
+ *
+ * 1) Parser state is stored entirely in global variables, some of
+ * which are static and inaccessible. This means only one thread can
+ * use getopt(). It also means it's not possible to recursively parse
+ * nested sub-arguments while in the middle of argument parsing.
+ * Optparse fixes this by storing all state on a local struct.
+ *
+ * 2) The POSIX standard provides no way to properly reset the parser.
+ * This means for portable code that getopt() is only good for one
+ * run, over one argv with one option string. It also means subcommand
+ * options cannot be processed with getopt(). Most implementations
+ * provide a method to reset the parser, but it's not portable.
+ * Optparse provides an optparse_arg() function for stepping over
+ * subcommands and continuing parsing of options with another option
+ * string. The Optparse struct itself can be passed around to
+ * subcommand handlers for additional subcommand option parsing. A
+ * full reset can be achieved by with an additional optparse_init().
+ *
+ * 3) Error messages are printed to stderr. This can be disabled with
+ * opterr, but the messages themselves are still inaccessible.
+ * Optparse solves this by writing an error message in its errmsg
+ * field. The downside to Optparse is that this error message will
+ * always be in English rather than the current locale.
+ *
+ * Optparse should be familiar with anyone accustomed to getopt(), and
+ * it could be a nearly drop-in replacement. The option string is the
+ * same and the fields have the same names as the getopt() global
+ * variables (optarg, optind, optopt).
+ *
+ * Optparse also supports GNU-style long options with optparse_long().
+ * The interface is slightly different and simpler than getopt_long().
+ *
+ * By default, argv is permuted as it is parsed, moving non-option
+ * arguments to the end. This can be disabled by setting the `permute`
+ * field to 0 after initialization.
+ */
+
+#3: License applying to file patterns.h
+
+/*
+ * Copyright (c) 2025 Christian Schulte <cs@schulte.it>
+ * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
+#4 License applying to file patterns.c
+
+/*
+ * Copyright (c) 2025 Christian Schulte <cs@schulte.it>
+ * Copyright (c) 2015 Reyk Floeter <reyk@openbsd.org>
+ * Copyright (C) 1994-2015 Lua.org, PUC-Rio.
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining
+ * a copy of this software and associated documentation files (the
+ * "Software"), to deal in the Software without restriction, including
+ * without limitation the rights to use, copy, modify, merge, publish,
+ * distribute, sublicense, and/or sell copies of the Software, and to
+ * permit persons to whom the Software is furnished to do so, subject to
+ * the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be
+ * included in all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+ * EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+ * MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
+ * IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY
+ * CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT,
+ * TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
+ * SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+ */
+
+#5: License applying to files mongoose.c and mongoose.h
+
+// Copyright (c) 2004-2013 Sergey Lyubka
+// Copyright (c) 2013-2025 Cesanta Software Limited
+// All rights reserved
+//
+// This software is dual-licensed: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License version 2 as
+// published by the Free Software Foundation. For the terms of this
+// license, see http://www.gnu.org/licenses/
+//
+// You are free to use this software under the terms of the GNU General
+// Public License, but WITHOUT ANY WARRANTY; without even the implied
+// warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+// See the GNU General Public License for more details.
+//
+// Alternatively, you can license this software under a commercial
+// license, as set out in https://www.mongoose.ws/licensing/
+//
+// SPDX-License-Identifier: GPL-2.0-only or commercial

@@ -1,0 +1,55 @@
+$SchulteIT: INTRO.txt 15283 2025-11-05 23:02:14Z schulte $
+$JDTAUS$
+
+Abagnale - Algorithmic Trading
+
+That name rings a bell? Well, it matches perfectly and was choosen out of
+joking about a long standing bug which - as of today - still has not been
+understood in detail and keeps reappearing in various incarnations from
+time to time. It mainly goes like "Where did that money come from, where
+did it go and why? No one knows. It's just abagnaling again." The Ace of
+Spades, the Ace of Spades. Enough said.
+
+./INTRO.txt               - This file
+./LICENSES.txt            - License information
+./Makefile                - BSD Makefile containing build instructions
+./abagnale.conf           - Documented configuration file
+./abagnale.service        - systemd service file
+./abagnale.h              - Abagnale API header file
+./abagnale.c              - Trading application source code
+./abagnalectl.c           - Maintenance application source code
+./algorithm-trend.c       - Trend algorithm source code
+./array.h                 - Array API header file
+./array.c                 - Array implementation source code
+./config.h                - Configuration API header file
+./config.y                - Configuration implementation source code
+./database.h              - Database API header file
+./database.sql            - Database schema file
+./database-postgresql.pgc - PostgreSQL implememtation source code
+./exchange.h              - Exchange API header file
+./exchange.c              - Common exchange implementation source code
+./exchange-coinbase.c     - Coinbase exchange implementation source code
+./heap.h                  - Heap API header file
+./heap.c                  - Heap implementation source code
+./main.c                  - Application main entry point source code
+./map.h                   - Map API header file
+./map.c                   - Map implementation source code
+./math.h                  - Math API
+./math-postgresql.c       - PostgreSQL math implementation source code
+./mongoose.h              - Mongoose.WS API header file
+./mongoose.c              - Mongoose.WS implementation source code
+./object.h                - Object API header file
+./object.c                - Object implementation source code
+./optparse.h              - Optparse API and implementation
+./patterns.h              - Pattern API 
+./patterns.c              - Pattern implementation source code
+./proc.h                  - Process environment API header file
+./proc.c                  - Process environment implementation source code
+./queue.h                 - Queue API header file
+./queue.c                 - Queue implementation source code
+./string.h                - String API header file
+./string.c                - String implementation source code
+./thread.h                - Thread API header file
+./thread.c                - Thread implementation source code
+./time.h                  - Date and time API header file
+./time.c                  - Date and time implementation source code

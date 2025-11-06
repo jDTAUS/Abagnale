@@ -1,0 +1,1637 @@
+/* $SchulteIT: database-postgresql.pgc 15235 2025-10-29 03:37:11Z schulte $ */
+/* $JDTAUS$ */
+
+/*
+ * Copyright (c) 2018 - 2025 Christian Schulte <cs@schulte.it>
+ *
+ * Permission to use, copy, modify, and distribute this software for any
+ * purpose with or without fee is hereby granted, provided that the above
+ * copyright notice and this permission notice appear in all copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+ * WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+ * MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+ * ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+ * WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+ * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+ * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+ */
+
+#include "config.h"
+#include "database.h"
+#include "math.h"
+#include "proc.h"
+#include "time.h"
+
+#include <pgtypes_numeric.h>
+
+#define DB_STATEMENT_MAX_LENGTH (size_t)2048
+
+extern const struct Numeric *restrict const zero;
+extern const struct Config *restrict const cnf;
+
+static void db_warn(void) {
+  werr("==== sqlca ====\n");
+  werr("sqlcode: %ld\n", sqlca.sqlcode);
+  werr("sqlerrm.sqlerrml: %d\n", sqlca.sqlerrm.sqlerrml);
+  werr("sqlerrm.sqlerrmc: %s\n", sqlca.sqlerrm.sqlerrmc);
+  werr("sqlerrd: %ld %ld %ld %ld %ld %ld\n", sqlca.sqlerrd[0], sqlca.sqlerrd[1],
+       sqlca.sqlerrd[2], sqlca.sqlerrd[3], sqlca.sqlerrd[4], sqlca.sqlerrd[5]);
+  werr("sqlwarn: %d %d %d %d %d %d %d %d\n", sqlca.sqlwarn[0], sqlca.sqlwarn[1],
+       sqlca.sqlwarn[2], sqlca.sqlwarn[3], sqlca.sqlwarn[4], sqlca.sqlwarn[5],
+       sqlca.sqlwarn[6], sqlca.sqlwarn[7]);
+  werr("sqlstate: %5s\n", sqlca.sqlstate);
+  werr("===============\n");
+}
+
+static void db_fatal(void) {
+  db_warn();
+  fatal();
+}
+
+void db_connect(const char *const cname) {
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(1, stdout);
+#endif
+  // clang-format off
+  EXEC SQL BEGIN DECLARE SECTION;
+  const char *con = cname;
+  const char *sql_tgt = String_chars(cnf->db_tgt);
+  const char *sql_usr = String_chars(cnf->db_usr);
+  EXEC SQL END DECLARE SECTION;
+  EXEC SQL WHENEVER SQLWARNING CALL db_warn();
+  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL CONNECT TO :sql_tgt AS :con USER :sql_usr;
+  EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
+  EXEC SQL AT :con SET AUTOCOMMIT TO OFF;
+  EXEC SQL AT :con SET TIMEZONE TO 'UTC';
+  EXEC SQL AT :con PREPARE sample_create AS 
+    INSERT INTO "SAMPLES" (
+      "EXCHANGE_ID",
+      "PRODUCT_ID",
+      "NANOS",
+      "PRICE"
+    ) VALUES (
+      $1, $2, $3, $4
+    );
+
+  EXEC SQL AT :con PREPARE internal_id AS
+    SELECT "INTERNAL_ID" FROM "IDENTIFIERS"
+    WHERE "EXCHANGE_ID" = $1
+      AND "EXTERNAL_ID" = $2;
+
+  EXEC SQL AT :con PREPARE internal_id_create AS
+    INSERT INTO "IDENTIFIERS" (
+      "EXCHANGE_ID",
+      "EXTERNAL_ID",
+      "INTERNAL_ID"
+    ) VALUES (
+      $1, $2, gen_random_uuid()
+    ) RETURNING "INTERNAL_ID";
+
+  EXEC SQL AT :con PREPARE plot_datapoint AS
+    INSERT INTO "PLOTS_DATAPOINTS" (
+      "PLOT_ID",
+      "X",
+      "Y"
+    ) VALUES (
+      $1, $2, $3
+    );
+
+  EXEC SQL AT :con COMMIT;
+  // clang-format on
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(0, stdout);
+#endif
+}
+
+void db_disconnect(const char *const cname) {
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(1, stdout);
+#endif
+  // clang-format off
+  EXEC SQL BEGIN DECLARE SECTION;
+  const char *con = cname;
+  EXEC SQL END DECLARE SECTION;
+  EXEC SQL WHENEVER SQLWARNING CALL db_warn();
+  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL DISCONNECT :con;
+  // clang-format on
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(0, stdout);
+#endif
+}
+
+void db_disconnect_all(void) {
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(1, stdout);
+#endif
+  // clang-format off
+  EXEC SQL WHENEVER SQLWARNING CALL db_warn();
+  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL DISCONNECT ALL;
+  // clang-format on
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(0, stdout);
+#endif
+}
+
+void db_tx_begin(const char *const cname) {
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(1, stdout);
+#endif
+  // clang-format off
+  EXEC SQL BEGIN DECLARE SECTION;
+  const char *con = cname;
+  EXEC SQL END DECLARE SECTION;
+  EXEC SQL WHENEVER SQLWARNING CALL db_warn();
+  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+  // clang-format on
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(0, stdout);
+#endif
+}
+
+void db_tx_commit(const char *const cname) {
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(1, stdout);
+#endif
+  // clang-format off
+  EXEC SQL BEGIN DECLARE SECTION;
+  const char *con = cname;
+  EXEC SQL END DECLARE SECTION;
+  EXEC SQL WHENEVER SQLWARNING CALL db_warn();
+  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL AT :con COMMIT;
+  // clang-format on
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(0, stdout);
+#endif
+}
+
+void db_tx_rollback(const char *const cname) {
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(1, stdout);
+#endif
+  // clang-format off
+  EXEC SQL BEGIN DECLARE SECTION;
+  const char *con = cname;
+  EXEC SQL END DECLARE SECTION;
+  EXEC SQL WHENEVER SQLWARNING CALL db_warn();
+  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL AT :con ROLLBACK;;
+  // clang-format on
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(0, stdout);
+#endif
+}
+
+void db_uuid(char *const res, const char *const cname) {
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(1, stdout);
+#endif
+  // clang-format off
+  EXEC SQL BEGIN DECLARE SECTION;
+  const char *con = cname;
+  char *uuid = res;
+  EXEC SQL END DECLARE SECTION;
+  EXEC SQL WHENEVER SQLWARNING CALL db_warn();
+  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
+  EXEC SQL AT :con SELECT gen_random_uuid() INTO :uuid;
+  EXEC SQL AT :con COMMIT;
+  // clang-format on
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(0, stdout);
+#endif
+}
+
+void db_id_to_internal(char *const res, const char *const cname,
+                       const char *const exc_id, const char *const ext_id) {
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(1, stdout);
+#endif
+  // clang-format off
+  EXEC SQL BEGIN DECLARE SECTION;
+  const char *con = cname;
+  const char *exc = exc_id;
+  const char *ext = ext_id;
+  char *uuid = res;
+  EXEC SQL END DECLARE SECTION;
+  EXEC SQL WHENEVER SQLWARNING CALL db_warn();
+  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL WHENEVER NOT FOUND GOTO not_found;
+  EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
+  EXEC SQL AT :con EXECUTE internal_id USING :exc, :ext INTO :uuid;
+  EXEC SQL AT :con COMMIT;
+  // clang-format on
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(0, stdout);
+#endif
+  return;
+not_found:
+  // clang-format off
+  EXEC SQL WHENEVER SQLWARNING CALL db_warn();
+  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL AT :con EXECUTE internal_id_create USING :exc, :ext INTO :uuid;
+  EXEC SQL AT :con COMMIT;
+  // clang-format on
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(0, stdout);
+#endif
+}
+
+void db_id_to_external(char *const res, const char *const cname,
+                       const char *const exc_id, const char *const int_id) {
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(1, stdout);
+#endif
+  // clang-format off
+  EXEC SQL BEGIN DECLARE SECTION;
+  const char *con = cname;
+  const char *exc = exc_id;
+  const char *in = int_id;
+  const char *ext = res;
+  EXEC SQL END DECLARE SECTION;
+  EXEC SQL WHENEVER SQLWARNING CALL db_warn();
+  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
+  EXEC SQL AT :con
+    SELECT "EXTERNAL_ID" INTO :ext FROM "IDENTIFIERS"
+    WHERE "EXCHANGE_ID" = :exc AND "INTERNAL_ID" = :in;
+  EXEC SQL AT :con COMMIT;
+  // clang-format on
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(0, stdout);
+#endif
+}
+
+void db_sample_create(const char *const cname, const char *const exc_id,
+                      const char *const p_id, const struct Numeric *const nanos,
+                      const struct Numeric *const price) {
+  // clang-format off
+  EXEC SQL BEGIN DECLARE SECTION;
+  const char *con = cname;
+  const char *exc = exc_id;
+  const char *pid = p_id;
+  const numeric *ns = Numeric_db(nanos);
+  const numeric *pr = Numeric_db(price);
+  EXEC SQL END DECLARE SECTION;
+  EXEC SQL WHENEVER SQLWARNING CALL db_warn();
+  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
+  EXEC SQL AT :con EXECUTE sample_create USING :exc, :pid, :ns, :pr;
+  EXEC SQL AT :con COMMIT;
+  // clang-format on
+}
+
+void db_samples_open(const char *const cname, const char *const exc_id,
+                     const char *const p_id,
+                     const struct Numeric *const later_than) {
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(1, stdout);
+#endif
+  // clang-format off
+  EXEC SQL BEGIN DECLARE SECTION;
+  const char *con = cname;
+  const char *exc = exc_id;
+  const char *pid = p_id;
+  const numeric *nanos = Numeric_db(later_than);
+  EXEC SQL END DECLARE SECTION;
+  EXEC SQL WHENEVER SQLWARNING CALL db_warn();
+  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+	EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+	EXEC SQL AT :con DECLARE samples_cursor CURSOR FOR
+		SELECT "NANOS", "PRICE" 
+    FROM "SAMPLES"
+		WHERE "EXCHANGE_ID" = :exc AND "PRODUCT_ID" = :pid
+			AND "NANOS" >= :nanos
+		ORDER BY "NANOS" ASC;
+
+	EXEC SQL AT :con OPEN samples_cursor;
+  // clang-format on
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(0, stdout);
+#endif
+}
+
+bool db_samples_next(struct db_sample_res *const res, const char *const cname) {
+  // clang-format off
+  EXEC SQL BEGIN DECLARE SECTION;
+  const char *con = cname;
+  numeric *nanos = Numeric_db(res->nanos);
+  numeric *price = Numeric_db(res->price);
+  EXEC SQL END DECLARE SECTION;
+  EXEC SQL WHENEVER SQLWARNING CALL db_warn();
+  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL WHENEVER NOT FOUND GOTO not_found;
+	EXEC SQL AT :con FETCH FROM samples_cursor INTO :nanos, :price;
+  // clang-format on
+  return true;
+not_found:
+  return false;
+}
+
+void db_samples_close(const char *const cname) {
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(1, stdout);
+#endif
+  // clang-format off
+  EXEC SQL BEGIN DECLARE SECTION;
+  const char *con = cname;
+  EXEC SQL END DECLARE SECTION;
+  EXEC SQL WHENEVER SQLWARNING CALL db_warn();
+  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL AT :con CLOSE samples_cursor;
+  EXEC SQL AT :con COMMIT;
+  // clang-format on
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(0, stdout);
+#endif
+}
+
+bool db_samples_vacuum(const char *const cname, const char *const fname) {
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(1, stdout);
+#endif
+  struct Numeric *now = Numeric_new();
+  nanos_now(now);
+  struct Numeric *nanos = Numeric_sub(now, cnf->wnanos_max);
+  Numeric_delete(now);
+  // clang-format off
+  EXEC SQL BEGIN DECLARE SECTION;
+  const char *con = cname;
+  char stmt[DB_STATEMENT_MAX_LENGTH] = {0};
+  numeric *db_nanos = Numeric_db(nanos);
+  EXEC SQL END DECLARE SECTION;
+  EXEC SQL WHENEVER SQLWARNING CALL db_warn();
+  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL WHENEVER NOT FOUND CONTINUE;
+  EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
+  // clang-format on
+  char *nanos_asc = Numeric_to_char(nanos, 0);
+  const int r =
+      snprintf(stmt, sizeof(stmt),
+               "COPY(SELECT * FROM \"SAMPLES\" WHERE \"NANOS\" <= %s) TO "
+               "PROGRAM 'xz - > %s.xz'",
+               nanos_asc, fname);
+
+  if (r < 0 || (size_t)r >= sizeof(stmt)) {
+    werr("%s: %d: %s: Statement exceeds %zu bytes\n", __FILE__, __LINE__,
+         __func__, sizeof(stmt));
+    fatal();
+  }
+  Numeric_char_free(nanos_asc);
+  // clang-format off
+  EXEC SQL AT :con PREPARE copy FROM :stmt;
+  EXEC SQL AT :con EXECUTE copy;
+  EXEC SQL AT :con DEALLOCATE PREPARE copy;
+  EXEC SQL AT :con DELETE FROM "SAMPLES" WHERE "NANOS" <= :db_nanos;
+  EXEC SQL AT :con DELETE FROM "PLOTS";
+  EXEC SQL AT :con COMMIT;
+  // clang-format on
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(0, stdout);
+#endif
+  Numeric_delete(nanos);
+  return true;
+}
+
+bool db_stats(struct db_stats_res *const res, const char *const cname,
+              const char *const e_id, const char *const p_id) {
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(1, stdout);
+#endif
+  // clang-format off
+  EXEC SQL BEGIN DECLARE SECTION;
+  const char *con = cname;
+  const char *eid = e_id;
+  const char *pid = p_id;
+  numeric *bd_min = Numeric_db(res->bd_min);
+  int bd_min_ind[1] = {0};
+  numeric *bd_max = Numeric_db(res->bd_max);
+  int bd_max_ind[1] = {0};
+  numeric *bd_avg = Numeric_db(res->bd_avg);
+  int bd_avg_ind[1] = {0};
+  numeric *sd_min = Numeric_db(res->sd_min);
+  int sd_min_ind[1] = {0};
+  numeric *sd_max = Numeric_db(res->sd_max);
+  int sd_max_ind[1] = {0};
+  numeric *sd_avg = Numeric_db(res->sd_avg);
+  int sd_avg_ind[1] = {0};
+  numeric *bcl_factor = Numeric_db(res->bcl_factor);
+  numeric *scl_factor = Numeric_db(res->scl_factor);
+  EXEC SQL END DECLARE SECTION;
+  EXEC SQL WHENEVER SQLWARNING CALL db_warn();
+  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+	EXEC SQL WHENEVER NOT FOUND GO TO not_found;
+	EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
+	EXEC SQL AT :con
+    SELECT "MIN_BUY_ORDER_DURATION_NANOS",
+           "MAX_BUY_ORDER_DURATION_NANOS",
+           "AVG_BUY_ORDER_DURATION_NANOS",
+           "BUY_ORDER_CANCEL_FACTOR",
+           "MIN_SELL_ORDER_DURATION_NANOS",
+           "MAX_SELL_ORDER_DURATION_NANOS",
+           "AVG_SELL_ORDER_DURATION_NANOS",
+           "SELL_ORDER_CANCEL_FACTOR"
+    INTO :bd_min :bd_min_ind,
+         :bd_max :bd_max_ind,
+         :bd_avg :bd_avg_ind,
+         :bcl_factor,
+         :sd_min :sd_min_ind,
+         :sd_max :sd_max_ind,
+         :sd_avg :sd_avg_ind,
+         :scl_factor
+		FROM "STATISTICS"
+		WHERE "EXCHANGE_ID" = :eid AND "PRODUCT_ID" = :pid;
+  EXEC SQL AT :con COMMIT;
+  // clang-format on
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(0, stdout);
+#endif
+  res->bd_min_null = bd_min_ind[0] != 0 ? true : false;
+  res->bd_max_null = bd_max_ind[0] != 0 ? true : false;
+  res->bd_avg_null = bd_avg_ind[0] != 0 ? true : false;
+  res->sd_min_null = sd_min_ind[0] != 0 ? true : false;
+  res->sd_max_null = sd_max_ind[0] != 0 ? true : false;
+  res->sd_avg_null = sd_avg_ind[0] != 0 ? true : false;
+  return true;
+not_found:
+  // clang-format off
+  EXEC SQL AT :con ROLLBACK;
+  // clang-format on
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(0, stdout);
+#endif
+  return false;
+}
+
+void db_stats_bcl_factor(const char *const cname, const char *const exc_id,
+                         const char *const p_id, struct Numeric *const factor) {
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(1, stdout);
+#endif
+  // clang-format off
+  EXEC SQL BEGIN DECLARE SECTION;
+  const char *con = cname;
+  const char *exc = exc_id;
+  const char *pid = p_id;
+  numeric *f = Numeric_db(factor);
+  EXEC SQL END DECLARE SECTION;
+  EXEC SQL WHENEVER SQLWARNING CALL db_warn();
+  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
+  EXEC SQL AT :con
+    UPDATE "STATISTICS"
+    SET "BUY_ORDER_CANCEL_FACTOR" = :f
+    WHERE "EXCHANGE_ID" = :exc AND "PRODUCT_ID" = :pid;
+  EXEC SQL AT :con COMMIT;
+  // clang-format on
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(0, stdout);
+#endif
+}
+
+void db_stats_scl_factor(const char *const cname, const char *const exc_id,
+                         const char *const p_id, struct Numeric *const factor) {
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(1, stdout);
+#endif
+  // clang-format off
+  EXEC SQL BEGIN DECLARE SECTION;
+  const char *con = cname;
+  const char *exc = exc_id;
+  const char *pid = p_id;
+  numeric *f = Numeric_db(factor);
+  EXEC SQL END DECLARE SECTION;
+  EXEC SQL WHENEVER SQLWARNING CALL db_warn();
+  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
+  EXEC SQL AT :con
+    UPDATE "STATISTICS"
+    SET "SELL_ORDER_CANCEL_FACTOR" = :f
+    WHERE "EXCHANGE_ID" = :exc AND "PRODUCT_ID" = :pid;
+  EXEC SQL AT :con COMMIT;
+  // clang-format on
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(0, stdout);
+#endif
+}
+
+void db_trade_bfill(const char *const cname, const char *const o_id,
+                    const struct Numeric *const csecs,
+                    const struct Numeric *const dsecs,
+                    const struct Numeric *const b_filled,
+                    const struct Numeric *const q_filled,
+                    const struct Numeric *const q_fees, const bool t_done) {
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(1, stdout);
+#endif
+  // clang-format off
+  EXEC SQL BEGIN DECLARE SECTION;
+  const char *sql_cname = cname;
+  const char *sql_o_id = o_id;
+  const numeric *sql_csecs = Numeric_db(csecs);
+  const numeric *sql_dsecs = dsecs != NULL ? Numeric_db(dsecs) : NULL;
+  const numeric *sql_b_filled = Numeric_db(b_filled);
+  const numeric *sql_q_filled = Numeric_db(q_filled);
+  const numeric *sql_q_fees = Numeric_db(q_fees);
+  const char *sql_status = t_done ? "DONE" : dsecs != NULL ? "BOUGHT" : NULL;
+  EXEC SQL END DECLARE SECTION;
+  EXEC SQL WHENEVER SQLWARNING CALL db_warn();
+  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL AT :sql_cname BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
+  EXEC SQL AT :sql_cname
+    UPDATE "TRADES" SET
+      "BUY_ORDER_CREATED_AT" = to_timestamp(:sql_csecs),
+      "BUY_ORDER_BASE_AMOUNT_FILLED" = :sql_b_filled,
+      "BUY_ORDER_QUOTE_AMOUNT_FILLED" = :sql_q_filled,
+      "BUY_ORDER_QUOTE_FEES" = :sql_q_fees
+    WHERE "BUY_ORDER_ID" = :sql_o_id;
+  // clang-format on
+  if (t_done || dsecs != NULL) {
+    // clang-format off
+    EXEC SQL WHENEVER SQLWARNING CALL db_warn();
+    EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+    EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+    EXEC SQL AT :sql_cname
+      UPDATE "TRADES"
+        SET "STATUS" = :sql_status,
+          "BUY_ORDER_CREATED_AT" = to_timestamp(:sql_csecs),
+          "BUY_ORDER_DONE_AT" = to_timestamp(:sql_dsecs)
+      WHERE "BUY_ORDER_ID" = :sql_o_id;
+    // clang-format on
+  }
+  // clang-format off
+  EXEC SQL AT :sql_cname COMMIT;
+  // clang-format on
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(0, stdout);
+#endif
+}
+
+void db_trade_bopen(const char *const cname, const char *const o_id,
+                    const struct Numeric *const csecs,
+                    const struct Numeric *const b_filled,
+                    const struct Numeric *const q_filled,
+                    const struct Numeric *const q_fees) {
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(1, stdout);
+#endif
+  // clang-format off
+  EXEC SQL BEGIN DECLARE SECTION;
+  const char *sql_cname = cname;
+  const char *sql_o_id = o_id;
+  const numeric *sql_csecs = Numeric_db(csecs);
+  const numeric *sql_b_filled = Numeric_db(b_filled);
+  const numeric *sql_q_filled = Numeric_db(q_filled);
+  const numeric *sql_q_fees = Numeric_db(q_fees);
+  EXEC SQL END DECLARE SECTION;
+  EXEC SQL WHENEVER SQLWARNING CALL db_warn();
+  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL AT :sql_cname BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
+  EXEC SQL AT :sql_cname
+    UPDATE "TRADES" SET
+      "BUY_ORDER_CREATED_AT" = to_timestamp(:sql_csecs),
+      "BUY_ORDER_BASE_AMOUNT_FILLED" = :sql_b_filled,
+      "BUY_ORDER_QUOTE_AMOUNT_FILLED" = :sql_q_filled,
+      "BUY_ORDER_QUOTE_FEES" = :sql_q_fees
+    WHERE "BUY_ORDER_ID" = :sql_o_id;
+  EXEC SQL AT :sql_cname COMMIT;
+  // clang-format on
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(0, stdout);
+#endif
+}
+
+void db_trade_sfill(const char *const cname, const char *const o_id,
+                    const struct Numeric *const csecs,
+                    const struct Numeric *const dsecs,
+                    const struct Numeric *const b_filled,
+                    const struct Numeric *const q_filled,
+                    const struct Numeric *const q_fees, const bool t_done) {
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(1, stdout);
+#endif
+  // clang-format off
+  EXEC SQL BEGIN DECLARE SECTION;
+  const char *sql_cname = cname;
+  const char *sql_o_id = o_id;
+  const numeric *sql_csecs = Numeric_db(csecs);
+  const numeric *sql_dsecs = dsecs != NULL ? Numeric_db(dsecs) : NULL;
+  const numeric *sql_b_filled = Numeric_db(b_filled);
+  const numeric *sql_q_filled = Numeric_db(q_filled);
+  const numeric *sql_q_fees = Numeric_db(q_fees);
+  const char *sql_status = t_done ? "DONE" : dsecs != NULL ? "SOLD" : NULL;
+  EXEC SQL END DECLARE SECTION;
+  EXEC SQL WHENEVER SQLWARNING CALL db_warn();
+  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL AT :sql_cname BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
+  EXEC SQL AT :sql_cname
+    UPDATE "TRADES" SET
+      "SELL_ORDER_CREATED_AT" = to_timestamp(:sql_csecs),
+      "SELL_ORDER_BASE_AMOUNT_FILLED" = :sql_b_filled,
+      "SELL_ORDER_QUOTE_AMOUNT_FILLED" = :sql_q_filled,
+      "SELL_ORDER_QUOTE_FEES" = :sql_q_fees
+    WHERE "SELL_ORDER_ID" = :sql_o_id;
+  // clang-format on
+  if (t_done || dsecs != NULL) {
+    // clang-format off
+    EXEC SQL WHENEVER SQLWARNING CALL db_warn();
+    EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+    EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+    EXEC SQL AT :sql_cname
+      UPDATE "TRADES"
+        SET "STATUS" = :sql_status,
+          "SELL_ORDER_CREATED_AT" = to_timestamp(:sql_csecs),
+          "SELL_ORDER_DONE_AT" = to_timestamp(:sql_dsecs)
+      WHERE "SELL_ORDER_ID" = :sql_o_id;
+    // clang-format on
+  }
+  // clang-format off
+  EXEC SQL AT :sql_cname COMMIT;
+  // clang-format on
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(0, stdout);
+#endif
+}
+
+void db_trade_sopen(const char *const cname, const char *const o_id,
+                    const struct Numeric *const csecs,
+                    const struct Numeric *const b_filled,
+                    const struct Numeric *const q_filled,
+                    const struct Numeric *const q_fees) {
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(1, stdout);
+#endif
+  // clang-format off
+  EXEC SQL BEGIN DECLARE SECTION;
+  const char *sql_cname = cname;
+  const char *sql_o_id = o_id;
+  const numeric *sql_csecs = Numeric_db(csecs);
+  const numeric *sql_b_filled = Numeric_db(b_filled);
+  const numeric *sql_q_filled = Numeric_db(q_filled);
+  const numeric *sql_q_fees = Numeric_db(q_fees);
+  EXEC SQL END DECLARE SECTION;
+  EXEC SQL WHENEVER SQLWARNING CALL db_warn();
+  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL AT :sql_cname BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
+  EXEC SQL AT :sql_cname
+    UPDATE "TRADES" SET
+      "SELL_ORDER_CREATED_AT" = to_timestamp(:sql_csecs),
+      "SELL_ORDER_BASE_AMOUNT_FILLED" = :sql_b_filled,
+      "SELL_ORDER_QUOTE_AMOUNT_FILLED" = :sql_q_filled,
+      "SELL_ORDER_QUOTE_FEES" = :sql_q_fees
+    WHERE "SELL_ORDER_ID" = :sql_o_id;
+  EXEC SQL AT :sql_cname COMMIT;
+  // clang-format on
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(0, stdout);
+#endif
+}
+
+void db_trades_open(const char *const cname, const char *const exc_id,
+                    const char *const p_id) {
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(1, stdout);
+#endif
+  // clang-format off
+  EXEC SQL BEGIN DECLARE SECTION;
+  const char *con = cname;
+  const char *exc = exc_id;
+  const char *pid = p_id;
+  EXEC SQL END DECLARE SECTION;
+  EXEC SQL WHENEVER SQLWARNING CALL db_warn();
+  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+	EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+  EXEC SQL AT :con DECLARE trades_cursor CURSOR FOR
+    SELECT "TRADE_ID",
+           "EXCHANGE_ID",
+           "PRODUCT_ID",
+           "BASE_CURRENCY_ID",
+           "QUOTE_CURRENCY_ID",
+           "STATUS",
+           "BUY_ORDER_ID",
+           extract(EPOCH FROM "BUY_ORDER_CREATED_AT") * 1000000000 AS "BUY_CNANOS",
+           extract(EPOCH FROM "BUY_ORDER_DONE_AT") * 1000000000 AS "BUY_DNANOS",
+           "BUY_ORDER_PRICE_ORDERED",
+           "BUY_ORDER_BASE_AMOUNT_ORDERED",
+           "BUY_ORDER_BASE_AMOUNT_FILLED",
+           "BUY_ORDER_QUOTE_AMOUNT_FILLED",
+           "BUY_ORDER_QUOTE_FEES",
+           "SELL_ORDER_ID",
+           extract(EPOCH FROM "SELL_ORDER_CREATED_AT") * 1000000000 AS "SELL_CNANOS",
+           extract(EPOCH FROM "SELL_ORDER_DONE_AT") * 1000000000 AS "SELL_DNANOS",
+           "SELL_ORDER_PRICE_ORDERED",
+           "SELL_ORDER_BASE_AMOUNT_ORDERED",
+           "SELL_ORDER_BASE_AMOUNT_FILLED",
+           "SELL_ORDER_QUOTE_AMOUNT_FILLED",
+           "SELL_ORDER_QUOTE_FEES"
+    FROM "TRADES"
+    WHERE "EXCHANGE_ID" = :exc AND "PRODUCT_ID" = :pid
+      AND NOT ("STATUS" = 'DONE' OR "STATUS" = 'KILLED');
+  EXEC SQL AT :con OPEN trades_cursor;
+  // clang-format on
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(0, stdout);
+#endif
+}
+
+bool db_trades_next(struct db_trade_res *const res, const char *const cname) {
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(1, stdout);
+#endif
+  // clang-format off
+  EXEC SQL BEGIN DECLARE SECTION;
+  const char *con = cname;
+  char *id = res->id;
+  char *e_id = res->e_id;
+  char *p_id = res->p_id;
+  char *b_id = res->b_id;
+  char *q_id = res->q_id;
+  char *status = res->status;
+  char *bo_id = res->bo_id;
+  int bo_id_ind = -1;
+  numeric *b_cnanos = Numeric_db(res->b_cnanos);
+  int b_cnanos_ind[1] = {0};
+  numeric *b_dnanos = Numeric_db(res->b_dnanos);
+  int b_dnanos_ind[1] = {0};
+  numeric *b_price = Numeric_db(res->b_price);
+  int b_price_ind[1] = {0};
+  numeric *b_b_ordered = Numeric_db(res->b_b_ordered);
+  int b_b_ordered_ind[1] = {0};
+  numeric *b_b_filled = Numeric_db(res->b_b_filled);
+  int b_b_filled_ind[1] = {0};
+  numeric *b_q_fees = Numeric_db(res->b_q_fees);
+  int b_q_fees_ind[1] = {0};
+  numeric *b_q_filled = Numeric_db(res->b_q_filled);
+  int b_q_filled_ind[1] = {0};
+  char *so_id = res->so_id;
+  int so_id_ind = -1;
+  numeric *s_cnanos = Numeric_db(res->s_cnanos);
+  int s_cnanos_ind[1] = {0};
+  numeric *s_dnanos = Numeric_db(res->s_dnanos);
+  int s_dnanos_ind[1] = {0};
+  numeric *s_price = Numeric_db(res->s_price);
+  int s_price_ind[1] = {0};
+  numeric *s_b_ordered = Numeric_db(res->s_b_ordered);
+  int s_b_ordered_ind[1] = {0};
+  numeric *s_b_filled = Numeric_db(res->s_b_filled);
+  int s_b_filled_ind[1] = {0};
+  numeric *s_q_fees = Numeric_db(res->s_q_fees);
+  int s_q_fees_ind[1] = {0};
+  numeric *s_q_filled = Numeric_db(res->s_q_filled);
+  int s_q_filled_ind[1] = {0};
+  EXEC SQL END DECLARE SECTION;
+  EXEC SQL WHENEVER SQLWARNING CALL db_warn();
+  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL WHENEVER NOT FOUND GOTO not_found;
+  EXEC SQL AT :con FETCH FROM trades_cursor INTO
+    :id, :e_id, :p_id, :b_id, :q_id, :status,
+    :bo_id :bo_id_ind,
+    :b_cnanos :b_cnanos_ind,
+    :b_dnanos :b_dnanos_ind,
+    :b_price :b_price_ind,
+    :b_b_ordered :b_b_ordered_ind,
+    :b_b_filled :b_b_filled_ind,
+    :b_q_filled :b_q_filled_ind,
+    :b_q_fees :b_q_fees_ind,
+    :so_id :so_id_ind,
+    :s_cnanos :s_cnanos_ind,
+    :s_dnanos :s_dnanos_ind,
+    :s_price :s_price_ind,
+    :s_b_ordered :s_b_ordered_ind,
+    :s_b_filled :s_b_filled_ind,
+    :s_q_filled :s_q_filled_ind,
+    :s_q_fees:s_q_fees_ind;
+  // clang-format on
+  res->bo_id_null = bo_id_ind != 0 ? true : false;
+  res->b_cnanos_null = b_cnanos_ind[0] != 0 ? true : false;
+  res->b_dnanos_null = b_dnanos_ind[0] != 0 ? true : false;
+  res->b_price_null = b_price_ind[0] != 0 ? true : false;
+  res->b_b_ordered_null = b_b_ordered_ind[0] != 0 ? true : false;
+  res->b_b_filled_null = b_b_filled_ind[0] != 0 ? true : false;
+  res->b_q_filled_null = b_q_filled_ind[0] != 0 ? true : false;
+  res->b_q_fees_null = b_q_fees_ind[0] != 0 ? true : false;
+  res->so_id_null = so_id_ind != 0 ? true : false;
+  res->s_cnanos_null = s_cnanos_ind[0] != 0 ? true : false;
+  res->s_dnanos_null = s_dnanos_ind[0] != 0 ? true : false;
+  res->s_price_null = s_price_ind[0] != 0 ? true : false;
+  res->s_b_ordered_null = s_b_ordered_ind[0] != 0 ? true : false;
+  res->s_b_filled_null = s_b_filled_ind[0] != 0 ? true : false;
+  res->s_q_filled_null = s_q_filled_ind[0] != 0 ? true : false;
+  res->s_q_fees_null = s_q_fees_ind[0] != 0 ? true : false;
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(0, stdout);
+#endif
+  return true;
+not_found:
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(0, stdout);
+#endif
+  return false;
+}
+
+void db_trades_close(const char *const cname) {
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(1, stdout);
+#endif
+  // clang-format off
+  EXEC SQL BEGIN DECLARE SECTION;
+  const char *con = cname;
+  EXEC SQL END DECLARE SECTION;
+  EXEC SQL WHENEVER SQLWARNING CALL db_warn();
+  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL AT :con CLOSE trades_cursor;
+  EXEC SQL AT :con COMMIT;
+  // clang-format on
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(0, stdout);
+#endif
+}
+
+void db_trade_bcreate(char *const t_id, const char *const cname,
+                      const char *const e_id, const char *const p_id,
+                      const char *const b_id, const char *const q_id,
+                      const char *const o_id,
+                      const struct Numeric *const o_base,
+                      const struct Numeric *const o_pr) {
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(1, stdout);
+#endif
+  // clang-format off
+  EXEC SQL BEGIN DECLARE SECTION;
+  const char *con = cname;
+  const char *eid = e_id;
+  const char *pid = p_id;
+  const char *bid = b_id;
+  const char *qid = q_id;
+  const char *oid = o_id;
+  const numeric *ob = Numeric_db(o_base);
+  const numeric *opr = Numeric_db(o_pr);
+  char *tid = t_id;
+  EXEC SQL END DECLARE SECTION;
+  EXEC SQL WHENEVER SQLWARNING CALL db_warn();
+  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
+  EXEC SQL AT :con
+    INSERT INTO "TRADES"
+      (
+      "EXCHANGE_ID",
+      "PRODUCT_ID",
+      "BASE_CURRENCY_ID",
+      "QUOTE_CURRENCY_ID",
+      "STATUS",
+      "BUY_ORDER_ID",
+      "BUY_ORDER_BASE_AMOUNT_ORDERED",
+      "BUY_ORDER_PRICE_ORDERED"
+      )
+    VALUES
+      (
+      :eid, :pid, :bid, :qid, 'BUYING', :oid, :ob, :opr
+      )
+    RETURNING "TRADE_ID" INTO :tid;
+  EXEC SQL AT :con COMMIT;
+  // clang-format on
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(0, stdout);
+#endif
+}
+
+void db_trade_bupdate(const char *const cname, const char *const t_id,
+                      const char *const o_id,
+                      const struct Numeric *const o_base,
+                      const struct Numeric *const o_pr) {
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(1, stdout);
+#endif
+  // clang-format off
+  EXEC SQL BEGIN DECLARE SECTION;
+  const char *con = cname;
+  const char *tid = t_id;
+  const char *oid = o_id;
+  const numeric *ob = Numeric_db(o_base);
+  const numeric *opr = Numeric_db(o_pr);
+  EXEC SQL END DECLARE SECTION;
+  EXEC SQL WHENEVER SQLWARNING CALL db_warn();
+  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
+  EXEC SQL AT :con
+    UPDATE
+      "TRADES"
+    SET
+      "BUY_ORDER_ID" = :oid,
+      "BUY_ORDER_BASE_AMOUNT_ORDERED" = :ob,
+      "BUY_ORDER_PRICE_ORDERED" = :opr,
+      "STATUS" = 'BUYING'
+    WHERE
+      "TRADE_ID" = :tid;
+  EXEC SQL AT :con COMMIT;
+  // clang-format on
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(0, stdout);
+#endif
+}
+
+void db_trade_screate(char *const t_id, const char *const cname,
+                      const char *const e_id, const char *const p_id,
+                      const char *const b_id, const char *const q_id,
+                      const char *const o_id,
+                      const struct Numeric *const o_base,
+                      const struct Numeric *const o_pr) {
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(1, stdout);
+#endif
+  // clang-format off
+  EXEC SQL BEGIN DECLARE SECTION;
+  const char *con = cname;
+  const char *eid = e_id;
+  const char *pid = p_id;
+  const char *bid = b_id;
+  const char *qid = q_id;
+  const char *oid = o_id;
+  const numeric *ob = Numeric_db(o_base);
+  const numeric *opr = Numeric_db(o_pr);
+  char *tid = t_id;
+  EXEC SQL END DECLARE SECTION;
+  EXEC SQL WHENEVER SQLWARNING CALL db_warn();
+  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
+  EXEC SQL AT :con
+    INSERT INTO "TRADES"
+      (
+      "EXCHANGE_ID",
+      "PRODUCT_ID",
+      "BASE_CURRENCY_ID",
+      "QUOTE_CURRENCY_ID",
+      "STATUS",
+      "SELL_ORDER_ID",
+      "SELL_ORDER_BASE_AMOUNT_ORDERED",
+      "SELL_ORDER_PRICE_ORDERED"
+      )
+    VALUES
+      (
+      :eid, :pid, :bid, :qid, 'SELLING', :oid, :ob, :opr
+      )
+    RETURNING "TRADE_ID" INTO :tid;
+  EXEC SQL AT :con COMMIT;
+  // clang-format on
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(0, stdout);
+#endif
+}
+
+void db_trade_supdate(const char *const cname, const char *const t_id,
+                      const char *const o_id,
+                      const struct Numeric *const o_base,
+                      const struct Numeric *const o_pr) {
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(1, stdout);
+#endif
+  // clang-format off
+  EXEC SQL BEGIN DECLARE SECTION;
+  const char *con = cname;
+  const char *tid = t_id;
+  const char *oid = o_id;
+  const numeric *ob = Numeric_db(o_base);
+  const numeric *opr = Numeric_db(o_pr);
+  EXEC SQL END DECLARE SECTION;
+  EXEC SQL WHENEVER SQLWARNING CALL db_warn();
+  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
+  EXEC SQL AT :con
+    UPDATE
+      "TRADES"
+    SET
+      "SELL_ORDER_ID" = :oid,
+      "SELL_ORDER_BASE_AMOUNT_ORDERED" = :ob,
+      "SELL_ORDER_PRICE_ORDERED" = :opr,
+      "STATUS" = 'SELLING'
+    WHERE
+      "TRADE_ID" = :tid;
+  EXEC SQL AT :con COMMIT;
+  // clang-format on
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(0, stdout);
+#endif
+}
+
+void db_trade_delete(const char *const cname, const char *const t_id) {
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(1, stdout);
+#endif
+  // clang-format off
+  EXEC SQL BEGIN DECLARE SECTION;
+  const char *con = cname;
+  const char *tid = t_id;
+  EXEC SQL END DECLARE SECTION;
+  EXEC SQL WHENEVER SQLWARNING CALL db_warn();
+  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
+  EXEC SQL AT :con
+    DELETE FROM "TRADES" WHERE "TRADE_ID" = :tid;
+  EXEC SQL AT :con COMMIT;
+  // clang-format on
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(0, stdout);
+#endif
+}
+
+void db_trade_breset(const char *const cname, const char *const o_id) {
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(1, stdout);
+#endif
+  // clang-format off
+  EXEC SQL BEGIN DECLARE SECTION;
+  const char *con = cname;
+  const char *oid = o_id;
+  EXEC SQL END DECLARE SECTION;
+  EXEC SQL WHENEVER SQLWARNING CALL db_warn();
+  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
+  EXEC SQL AT :con
+    UPDATE "TRADES" SET
+      "BUY_ORDER_ID" = NULL,
+      "BUY_ORDER_CREATED_AT" = NULL,
+      "BUY_ORDER_DONE_AT" = NULL,
+      "BUY_ORDER_PRICE_ORDERED" = NULL,
+      "BUY_ORDER_BASE_AMOUNT_ORDERED" = NULL,
+      "BUY_ORDER_BASE_AMOUNT_FILLED" = NULL,
+      "BUY_ORDER_QUOTE_AMOUNT_FILLED" = NULL,
+      "BUY_ORDER_QUOTE_FEES" = NULL,
+      "STATUS" = 'SOLD'
+    WHERE "BUY_ORDER_ID" = :oid;
+  EXEC SQL AT :con COMMIT;
+  // clang-format on
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(0, stdout);
+#endif
+}
+
+void db_trade_sreset(const char *const cname, const char *const o_id) {
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(1, stdout);
+#endif
+  // clang-format off
+  EXEC SQL BEGIN DECLARE SECTION;
+  const char *con = cname;
+  const char *oid = o_id;
+  EXEC SQL END DECLARE SECTION;
+  EXEC SQL WHENEVER SQLWARNING CALL db_warn();
+  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
+  EXEC SQL AT :con
+    UPDATE "TRADES" SET
+      "SELL_ORDER_ID" = NULL,
+      "SELL_ORDER_CREATED_AT" = NULL,
+      "SELL_ORDER_DONE_AT" = NULL,
+      "SELL_ORDER_PRICE_ORDERED" = NULL,
+      "SELL_ORDER_BASE_AMOUNT_ORDERED" = NULL,
+      "SELL_ORDER_BASE_AMOUNT_FILLED" = NULL,
+      "SELL_ORDER_QUOTE_AMOUNT_FILLED" = NULL,
+      "SELL_ORDER_QUOTE_FEES" = NULL,
+      "STATUS" = 'BOUGHT'
+    WHERE "SELL_ORDER_ID" = :oid;
+  EXEC SQL AT :con COMMIT;
+  // clang-format on
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(0, stdout);
+#endif
+}
+
+void db_trades_hold(struct db_balance_res *res, const char *const cname,
+                    const char *const e_id, const char *const q_id,
+                    const char *const b_id) {
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(1, stdout);
+#endif
+  // clang-format off
+  EXEC SQL BEGIN DECLARE SECTION;
+  const char *con = cname;
+  const char *eid = e_id;
+  const char *qid = q_id;
+  const char *bid = b_id;
+  numeric *q = Numeric_db(res->q);
+  int q_ind[1] = {0};
+  numeric *b = Numeric_db(res->b);
+  int b_ind[1] = {0};
+  EXEC SQL END DECLARE SECTION;
+  EXEC SQL WHENEVER SQLWARNING CALL db_warn();
+  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL WHENEVER NOT FOUND GOTO q_not_found;
+  EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
+  EXEC SQL AT :con
+    SELECT sum("SELL_ORDER_QUOTE_AMOUNT_FILLED") INTO :q :q_ind
+    FROM "TRADES"
+    WHERE "EXCHANGE_ID" = :eid
+      AND "QUOTE_CURRENCY_ID" = :qid
+      AND ("STATUS" = 'SOLD' OR "STATUS" = 'SELLING');
+  // clang-format on
+q_not_found:
+  if (q_ind[0] != 0)
+    Numeric_copy_to(zero, res->q);
+  // clang-format off
+  EXEC SQL WHENEVER SQLWARNING CALL db_warn();
+  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL WHENEVER NOT FOUND GOTO b_not_found;
+  EXEC SQL AT :con
+    SELECT sum("BUY_ORDER_BASE_AMOUNT_FILLED") INTO :b :b_ind
+    FROM "TRADES"
+    WHERE "EXCHANGE_ID" = :eid
+      AND "BASE_CURRENCY_ID" = :bid
+      AND ("STATUS" = 'BOUGHT' OR "STATUS" = 'BUYING');
+  EXEC SQL AT :con COMMIT;
+  // clang-format on
+b_not_found:
+  if (b_ind[0] != 0)
+    Numeric_copy_to(zero, res->b);
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(0, stdout);
+#endif
+}
+
+void db_tx_plot_enanos(const char *const cname, const char *const pl_id,
+                       const struct Numeric *const enanos) {
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(1, stdout);
+#endif
+  // clang-format off
+  EXEC SQL BEGIN DECLARE SECTION;
+  const char *sql_cname = cname;
+  const char *sql_id = pl_id;
+  const numeric *sql_enanos = Numeric_db(enanos);
+  EXEC SQL END DECLARE SECTION;
+  EXEC SQL WHENEVER SQLWARNING CALL db_warn();
+  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL AT :sql_cname
+    UPDATE "PLOTS" SET "ENANOS" = :sql_enanos
+    WHERE "PLOT_ID" = :sql_id;
+  // clang-format on
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(0, stdout);
+#endif
+}
+
+void db_tx_plot_datapoint(const char *const cname, const char *const pl_id,
+                          const struct Numeric *const x,
+                          const struct Numeric *const y) {
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(1, stdout);
+#endif
+  // clang-format off
+  EXEC SQL BEGIN DECLARE SECTION;
+  const char *sql_cname = cname;
+  const char *sql_id = pl_id;
+  const numeric *sql_x = Numeric_db(x);
+  const numeric *sql_y = Numeric_db(y);
+  EXEC SQL END DECLARE SECTION;
+  EXEC SQL WHENEVER SQLWARNING CALL db_warn();
+  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL AT :sql_cname EXECUTE plot_datapoint USING :sql_id, :sql_x, :sql_y;
+  // clang-format on
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(0, stdout);
+#endif
+}
+
+void db_tx_trend_plot(struct db_plot_res *res, const char *const cname,
+                      const char *const e_id, const char *const p_id) {
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(1, stdout);
+#endif
+  // clang-format off
+  EXEC SQL BEGIN DECLARE SECTION;
+  const char *sql_cname = cname;
+  const char *sql_e_id = e_id;
+  const char *sql_p_id = p_id;
+  char *id = res->id;
+  const numeric *snanos = Numeric_db(res->snanos);
+  const numeric *enanos = Numeric_db(res->enanos);
+  EXEC SQL END DECLARE SECTION;
+  EXEC SQL WHENEVER SQLWARNING CALL db_warn();
+  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL WHENEVER NOT FOUND GOTO not_found;
+  EXEC SQL AT :sql_cname
+    SELECT p."PLOT_ID", p."SNANOS", p."ENANOS" INTO :id, :snanos, :enanos
+    FROM "TREND_PLOTS" t JOIN "PLOTS" p ON t."PLOT_ID" = p."PLOT_ID"
+    WHERE t."EXCHANGE_ID" = :sql_e_id AND t."PRODUCT_ID" = :sql_p_id;
+  // clang-format on
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(0, stdout);
+#endif
+  return;
+not_found:
+  // clang-format off
+  EXEC SQL WHENEVER SQLWARNING CALL db_warn();
+  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL AT :sql_cname
+    INSERT INTO "PLOTS"
+      ("SNANOS", "ENANOS")
+    VALUES
+      (:snanos, :enanos)
+    RETURNING "PLOT_ID", "SNANOS", "ENANOS" INTO :id, :snanos, :enanos;
+  EXEC SQL AT :sql_cname
+    INSERT INTO "PLOTS_DATAPOINTS"
+      ("PLOT_ID", "X", "Y")
+      SELECT :id, "NANOS", "PRICE"
+      FROM "SAMPLES"
+      WHERE "EXCHANGE_ID" = :sql_e_id
+        AND "PRODUCT_ID" = :sql_p_id
+        AND "NANOS" >= :snanos;
+  EXEC SQL AT :sql_cname
+    INSERT INTO "TREND_PLOTS"
+      ("EXCHANGE_ID", "PRODUCT_ID", "PLOT_ID")
+    VALUES
+      ( :sql_e_id, :sql_p_id, :id);
+  // clang-format on
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(0, stdout);
+#endif
+}
+
+void db_tx_trend_plot_candle(const char *const cname, const char *const e_id,
+                             const char *const p_id,
+                             const struct db_candle_res *const cd) {
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(1, stdout);
+#endif
+  // clang-format off
+  EXEC SQL BEGIN DECLARE SECTION;
+  const char *sql_cname = cname;
+  const char *sql_e_id = e_id;
+  const char *sql_p_id = p_id;
+  const numeric *o = Numeric_db(cd->o);
+  const numeric *h = Numeric_db(cd->h);
+  const numeric *l = Numeric_db(cd->l);
+  const numeric *c = Numeric_db(cd->c);
+  const numeric *onanos = Numeric_db(cd->onanos);
+  const numeric *hnanos = Numeric_db(cd->hnanos);
+  const numeric *lnanos = Numeric_db(cd->lnanos);
+  const numeric *cnanos = Numeric_db(cd->cnanos);
+  EXEC SQL END DECLARE SECTION;
+  EXEC SQL WHENEVER SQLWARNING CALL db_warn();
+  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL AT :sql_cname
+    INSERT INTO "TREND_CANDLES"
+      ("EXCHANGE_ID", "PRODUCT_ID", "OPEN", "HIGH", "LOW", "CLOSE",
+       "ONANOS", "HNANOS", "LNANOS", "CNANOS")
+    VALUES
+      (:sql_e_id, :sql_p_id, :o, :h, :l, :c, :onanos, :hnanos, :lnanos, :cnanos);
+  // clang-format on
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(0, stdout);
+#endif
+}
+
+void db_tx_trend_plot_marker(const char *const cname, const char *const e_id,
+                             const char *const p_id,
+                             const struct Numeric *const x,
+                             const struct Numeric *const y) {
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(1, stdout);
+#endif
+  // clang-format off
+  EXEC SQL BEGIN DECLARE SECTION;
+  const char *sql_cname = cname;
+  const char *sql_e_id = e_id;
+  const char *sql_p_id = p_id;
+  const numeric *sql_x = Numeric_db(x);
+  const numeric *sql_y = Numeric_db(y);
+  char sql_id[DATABASE_UUID_MAX_LENGTH] = {0};
+  EXEC SQL END DECLARE SECTION;
+  EXEC SQL WHENEVER SQLWARNING CALL db_warn();
+  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL AT :sql_cname
+    INSERT INTO "PLOTS"
+      ("SNANOS", "ENANOS")
+    VALUES
+      (0, 0)
+    RETURNING "PLOT_ID" INTO :sql_id;
+  EXEC SQL AT :sql_cname
+    INSERT INTO "PLOTS_DATAPOINTS"
+      ("PLOT_ID", "X", "Y")
+    VALUES
+      (:sql_id, :sql_x, :sql_y);
+  EXEC SQL AT :sql_cname
+    INSERT INTO "TREND_MARKERS"
+      ("EXCHANGE_ID", "PRODUCT_ID", "PLOT_ID")
+    VALUES
+      ( :sql_e_id, :sql_p_id, :sql_id);
+  // clang-format on
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(0, stdout);
+#endif
+}
+
+void db_tx_trend_plot_samples_open(const char *const cname,
+                                   const char *const e_id,
+                                   const char *const p_id) {
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(1, stdout);
+#endif
+  // clang-format off
+  EXEC SQL BEGIN DECLARE SECTION;
+  const char *sql_cname = cname;
+  const char *sql_e_id = e_id;
+  const char *sql_p_id = p_id;
+  EXEC SQL END DECLARE SECTION;
+  EXEC SQL WHENEVER SQLWARNING CALL db_warn();
+  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+	EXEC SQL AT :sql_cname DECLARE trend_plot_cursor CURSOR FOR
+		SELECT "X", "Y" 
+    FROM "TREND_PLOTS" t
+      JOIN "PLOTS" p ON t."PLOT_ID" = p."PLOT_ID"
+      JOIN "PLOTS_DATAPOINTS" d ON p."PLOT_ID" = d."PLOT_ID"
+		WHERE t."EXCHANGE_ID" = :sql_e_id
+      AND t."PRODUCT_ID" = :sql_p_id
+		ORDER BY "X" ASC;
+
+	EXEC SQL AT :sql_cname OPEN trend_plot_cursor;
+  // clang-format on
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(0, stdout);
+#endif
+}
+
+bool db_tx_trend_plot_samples_next(struct db_datapoint_res *restrict const res,
+                                   const char *const cname) {
+  // clang-format off
+  EXEC SQL BEGIN DECLARE SECTION;
+  const char *sql_cname = cname;
+  numeric *x = Numeric_db(res->x);
+  numeric *y = Numeric_db(res->y);
+  EXEC SQL END DECLARE SECTION;
+  EXEC SQL WHENEVER SQLWARNING CALL db_warn();
+  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL WHENEVER NOT FOUND GOTO not_found;
+	EXEC SQL AT :sql_cname FETCH FROM trend_plot_cursor INTO :x, :y;
+  // clang-format on
+  return true;
+not_found:
+  return false;
+}
+
+void db_tx_trend_plot_samples_close(const char *const cname) {
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(1, stdout);
+#endif
+  // clang-format off
+  EXEC SQL BEGIN DECLARE SECTION;
+  const char *sql_cname = cname;
+  EXEC SQL END DECLARE SECTION;
+  EXEC SQL WHENEVER SQLWARNING CALL db_warn();
+  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL AT :sql_cname CLOSE trend_plot_cursor;
+  // clang-format on
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(0, stdout);
+#endif
+}
+
+void db_tx_trend_plot_candles_open(const char *const cname,
+                                   const char *const e_id,
+                                   const char *const p_id) {
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(1, stdout);
+#endif
+  // clang-format off
+  EXEC SQL BEGIN DECLARE SECTION;
+  const char *sql_cname = cname;
+  const char *sql_e_id = e_id;
+  const char *sql_p_id = p_id;
+  EXEC SQL END DECLARE SECTION;
+  EXEC SQL WHENEVER SQLWARNING CALL db_warn();
+  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+	EXEC SQL AT :sql_cname DECLARE trend_plot_candles_cursor CURSOR FOR
+		SELECT c."OPEN", c."HIGH", c."LOW", c."CLOSE",
+      c."ONANOS", c."HNANOS", c."LNANOS", c."CNANOS"
+    FROM "TREND_PLOTS" t
+      JOIN "TREND_CANDLES" c ON t."EXCHANGE_ID" = c."EXCHANGE_ID"
+                            AND t."PRODUCT_ID" = c."PRODUCT_ID"
+		WHERE t."EXCHANGE_ID" = :sql_e_id
+      AND t."PRODUCT_ID" = :sql_p_id
+		ORDER BY "ONANOS" ASC;
+
+	EXEC SQL AT :sql_cname OPEN trend_plot_candles_cursor;
+  // clang-format on
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(0, stdout);
+#endif
+}
+
+bool db_tx_trend_plot_candles_next(struct db_candle_res *restrict const res,
+                                   const char *const cname) {
+  // clang-format off
+  EXEC SQL BEGIN DECLARE SECTION;
+  const char *sql_cname = cname;
+  numeric *o = Numeric_db(res->o);
+  numeric *h = Numeric_db(res->h);
+  numeric *l = Numeric_db(res->l);
+  numeric *c = Numeric_db(res->c);
+  numeric *onanos = Numeric_db(res->onanos);
+  numeric *hnanos = Numeric_db(res->hnanos);
+  numeric *lnanos = Numeric_db(res->lnanos);
+  numeric *cnanos = Numeric_db(res->cnanos);
+  EXEC SQL END DECLARE SECTION;
+  EXEC SQL WHENEVER SQLWARNING CALL db_warn();
+  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL WHENEVER NOT FOUND GOTO not_found;
+	EXEC SQL AT :sql_cname
+    FETCH FROM trend_plot_candles_cursor
+    INTO :o, :h, :l, :c, :onanos, :hnanos, :lnanos, :cnanos;
+  // clang-format on
+  return true;
+not_found:
+  return false;
+}
+
+void db_tx_trend_plot_candles_close(const char *const cname) {
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(1, stdout);
+#endif
+  // clang-format off
+  EXEC SQL BEGIN DECLARE SECTION;
+  const char *sql_cname = cname;
+  EXEC SQL END DECLARE SECTION;
+  EXEC SQL WHENEVER SQLWARNING CALL db_warn();
+  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL AT :sql_cname CLOSE trend_plot_candles_cursor;
+  // clang-format on
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(0, stdout);
+#endif
+}
+
+void db_tx_trend_plot_markers_open(const char *const cname,
+                                   const char *const e_id,
+                                   const char *const p_id) {
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(1, stdout);
+#endif
+  // clang-format off
+  EXEC SQL BEGIN DECLARE SECTION;
+  const char *sql_cname = cname;
+  const char *sql_e_id = e_id;
+  const char *sql_p_id = p_id;
+  EXEC SQL END DECLARE SECTION;
+  EXEC SQL WHENEVER SQLWARNING CALL db_warn();
+  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+	EXEC SQL AT :sql_cname DECLARE trend_plot_markers_cursor CURSOR FOR
+		SELECT d."X", d."Y"
+    FROM "TREND_PLOTS" t
+      JOIN "TREND_MARKERS" m ON t."EXCHANGE_ID" = m."EXCHANGE_ID"
+                            AND t."PRODUCT_ID" = m."PRODUCT_ID"
+      JOIN "PLOTS" p ON p."PLOT_ID" = m."PLOT_ID"
+      JOIN "PLOTS_DATAPOINTS" d ON p."PLOT_ID" = d."PLOT_ID"
+		WHERE t."EXCHANGE_ID" = :sql_e_id
+      AND t."PRODUCT_ID" = :sql_p_id
+		ORDER BY "X" ASC;
+
+	EXEC SQL AT :sql_cname OPEN trend_plot_markers_cursor;
+  // clang-format on
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(0, stdout);
+#endif
+}
+
+bool db_tx_trend_plot_markers_next(struct db_datapoint_res *restrict const res,
+                                   const char *const cname) {
+  // clang-format off
+  EXEC SQL BEGIN DECLARE SECTION;
+  const char *sql_cname = cname;
+  numeric *x = Numeric_db(res->x);
+  numeric *y = Numeric_db(res->y);
+  EXEC SQL END DECLARE SECTION;
+  EXEC SQL WHENEVER SQLWARNING CALL db_warn();
+  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL WHENEVER NOT FOUND GOTO not_found;
+	EXEC SQL AT :sql_cname
+    FETCH FROM trend_plot_markers_cursor INTO :x, :y;
+  // clang-format on
+  return true;
+not_found:
+  return false;
+}
+void db_tx_trend_plot_markers_close(const char *const cname) {
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(1, stdout);
+#endif
+  // clang-format off
+  EXEC SQL BEGIN DECLARE SECTION;
+  const char *sql_cname = cname;
+  EXEC SQL END DECLARE SECTION;
+  EXEC SQL WHENEVER SQLWARNING CALL db_warn();
+  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL AT :sql_cname CLOSE trend_plot_markers_cursor;
+  // clang-format on
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(0, stdout);
+#endif
+}
+
+void db_trend_state(struct db_trend_state_res *const res,
+                    const char *const cname, const char *const e_id,
+                    const char *const p_id) {
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(1, stdout);
+#endif
+  // clang-format off
+  EXEC SQL BEGIN DECLARE SECTION;
+  const char *sql_cname = cname;
+  const char *sql_e_id = e_id;
+  const char *sql_p_id = p_id;
+  numeric *sql_lnanos = Numeric_db(res->cd_lnanos);
+  numeric *sql_langle = Numeric_db(res->cd_langle);
+  char *sql_ltrend = res->cd_ltrend;
+  EXEC SQL END DECLARE SECTION;
+  EXEC SQL WHENEVER SQLWARNING CALL db_warn();
+  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL WHENEVER NOT FOUND GO TO not_found;
+  EXEC SQL AT :sql_cname BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
+  EXEC SQL AT :sql_cname
+    SELECT "CANDLE_LAST_NANOS", "CANDLE_LAST_ANGLE", "CANDLE_LAST_TREND"
+    INTO :sql_lnanos, :sql_langle, :sql_ltrend
+    FROM "TREND_STATES"
+    WHERE "EXCHANGE_ID" = :sql_e_id AND "PRODUCT_ID" = :sql_p_id;
+  EXEC SQL AT :sql_cname COMMIT;
+  // clang-format on
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(0, stdout);
+#endif
+  return;
+not_found:
+  // clang-format off
+  EXEC SQL AT :sql_cname
+    INSERT INTO "TREND_STATES"
+      ("EXCHANGE_ID", "PRODUCT_ID", "CANDLE_LAST_NANOS", "CANDLE_LAST_ANGLE",
+       "CANDLE_LAST_TREND")
+    VALUES
+      (:sql_e_id, :sql_p_id, 0, 0, 'NONE')
+    RETURNING
+      "CANDLE_LAST_NANOS", "CANDLE_LAST_ANGLE", "CANDLE_LAST_TREND"
+        INTO :sql_lnanos, :sql_langle, :sql_ltrend;
+  EXEC SQL AT :sql_cname COMMIT;
+  // clang-format on
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(0, stdout);
+#endif
+}
+
+void db_trend_state_update(const char *const cname, const char *const e_id,
+                           const char *const p_id,
+                           const struct db_trend_state_res *const st) {
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(1, stdout);
+#endif
+  // clang-format off
+  EXEC SQL BEGIN DECLARE SECTION;
+  const char *sql_cname = cname;
+  const char *sql_e_id = e_id;
+  const char *sql_p_id = p_id;
+  const numeric *sql_lnanos = Numeric_db(st->cd_lnanos);
+  const numeric *sql_langle = Numeric_db(st->cd_langle);
+  const char *sql_ltrend = st->cd_ltrend;
+  EXEC SQL END DECLARE SECTION;
+  EXEC SQL WHENEVER SQLWARNING CALL db_warn();
+  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL AT :sql_cname BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
+  EXEC SQL AT :sql_cname
+    UPDATE "TREND_STATES"
+      SET "CANDLE_LAST_NANOS" = :sql_lnanos,
+          "CANDLE_LAST_ANGLE" = :sql_langle,
+          "CANDLE_LAST_TREND" = :sql_ltrend
+    WHERE
+      "EXCHANGE_ID" = :sql_e_id AND "PRODUCT_ID" = :sql_p_id;
+  EXEC SQL AT :sql_cname COMMIT;
+  // clang-format on
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(0, stdout);
+#endif
+}
