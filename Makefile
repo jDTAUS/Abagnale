@@ -35,7 +35,6 @@ FORMAT=clang-format
 
 INCLUDES=-I/usr/include/postgresql
 INCLUDES+=-I/usr/local/include
-INCLUDES+=-I/home/schulte/wcjson/include
 
 DEBUG=-g
 #DEBUG+=-O0 -DABAG_DEBUG
@@ -73,7 +72,6 @@ CFLAGS+=-O3
 
 LDFLAGS=$(DEBUG) $(PROFILE) $(LTO)
 LDFLAGS+=-L/usr/local/lib
-LDFLAGS+=-L/home/schulte/wcjson/lib
 
 # ECPG - Embedded SQL in C
 #   https://www.postgresql.org/docs/18/ecpg.html

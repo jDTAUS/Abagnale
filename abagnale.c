@@ -2410,8 +2410,10 @@ static int orders_process(void *restrict const arg) {
         position_maintain(w_ctx, t, p, samples, Array_tail(samples), order);
         trade_maintain(w_ctx, t, samples, Array_tail(samples));
         Array_unlock(samples);
+      }
 
-      } else {
+      if (t->status == TRADE_STATUS_CANCELLED ||
+          t->status == TRADE_STATUS_DONE) {
         trade_delete(t);
         Array_remove_idx(trades, i - 1);
       }
