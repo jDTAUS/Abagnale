@@ -463,6 +463,14 @@ exchange  : EXCHANGE STRING {
           ;
 
 conf_market : negate STRING {
+              const char *errstr = NULL;
+              struct str_find sm[MAXCAPTURES] = {0};
+              str_find("", String_chars($2), sm, MAXCAPTURES, &errstr);
+              if (errstr != NULL) {
+                yyerror("%s", errstr);
+                String_delete($2);
+                YYERROR;
+              }
               struct Pattern *restrict const p = Pattern_new();
               p->p = $2;
               p->neg = $1;
@@ -1296,11 +1304,17 @@ bool ProductConfig_market(const struct ProductConfig *restrict const c,
   void **items = Array_items(c->p_pats);
   const char *mk = String_chars(m);
 
-  for (size_t i = Array_size(c->p_pats); i > 0; i--) {
-    str_find(mk, String_chars(((struct Pattern*)items[i - 1])->p), sm,
-             MAXCAPTURES, &errstr);
+  for (size_t i = Array_size(c->p_pats); i > 0 && market; i--) {
+    market = str_find(mk, String_chars(((struct Pattern *)items[i - 1])->p),
+                      sm, MAXCAPTURES, &errstr)
+             ? !((struct Pattern *)items[i - 1])->neg
+             : ((struct Pattern *)items[i - 1])->neg;
 
-    market = market && errstr == NULL && !((struct Pattern *)items[i - 1])->neg;
+    if (errstr != NULL) {
+      werr("%s: %s: %s\n",
+           mk, String_chars(((struct Pattern *)items[i - 1])->p), errstr);
+      market = false;
+    }
   }
 
   return market;
