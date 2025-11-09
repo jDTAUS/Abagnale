@@ -2391,8 +2391,8 @@ static int orders_process(void *restrict const arg) {
     }
 
     if (t != NULL) {
-      if (t->status != TRADE_STATUS_CANCELLED &&
-          t->status != TRADE_STATUS_DONE) {
+      if (t->status == TRADE_STATUS_BUYING ||
+          t->status == TRADE_STATUS_SELLING) {
         Array_lock(samples);
 
         if (Array_size(samples) < 2) {
