@@ -365,6 +365,8 @@ bool db_samples_vacuum(const char *const cname, const char *const fname) {
   // clang-format off
   EXEC SQL BEGIN DECLARE SECTION;
   const char *con = cname;
+  const char *sql_tgt = String_chars(cnf->db_tgt);
+  const char *sql_usr = String_chars(cnf->db_usr);
   char stmt[DB_STATEMENT_MAX_LENGTH] = {0};
   numeric *db_nanos = Numeric_db(nanos);
   EXEC SQL END DECLARE SECTION;
@@ -393,6 +395,11 @@ bool db_samples_vacuum(const char *const cname, const char *const fname) {
   EXEC SQL AT :con DELETE FROM "SAMPLES" WHERE "NANOS" <= :db_nanos;
   EXEC SQL AT :con DELETE FROM "PLOTS";
   EXEC SQL AT :con COMMIT;
+  EXEC SQL CONNECT TO :sql_tgt AS vfa USER :sql_usr;
+  EXEC SQL AT vfa SET AUTOCOMMIT TO ON;
+  EXEC SQL AT vfa SET TIMEZONE TO 'UTC';
+  EXEC SQL AT vfa VACUUM FULL ANALYZE;
+  EXEC SQL DISCONNECT vfa;
   // clang-format on
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(0, stdout);

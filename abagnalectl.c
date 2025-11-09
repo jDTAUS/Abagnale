@@ -98,7 +98,7 @@ static const struct {
   const char *restrict usage;
   int (*cmd)(int, char *[]);
 } cmd_tab[] = {
-    {"vacuum", "-f file", cmd_vacuum},
+    {"vacuum", "-o file", cmd_vacuum},
     {"algorithms", "", cmd_algorithms},
     {"exchanges", "", cmd_exchanges},
     {"markets",
