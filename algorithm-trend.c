@@ -550,8 +550,7 @@ static bool trend_position_close(const char *restrict const dbcon,
 static void trend_position_done(const char *restrict const dbcon,
                                 const struct Exchange *restrict const e,
                                 const struct Trade *restrict const t,
-                                const struct Position *restrict const p) {
-}
+                                const struct Position *restrict const p) {}
 
 static bool trend_product_plot(const char *restrict const fn,
                                const char *restrict const dbcon,
