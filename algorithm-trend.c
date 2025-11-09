@@ -73,9 +73,6 @@ struct trend_tls {
   struct trend_configure_vars {
     struct db_trend_state_res *restrict st_res;
   } trend_configure;
-  struct trend_position_done_vars {
-    struct db_trend_state_res *restrict st_res;
-  } trend_position_done;
 };
 
 static tss_t trend_tls_key;
@@ -131,10 +128,6 @@ static struct trend_tls *trend_tls(void) {
         heap_malloc(sizeof(struct db_trend_state_res));
     tls->trend_configure.st_res->cd_lnanos = Numeric_new();
     tls->trend_configure.st_res->cd_langle = Numeric_new();
-    tls->trend_position_done.st_res =
-        heap_malloc(sizeof(struct db_trend_state_res));
-    tls->trend_position_done.st_res->cd_lnanos = Numeric_new();
-    tls->trend_position_done.st_res->cd_langle = Numeric_new();
     tls_set(trend_tls_key, tls);
   }
   return tls;
@@ -176,9 +169,6 @@ static void trend_tls_dtor(void *e) {
   Numeric_delete(tls->trend_configure.st_res->cd_lnanos);
   Numeric_delete(tls->trend_configure.st_res->cd_langle);
   heap_free(tls->trend_configure.st_res);
-  Numeric_delete(tls->trend_position_done.st_res->cd_lnanos);
-  Numeric_delete(tls->trend_position_done.st_res->cd_langle);
-  heap_free(tls->trend_position_done.st_res);
   heap_free(tls);
   tls_set(trend_tls_key, NULL);
 }
@@ -561,20 +551,6 @@ static void trend_position_done(const char *restrict const dbcon,
                                 const struct Exchange *restrict const e,
                                 const struct Trade *restrict const t,
                                 const struct Position *restrict const p) {
-  const struct trend_tls *restrict const tls = trend_tls();
-  struct db_trend_state_res *restrict const st_res =
-      tls->trend_position_done.st_res;
-  struct trend_state *restrict const st = t->a_st;
-
-  Numeric_copy_to(zero, st->cd_langle);
-  nanos_now(st->cd_lnanos);
-
-  Numeric_copy_to(st->cd_lnanos, st_res->cd_lnanos);
-  Numeric_copy_to(st->cd_langle, st_res->cd_langle);
-  st_res->cd_ltrend = db_candle_trend(st->cd_ltrend);
-
-  db_trend_state_update(dbcon, String_chars(e->id), String_chars(t->p_id),
-                        st_res);
 }
 
 static bool trend_product_plot(const char *restrict const fn,
