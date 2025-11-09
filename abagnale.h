@@ -147,7 +147,7 @@ struct Algorithm {
 };
 
 struct Candle *Candle_new(void);
-void Candle_delete(struct Candle *restrict const);
+void Candle_delete(void *restrict const);
 void Candle_copy_to(const struct Candle *restrict const,
                     struct Candle *restrict const);
 void Candle_reset(struct Candle *restrict const);

@@ -35,28 +35,29 @@ struct Object *Object_new(void) {
   return o;
 }
 
-bool Object_delete(struct Object *restrict const o) {
+bool Object_delete(void *restrict const o) {
   if (o == NULL)
     return false;
 
+  struct Object *restrict const obj = o;
   bool del = false;
 
-  mutex_lock(o->mtx);
-  if (o->r_cnt == 0) {
+  mutex_lock(obj->mtx);
+  if (obj->r_cnt == 0) {
     werr("%s: %d: %s: o->r_cnt == 0\n", __FILE__, __LINE__, __func__);
     fatal();
   }
 
-  o->r_cnt--;
-  if (o->r_cnt == 0)
+  obj->r_cnt--;
+  if (obj->r_cnt == 0)
     del = true;
 
-  mutex_unlock(o->mtx);
+  mutex_unlock(obj->mtx);
 
   if (del) {
-    mutex_destroy(o->mtx);
-    heap_free(o->mtx);
-    heap_free(o);
+    mutex_destroy(obj->mtx);
+    heap_free(obj->mtx);
+    heap_free(obj);
   }
 
   return del;

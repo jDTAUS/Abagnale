@@ -404,19 +404,21 @@ struct Candle *Candle_new(void) {
   return c;
 }
 
-void Candle_delete(struct Candle *restrict const c) {
-  if (c != NULL) {
-    Numeric_delete(c->o);
-    Numeric_delete(c->c);
-    Numeric_delete(c->h);
-    Numeric_delete(c->l);
-    Numeric_delete(c->pc);
-    Numeric_delete(c->a);
-    Numeric_delete(c->onanos);
-    Numeric_delete(c->cnanos);
-    Numeric_delete(c->hnanos);
-    Numeric_delete(c->lnanos);
-  }
+void Candle_delete(void *restrict const c) {
+  if (c == NULL)
+    return;
+
+  struct Candle *restrict const cd = c;
+  Numeric_delete(cd->o);
+  Numeric_delete(cd->c);
+  Numeric_delete(cd->h);
+  Numeric_delete(cd->l);
+  Numeric_delete(cd->pc);
+  Numeric_delete(cd->a);
+  Numeric_delete(cd->onanos);
+  Numeric_delete(cd->cnanos);
+  Numeric_delete(cd->hnanos);
+  Numeric_delete(cd->lnanos);
 }
 
 void Candle_reset(struct Candle *restrict const c) {

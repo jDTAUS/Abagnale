@@ -25,6 +25,6 @@
 struct Object;
 
 struct Object *Object_new(void);
-bool Object_delete(struct Object *restrict const);
+bool Object_delete(void *restrict const);
 struct Object *Object_copy(struct Object *restrict const);
 #endif
