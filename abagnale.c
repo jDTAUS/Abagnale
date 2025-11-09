@@ -2005,12 +2005,11 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
 
         Numeric_char_free(r);
         Numeric_char_free(a);
-      }
 
-      if (verbose)
         wout("%s: %s->%s: Leaving bet(%" PRIuMAX ")\n",
              String_chars(w_ctx->ex->nm), String_chars(t->q_id),
              String_chars(t->b_id), t->bet_trg.cnt);
+      }
 
       trigger_reset(&t->bet_trg);
       goto ret;
@@ -2053,12 +2052,11 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
         Numeric_char_free(qr);
         Numeric_char_free(qa);
         Numeric_char_free(ba);
-      }
 
-      if (verbose)
         wout("%s: %s->%s: Leaving bet(%" PRIuMAX ")\n",
              String_chars(w_ctx->ex->nm), String_chars(t->q_id),
              String_chars(t->b_id), t->bet_trg.cnt);
+      }
 
       trigger_reset(&t->bet_trg);
       goto ret;
