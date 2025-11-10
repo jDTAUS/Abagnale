@@ -1849,16 +1849,8 @@ static void trade_pricing(const struct worker_ctx *restrict const w_ctx,
 static void trade_plot(const struct worker_ctx *restrict const w_ctx,
                        struct Trade *restrict const t) {
   char plot_fn[4096] = {0};
-
-  struct Product *restrict const p = w_ctx->ex->product(t->p_id);
-  if (p == NULL) {
-    werr("%s: %d: %s: %s: Product not found\n", __FILE__, __LINE__, __func__,
-         String_chars(t->p_id));
-    fatal();
-  }
-
   int r = snprintf(plot_fn, sizeof(plot_fn), "%s/%s.m",
-                   String_chars(cnf->plts_dir), String_chars(p->nm));
+                   String_chars(cnf->plts_dir), String_chars(w_ctx->p->nm));
 
   if (r < 0 || (size_t)r >= sizeof(plot_fn)) {
     werr("%s: %d: %s: Plot filename exceeds %zu characters\n", __FILE__,
@@ -1866,9 +1858,7 @@ static void trade_plot(const struct worker_ctx *restrict const w_ctx,
     fatal();
   }
 
-  t->a->product_plot(plot_fn, w_ctx->db, w_ctx->ex, p);
-
-  Product_delete(p);
+  t->a->product_plot(plot_fn, w_ctx->db, w_ctx->ex, w_ctx->p);
 }
 
 static void trade_bet(const struct worker_ctx *restrict const w_ctx,
