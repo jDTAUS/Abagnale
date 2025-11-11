@@ -23,9 +23,6 @@
 
 #include <string.h>
 
-// 10% headroom
-#define LOAD_FACTOR 0.1L
-
 struct Array {
   void **items;
   size_t size;
@@ -35,9 +32,9 @@ struct Array {
 
 struct Array *Array_new(const size_t c) {
   struct Array *restrict const a = heap_malloc(sizeof(struct Array));
-  a->items = heap_calloc(c, sizeof(void *));
   a->size = 0;
-  a->capacity = c;
+  a->capacity = c || !c;
+  a->items = heap_calloc(a->capacity, sizeof(void *));
   a->mtx = heap_malloc(sizeof(mtx_t));
   mutex_init(a->mtx);
   return a;
@@ -84,18 +81,16 @@ void Array_clear(struct Array *restrict const a,
 }
 
 void Array_shrink(struct Array *restrict const a) {
-  if (a->size > 0) {
-    const size_t new_capacity = (size_t)(a->size + a->size * LOAD_FACTOR);
-    if (new_capacity > a->size && new_capacity < a->capacity) {
-      a->capacity = new_capacity;
-      a->items = heap_realloc(a->items, sizeof(void *) * a->capacity);
-    }
+  if (a->size < a->capacity) {
+    a->capacity = ((a->size | !a->size) + 1) & ~1U;
+    a->items = heap_realloc(a->items, sizeof(void *) * a->capacity);
+    heap_trim(0);
   }
 }
 
 static inline void Array_grow(struct Array *restrict const a) {
   if (a->size >= a->capacity) {
-    a->capacity = (size_t)(a->size + (a->size * LOAD_FACTOR));
+    a->capacity <<= 1;
     a->items = heap_realloc(a->items, sizeof(void *) * a->capacity);
     heap_trim(0);
   }

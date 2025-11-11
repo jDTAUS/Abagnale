@@ -60,8 +60,6 @@ void heap_free(void *restrict const p) { free(p); }
 
 void heap_trim(const size_t pad) {
 #if defined(__linux__)
-  if (malloc_trim(pad) == 0)
-    werr("%s: %d: %s: Could not release memory\n", __FILE__, __LINE__,
-         __func__);
+  malloc_trim(pad);
 #endif
 }
