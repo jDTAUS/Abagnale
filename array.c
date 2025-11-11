@@ -33,7 +33,7 @@ struct Array {
 struct Array *Array_new(const size_t c) {
   struct Array *restrict const a = heap_malloc(sizeof(struct Array));
   a->size = 0;
-  a->capacity = c || !c;
+  a->capacity = ((c | !c) + 1) & ~1U;
   a->items = heap_calloc(a->capacity, sizeof(void *));
   a->mtx = heap_malloc(sizeof(mtx_t));
   mutex_init(a->mtx);
