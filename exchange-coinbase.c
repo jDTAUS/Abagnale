@@ -1187,6 +1187,7 @@ static void http_listener(struct mg_connection *restrict c, int ev,
               "Content-Type: application/json\r\n"
               "Content-Length: %u\r\n"
               "Connection: close\r\n"
+              "User-Agent: Abagnale/0 $JDTAUS$\r\n"
               "\r\n",
               method, mg_url_uri(http_ctx->url), jwt, (int)host.len, host.buf,
               http_ctx->body_len);
