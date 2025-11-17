@@ -61,7 +61,6 @@ struct Numeric *restrict two;
 struct Numeric *restrict seven;
 struct Numeric *restrict ten;
 struct Numeric *restrict twenty_four;
-struct Numeric *restrict fourty;
 struct Numeric *restrict sixty;
 struct Numeric *restrict hundred;
 struct Numeric *restrict thousand;
@@ -119,7 +118,6 @@ int main(int argc, char *argv[]) {
   seven = Numeric_from_int(7);
   ten = Numeric_from_int(10);
   twenty_four = Numeric_from_int(24);
-  fourty = Numeric_from_int(40);
   sixty = Numeric_from_int(60);
   hundred = Numeric_from_int(100);
   thousand = Numeric_from_int(1000);
@@ -224,7 +222,6 @@ int main(int argc, char *argv[]) {
   Numeric_delete(seven);
   Numeric_delete(ten);
   Numeric_delete(twenty_four);
-  Numeric_delete(fourty);
   Numeric_delete(sixty);
   Numeric_delete(hundred);
   Numeric_delete(thousand);

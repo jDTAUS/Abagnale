@@ -36,7 +36,6 @@
 extern _Atomic bool terminated;
 extern const struct Numeric *restrict const zero;
 extern const struct Numeric *restrict const n_one;
-extern const struct Numeric *restrict const fourty;
 extern const struct Numeric *restrict const hundred;
 
 extern const struct Config *restrict const cnf;
@@ -52,7 +51,6 @@ struct trend_tls {
   struct trend_position_select_vars {
     struct Numeric *restrict r0;
     struct Numeric *restrict r1;
-    struct Numeric *restrict fee_pc;
     struct Numeric *restrict cd_pc;
     struct Numeric *restrict cd_n_pc;
     struct Numeric *restrict d_pc;
@@ -94,7 +92,6 @@ static struct trend_tls *trend_tls(void) {
     tls->trend_position_select.r1 = Numeric_from_int(0);
     tls->trend_position_select.cd_pc = Numeric_from_int(0);
     tls->trend_position_select.cd_n_pc = Numeric_from_int(0);
-    tls->trend_position_select.fee_pc = Numeric_from_int(0);
     tls->trend_position_select.d_pc = Numeric_from_int(0);
     tls->trend_position_select.s_pc = Numeric_from_int(0);
     tls->trend_position_select.pr_min = Numeric_from_int(0);
@@ -139,7 +136,6 @@ static void trend_tls_dtor(void *e) {
   Numeric_delete(tls->trend_position_select.r1);
   Numeric_delete(tls->trend_position_select.cd_pc);
   Numeric_delete(tls->trend_position_select.cd_n_pc);
-  Numeric_delete(tls->trend_position_select.fee_pc);
   Numeric_delete(tls->trend_position_select.d_pc);
   Numeric_delete(tls->trend_position_select.s_pc);
   Numeric_delete(tls->trend_position_select.pr_min);
@@ -280,7 +276,6 @@ static struct Position *trend_position_select(
   const struct trend_tls *restrict const tls = trend_tls();
   struct Numeric *restrict const r0 = tls->trend_position_select.r0;
   struct Numeric *restrict const r1 = tls->trend_position_select.r1;
-  struct Numeric *restrict const fee_pc = tls->trend_position_select.fee_pc;
   struct Numeric *restrict const cd_pc = tls->trend_position_select.cd_pc;
   struct Numeric *restrict const cd_n_pc = tls->trend_position_select.cd_n_pc;
   struct Numeric *restrict const d_pc = tls->trend_position_select.d_pc;
@@ -303,15 +298,9 @@ static struct Position *trend_position_select(
   char pl_id[DATABASE_UUID_MAX_LENGTH] = {0};
   plot_res->id = pl_id;
 
-  if (Numeric_cmp(t->fee_pc, fee_pc) != 0) {
-    Numeric_copy_to(t->fee_pc, fee_pc);
-    // tp_pc / 40 * 100 + fee_pc
-    // Take profit percent is 40% of candle percent.
-    Numeric_div_to(t->tp_pc, fourty, r0);
-    Numeric_mul_to(r0, hundred, r1);
-    Numeric_add_to(r1, t->fee_pc, cd_pc);
-    Numeric_mul_to(n_one, cd_pc, cd_n_pc);
-  }
+  Numeric_copy_to(t->tp_pc, cd_pc);
+  Numeric_mul_to(t->tp_pc, n_one, r0);
+  Numeric_copy_to(r0, cd_n_pc);
 
   Candle_reset(cd_cur);
   Numeric_copy_to(sample->price, cd_cur->h);
