@@ -419,7 +419,13 @@ static struct Position *trend_position_select(
   Numeric_atan_to(r0, r1);
   // r1: angle
 
-  if (Numeric_cmp(st->cd_langle, st->cd_ltrend != cd_first->t ? zero : r1) > 0)
+  if (Numeric_cmp(
+          st->cd_langle,
+          st->cd_ltrend != cd_first->t ||
+                  Numeric_cmp(((struct Sample *)Array_head(samples))->nanos,
+                              st->cd_lnanos) > 0
+              ? zero
+              : r1) > 0)
     return NULL;
 
   Numeric_copy_to(r1, st->cd_langle);
