@@ -61,8 +61,12 @@ struct Array *Array_copy(const struct Array *restrict const a,
                          void *(*cb)(void *restrict const)) {
   struct Array *restrict const copy = Array_new(a->size);
 
-  for (size_t i = a->size; i > 0; i--)
-    copy->items[i - 1] = cb ? cb(a->items[i - 1]) : a->items[i - 1];
+  if (cb)
+    for (size_t i = a->size; i > 0; i--)
+      copy->items[i - 1] = cb(a->items[i - 1]);
+  else
+    for (size_t i = a->size; i > 0; i--)
+      copy->items[i - 1] = a->items[i - 1];
 
   copy->size = a->size;
   return copy;
@@ -70,12 +74,14 @@ struct Array *Array_copy(const struct Array *restrict const a,
 
 void Array_clear(struct Array *restrict const a,
                  void (*cb)(void *restrict const)) {
-  for (size_t i = a->size; i > 0; i--) {
-    if (cb)
+  if (cb)
+    for (size_t i = a->size; i > 0; i--) {
       cb(a->items[i - 1]);
-
-    a->items[i - 1] = NULL;
-  }
+      a->items[i - 1] = NULL;
+    }
+  else
+    for (size_t i = a->size; i > 0; i--)
+      a->items[i - 1] = NULL;
 
   a->size = 0;
 }
