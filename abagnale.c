@@ -1863,7 +1863,7 @@ static void trade_plot(const struct worker_ctx *restrict const w_ctx,
 
 static void trade_bet(const struct worker_ctx *restrict const w_ctx,
                       struct Trade *restrict const t,
-                      struct Array *restrict const samples,
+                      const struct Array *restrict const samples,
                       const struct Sample *restrict const sample) {
   const struct abag_tls *restrict const tls = abag_tls();
   struct Numeric *restrict const b_avail = tls->trade_bet.b_avail;
@@ -1896,7 +1896,6 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
       t->bet_trg.set = true;
       t->bet_trg.cnt++;
       Numeric_copy_to(sample->nanos, t->bet_trg.nanos);
-      Array_clear(samples, Sample_delete);
 
       if (verbose)
         wout("%s: %s->%s: Entering bet(%" PRIuMAX ")\n",
@@ -2091,7 +2090,7 @@ ret:
 
 static void trade_maintain(const struct worker_ctx *restrict const w_ctx,
                            struct Trade *restrict const t,
-                           struct Array *restrict const samples,
+                           const struct Array *restrict const samples,
                            const struct Sample *restrict const sample) {
   const struct abag_tls *restrict const tls = abag_tls();
   struct Numeric *restrict const q_delta = tls->trade_maintain.q_delta;
