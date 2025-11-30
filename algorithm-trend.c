@@ -489,10 +489,11 @@ static struct Position *trend_position_select(
     fatal();
   }
 
+  st->cd_ltrend = t->bet_cd.t;
   Numeric_copy_to(sample->nanos, st->cd_lnanos);
   Numeric_copy_to(st->cd_lnanos, st_res->cd_lnanos);
   Numeric_copy_to(st->cd_langle, st_res->cd_langle);
-  st_res->cd_ltrend = db_candle_trend(t->bet_cd.t);
+  st_res->cd_ltrend = db_candle_trend(st->cd_ltrend);
 
   db_trend_state_update(dbcon, String_chars(e->id), String_chars(t->p_id),
                         st_res);
