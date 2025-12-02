@@ -1833,6 +1833,14 @@ static void trade_pricing(const struct worker_ctx *restrict const w_ctx,
   const struct Pricing *restrict const pricing = w_ctx->ex->pricing();
 
   if (Numeric_cmp(t->fee_pc, pricing->ef_pc) != 0) {
+    if (verbose) {
+      char *restrict const pr = Numeric_to_char(pricing->ef_pc, 2);
+      wout("%s: %s->%s: Pricing: %s\n", String_chars(w_ctx->ex->nm),
+           String_chars(t->q_id), String_chars(t->b_id), pr);
+
+      Numeric_char_free(pr);
+    }
+
     Numeric_copy_to(pricing->ef_pc, t->fee_pc);
     Numeric_div_to(t->fee_pc, hundred, r0);
     Numeric_add_to(r0, one, t->fee_pf);
