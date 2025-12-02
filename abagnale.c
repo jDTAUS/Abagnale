@@ -1832,7 +1832,7 @@ static void trade_pricing(const struct worker_ctx *restrict const w_ctx,
   struct Numeric *restrict const r0 = tls->trade_pricing.r0;
   const struct Pricing *restrict const pricing = w_ctx->ex->pricing();
 
-  if (Numeric_cmp(t->fee_pc, pricing->ef_pc) != 0) {
+  if (Numeric_cmp(t->fee_pc, pricing->ef_pc) < 0) {
     if (verbose) {
       char *restrict const pr = Numeric_to_char(pricing->ef_pc, 2);
       wout("%s: %s->%s: Pricing: %s\n", String_chars(w_ctx->ex->nm),
