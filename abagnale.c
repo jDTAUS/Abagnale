@@ -963,7 +963,7 @@ static void position_pricing(const struct worker_ctx *restrict const w_ctx,
     Numeric_scale(p->b_ordered, t->b_sc);
   }
 
-  if (Numeric_cmp(t->fee_pc, p->fee_pc) > 0) {
+  if (Numeric_cmp(t->fee_pc, p->fee_pc) != 0) {
     Numeric_copy_to(t->fee_pc, p->fee_pc);
     Numeric_div_to(t->fee_pc, hundred, r0);
     // r0 = fee
