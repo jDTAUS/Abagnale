@@ -777,10 +777,11 @@ ret:
 static void ws_status_update(const struct wcjson_document *restrict const doc,
                              const struct wcjson_value *restrict const product,
                              const struct Numeric *restrict const nanos) {
+#ifdef ABAG_COINBASE_DEBUG
   char msg[WCJSON_BODY_MAX + 1] = {0};
-  if (verbose)
-    wout("coinbase: status: %s\n",
+  wdebug("coinbase: status: %s\n",
          wcjsondoc_string(msg, sizeof(msg), doc, product, NULL));
+#endif
 
   for (size_t i = nitems(ws_channels); i > 0; i--)
     ws_channels[i - 1].reconnect = true;
@@ -851,9 +852,10 @@ static void ws_user_update(const struct wcjson_document *restrict const doc,
                Numeric_cmp(o->b_ordered, o->b_filled) == 0;
   o->dnanos = o->settled ? Numeric_copy(nanos) : NULL;
 
-  if (verbose)
-    wout("coinbase: user: %s\n",
+#ifdef ABAG_COINBASE_DEBUG
+  wdebug("coinbase: user: %s\n",
          wcjsondoc_string(errbuf, sizeof(errbuf), doc, order, NULL));
+#endif
 
   if (o->status == ORDER_STATUS_UNKNOWN)
     werr("coinbase: user: %s: Order status unknown\n", j_status->mbstring);
