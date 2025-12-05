@@ -1288,14 +1288,12 @@ static void position_maintain(const struct worker_ctx *restrict const w_ctx,
   Numeric_sub_to(p->cl_samples, one, r0);
   Numeric_copy_to(r0, p->cl_samples);
 
-  if (!p->filled && !p->tl_trg.set) {
-    if (Numeric_cmp(p->cl_samples, zero) <= 0) {
-      if (verbose)
-        wout("%s: %s->%s: %s: Order timed out\n", String_chars(w_ctx->ex->nm),
-             String_chars(t->q_id), String_chars(t->b_id), String_chars(t->id));
+  if (!p->filled && Numeric_cmp(p->cl_samples, zero) <= 0) {
+    if (verbose)
+      wout("%s: %s->%s: %s: Order timed out\n", String_chars(w_ctx->ex->nm),
+           String_chars(t->q_id), String_chars(t->b_id), String_chars(t->id));
 
-      cancel = true;
-    }
+    cancel = true;
   }
 
   if (cancel || reload || order != NULL) {
@@ -1435,10 +1433,9 @@ static void position_maintain(const struct worker_ctx *restrict const w_ctx,
     // Recheck after reload.
     if (cancel && p->id != NULL && !(p->done || p->filled)) {
       const bool cancelled = w_ctx->ex->cancel(p->id);
+      char *restrict const p_info = position_string(t, p);
 
       if (!cancelled) {
-        char *restrict const p_info = position_string(t, p);
-
         werr("%s: %s->%s: %s: Failure cancelling position\n",
              String_chars(w_ctx->ex->nm), String_chars(t->q_id),
              String_chars(t->b_id), String_chars(t->id));
@@ -1447,10 +1444,7 @@ static void position_maintain(const struct worker_ctx *restrict const w_ctx,
              String_chars(t->q_id), String_chars(t->b_id), String_chars(p->id),
              p_info);
 
-        heap_free(p_info);
       } else if (verbose) {
-        char *restrict const p_info = position_string(t, p);
-
         wout("%s: %s->%s: %s: Position cancelled\n",
              String_chars(w_ctx->ex->nm), String_chars(t->q_id),
              String_chars(t->b_id), String_chars(t->id));
@@ -1458,10 +1452,9 @@ static void position_maintain(const struct worker_ctx *restrict const w_ctx,
         wout("%s: %s->%s: %s: %s\n", String_chars(w_ctx->ex->nm),
              String_chars(t->q_id), String_chars(t->b_id), String_chars(p->id),
              p_info);
-
-        heap_free(p_info);
       }
 
+      heap_free(p_info);
       position_timeout(w_ctx, t, p, samples, sample);
     }
   free:
@@ -2350,10 +2343,10 @@ static int orders_process(void *restrict const arg) {
 
     Array_lock(samples);
     worker_config(w_ctx, samples);
-    Array_unlock(samples);
 
     if (!(w_ctx->p_cnf != NULL && w_ctx->q_tgt != NULL &&
           w_ctx->p->is_active)) {
+      Array_unlock(samples);
       Product_delete(w_ctx->p);
       Order_delete(order);
       continue;
@@ -2364,6 +2357,7 @@ static int orders_process(void *restrict const arg) {
     Map_unlock(product_trades);
 
     if (trades == NULL) {
+      Array_unlock(samples);
       Order_delete(order);
       Product_delete(w_ctx->p);
       continue;
@@ -2391,23 +2385,12 @@ static int orders_process(void *restrict const arg) {
     if (t != NULL) {
       if (t->status == TRADE_STATUS_BUYING ||
           t->status == TRADE_STATUS_SELLING) {
-        Array_lock(samples);
-
-        if (Array_size(samples) < 2) {
-          Array_unlock(samples);
-          Array_unlock(trades);
-          Order_delete(order);
-          Product_delete(w_ctx->p);
-          continue;
-        }
-
         t->a = w_ctx->a;
         t->a->configure(w_ctx->db, w_ctx->ex, t);
         Numeric_copy_to(w_ctx->q_tgt, t->tp);
         trade_pricing(w_ctx, t);
         position_maintain(w_ctx, t, p, samples, Array_tail(samples), order);
         trade_maintain(w_ctx, t, samples, Array_tail(samples));
-        Array_unlock(samples);
       }
 
       if (t->status == TRADE_STATUS_CANCELLED ||
@@ -2417,6 +2400,7 @@ static int orders_process(void *restrict const arg) {
       }
 
       Array_unlock(trades);
+      Array_unlock(samples);
       Order_delete(order);
       Product_delete(w_ctx->p);
     }
@@ -2518,9 +2502,9 @@ static int samples_process(void *restrict const arg) {
       Sample_delete(Array_remove_head(samples));
 
     Array_shrink(samples);
-    Array_unlock(samples);
 
     if (!(ctx->p_cnf != NULL && ctx->q_tgt != NULL && ctx->p->is_active)) {
+      Array_unlock(samples);
       Product_delete(ctx->p);
       continue;
     }
@@ -2543,18 +2527,7 @@ static int samples_process(void *restrict const arg) {
       t->a->configure(ctx->db, ctx->ex, t);
       Numeric_copy_to(ctx->q_tgt, t->tp);
       trade_pricing(ctx, t);
-
-      Array_lock(samples);
-
-      if (Array_size(samples) < 2) {
-        Array_unlock(samples);
-        Array_unlock(trades);
-        Product_delete(ctx->p);
-        continue;
-      }
-
       trade_maintain(ctx, t, samples, Array_tail(samples));
-      Array_unlock(samples);
 
       if (t->status == TRADE_STATUS_CANCELLED ||
           t->status == TRADE_STATUS_DONE) {
@@ -2580,6 +2553,7 @@ static int samples_process(void *restrict const arg) {
     }
 
     Array_unlock(trades);
+    Array_unlock(samples);
     Product_delete(ctx->p);
   }
 
