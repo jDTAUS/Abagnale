@@ -2398,12 +2398,12 @@ static int orders_process(void *restrict const arg) {
         trade_delete(t);
         Array_remove_idx(trades, i - 1);
       }
-
-      Array_unlock(trades);
-      Array_unlock(samples);
-      Order_delete(order);
-      Product_delete(w_ctx->p);
     }
+
+    Array_unlock(trades);
+    Array_unlock(samples);
+    Order_delete(order);
+    Product_delete(w_ctx->p);
   }
 
   db_disconnect(w_ctx->db);
