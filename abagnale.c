@@ -170,9 +170,9 @@ extern const bool verbose;
 extern const struct Numeric *restrict const zero;
 extern const struct Numeric *restrict const one;
 extern const struct Numeric *restrict const two;
-extern const struct Numeric *restrict const sixty;
 extern const struct Numeric *restrict const hundred;
 extern const struct Numeric *restrict const second_nanos;
+extern const struct Numeric *restrict const minute_nanos;
 extern const struct Numeric *restrict const boot_nanos;
 
 static thrd_t *workers;
@@ -759,8 +759,8 @@ void samples_per_minute(struct Numeric *restrict const ret,
   const struct abag_tls *restrict const tls = abag_tls();
   struct Numeric *restrict const s = tls->samples_per_minute.s;
 
-  samples_per_second(s, samples);
-  Numeric_mul_to(s, sixty, ret);
+  samples_per_nano(s, samples);
+  Numeric_mul_to(s, minute_nanos, ret);
 }
 
 static struct Array *
