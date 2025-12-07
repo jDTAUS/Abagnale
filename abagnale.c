@@ -1332,15 +1332,15 @@ static void position_maintain(const struct worker_ctx *restrict const w_ctx,
                String_chars(t->q_id), String_chars(t->b_id),
                String_chars(t->id));
 
-        wout("%s: %s->%s: %s: %s\n", String_chars(w_ctx->ex->nm),
-             String_chars(t->q_id), String_chars(t->b_id), String_chars(p->id),
-             p_info);
-
         if (order->msg && String_length(order->msg) > 0) {
           wout("%s: %s->%s: %s: %s\n", String_chars(w_ctx->ex->nm),
                String_chars(t->q_id), String_chars(t->b_id),
                String_chars(p->id), String_chars(order->msg));
         }
+
+        wout("%s: %s->%s: %s: %s\n", String_chars(w_ctx->ex->nm),
+             String_chars(t->q_id), String_chars(t->b_id), String_chars(p->id),
+             p_info);
 
         heap_free(p_info);
       }
@@ -1359,15 +1359,15 @@ static void position_maintain(const struct worker_ctx *restrict const w_ctx,
              String_chars(w_ctx->ex->nm), String_chars(t->q_id),
              String_chars(t->b_id), String_chars(t->id), f_asc, s_asc, m_asc);
 
-        wout("%s: %s->%s: %s: %s\n", String_chars(w_ctx->ex->nm),
-             String_chars(t->q_id), String_chars(t->b_id), String_chars(p->id),
-             p_info);
-
         if (order->msg && String_length(order->msg) > 0) {
           wout("%s: %s->%s: %s: %s\n", String_chars(w_ctx->ex->nm),
                String_chars(t->q_id), String_chars(t->b_id),
                String_chars(p->id), String_chars(order->msg));
         }
+
+        wout("%s: %s->%s: %s: %s\n", String_chars(w_ctx->ex->nm),
+             String_chars(t->q_id), String_chars(t->b_id), String_chars(p->id),
+             p_info);
 
         Numeric_char_free(f_asc);
         Numeric_char_free(s_asc);
@@ -1383,15 +1383,16 @@ static void position_maintain(const struct worker_ctx *restrict const w_ctx,
              String_chars(w_ctx->ex->nm), String_chars(t->q_id),
              String_chars(t->b_id), String_chars(t->id));
 
-        wout("%s: %s->%s: %s: %s\n", String_chars(w_ctx->ex->nm),
-             String_chars(t->q_id), String_chars(t->b_id), String_chars(p->id),
-             p_info);
-
         if (order->msg && String_length(order->msg) > 0) {
           wout("%s: %s->%s: %s: %s\n", String_chars(w_ctx->ex->nm),
                String_chars(t->q_id), String_chars(t->b_id),
                String_chars(p->id), String_chars(order->msg));
         }
+
+        wout("%s: %s->%s: %s: %s\n", String_chars(w_ctx->ex->nm),
+             String_chars(t->q_id), String_chars(t->b_id), String_chars(p->id),
+             p_info);
+
         heap_free(p_info);
       }
 
@@ -1408,15 +1409,15 @@ static void position_maintain(const struct worker_ctx *restrict const w_ctx,
              String_chars(w_ctx->ex->nm), String_chars(t->q_id),
              String_chars(t->b_id), String_chars(t->id));
 
-        wout("%s: %s->%s: %s: %s\n", String_chars(w_ctx->ex->nm),
-             String_chars(t->q_id), String_chars(t->b_id), String_chars(p->id),
-             p_info);
-
         if (order->msg && String_length(order->msg) > 0) {
           wout("%s: %s->%s: %s: %s\n", String_chars(w_ctx->ex->nm),
                String_chars(t->q_id), String_chars(t->b_id),
                String_chars(t->id), String_chars(order->msg));
         }
+
+        wout("%s: %s->%s: %s: %s\n", String_chars(w_ctx->ex->nm),
+             String_chars(t->q_id), String_chars(t->b_id), String_chars(p->id),
+             p_info);
 
         heap_free(p_info);
       }
