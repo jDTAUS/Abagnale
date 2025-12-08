@@ -69,6 +69,9 @@ struct abag_tls {
   struct candle_string_vars {
     struct Numeric *restrict s;
   } candle_string;
+  struct scale_to_increment_vars {
+    struct Numeric *restrict r0;
+  } scale_to_increment;
   struct samples_per_nano_vars {
     struct Numeric *restrict size;
     struct Numeric *restrict duration;
@@ -99,6 +102,7 @@ struct abag_tls {
     struct Numeric *restrict nanos;
   } samples_process;
   struct position_pricing_vars {
+    struct Numeric *restrict p_inc;
     struct Numeric *restrict r0;
     struct Numeric *restrict r1;
     struct Numeric *restrict r2;
@@ -194,6 +198,7 @@ static struct abag_tls *abag_tls(void) {
   if (tls == NULL) {
     tls = heap_malloc(sizeof(struct abag_tls));
     tls->candle_string.s = Numeric_new();
+    tls->scale_to_increment.r0 = Numeric_new();
     tls->samples_per_nano.size = Numeric_new();
     tls->samples_per_nano.duration = Numeric_new();
     tls->samples_per_second.n = Numeric_new();
@@ -211,6 +216,7 @@ static struct abag_tls *abag_tls(void) {
     tls->samples_process.outdated_ns = Numeric_new();
     tls->samples_process.tp = Numeric_new();
     tls->samples_process.nanos = Numeric_new();
+    tls->position_pricing.p_inc = Numeric_new();
     tls->position_pricing.r0 = Numeric_new();
     tls->position_pricing.r1 = Numeric_new();
     tls->position_pricing.r2 = Numeric_new();
@@ -283,6 +289,7 @@ static struct abag_tls *abag_tls(void) {
 static void abag_tls_dtor(void *e) {
   struct abag_tls *tls = e;
   Numeric_delete(tls->candle_string.s);
+  Numeric_delete(tls->scale_to_increment.r0);
   Numeric_delete(tls->samples_per_nano.size);
   Numeric_delete(tls->samples_per_nano.duration);
   Numeric_delete(tls->samples_per_second.n);
@@ -300,6 +307,7 @@ static void abag_tls_dtor(void *e) {
   Numeric_delete(tls->samples_process.outdated_ns);
   Numeric_delete(tls->samples_process.tp);
   Numeric_delete(tls->samples_process.nanos);
+  Numeric_delete(tls->position_pricing.p_inc);
   Numeric_delete(tls->position_pricing.r0);
   Numeric_delete(tls->position_pricing.r1);
   Numeric_delete(tls->position_pricing.r2);
@@ -722,6 +730,25 @@ static inline int sample_cmp(const void *restrict const e1,
                      ((const struct Sample **)e2)[0]->nanos);
 }
 
+static inline void scale_to_increment(struct Numeric *restrict const ret,
+                                      const size_t sc) {
+  const struct abag_tls *restrict const tls = abag_tls();
+  struct Numeric *restrict const r0 = tls->scale_to_increment.r0;
+  static const size_t pow10[] = {
+      1UL,           10UL,           100UL,           1000UL,      10000UL,
+      100000UL,      1000000UL,      10000000UL,      100000000UL, 1000000000UL,
+      10000000000UL, 100000000000UL, 1000000000000UL,
+  };
+
+  if (sc >= nitems(pow10)) {
+    werr("%s: %d: %s: %zu\n", __FILE__, __LINE__, __func__, sc);
+    fatal();
+  }
+
+  Numeric_from_long_to(pow10[sc], r0);
+  Numeric_div_to(one, r0, ret);
+}
+
 void samples_per_nano(struct Numeric *restrict const ret,
                       const struct Array *restrict const samples) {
   const struct abag_tls *restrict const tls = abag_tls();
@@ -918,6 +945,7 @@ static void position_pricing(const struct worker_ctx *restrict const w_ctx,
                              struct Position *restrict const p,
                              const bool create) {
   const struct abag_tls *restrict const tls = abag_tls();
+  struct Numeric *restrict const p_inc = tls->position_pricing.p_inc;
   struct Numeric *restrict const r0 = tls->position_pricing.r0;
   struct Numeric *restrict const r1 = tls->position_pricing.r1;
   struct Numeric *restrict const r2 = tls->position_pricing.r2;
@@ -974,9 +1002,11 @@ static void position_pricing(const struct worker_ctx *restrict const w_ctx,
     Numeric_mul_to(r1, p->price, r2);
     // r2 = p*2*fee
     Numeric_add_to(p->price, r2, p->sl_price);
+    Numeric_scale(p->sl_price, t->p_sc);
 
     // Take profit price long.
     Numeric_mul_to(p->sl_price, t->tp_pf, p->tp_price);
+    Numeric_scale(p->tp_price, t->p_sc);
 
     // Quote.
     Numeric_mul_to(p->b_ordered, p->price, p->q_ordered);
@@ -984,8 +1014,22 @@ static void position_pricing(const struct worker_ctx *restrict const w_ctx,
     Numeric_scale(p->q_fees, t->q_sc);
     Numeric_scale(p->q_ordered, t->q_sc);
 
+    scale_to_increment(p_inc, t->p_sc);
+
     switch (p->side) {
     case POSITION_SIDE_BUY:
+      Numeric_sub_to(p->sl_price, p->price, r1);
+      if (Numeric_cmp(r1, p_inc) < 0) {
+        Numeric_add_to(p->sl_price, p_inc, r1);
+        Numeric_copy_to(r1, p->sl_price);
+        Numeric_scale(p->sl_price, t->p_sc);
+      }
+      Numeric_sub_to(p->tp_price, p->sl_price, r1);
+      if (Numeric_cmp(r1, p_inc) < 0) {
+        Numeric_add_to(p->tp_price, p_inc, r1);
+        Numeric_copy_to(r1, p->tp_price);
+        Numeric_scale(p->tp_price, t->p_sc);
+      }
       break;
     case POSITION_SIDE_SELL:
       // Take profit price short.
@@ -994,6 +1038,7 @@ static void position_pricing(const struct worker_ctx *restrict const w_ctx,
       Numeric_sub_to(r1, p->tp_price, r2);
       // r2 = 2*p-tp_pr_long
       Numeric_copy_to(r2, p->tp_price);
+      Numeric_scale(p->tp_price, t->p_sc);
 
       // Stop loss price short.
       Numeric_mul_to(two, r0, r1);
@@ -1001,15 +1046,27 @@ static void position_pricing(const struct worker_ctx *restrict const w_ctx,
       Numeric_mul_to(r1, p->price, r2);
       // r2 = p*2*fee
       Numeric_sub_to(p->price, r2, p->sl_price);
+      Numeric_scale(p->sl_price, t->p_sc);
+
+      Numeric_sub_to(p->price, p->sl_price, r1);
+      if (Numeric_cmp(r1, p_inc) < 0) {
+        Numeric_sub_to(p->sl_price, p_inc, r1);
+        Numeric_copy_to(r1, p->sl_price);
+        Numeric_scale(p->sl_price, t->p_sc);
+      }
+
+      Numeric_sub_to(p->sl_price, p->tp_price, r1);
+      if (Numeric_cmp(r1, p_inc) < 0) {
+        Numeric_sub_to(p->tp_price, p_inc, r1);
+        Numeric_copy_to(r1, p->tp_price);
+        Numeric_scale(p->tp_price, t->p_sc);
+      }
       break;
     default:
       werr("%s: %d: %s: Position neither buy nor sell\n", __FILE__, __LINE__,
            __func__);
       fatal();
     }
-
-    Numeric_scale(p->tp_price, t->p_sc);
-    Numeric_scale(p->sl_price, t->p_sc);
   }
 }
 
