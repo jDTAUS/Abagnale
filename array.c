@@ -40,8 +40,8 @@ struct Array *Array_new(const size_t c) {
   return a;
 }
 
-void Array_delete(struct Array *restrict const a,
-                  void (*cb)(void *restrict const)) {
+inline void Array_delete(struct Array *restrict const a,
+                         void (*cb)(void *restrict const)) {
   if (cb)
     for (size_t i = a->size; i > 0; i--)
       cb(a->items[i - 1]);
@@ -57,8 +57,8 @@ inline void Array_unlock(struct Array *restrict const a) {
   mutex_unlock(a->mtx);
 }
 
-struct Array *Array_copy(const struct Array *restrict const a,
-                         void *(*cb)(void *restrict const)) {
+inline struct Array *Array_copy(const struct Array *restrict const a,
+                                void *(*cb)(void *restrict const)) {
   struct Array *restrict const copy = Array_new(a->size);
 
   if (cb)
@@ -72,8 +72,8 @@ struct Array *Array_copy(const struct Array *restrict const a,
   return copy;
 }
 
-void Array_clear(struct Array *restrict const a,
-                 void (*cb)(void *restrict const)) {
+inline void Array_clear(struct Array *restrict const a,
+                        void (*cb)(void *restrict const)) {
   if (cb)
     for (size_t i = a->size; i > 0; i--) {
       cb(a->items[i - 1]);
@@ -86,7 +86,7 @@ void Array_clear(struct Array *restrict const a,
   a->size = 0;
 }
 
-void Array_shrink(struct Array *restrict const a) {
+inline void Array_shrink(struct Array *restrict const a) {
   if (a->size < a->capacity) {
     a->capacity = ((a->size | !a->size) + 1) & ~1U;
     a->items = heap_realloc(a->items, sizeof(void *) * a->capacity);
@@ -102,7 +102,8 @@ static inline void Array_grow(struct Array *restrict const a) {
   }
 }
 
-void Array_add_tail(struct Array *restrict const a, void *restrict const i) {
+inline void Array_add_tail(struct Array *restrict const a,
+                           void *restrict const i) {
   Array_grow(a);
   a->items[a->size] = i;
   a->size++;
@@ -112,7 +113,8 @@ inline void *Array_tail(const struct Array *restrict const a) {
   return a->size > 0 ? a->items[a->size - 1] : NULL;
 }
 
-void Array_add_head(struct Array *restrict const a, void *restrict const i) {
+inline void Array_add_head(struct Array *restrict const a,
+                           void *restrict const i) {
   Array_grow(a);
 
   if (a->size > 0)
@@ -126,15 +128,15 @@ inline void *Array_head(const struct Array *restrict const a) {
   return a->size > 0 ? a->items[0] : NULL;
 }
 
-void *Array_remove_tail(struct Array *restrict const a) {
+inline void *Array_remove_tail(struct Array *restrict const a) {
   return Array_remove_idx(a, a->size - 1);
 }
 
-void *Array_remove_head(struct Array *restrict const a) {
+inline void *Array_remove_head(struct Array *restrict const a) {
   return Array_remove_idx(a, 0);
 }
 
-void *Array_remove_idx(struct Array *restrict const a, const size_t i) {
+inline void *Array_remove_idx(struct Array *restrict const a, const size_t i) {
   void *restrict const item = a->items[i];
 
   if (i < a->size - 1)
@@ -148,6 +150,7 @@ void *Array_remove_idx(struct Array *restrict const a, const size_t i) {
 inline const size_t Array_size(const struct Array *restrict const a) {
   return a->size;
 }
+
 inline void **Array_items(const struct Array *restrict const a) {
   return a->items;
 }

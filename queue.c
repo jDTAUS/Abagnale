@@ -35,7 +35,7 @@ struct Queue {
   cnd_t not_full;
 };
 
-struct Queue *Queue_new(const size_t capacity, const time_t timeout) {
+inline struct Queue *Queue_new(const size_t capacity, const time_t timeout) {
   struct Queue *restrict q = heap_malloc(sizeof(struct Queue));
   q->items = heap_calloc(capacity, sizeof(void *));
   mutex_init(&q->mutex);
@@ -50,8 +50,8 @@ struct Queue *Queue_new(const size_t capacity, const time_t timeout) {
   return q;
 }
 
-void Queue_delete(struct Queue *restrict const q,
-                  void (*cb)(void *restrict const)) {
+inline void Queue_delete(struct Queue *restrict const q,
+                         void (*cb)(void *restrict const)) {
   condition_destroy(&q->not_empty);
   condition_destroy(&q->not_full);
   mutex_destroy(&q->mutex);
@@ -64,15 +64,16 @@ void Queue_delete(struct Queue *restrict const q,
   heap_free(q);
 }
 
-void Queue_start(struct Queue *restrict const q) { q->running = true; }
+inline void Queue_start(struct Queue *restrict const q) { q->running = true; }
 
-void Queue_stop(struct Queue *restrict const q) {
+inline void Queue_stop(struct Queue *restrict const q) {
   q->running = false;
   condition_broadcast(&q->not_empty);
   condition_broadcast(&q->not_full);
 }
 
-void Queue_enqueue(struct Queue *restrict const q, void *restrict const item) {
+inline void Queue_enqueue(struct Queue *restrict const q,
+                          void *restrict const item) {
   struct timespec to;
 
   mutex_lock(&q->mutex);
@@ -99,7 +100,7 @@ void Queue_enqueue(struct Queue *restrict const q, void *restrict const item) {
   mutex_unlock(&q->mutex);
 }
 
-void *Queue_dequeue(struct Queue *restrict const q) {
+inline void *Queue_dequeue(struct Queue *restrict const q) {
   void *restrict item = NULL;
   struct timespec to;
 

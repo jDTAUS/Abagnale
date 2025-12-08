@@ -77,7 +77,7 @@ void time_terminate(void) {
   mutex_destroy(&time_mtx);
 }
 
-void time_now(struct timespec *restrict const ts) {
+inline void time_now(struct timespec *restrict const ts) {
   if (!timespec_get(ts, TIME_UTC)) {
     werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
     fatal();
@@ -331,14 +331,14 @@ static inline void nanos_from_ts(struct Numeric *restrict const res,
   Numeric_add_to(s_ns, ns, res);
 }
 
-void nanos_now(struct Numeric *restrict const res) {
+inline void nanos_now(struct Numeric *restrict const res) {
   struct timespec ts;
 
   time_now(&ts);
   nanos_from_ts(res, &ts);
 }
 
-char *nanos_to_iso8601(const struct Numeric *restrict const nanos) {
+inline char *nanos_to_iso8601(const struct Numeric *restrict const nanos) {
   const struct time_tls *tls = time_tls();
   struct Numeric *restrict const s = tls->nanos_to_iso8601.s;
 

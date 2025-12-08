@@ -27,7 +27,7 @@ struct Object {
   mtx_t *restrict mtx;
 };
 
-struct Object *Object_new(void) {
+inline struct Object *Object_new(void) {
   struct Object *restrict const o = heap_malloc(sizeof(struct Object));
   o->r_cnt = 1;
   o->mtx = heap_malloc(sizeof(mtx_t));
@@ -35,7 +35,7 @@ struct Object *Object_new(void) {
   return o;
 }
 
-bool Object_delete(void *restrict const o) {
+inline bool Object_delete(void *restrict const o) {
   if (o == NULL)
     return false;
 
@@ -63,7 +63,7 @@ bool Object_delete(void *restrict const o) {
   return del;
 }
 
-struct Object *Object_copy(struct Object *restrict const o) {
+inline struct Object *Object_copy(struct Object *restrict const o) {
   if (o == NULL)
     return NULL;
 

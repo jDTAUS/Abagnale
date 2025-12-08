@@ -35,7 +35,7 @@ struct Numeric {
 extern const struct Numeric *restrict const zero;
 extern const struct Numeric *restrict const n_one;
 
-struct Numeric *Numeric_new(void) {
+inline struct Numeric *Numeric_new(void) {
   numeric *res = PGTYPESnumeric_new();
   if (res == NULL) {
     werr("%s: %d: %s: Failure allocating numeric\n", __FILE__, __LINE__,
@@ -50,7 +50,7 @@ struct Numeric *Numeric_new(void) {
   return n;
 }
 
-void Numeric_delete(void *restrict const n) {
+inline void Numeric_delete(void *restrict const n) {
   if (n == NULL)
     return;
 
@@ -62,9 +62,9 @@ void Numeric_delete(void *restrict const n) {
   heap_free(num);
 }
 
-void *Numeric_db(const struct Numeric *restrict const n) { return n->n; }
+inline void *Numeric_db(const struct Numeric *restrict const n) { return n->n; }
 
-struct Numeric *Numeric_from_char(const char *restrict const s) {
+inline struct Numeric *Numeric_from_char(const char *restrict const s) {
   struct Numeric *restrict n = NULL;
   // XXX: (char *)
   numeric *res = PGTYPESnumeric_from_asc((char *)s, NULL);
@@ -78,7 +78,8 @@ struct Numeric *Numeric_from_char(const char *restrict const s) {
   return n;
 }
 
-char *Numeric_to_char(const struct Numeric *restrict const n, const int d) {
+inline char *Numeric_to_char(const struct Numeric *restrict const n,
+                             const int d) {
   char *restrict const s = PGTYPESnumeric_to_asc(n->n, d);
   if (s == NULL) {
     werr("%s: %d: %s: Failure creating string from numeric\n", __FILE__,
@@ -88,16 +89,16 @@ char *Numeric_to_char(const struct Numeric *restrict const n, const int d) {
   return s;
 }
 
-struct Numeric *Numeric_add(const struct Numeric *restrict const n1,
-                            const struct Numeric *restrict const n2) {
+inline struct Numeric *Numeric_add(const struct Numeric *restrict const n1,
+                                   const struct Numeric *restrict const n2) {
   struct Numeric *restrict const res = Numeric_new();
   Numeric_add_to(n1, n2, res);
   return res;
 }
 
-void Numeric_add_to(const struct Numeric *restrict const n1,
-                    const struct Numeric *restrict const n2,
-                    struct Numeric *restrict const res) {
+inline void Numeric_add_to(const struct Numeric *restrict const n1,
+                           const struct Numeric *restrict const n2,
+                           struct Numeric *restrict const res) {
   const int ret = PGTYPESnumeric_add(n1->n, n2->n, res->n);
   if (ret < 0) {
     werr("%s: %d: %s: Failure adding numerics\n", __FILE__, __LINE__, __func__);
@@ -109,16 +110,16 @@ void Numeric_add_to(const struct Numeric *restrict const n1,
 #endif
 }
 
-struct Numeric *Numeric_sub(const struct Numeric *restrict const n1,
-                            const struct Numeric *restrict const n2) {
+inline struct Numeric *Numeric_sub(const struct Numeric *restrict const n1,
+                                   const struct Numeric *restrict const n2) {
   struct Numeric *restrict const res = Numeric_new();
   Numeric_sub_to(n1, n2, res);
   return res;
 }
 
-void Numeric_sub_to(const struct Numeric *restrict const n1,
-                    const struct Numeric *restrict const n2,
-                    struct Numeric *restrict const res) {
+inline void Numeric_sub_to(const struct Numeric *restrict const n1,
+                           const struct Numeric *restrict const n2,
+                           struct Numeric *restrict const res) {
   const int ret = PGTYPESnumeric_sub(n1->n, n2->n, res->n);
   if (ret < 0) {
     werr("%s: %d: %s: Failure substracting numerics\n", __FILE__, __LINE__,
@@ -131,16 +132,16 @@ void Numeric_sub_to(const struct Numeric *restrict const n1,
 #endif
 }
 
-struct Numeric *Numeric_mul(const struct Numeric *restrict const n1,
-                            const struct Numeric *restrict const n2) {
+inline struct Numeric *Numeric_mul(const struct Numeric *restrict const n1,
+                                   const struct Numeric *restrict const n2) {
   struct Numeric *restrict const res = Numeric_new();
   Numeric_mul_to(n1, n2, res);
   return res;
 }
 
-void Numeric_mul_to(const struct Numeric *restrict const n1,
-                    const struct Numeric *restrict const n2,
-                    struct Numeric *restrict const res) {
+inline void Numeric_mul_to(const struct Numeric *restrict const n1,
+                           const struct Numeric *restrict const n2,
+                           struct Numeric *restrict const res) {
   const int ret = PGTYPESnumeric_mul(n1->n, n2->n, res->n);
   if (ret < 0) {
     werr("%s: %d: %s: Failure multiplying numerics\n", __FILE__, __LINE__,
@@ -153,16 +154,16 @@ void Numeric_mul_to(const struct Numeric *restrict const n1,
 #endif
 }
 
-struct Numeric *Numeric_div(const struct Numeric *restrict const n1,
-                            const struct Numeric *restrict const n2) {
+inline struct Numeric *Numeric_div(const struct Numeric *restrict const n1,
+                                   const struct Numeric *restrict const n2) {
   struct Numeric *restrict const res = Numeric_new();
   Numeric_div_to(n1, n2, res);
   return res;
 }
 
-void Numeric_div_to(const struct Numeric *restrict const n1,
-                    const struct Numeric *restrict const n2,
-                    struct Numeric *restrict const res) {
+inline void Numeric_div_to(const struct Numeric *restrict const n1,
+                           const struct Numeric *restrict const n2,
+                           struct Numeric *restrict const res) {
   const int ret = PGTYPESnumeric_div(n1->n, n2->n, res->n);
   if (ret < 0) {
     werr("%s: %d: %s: Failure dividing numerics\n", __FILE__, __LINE__,
@@ -175,8 +176,8 @@ void Numeric_div_to(const struct Numeric *restrict const n1,
 #endif
 }
 
-int Numeric_cmp(const struct Numeric *restrict const n1,
-                const struct Numeric *restrict const n2) {
+inline int Numeric_cmp(const struct Numeric *restrict const n1,
+                       const struct Numeric *restrict const n2) {
   const int ret = PGTYPESnumeric_cmp(n1->n, n2->n);
   if (ret == INT_MAX) {
     werr("%s: %d: %s: Failure comparing numerics\n", __FILE__, __LINE__,
@@ -186,14 +187,14 @@ int Numeric_cmp(const struct Numeric *restrict const n1,
   return ret;
 }
 
-struct Numeric *Numeric_from_int(const signed int i) {
+inline struct Numeric *Numeric_from_int(const signed int i) {
   struct Numeric *restrict const res = Numeric_new();
   Numeric_from_int_to(i, res);
   return res;
 }
 
-void Numeric_from_int_to(const signed int i,
-                         struct Numeric *restrict const res) {
+inline void Numeric_from_int_to(const signed int i,
+                                struct Numeric *restrict const res) {
   const int ret = PGTYPESnumeric_from_int(i, res->n);
   if (ret < 0) {
     werr("%s: %d: %s: %d: Failure creating numeric from integer\n", __FILE__,
@@ -205,7 +206,7 @@ void Numeric_from_int_to(const signed int i,
 #endif
 }
 
-int Numeric_to_int(const struct Numeric *restrict const n) {
+inline int Numeric_to_int(const struct Numeric *restrict const n) {
   int res = 0;
   const int ret = PGTYPESnumeric_to_int(n->n, &res);
   if (ret < 0) {
@@ -216,14 +217,14 @@ int Numeric_to_int(const struct Numeric *restrict const n) {
   return res;
 }
 
-struct Numeric *Numeric_from_long(const signed long int l) {
+inline struct Numeric *Numeric_from_long(const signed long int l) {
   struct Numeric *restrict const res = Numeric_new();
   Numeric_from_long_to(l, res);
   return res;
 }
 
-void Numeric_from_long_to(const signed long int l,
-                          struct Numeric *restrict const res) {
+inline void Numeric_from_long_to(const signed long int l,
+                                 struct Numeric *restrict const res) {
   const int ret = PGTYPESnumeric_from_long(l, res->n);
   if (ret < 0) {
     werr("%s: %d: %s: %ld: Failure creating numeric from long\n", __FILE__,
@@ -235,7 +236,7 @@ void Numeric_from_long_to(const signed long int l,
 #endif
 }
 
-long Numeric_to_long(const struct Numeric *restrict const n) {
+inline long Numeric_to_long(const struct Numeric *restrict const n) {
   long res = 0;
   const int ret = PGTYPESnumeric_to_long(n->n, &res);
   if (ret < 0) {
@@ -246,14 +247,14 @@ long Numeric_to_long(const struct Numeric *restrict const n) {
   return res;
 }
 
-struct Numeric *Numeric_copy(const struct Numeric *restrict const n) {
+inline struct Numeric *Numeric_copy(const struct Numeric *restrict const n) {
   struct Numeric *restrict const res = Numeric_new();
   Numeric_copy_to(n, res);
   return res;
 }
 
-void Numeric_copy_to(const struct Numeric *restrict const n,
-                     struct Numeric *restrict const res) {
+inline void Numeric_copy_to(const struct Numeric *restrict const n,
+                            struct Numeric *restrict const res) {
   const int ret = PGTYPESnumeric_copy(n->n, res->n);
   if (ret < 0) {
     werr("%s: %d: %s: Failure copying numerics\n", __FILE__, __LINE__,
@@ -266,14 +267,14 @@ void Numeric_copy_to(const struct Numeric *restrict const n,
 #endif
 }
 
-struct Numeric *Numeric_from_double(const double d) {
+inline struct Numeric *Numeric_from_double(const double d) {
   struct Numeric *res = Numeric_new();
   Numeric_from_double_to(d, res);
   return res;
 }
 
-void Numeric_from_double_to(const double d,
-                            struct Numeric *restrict const res) {
+inline void Numeric_from_double_to(const double d,
+                                   struct Numeric *restrict const res) {
   const int ret = PGTYPESnumeric_from_double(d, res->n);
   if (ret < 0) {
     werr("%s: %d: %s: %lf: Failure creating numeric from double\n", __FILE__,
@@ -285,7 +286,7 @@ void Numeric_from_double_to(const double d,
 #endif
 }
 
-double Numeric_to_double(const struct Numeric *restrict const n) {
+inline double Numeric_to_double(const struct Numeric *restrict const n) {
   double res = 0;
   const int ret = PGTYPESnumeric_to_double(n->n, &res);
   if (ret < 0) {
@@ -296,7 +297,7 @@ double Numeric_to_double(const struct Numeric *restrict const n) {
   return res;
 }
 
-void Numeric_abs(struct Numeric *restrict const n) {
+inline void Numeric_abs(struct Numeric *restrict const n) {
   if (Numeric_cmp(n, zero) < 0) {
     const int ret = PGTYPESnumeric_mul(n_one->n, n->n, n->n);
     if (ret < 0) {
@@ -311,7 +312,7 @@ void Numeric_abs(struct Numeric *restrict const n) {
 #endif
 }
 
-void Numeric_scale(struct Numeric *restrict const n, const int scale) {
+inline void Numeric_scale(struct Numeric *restrict const n, const int scale) {
   char *restrict const s = Numeric_to_char(n, scale);
   struct Numeric *restrict const scaled = Numeric_from_char(s);
   if (scaled == NULL) {
@@ -323,14 +324,14 @@ void Numeric_scale(struct Numeric *restrict const n, const int scale) {
   Numeric_char_free(s);
 }
 
-struct Numeric *Numeric_atan(const struct Numeric *restrict const n) {
+inline struct Numeric *Numeric_atan(const struct Numeric *restrict const n) {
   struct Numeric *restrict const res = Numeric_new();
   Numeric_atan_to(n, res);
   return res;
 }
 
-void Numeric_atan_to(const struct Numeric *restrict const n,
-                     struct Numeric *restrict const res) {
+inline void Numeric_atan_to(const struct Numeric *restrict const n,
+                            struct Numeric *restrict const res) {
   Numeric_from_double_to(atan(Numeric_to_double(n)), res);
 #ifdef ABAG_MATH_DEBUG
   Numeric_char_free(res->s);
@@ -338,4 +339,4 @@ void Numeric_atan_to(const struct Numeric *restrict const n,
 #endif
 }
 
-void Numeric_char_free(char *restrict const s) { PGTYPESchar_free(s); }
+inline void Numeric_char_free(char *restrict const s) { PGTYPESchar_free(s); }

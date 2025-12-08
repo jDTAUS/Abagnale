@@ -21,13 +21,13 @@
 #include "heap.h"
 #include "math.h"
 
-struct Sample *Sample_new(void) {
+inline struct Sample *Sample_new(void) {
   struct Sample *restrict const s = heap_calloc(1, sizeof(struct Sample));
   s->obj = Object_new();
   return s;
 }
 
-void Sample_delete(void *restrict const s) {
+inline void Sample_delete(void *restrict const s) {
   if (s == NULL)
     return;
 
@@ -41,13 +41,13 @@ void Sample_delete(void *restrict const s) {
   }
 }
 
-struct Product *Product_new(void) {
+inline struct Product *Product_new(void) {
   struct Product *restrict const p = heap_calloc(1, sizeof(struct Product));
   p->obj = Object_new();
   return p;
 }
 
-struct Product *Product_copy(struct Product *restrict const p) {
+inline struct Product *Product_copy(struct Product *restrict const p) {
   if (p == NULL)
     return NULL;
 
@@ -61,7 +61,7 @@ struct Product *Product_copy(struct Product *restrict const p) {
   return p;
 }
 
-void Product_delete(void *restrict const p) {
+inline void Product_delete(void *restrict const p) {
   if (p == NULL)
     return;
 
@@ -77,13 +77,13 @@ void Product_delete(void *restrict const p) {
     heap_free(product);
 }
 
-struct Account *Account_new(void) {
+inline struct Account *Account_new(void) {
   struct Account *restrict const a = heap_calloc(1, sizeof(struct Account));
   a->obj = Object_new();
   return a;
 }
 
-void Account_delete(void *restrict const a) {
+inline void Account_delete(void *restrict const a) {
   if (a == NULL)
     return;
 
@@ -98,13 +98,13 @@ void Account_delete(void *restrict const a) {
   }
 }
 
-struct Order *Order_new(void) {
+inline struct Order *Order_new(void) {
   struct Order *restrict const o = heap_calloc(1, sizeof(struct Order));
   o->obj = Object_new();
   return o;
 }
 
-void Order_delete(void *restrict const o) {
+inline void Order_delete(void *restrict const o) {
   if (o == NULL)
     return;
 
@@ -125,13 +125,13 @@ void Order_delete(void *restrict const o) {
   }
 }
 
-struct Pricing *Pricing_new(void) {
+inline struct Pricing *Pricing_new(void) {
   struct Pricing *restrict const p = heap_calloc(1, sizeof(struct Pricing));
   p->obj = Object_new();
   return p;
 }
 
-void Pricing_delete(void *restrict const p) {
+inline void Pricing_delete(void *restrict const p) {
   if (p == NULL)
     return;
 
@@ -146,7 +146,7 @@ void Pricing_delete(void *restrict const p) {
   }
 }
 
-struct ExchangeConfig *ExchangeConfig_new(void) {
+inline struct ExchangeConfig *ExchangeConfig_new(void) {
   struct ExchangeConfig *restrict const e =
       heap_calloc(1, sizeof(struct ExchangeConfig));
 
@@ -154,7 +154,7 @@ struct ExchangeConfig *ExchangeConfig_new(void) {
   return e;
 }
 
-void ExchangeConfig_delete(void *restrict const e) {
+inline void ExchangeConfig_delete(void *restrict const e) {
   if (e == NULL)
     return;
 

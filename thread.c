@@ -20,7 +20,7 @@
 #include "thread.h"
 #include "proc.h"
 
-static const char *strthrd(const int r) {
+static inline const char *strthrd(const int r) {
   switch (r) {
   case thrd_success:
     return "success";
@@ -38,7 +38,8 @@ static const char *strthrd(const int r) {
   }
 }
 
-void thread_create(thrd_t *restrict const t, int (*entry)(void *), void *arg) {
+inline void thread_create(thrd_t *restrict const t, int (*entry)(void *),
+                          void *arg) {
   int r = thrd_create(t, entry, arg);
   if (r != thrd_success) {
     werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__, strthrd(r));
@@ -46,7 +47,7 @@ void thread_create(thrd_t *restrict const t, int (*entry)(void *), void *arg) {
   }
 }
 
-void thread_join(const thrd_t t, int *restrict const res) {
+inline void thread_join(const thrd_t t, int *restrict const res) {
   int r = thrd_join(t, res);
   if (r != thrd_success) {
     werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__, strthrd(r));
@@ -54,7 +55,7 @@ void thread_join(const thrd_t t, int *restrict const res) {
   }
 }
 
-void thread_sleep(const struct timespec *restrict const duration) {
+inline void thread_sleep(const struct timespec *restrict const duration) {
   int r = thrd_sleep(duration, NULL);
   if (r != thrd_success) {
     werr("%s: %d: %s. %s\n", __FILE__, __LINE__, __func__, strthrd(r));
@@ -64,7 +65,7 @@ void thread_sleep(const struct timespec *restrict const duration) {
 
 _Noreturn void thread_exit(const int res) { thrd_exit(res); }
 
-void mutex_init(mtx_t *restrict const m) {
+inline void mutex_init(mtx_t *restrict const m) {
   int r = mtx_init(m, mtx_plain | mtx_recursive);
   if (r != thrd_success) {
     werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__, strthrd(r));
@@ -72,9 +73,9 @@ void mutex_init(mtx_t *restrict const m) {
   }
 }
 
-void mutex_destroy(mtx_t *restrict const m) { mtx_destroy(m); }
+inline void mutex_destroy(mtx_t *restrict const m) { mtx_destroy(m); }
 
-void mutex_lock(mtx_t *restrict const m) {
+inline void mutex_lock(mtx_t *restrict const m) {
   int r = mtx_lock(m);
   if (r != thrd_success) {
     werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__, strthrd(r));
@@ -82,7 +83,7 @@ void mutex_lock(mtx_t *restrict const m) {
   }
 }
 
-void mutex_unlock(mtx_t *restrict const m) {
+inline void mutex_unlock(mtx_t *restrict const m) {
   int r = mtx_unlock(m);
   if (r != thrd_success) {
     werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__, strthrd(r));
@@ -90,7 +91,7 @@ void mutex_unlock(mtx_t *restrict const m) {
   }
 }
 
-void tls_create(tss_t *restrict const key, tss_dtor_t dtor) {
+inline void tls_create(tss_t *restrict const key, tss_dtor_t dtor) {
   int r = tss_create(key, dtor);
   if (r != thrd_success) {
     werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__, strthrd(r));
@@ -98,11 +99,11 @@ void tls_create(tss_t *restrict const key, tss_dtor_t dtor) {
   }
 }
 
-void tls_delete(const tss_t key) { tss_delete(key); }
+inline void tls_delete(const tss_t key) { tss_delete(key); }
 
-void *tls_get(const tss_t key) { return tss_get(key); }
+inline void *tls_get(const tss_t key) { return tss_get(key); }
 
-void tls_set(const tss_t key, void *restrict const val) {
+inline void tls_set(const tss_t key, void *restrict const val) {
   int r = tss_set(key, val);
   if (r != thrd_success) {
     werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__, strthrd(r));
@@ -110,7 +111,7 @@ void tls_set(const tss_t key, void *restrict const val) {
   }
 }
 
-void condition_init(cnd_t *restrict const cond) {
+inline void condition_init(cnd_t *restrict const cond) {
   int r = cnd_init(cond);
   if (r != thrd_success) {
     werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__, strthrd(r));
@@ -118,9 +119,9 @@ void condition_init(cnd_t *restrict const cond) {
   }
 }
 
-void condition_destroy(cnd_t *restrict const cond) { cnd_destroy(cond); }
+inline void condition_destroy(cnd_t *restrict const cond) { cnd_destroy(cond); }
 
-void condition_broadcast(cnd_t *restrict const cond) {
+inline void condition_broadcast(cnd_t *restrict const cond) {
   int r = cnd_broadcast(cond);
   if (r != thrd_success) {
     werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__, strthrd(r));
@@ -128,7 +129,7 @@ void condition_broadcast(cnd_t *restrict const cond) {
   }
 }
 
-void condition_signal(cnd_t *restrict const cond) {
+inline void condition_signal(cnd_t *restrict const cond) {
   int r = cnd_signal(cond);
   if (r != thrd_success) {
     werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__, strthrd(r));
@@ -136,8 +137,9 @@ void condition_signal(cnd_t *restrict const cond) {
   }
 }
 
-void condition_timedwait(cnd_t *restrict const cond, mtx_t *restrict const mtx,
-                         const struct timespec *restrict const ts) {
+inline void condition_timedwait(cnd_t *restrict const cond,
+                                mtx_t *restrict const mtx,
+                                const struct timespec *restrict const ts) {
   int r = cnd_timedwait(cond, mtx, ts);
   if (r != thrd_success) {
     werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__, strthrd(r));
@@ -145,7 +147,8 @@ void condition_timedwait(cnd_t *restrict const cond, mtx_t *restrict const mtx,
   }
 }
 
-void condition_wait(cnd_t *restrict const cond, mtx_t *restrict const mtx) {
+inline void condition_wait(cnd_t *restrict const cond,
+                           mtx_t *restrict const mtx) {
   int r = cnd_wait(cond, mtx);
   if (r != thrd_success) {
     werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__, strthrd(r));

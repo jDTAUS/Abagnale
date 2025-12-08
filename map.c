@@ -39,7 +39,7 @@ struct MapIterator {
   const struct Map *restrict m;
 };
 
-struct Map *Map_new(const size_t capacity) {
+inline struct Map *Map_new(const size_t capacity) {
   struct Map *restrict const m = heap_malloc(sizeof(struct Map));
   m->capacity = capacity;
   m->buckets = heap_calloc(capacity, sizeof(struct Entry *));
@@ -48,8 +48,8 @@ struct Map *Map_new(const size_t capacity) {
   return m;
 }
 
-void Map_delete(struct Map *restrict const m,
-                void (*cb)(void *restrict const)) {
+inline void Map_delete(struct Map *restrict const m,
+                       void (*cb)(void *restrict const)) {
   for (size_t i = m->capacity; i > 0; i--) {
     struct Entry *restrict bucket = m->buckets[i - 1];
 
@@ -74,8 +74,9 @@ void Map_delete(struct Map *restrict const m,
 inline void Map_lock(struct Map *restrict const m) { mutex_lock(m->mtx); }
 inline void Map_unlock(struct Map *restrict const m) { mutex_unlock(m->mtx); }
 
-void *Map_put(struct Map *restrict const m, struct String *restrict const key,
-              void *restrict const e) {
+inline void *Map_put(struct Map *restrict const m,
+                     struct String *restrict const key,
+                     void *restrict const e) {
   const size_t i = String_hash(key) % m->capacity;
   struct Entry *restrict bucket = m->buckets[i];
   void *restrict needle = NULL;
@@ -97,8 +98,8 @@ void *Map_put(struct Map *restrict const m, struct String *restrict const key,
   return needle;
 }
 
-void *Map_get(const struct Map *restrict const m,
-              const struct String *restrict const key) {
+inline void *Map_get(const struct Map *restrict const m,
+                     const struct String *restrict const key) {
   struct Entry *restrict bucket = m->buckets[String_hash(key) % m->capacity];
 
   while (bucket != NULL && !String_equals(bucket->key, key))
@@ -107,7 +108,7 @@ void *Map_get(const struct Map *restrict const m,
   return bucket != NULL ? bucket->value : NULL;
 }
 
-struct MapIterator *MapIterator_new(const struct Map *restrict const m) {
+inline struct MapIterator *MapIterator_new(const struct Map *restrict const m) {
   struct MapIterator *restrict const it =
       heap_malloc(sizeof(struct MapIterator));
 
@@ -117,11 +118,11 @@ struct MapIterator *MapIterator_new(const struct Map *restrict const m) {
   return it;
 }
 
-void MapIterator_delete(struct MapIterator *restrict const it) {
+inline void MapIterator_delete(struct MapIterator *restrict const it) {
   heap_free(it);
 }
 
-bool MapIterator_next(struct MapIterator *restrict const it) {
+inline bool MapIterator_next(struct MapIterator *restrict const it) {
   if (it->e != NULL)
     it->e = it->e->next;
 
@@ -134,7 +135,7 @@ bool MapIterator_next(struct MapIterator *restrict const it) {
   return it->e != NULL;
 }
 
-void *MapIterator_remove(struct MapIterator *restrict const it) {
+inline void *MapIterator_remove(struct MapIterator *restrict const it) {
   void *restrict value = NULL;
 
   if (it->e != NULL) {
@@ -148,11 +149,12 @@ void *MapIterator_remove(struct MapIterator *restrict const it) {
   return value;
 }
 
-const struct String *
+inline const struct String *
 MapIterator_key(const struct MapIterator *restrict const it) {
   return it->e != NULL ? it->e->key : NULL;
 }
 
-const void *MapIterator_value(const struct MapIterator *restrict const it) {
+inline const void *
+MapIterator_value(const struct MapIterator *restrict const it) {
   return it->e != NULL ? it->e->value : NULL;
 }

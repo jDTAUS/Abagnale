@@ -32,7 +32,7 @@ struct String {
   struct Object *restrict obj;
 };
 
-struct String *String_new(const char *restrict s) {
+inline struct String *String_new(const char *restrict s) {
   size_t hc = 5381;
   const char *s_p;
 
@@ -55,7 +55,7 @@ struct String *String_new(const char *restrict s) {
   return str;
 }
 
-struct String *String_nnew(const char *restrict s, size_t maxlen) {
+inline struct String *String_nnew(const char *restrict s, size_t maxlen) {
   size_t hc = 5381;
   const char *s_p;
 
@@ -78,8 +78,8 @@ struct String *String_nnew(const char *restrict s, size_t maxlen) {
   return str;
 }
 
-struct String *String_subdup(const struct String *restrict s, const size_t i,
-                             const size_t c) {
+inline struct String *String_subdup(const struct String *restrict s,
+                                    const size_t i, const size_t c) {
   const char *s_p;
   // i + c + 1 <= SIZE_MAX
   // => i <= SIZE_MAX - c - 1
@@ -115,7 +115,7 @@ inline const size_t String_hash(const struct String *restrict const s) {
   return s->hc;
 }
 
-void String_delete(void *restrict const s) {
+inline void String_delete(void *restrict const s) {
   if (s == NULL)
     return;
 
@@ -126,7 +126,7 @@ void String_delete(void *restrict const s) {
   }
 }
 
-struct String *String_copy(struct String *restrict const str) {
+inline struct String *String_copy(struct String *restrict const str) {
   if (str == NULL)
     return NULL;
 
