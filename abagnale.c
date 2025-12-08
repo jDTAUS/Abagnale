@@ -2363,14 +2363,14 @@ static int orders_process(void *restrict const arg) {
   const struct abag_tls *restrict const tls = abag_tls();
   struct Numeric *restrict const tp = tls->orders_process.tp;
   struct worker_ctx *restrict const w_ctx = arg;
-  struct Trade *restrict t = NULL;
-  struct Position *restrict p = NULL;
-  struct Array *restrict trades = NULL;
-  struct Array *restrict samples = NULL;
-  size_t i;
-  void **items;
 
   while (!terminated) {
+    struct Trade *restrict t = NULL;
+    struct Position *restrict p = NULL;
+    struct Array *restrict trades = NULL;
+    struct Array *restrict samples = NULL;
+    size_t i;
+    void **items;
     struct Order *restrict const order = w_ctx->ex->order_await();
 
     if (order == NULL)
