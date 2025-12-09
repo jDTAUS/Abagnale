@@ -20,7 +20,9 @@
 #include "thread.h"
 #include "proc.h"
 
-static inline const char *strthrd(const int r) {
+const char *strthrd(const int r);
+
+inline const char *strthrd(const int r) {
   switch (r) {
   case thrd_success:
     return "success";

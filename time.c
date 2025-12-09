@@ -331,14 +331,14 @@ static inline void nanos_from_ts(struct Numeric *restrict const res,
   Numeric_add_to(s_ns, ns, res);
 }
 
-inline void nanos_now(struct Numeric *restrict const res) {
+void nanos_now(struct Numeric *restrict const res) {
   struct timespec ts;
 
   time_now(&ts);
   nanos_from_ts(res, &ts);
 }
 
-inline char *nanos_to_iso8601(const struct Numeric *restrict const nanos) {
+char *nanos_to_iso8601(const struct Numeric *restrict const nanos) {
   const struct time_tls *tls = time_tls();
   struct Numeric *restrict const s = tls->nanos_to_iso8601.s;
 

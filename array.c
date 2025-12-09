@@ -94,7 +94,7 @@ inline void Array_shrink(struct Array *restrict const a) {
   }
 }
 
-static inline void Array_grow(struct Array *restrict const a) {
+inline void Array_grow(struct Array *restrict const a) {
   if (a->size >= a->capacity) {
     a->capacity <<= 1;
     a->items = heap_realloc(a->items, sizeof(void *) * a->capacity);
