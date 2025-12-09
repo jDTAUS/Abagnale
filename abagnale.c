@@ -1886,7 +1886,7 @@ static void trade_pricing(const struct worker_ctx *restrict const w_ctx,
   if (Numeric_cmp(t->fee_pc, pricing->ef_pc) < 0) {
     if (verbose) {
       char *restrict const pr = Numeric_to_char(pricing->ef_pc, 2);
-      wout("%s: %s->%s: Pricing: %s\n", String_chars(w_ctx->ex->nm),
+      wout("%s: %s->%s: Effective fee: %s%%\n", String_chars(w_ctx->ex->nm),
            String_chars(t->q_id), String_chars(t->b_id), pr);
 
       Numeric_char_free(pr);
