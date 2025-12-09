@@ -377,7 +377,10 @@ static struct timespec api_request_rate = {
     .tv_sec = 0,
     .tv_nsec = 1000000000L / API_RATE_REQUESTS_PER_SECOND,
 };
-
+static struct timespec api_reconnect_rate = {
+    .tv_sec = WEBSOCKET_RECONNECT_TIMEOUT_SECONDS,
+    .tv_nsec = 0,
+};
 static void coinbase_init(void);
 static void coinbase_configure(const struct ExchangeConfig *restrict const);
 static void coinbase_terminate(void);
@@ -449,13 +452,13 @@ static struct ws_channel {
                    const struct Numeric *restrict const);
 } ws_channels[] = {
     {"heartbeats", NULL, 0, 0, false, false, .update = NULL, .snapshot = NULL},
-    {"status", L"products", 8, 0, false, true, .update = ws_status_update,
+    {"status", L"products", 8, 0, true, false, .update = ws_status_update,
      .snapshot = NULL},
-    {"subscriptions", NULL, 0, 0, false, true, .update = NULL,
+    {"subscriptions", NULL, 0, 0, true, false, .update = NULL,
      .snapshot = NULL},
     {"ticker", L"tickers", 7, 0, false, false, .update = ws_ticker_update,
      .snapshot = NULL},
-    {"user", L"orders", 6, 0, false, true, .update = ws_user_update,
+    {"user", L"orders", 6, 0, true, false, .update = ws_user_update,
      .snapshot = NULL},
 };
 
@@ -777,12 +780,6 @@ ret:
 static void ws_status_update(const struct wcjson_document *restrict const doc,
                              const struct wcjson_value *restrict const product,
                              const struct Numeric *restrict const nanos) {
-#ifdef ABAG_COINBASE_DEBUG
-  char msg[WCJSON_BODY_MAX + 1] = {0};
-  wdebug("coinbase: status: %s\n",
-         wcjsondoc_string(msg, sizeof(msg), doc, product, NULL));
-#endif
-
   for (size_t i = nitems(ws_channels); i > 0; i--)
     ws_channels[i - 1].reconnect = true;
 }
@@ -851,11 +848,6 @@ static void ws_user_update(const struct wcjson_document *restrict const doc,
                Numeric_cmp(j_outstanding_hold_amount_num, zero) == 0 &&
                Numeric_cmp(o->b_ordered, o->b_filled) == 0;
   o->dnanos = o->settled ? Numeric_copy(nanos) : NULL;
-
-#ifdef ABAG_COINBASE_DEBUG
-  wdebug("coinbase: user: %s\n",
-         wcjsondoc_string(errbuf, sizeof(errbuf), doc, order, NULL));
-#endif
 
   if (o->status == ORDER_STATUS_UNKNOWN)
     werr("coinbase: user: %s: Order status unknown\n", j_status->mbstring);
@@ -1107,7 +1099,7 @@ static void ws_listener(struct mg_connection *restrict c, int ev,
 #endif
     if (running) {
       do {
-        sleep(WEBSOCKET_RECONNECT_TIMEOUT_SECONDS);
+        thread_sleep(&api_reconnect_rate);
         c = mg_ws_connect(c->mgr, ABAG_COINBASE_WEBSOCKET_URL, ws_listener,
                           channel, NULL);
         if (!c)
@@ -2193,12 +2185,6 @@ static struct Pricing *coinbase_pricing(void) {
 
   if (http_req(&doc, url, ABAG_COINBASE_FEES_PATH, NULL, 0) == 0)
     pricing = parse_pricing(&doc, doc.values);
-
-#ifdef ABAG_COINBASE_DEBUG
-  char errbuf[WCJSON_BODY_MAX + 1] = {0};
-  wdebug("coinbase: %s\n",
-         wcjsondoc_string(errbuf, sizeof(errbuf), &doc, doc.values, NULL));
-#endif
 
 ret:
   mutex_unlock(&pricing_mutex);
