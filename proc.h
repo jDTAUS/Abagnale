@@ -21,7 +21,7 @@
 #define ABAG_PROC_H
 
 void proc_init(void);
-void proc_terminate(void);
+void proc_destroy(void);
 
 void wout(const char *, ...) __attribute__((__format__(printf, 1, 2)));
 void werr(const char *, ...) __attribute__((__format__(printf, 1, 2)));

@@ -383,7 +383,7 @@ static struct timespec api_reconnect_rate = {
 };
 static void coinbase_init(void);
 static void coinbase_configure(const struct ExchangeConfig *restrict const);
-static void coinbase_terminate(void);
+static void coinbase_destroy(void);
 static void coinbase_start(void);
 static void coinbase_stop(void);
 static struct Order *coinbase_order_await(void);
@@ -421,7 +421,7 @@ struct Exchange exchange_coinbase = {
     .nm = NULL,
     .init = coinbase_init,
     .configure = coinbase_configure,
-    .terminate = coinbase_terminate,
+    .destroy = coinbase_destroy,
     .start = coinbase_start,
     .stop = coinbase_stop,
     .order_await = coinbase_order_await,
@@ -1373,7 +1373,7 @@ static void coinbase_configure(const struct ExchangeConfig *restrict const c) {
   db_connect(COINBASE_DBCON);
 }
 
-static void coinbase_terminate(void) {
+static void coinbase_destroy(void) {
   if (coinbase_cnf)
     db_disconnect(COINBASE_DBCON);
 

@@ -678,12 +678,12 @@ static inline struct Trade *trade_new(
   t->tp_pf = Numeric_copy(one);
   t->tp = Numeric_copy(zero);
   t->a = NULL;
-  candle_init(&t->bet_cd);
+  candle_init(&t->open_cd);
+  trigger_init(&t->open_trg);
   position_init(&t->p_long);
   t->p_long.side = POSITION_SIDE_BUY;
   position_init(&t->p_short);
   t->p_short.side = POSITION_SIDE_SELL;
-  trigger_init(&t->bet_trg);
   return t;
 }
 
@@ -704,10 +704,10 @@ static inline void trade_delete(void *restrict const t) {
   Numeric_delete(trade->tp_pc);
   Numeric_delete(trade->tp_pf);
   Numeric_delete(trade->tp);
-  Candle_delete(&trade->bet_cd);
+  Candle_delete(&trade->open_cd);
+  trigger_delete(&trade->open_trg);
   position_delete(&trade->p_long);
   position_delete(&trade->p_short);
-  trigger_delete(&trade->bet_trg);
   heap_free(trade);
 }
 
@@ -1162,7 +1162,6 @@ static void position_fill(const struct worker_ctx *restrict const w_ctx,
     trigger_reset(&p->sl_trg);
     trigger_reset(&p->tl_trg);
     trigger_reset(&p->tp_trg);
-    t->a->position_done(w_ctx->db, w_ctx->ex, t, p);
   }
 
   const bool t_done = t->p_long.done && t->p_short.done;
@@ -1524,9 +1523,9 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
   const struct abag_tls *restrict const tls = abag_tls();
   struct Numeric *restrict const sr = tls->position_trigger.sr;
   struct Numeric *restrict const age = tls->position_trigger.age;
-  bool cancel = false;
   bool sl = false;
   bool tp = false;
+  bool tl = false;
 
   switch (p->side) {
   case POSITION_SIDE_BUY:
@@ -1556,7 +1555,7 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
 
   if ((w_ctx->p_cnf->sr_min != NULL &&
        Numeric_cmp(sr, w_ctx->p_cnf->sr_min) < 0)) {
-    cancel = true;
+    tl = true;
 
     if (verbose && !p->tl_trg.set) {
       char *restrict const sr_asc = Numeric_to_char(sr, 2);
@@ -1575,7 +1574,7 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
 
   if ((w_ctx->p_cnf->sr_max != NULL &&
        Numeric_cmp(sr, w_ctx->p_cnf->sr_max) > 0)) {
-    cancel = true;
+    tl = true;
 
     if (verbose && !p->tl_trg.set) {
       char *restrict const sr_asc = Numeric_to_char(sr, 2);
@@ -1594,7 +1593,7 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
 
   if ((w_ctx->p_cnf->tl_dlnanos != NULL &&
        Numeric_cmp(age, w_ctx->p_cnf->tl_dlnanos) > 0)) {
-    cancel = true;
+    tl = true;
 
     if (verbose && !p->tl_trg.set) {
       wout("%s: %s->%s: %s: Age greater than take-loss-delay\n",
@@ -1604,7 +1603,7 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
   }
 
   if (t->a->position_close(w_ctx->db, w_ctx->ex, t, p))
-    cancel = true;
+    tl = true;
 
   if (sl) {
     if (!p->sl_trg.set) {
@@ -1651,7 +1650,7 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
            String_chars(t->b_id), String_chars(t->id), p->tp_trg.cnt);
   }
 
-  if (cancel) {
+  if (tl) {
     if (!p->tl_trg.set) {
       p->tl_trg.set = true;
       p->tl_trg.cnt++;
@@ -1943,30 +1942,30 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
     return;
 
   struct Position *restrict const p =
-      t->a->position_select(w_ctx->db, w_ctx->ex, t, samples, sample);
+      t->a->position_open(w_ctx->db, w_ctx->ex, t, samples, sample);
 
   if (p != NULL) {
-    if (!t->bet_trg.set) {
-      t->bet_trg.set = true;
-      t->bet_trg.cnt++;
-      Numeric_copy_to(sample->nanos, t->bet_trg.nanos);
+    if (!t->open_trg.set) {
+      t->open_trg.set = true;
+      t->open_trg.cnt++;
+      Numeric_copy_to(sample->nanos, t->open_trg.nanos);
 
       if (verbose)
-        wout("%s: %s->%s: Entering bet(%" PRIuMAX ")\n",
+        wout("%s: %s->%s: Entering open(%" PRIuMAX ")\n",
              String_chars(w_ctx->ex->nm), String_chars(t->q_id),
-             String_chars(t->b_id), t->bet_trg.cnt);
+             String_chars(t->b_id), t->open_trg.cnt);
     }
-  } else if (t->bet_trg.set) {
-    t->bet_trg.set = false;
-    Numeric_copy_to(zero, t->bet_trg.nanos);
+  } else if (t->open_trg.set) {
+    t->open_trg.set = false;
+    Numeric_copy_to(zero, t->open_trg.nanos);
 
     if (verbose)
-      wout("%s: %s->%s: Leaving bet(%" PRIuMAX ")\n",
+      wout("%s: %s->%s: Leaving open(%" PRIuMAX ")\n",
            String_chars(w_ctx->ex->nm), String_chars(t->q_id),
-           String_chars(t->b_id), t->bet_trg.cnt);
+           String_chars(t->b_id), t->open_trg.cnt);
   }
 
-  if (!t->bet_trg.set)
+  if (!t->open_trg.set)
     return;
 
   if (cnf->plts_dir != NULL)
@@ -1997,13 +1996,13 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
       !(b_acct->is_active && b_acct->is_ready)) {
 
     if (verbose)
-      wout("%s: %s->%s: Leaving bet(%" PRIuMAX ")\n",
+      wout("%s: %s->%s: Leaving open(%" PRIuMAX ")\n",
            String_chars(w_ctx->ex->nm), String_chars(t->q_id),
-           String_chars(t->b_id), t->bet_trg.cnt);
+           String_chars(t->b_id), t->open_trg.cnt);
 
     Account_delete(q_acct);
     Account_delete(b_acct);
-    trigger_reset(&t->bet_trg);
+    trigger_reset(&t->open_trg);
     return;
   }
 
@@ -2031,7 +2030,7 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
   Numeric_mul_to(r0, ninety_percent_factor, q_avail);
 
   char *restrict const c =
-      candle_string(&t->bet_cd, String_chars(t->q_id), t->p_sc);
+      candle_string(&t->open_cd, String_chars(t->q_id), t->p_sc);
 
   char *restrict const b = Numeric_to_char(p->b_ordered, t->b_sc);
   char *restrict const pr = Numeric_to_char(p->price, t->p_sc);
@@ -2052,12 +2051,12 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
         Numeric_char_free(r);
         Numeric_char_free(a);
 
-        wout("%s: %s->%s: Leaving bet(%" PRIuMAX ")\n",
+        wout("%s: %s->%s: Leaving open(%" PRIuMAX ")\n",
              String_chars(w_ctx->ex->nm), String_chars(t->q_id),
-             String_chars(t->b_id), t->bet_trg.cnt);
+             String_chars(t->b_id), t->open_trg.cnt);
       }
 
-      trigger_reset(&t->bet_trg);
+      trigger_reset(&t->open_trg);
       goto ret;
     }
 
@@ -2099,12 +2098,12 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
         Numeric_char_free(qa);
         Numeric_char_free(ba);
 
-        wout("%s: %s->%s: Leaving bet(%" PRIuMAX ")\n",
+        wout("%s: %s->%s: Leaving open(%" PRIuMAX ")\n",
              String_chars(w_ctx->ex->nm), String_chars(t->q_id),
-             String_chars(t->b_id), t->bet_trg.cnt);
+             String_chars(t->b_id), t->open_trg.cnt);
       }
 
-      trigger_reset(&t->bet_trg);
+      trigger_reset(&t->open_trg);
       goto ret;
     }
 
@@ -2132,7 +2131,7 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
   }
 
   // Try longer or shorter than average based on angle (1rad approx. 57.3dec).
-  Numeric_mul_to(p->cl_factor, t->bet_cd.a, r0);
+  Numeric_mul_to(p->cl_factor, t->open_cd.a, r0);
   Numeric_copy_to(r0, p->cl_factor);
   position_create(w_ctx, t, p);
   position_timeout(w_ctx, t, p, samples, sample);

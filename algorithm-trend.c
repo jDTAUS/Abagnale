@@ -44,7 +44,7 @@ struct trend_tls {
   struct trend_state_vars {
     struct db_trend_state_res *restrict st_res;
   } trend_state;
-  struct trend_position_select_vars {
+  struct trend_position_open_vars {
     struct Numeric *restrict r0;
     struct Numeric *restrict r1;
     struct Numeric *restrict cd_pc;
@@ -59,7 +59,7 @@ struct trend_tls {
     struct Candle *restrict cd_last;
     struct db_plot_res *restrict plot_res;
     struct db_trend_state_res *restrict st_res;
-  } trend_position_select;
+  } trend_position_open;
   struct trend_product_plot_vars {
     struct db_datapoint_res *restrict pt_res;
     struct db_candle_res *restrict cd_res;
@@ -105,26 +105,25 @@ static struct trend_tls *trend_tls(void) {
     tls->trend_state.st_res = heap_malloc(sizeof(struct db_trend_state_res));
     tls->trend_state.st_res->cd_lnanos = Numeric_new();
     tls->trend_state.st_res->cd_langle = Numeric_new();
-    tls->trend_position_select.r0 = Numeric_from_int(0);
-    tls->trend_position_select.r1 = Numeric_from_int(0);
-    tls->trend_position_select.cd_pc = Numeric_from_int(0);
-    tls->trend_position_select.cd_n_pc = Numeric_from_int(0);
-    tls->trend_position_select.d_pc = Numeric_from_int(0);
-    tls->trend_position_select.s_pc = Numeric_from_int(0);
-    tls->trend_position_select.pr_min = Numeric_from_int(0);
-    tls->trend_position_select.pr_max = Numeric_from_int(0);
-    tls->trend_position_select.pr_cur = Numeric_new();
-    tls->trend_position_select.cd_cur = Candle_new();
-    tls->trend_position_select.cd_first = Candle_new();
-    tls->trend_position_select.cd_last = Candle_new();
-    tls->trend_position_select.plot_res =
-        heap_malloc(sizeof(struct db_plot_res));
-    tls->trend_position_select.plot_res->snanos = Numeric_from_int(0);
-    tls->trend_position_select.plot_res->enanos = Numeric_from_int(0);
-    tls->trend_position_select.st_res =
+    tls->trend_position_open.r0 = Numeric_from_int(0);
+    tls->trend_position_open.r1 = Numeric_from_int(0);
+    tls->trend_position_open.cd_pc = Numeric_from_int(0);
+    tls->trend_position_open.cd_n_pc = Numeric_from_int(0);
+    tls->trend_position_open.d_pc = Numeric_from_int(0);
+    tls->trend_position_open.s_pc = Numeric_from_int(0);
+    tls->trend_position_open.pr_min = Numeric_from_int(0);
+    tls->trend_position_open.pr_max = Numeric_from_int(0);
+    tls->trend_position_open.pr_cur = Numeric_new();
+    tls->trend_position_open.cd_cur = Candle_new();
+    tls->trend_position_open.cd_first = Candle_new();
+    tls->trend_position_open.cd_last = Candle_new();
+    tls->trend_position_open.plot_res = heap_malloc(sizeof(struct db_plot_res));
+    tls->trend_position_open.plot_res->snanos = Numeric_from_int(0);
+    tls->trend_position_open.plot_res->enanos = Numeric_from_int(0);
+    tls->trend_position_open.st_res =
         heap_malloc(sizeof(struct db_trend_state_res));
-    tls->trend_position_select.st_res->cd_lnanos = Numeric_new();
-    tls->trend_position_select.st_res->cd_langle = Numeric_new();
+    tls->trend_position_open.st_res->cd_lnanos = Numeric_new();
+    tls->trend_position_open.st_res->cd_langle = Numeric_new();
     tls->trend_product_plot.pt_res =
         heap_malloc(sizeof(struct db_datapoint_res));
     tls->trend_product_plot.pt_res->x = Numeric_new();
@@ -148,24 +147,24 @@ static void trend_tls_dtor(void *e) {
   Numeric_delete(tls->trend_state.st_res->cd_lnanos);
   Numeric_delete(tls->trend_state.st_res->cd_langle);
   heap_free(tls->trend_state.st_res);
-  Numeric_delete(tls->trend_position_select.r0);
-  Numeric_delete(tls->trend_position_select.r1);
-  Numeric_delete(tls->trend_position_select.cd_pc);
-  Numeric_delete(tls->trend_position_select.cd_n_pc);
-  Numeric_delete(tls->trend_position_select.d_pc);
-  Numeric_delete(tls->trend_position_select.s_pc);
-  Numeric_delete(tls->trend_position_select.pr_min);
-  Numeric_delete(tls->trend_position_select.pr_max);
-  Numeric_delete(tls->trend_position_select.pr_cur);
-  Candle_delete(tls->trend_position_select.cd_cur);
-  Candle_delete(tls->trend_position_select.cd_first);
-  Candle_delete(tls->trend_position_select.cd_last);
-  Numeric_delete(tls->trend_position_select.plot_res->snanos);
-  Numeric_delete(tls->trend_position_select.plot_res->enanos);
-  heap_free(tls->trend_position_select.plot_res);
-  Numeric_delete(tls->trend_position_select.st_res->cd_lnanos);
-  Numeric_delete(tls->trend_position_select.st_res->cd_langle);
-  heap_free(tls->trend_position_select.st_res);
+  Numeric_delete(tls->trend_position_open.r0);
+  Numeric_delete(tls->trend_position_open.r1);
+  Numeric_delete(tls->trend_position_open.cd_pc);
+  Numeric_delete(tls->trend_position_open.cd_n_pc);
+  Numeric_delete(tls->trend_position_open.d_pc);
+  Numeric_delete(tls->trend_position_open.s_pc);
+  Numeric_delete(tls->trend_position_open.pr_min);
+  Numeric_delete(tls->trend_position_open.pr_max);
+  Numeric_delete(tls->trend_position_open.pr_cur);
+  Candle_delete(tls->trend_position_open.cd_cur);
+  Candle_delete(tls->trend_position_open.cd_first);
+  Candle_delete(tls->trend_position_open.cd_last);
+  Numeric_delete(tls->trend_position_open.plot_res->snanos);
+  Numeric_delete(tls->trend_position_open.plot_res->enanos);
+  heap_free(tls->trend_position_open.plot_res);
+  Numeric_delete(tls->trend_position_open.st_res->cd_lnanos);
+  Numeric_delete(tls->trend_position_open.st_res->cd_langle);
+  heap_free(tls->trend_position_open.st_res);
   Numeric_delete(tls->trend_product_plot.pt_res->x);
   Numeric_delete(tls->trend_product_plot.pt_res->y);
   heap_free(tls->trend_product_plot.pt_res);
@@ -183,8 +182,8 @@ static void trend_tls_dtor(void *e) {
 }
 
 static void trend_init(void);
-static void trend_terminate(void);
-static struct Position *trend_position_select(
+static void trend_destroy(void);
+static struct Position *trend_position_open(
     const char *restrict const, const struct Exchange *restrict const,
     struct Trade *restrict const, const struct Array *restrict const,
     const struct Sample *restrict const);
@@ -192,10 +191,6 @@ static bool trend_position_close(const char *restrict const,
                                  const struct Exchange *restrict const,
                                  const struct Trade *restrict const,
                                  const struct Position *restrict const);
-static void trend_position_done(const char *restrict const,
-                                const struct Exchange *restrict const,
-                                const struct Trade *restrict const,
-                                const struct Position *restrict const);
 static bool trend_product_plot(const char *restrict const,
                                const char *restrict const,
                                const struct Exchange *restrict const,
@@ -204,10 +199,9 @@ static bool trend_product_plot(const char *restrict const,
 struct Algorithm algorithm_trend = {
     .nm = NULL,
     .init = trend_init,
-    .terminate = trend_terminate,
-    .position_select = trend_position_select,
+    .destroy = trend_destroy,
+    .position_open = trend_position_open,
     .position_close = trend_position_close,
-    .position_done = trend_position_done,
     .product_plot = trend_product_plot,
 };
 
@@ -238,7 +232,7 @@ static void trend_init(void) {
   states = Map_new(2048);
 }
 
-static void trend_terminate(void) {
+static void trend_destroy(void) {
   String_delete(algorithm_trend.id);
   String_delete(algorithm_trend.nm);
   tls_delete(trend_tls_key);
@@ -275,27 +269,27 @@ static struct trend_state *trend_state(const char *dbcon,
   return st;
 }
 
-static struct Position *trend_position_select(
+static struct Position *trend_position_open(
     const char *restrict const dbcon, const struct Exchange *restrict const e,
     struct Trade *restrict const t, const struct Array *restrict const samples,
     const struct Sample *restrict const sample) {
   const struct trend_tls *restrict const tls = trend_tls();
-  struct Numeric *restrict const r0 = tls->trend_position_select.r0;
-  struct Numeric *restrict const r1 = tls->trend_position_select.r1;
-  struct Numeric *restrict const cd_pc = tls->trend_position_select.cd_pc;
-  struct Numeric *restrict const cd_n_pc = tls->trend_position_select.cd_n_pc;
-  struct Numeric *restrict const d_pc = tls->trend_position_select.d_pc;
-  struct Numeric *restrict const s_pc = tls->trend_position_select.s_pc;
-  struct Numeric *restrict const pr_min = tls->trend_position_select.pr_min;
-  struct Numeric *restrict const pr_max = tls->trend_position_select.pr_max;
-  struct Numeric *restrict const pr_cur = tls->trend_position_select.pr_cur;
-  struct Candle *restrict const cd_cur = tls->trend_position_select.cd_cur;
-  struct Candle *restrict const cd_first = tls->trend_position_select.cd_first;
-  struct Candle *restrict const cd_last = tls->trend_position_select.cd_last;
+  struct Numeric *restrict const r0 = tls->trend_position_open.r0;
+  struct Numeric *restrict const r1 = tls->trend_position_open.r1;
+  struct Numeric *restrict const cd_pc = tls->trend_position_open.cd_pc;
+  struct Numeric *restrict const cd_n_pc = tls->trend_position_open.cd_n_pc;
+  struct Numeric *restrict const d_pc = tls->trend_position_open.d_pc;
+  struct Numeric *restrict const s_pc = tls->trend_position_open.s_pc;
+  struct Numeric *restrict const pr_min = tls->trend_position_open.pr_min;
+  struct Numeric *restrict const pr_max = tls->trend_position_open.pr_max;
+  struct Numeric *restrict const pr_cur = tls->trend_position_open.pr_cur;
+  struct Candle *restrict const cd_cur = tls->trend_position_open.cd_cur;
+  struct Candle *restrict const cd_first = tls->trend_position_open.cd_first;
+  struct Candle *restrict const cd_last = tls->trend_position_open.cd_last;
   struct db_plot_res *restrict const plot_res =
-      tls->trend_position_select.plot_res;
+      tls->trend_position_open.plot_res;
   struct db_trend_state_res *restrict const st_res =
-      tls->trend_position_select.st_res;
+      tls->trend_position_open.st_res;
   struct db_candle_res candle_res = {0};
   struct trend_state *restrict const st = trend_state(dbcon, e->id, t->p_id);
   struct Position *restrict p = NULL;
@@ -479,19 +473,19 @@ static struct Position *trend_position_select(
     db_tx_commit(dbcon);
   }
 
-  Candle_copy_to(cd_first, &t->bet_cd);
+  Candle_copy_to(cd_first, &t->open_cd);
 
-  switch (t->bet_cd.t) {
+  switch (t->open_cd.t) {
   case CANDLE_UP:
     // Trending up. Buy at candle high and expect the price to go up further.
     p = &t->p_long;
-    Numeric_copy_to(t->bet_cd.h, p->price);
+    Numeric_copy_to(t->open_cd.h, p->price);
     break;
   case CANDLE_DOWN:
     // Trending down. Sell at candle low and expect the price to go down
     // further.
     p = &t->p_short;
-    Numeric_copy_to(t->bet_cd.l, p->price);
+    Numeric_copy_to(t->open_cd.l, p->price);
     break;
   default:
     werr("%s: %d: %s: Candle neiter up nor down\n", __FILE__, __LINE__,
@@ -499,7 +493,7 @@ static struct Position *trend_position_select(
     fatal();
   }
 
-  st->cd_ltrend = t->bet_cd.t;
+  st->cd_ltrend = t->open_cd.t;
   Numeric_copy_to(sample->nanos, st->cd_lnanos);
   Numeric_copy_to(st->cd_lnanos, st_res->cd_lnanos);
   Numeric_copy_to(st->cd_langle, st_res->cd_langle);
@@ -551,11 +545,6 @@ static bool trend_position_close(const char *restrict const dbcon,
   mutex_unlock(st->mtx);
   return close;
 }
-
-static void trend_position_done(const char *restrict const dbcon,
-                                const struct Exchange *restrict const e,
-                                const struct Trade *restrict const t,
-                                const struct Position *restrict const p) {}
 
 static bool trend_product_plot(const char *restrict const fn,
                                const char *restrict const dbcon,

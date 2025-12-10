@@ -113,8 +113,8 @@ struct Trade {
   struct Numeric *restrict tp_pf;
   struct Position p_long;
   struct Position p_short;
-  struct Candle bet_cd;
-  struct Trigger bet_trg;
+  struct Candle open_cd;
+  struct Trigger open_trg;
   const struct Algorithm *restrict a;
 };
 
@@ -122,20 +122,16 @@ struct Algorithm {
   struct String *restrict id;
   struct String *restrict nm;
   void (*init)(void);
-  void (*terminate)(void);
-  struct Position *(*position_select)(const char *restrict const,
-                                      const struct Exchange *restrict const,
-                                      struct Trade *restrict const,
-                                      const struct Array *restrict const,
-                                      const struct Sample *restrict const);
+  void (*destroy)(void);
+  struct Position *(*position_open)(const char *restrict const,
+                                    const struct Exchange *restrict const,
+                                    struct Trade *restrict const,
+                                    const struct Array *restrict const,
+                                    const struct Sample *restrict const);
   bool (*position_close)(const char *restrict const,
                          const struct Exchange *restrict const,
                          const struct Trade *restrict const,
                          const struct Position *restrict const);
-  void (*position_done)(const char *restrict const,
-                        const struct Exchange *restrict const,
-                        const struct Trade *restrict const,
-                        const struct Position *restrict const);
   bool (*product_plot)(const char *restrict const, const char *restrict const,
                        const struct Exchange *restrict const,
                        const struct Product *restrict const);

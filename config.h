@@ -74,7 +74,7 @@ struct ProductConfig {
 };
 
 void config_init(void);
-void config_terminate(void);
+void config_destroy(void);
 
 struct Config *Config_new(void);
 void Config_delete(void *restrict const);

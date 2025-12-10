@@ -130,7 +130,7 @@ struct Exchange {
   struct String *restrict nm;
   void (*init)(void);
   void (*configure)(const struct ExchangeConfig *restrict const);
-  void (*terminate)(void);
+  void (*destroy)(void);
   void (*start)(void);
   void (*stop)(void);
   struct Array *(*products)(void);

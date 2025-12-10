@@ -27,7 +27,7 @@
 #include <time.h>
 
 void time_init(void);
-void time_terminate(void);
+void time_destroy(void);
 
 void time_now(struct timespec *restrict const);
 

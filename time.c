@@ -72,7 +72,7 @@ void time_init(void) {
   mutex_init(&time_mtx);
 }
 
-void time_terminate(void) {
+void time_destroy(void) {
   tls_delete(time_tls_key);
   mutex_destroy(&time_mtx);
 }

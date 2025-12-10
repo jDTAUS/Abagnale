@@ -191,8 +191,8 @@ static _Noreturn void usage(void) {
     werr("       %s %s %s\n", __progname, cmd_tab[i - 1].name,
          cmd_tab[i - 1].usage);
 
-  time_terminate();
-  proc_terminate();
+  time_destroy();
+  proc_destroy();
   fatal();
 }
 

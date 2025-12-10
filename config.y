@@ -1208,7 +1208,7 @@ void config_init(void) {
   files = Array_new(64);
 }
 
-void config_terminate(void) {
+void config_destroy(void) {
   Array_delete(files, file_delete);
   Map_delete(symbols, sym_delete);
 }

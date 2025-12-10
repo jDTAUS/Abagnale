@@ -38,7 +38,7 @@ void proc_init(void) {
   mutex_init(&stderr_mutex);
 }
 
-void proc_terminate(void) {
+void proc_destroy(void) {
   mutex_destroy(&stdout_mutex);
   mutex_destroy(&stderr_mutex);
 }
