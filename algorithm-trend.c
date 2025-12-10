@@ -94,6 +94,7 @@ static void trend_state_delete(void *restrict const e) {
   Numeric_delete(st->cd_lnanos);
   Numeric_delete(st->cd_langle);
   mutex_destroy(st->mtx);
+  heap_free(st->mtx);
   heap_free(e);
 }
 
@@ -264,6 +265,7 @@ static struct trend_state *trend_state(const char *dbcon,
     st->cd_lnanos = Numeric_copy(st_res->cd_lnanos);
     st->cd_langle = Numeric_copy(st_res->cd_langle);
     st->cd_ltrend = candle_trend_db(st_res->cd_ltrend);
+    st->mtx = heap_malloc(sizeof(mtx_t));
     mutex_init(st->mtx);
     Map_put(states, p_id, st);
   }
