@@ -33,21 +33,17 @@
 
 #define TREND_UUID "bfd87009-ea0f-4664-a03a-f9b6e91274dd"
 
-extern _Atomic bool terminated;
-extern const struct Numeric *restrict const zero;
-extern const struct Numeric *restrict const n_one;
-extern const struct Numeric *restrict const hundred;
-
-extern const struct Config *restrict const cnf;
-extern const bool verbose;
-
 struct trend_state {
+  mtx_t *restrict mtx;
   struct Numeric *restrict cd_lnanos;
   struct Numeric *restrict cd_langle;
   enum candle_trend cd_ltrend;
 };
 
 struct trend_tls {
+  struct trend_state_vars {
+    struct db_trend_state_res *restrict st_res;
+  } trend_state;
   struct trend_position_select_vars {
     struct Numeric *restrict r0;
     struct Numeric *restrict r1;
@@ -68,12 +64,7 @@ struct trend_tls {
     struct db_datapoint_res *restrict pt_res;
     struct db_candle_res *restrict cd_res;
   } trend_product_plot;
-  struct trend_configure_vars {
-    struct db_trend_state_res *restrict st_res;
-  } trend_configure;
 };
-
-static tss_t trend_tls_key;
 
 static const struct {
   enum candle_trend trend;
@@ -84,10 +75,35 @@ static const struct {
     {CANDLE_NONE, "NONE"},
 };
 
+extern _Atomic bool terminated;
+extern const struct Numeric *restrict const zero;
+extern const struct Numeric *restrict const n_one;
+extern const struct Numeric *restrict const hundred;
+
+extern const struct Config *restrict const cnf;
+extern const bool verbose;
+
+static tss_t trend_tls_key;
+static struct Map *states;
+
+static void trend_state_delete(void *restrict const e) {
+  if (e == NULL)
+    return;
+
+  struct trend_state *restrict st = e;
+  Numeric_delete(st->cd_lnanos);
+  Numeric_delete(st->cd_langle);
+  mutex_destroy(st->mtx);
+  heap_free(e);
+}
+
 static struct trend_tls *trend_tls(void) {
   struct trend_tls *tls = tls_get(trend_tls_key);
   if (tls == NULL) {
     tls = heap_malloc(sizeof(struct trend_tls));
+    tls->trend_state.st_res = heap_malloc(sizeof(struct db_trend_state_res));
+    tls->trend_state.st_res->cd_lnanos = Numeric_new();
+    tls->trend_state.st_res->cd_langle = Numeric_new();
     tls->trend_position_select.r0 = Numeric_from_int(0);
     tls->trend_position_select.r1 = Numeric_from_int(0);
     tls->trend_position_select.cd_pc = Numeric_from_int(0);
@@ -121,10 +137,6 @@ static struct trend_tls *trend_tls(void) {
     tls->trend_product_plot.cd_res->hnanos = Numeric_new();
     tls->trend_product_plot.cd_res->lnanos = Numeric_new();
     tls->trend_product_plot.cd_res->cnanos = Numeric_new();
-    tls->trend_configure.st_res =
-        heap_malloc(sizeof(struct db_trend_state_res));
-    tls->trend_configure.st_res->cd_lnanos = Numeric_new();
-    tls->trend_configure.st_res->cd_langle = Numeric_new();
     tls_set(trend_tls_key, tls);
   }
   return tls;
@@ -132,6 +144,9 @@ static struct trend_tls *trend_tls(void) {
 
 static void trend_tls_dtor(void *e) {
   struct trend_tls *tls = e;
+  Numeric_delete(tls->trend_state.st_res->cd_lnanos);
+  Numeric_delete(tls->trend_state.st_res->cd_langle);
+  heap_free(tls->trend_state.st_res);
   Numeric_delete(tls->trend_position_select.r0);
   Numeric_delete(tls->trend_position_select.r1);
   Numeric_delete(tls->trend_position_select.cd_pc);
@@ -162,19 +177,12 @@ static void trend_tls_dtor(void *e) {
   Numeric_delete(tls->trend_product_plot.cd_res->lnanos);
   Numeric_delete(tls->trend_product_plot.cd_res->cnanos);
   heap_free(tls->trend_product_plot.cd_res);
-  Numeric_delete(tls->trend_configure.st_res->cd_lnanos);
-  Numeric_delete(tls->trend_configure.st_res->cd_langle);
-  heap_free(tls->trend_configure.st_res);
   heap_free(tls);
   tls_set(trend_tls_key, NULL);
 }
 
 static void trend_init(void);
 static void trend_terminate(void);
-static void trend_configure(const char *restrict const,
-                            const struct Exchange *restrict const,
-                            struct Trade *restrict const);
-static void trend_deconfigure(struct Trade *restrict const);
 static struct Position *trend_position_select(
     const char *restrict const, const struct Exchange *restrict const,
     struct Trade *restrict const, const struct Array *restrict const,
@@ -196,8 +204,6 @@ struct Algorithm algorithm_trend = {
     .nm = NULL,
     .init = trend_init,
     .terminate = trend_terminate,
-    .configure = trend_configure,
-    .deconfigure = trend_deconfigure,
     .position_select = trend_position_select,
     .position_close = trend_position_close,
     .position_done = trend_position_done,
@@ -228,45 +234,43 @@ static void trend_init(void) {
   algorithm_trend.id = String_new(TREND_UUID);
   algorithm_trend.nm = String_new("trend");
   tls_create(&trend_tls_key, trend_tls_dtor);
+  states = Map_new(2048);
 }
 
 static void trend_terminate(void) {
   String_delete(algorithm_trend.id);
   String_delete(algorithm_trend.nm);
   tls_delete(trend_tls_key);
+  Map_delete(states, trend_state_delete);
 }
 
-static void trend_configure(const char *restrict const dbcon,
-                            const struct Exchange *restrict const e,
-                            struct Trade *restrict const t) {
-  if (t->a_st == NULL) {
-    const struct trend_tls *restrict const tls = trend_tls();
-    struct db_trend_state_res *restrict const st_res =
-        tls->trend_configure.st_res;
+static struct trend_state *trend_state(const char *dbcon,
+                                       struct String *restrict const e_id,
+                                       struct String *restrict const p_id) {
+  const struct trend_tls *restrict const tls = trend_tls();
+  struct trend_state *restrict st = NULL;
+  struct db_trend_state_res *restrict const st_res = tls->trend_state.st_res;
+  char ltrend[DATABASE_CANDLE_VALUE_MAX_LENGTH] = {0};
+  st_res->cd_ltrend = ltrend;
 
-    char ltrend[DATABASE_CANDLE_VALUE_MAX_LENGTH] = {0};
-    st_res->cd_ltrend = ltrend;
+  Map_lock(states);
 
-    db_trend_state(st_res, dbcon, String_chars(e->id), String_chars(t->p_id));
+  st = Map_get(states, p_id);
 
-    struct trend_state *restrict const st =
-        heap_malloc(sizeof(struct trend_state));
+  if (st == NULL) {
+    db_trend_state(st_res, dbcon, String_chars(e_id), String_chars(p_id));
 
-    st->cd_lnanos = Numeric_new();
-    st->cd_langle = Numeric_new();
-    Numeric_copy_to(st_res->cd_lnanos, st->cd_lnanos);
-    Numeric_copy_to(st_res->cd_langle, st->cd_langle);
+    st = heap_malloc(sizeof(struct trend_state));
+    st->cd_lnanos = Numeric_copy(st_res->cd_lnanos);
+    st->cd_langle = Numeric_copy(st_res->cd_langle);
     st->cd_ltrend = candle_trend_db(st_res->cd_ltrend);
-    t->a_st = st;
+    mutex_init(st->mtx);
+    Map_put(states, p_id, st);
   }
-}
 
-static void trend_deconfigure(struct Trade *restrict const t) {
-  struct trend_state *restrict const st = t->a_st;
-  Numeric_delete(st->cd_lnanos);
-  Numeric_delete(st->cd_langle);
-  heap_free(st);
-  t->a_st = NULL;
+  Map_unlock(states);
+  mutex_lock(st->mtx);
+  return st;
 }
 
 static struct Position *trend_position_select(
@@ -291,7 +295,7 @@ static struct Position *trend_position_select(
   struct db_trend_state_res *restrict const st_res =
       tls->trend_position_select.st_res;
   struct db_candle_res candle_res = {0};
-  struct trend_state *restrict const st = t->a_st;
+  struct trend_state *restrict const st = trend_state(dbcon, e->id, t->p_id);
   struct Position *restrict p = NULL;
   void **items;
 
@@ -382,8 +386,10 @@ static struct Position *trend_position_select(
     }
   }
 
-  if (cd_first->t == CANDLE_NONE || cd_first->t != cd_last->t)
+  if (cd_first->t == CANDLE_NONE || cd_first->t != cd_last->t) {
+    mutex_unlock(st->mtx);
     return NULL;
+  }
 
   /*
    * In order to be able to perform trigonometric functions, time and amount
@@ -422,8 +428,10 @@ static struct Position *trend_position_select(
   if (st->cd_ltrend == cd_first->t &&
       Numeric_cmp(((struct Sample *)Array_head(samples))->nanos,
                   st->cd_lnanos) <= 0 &&
-      Numeric_cmp(st->cd_langle, r1) > 0)
+      Numeric_cmp(st->cd_langle, r1) > 0) {
+    mutex_unlock(st->mtx);
     return NULL;
+  }
 
   Numeric_copy_to(r1, st->cd_langle);
   Numeric_copy_to(st->cd_langle, cd_first->a);
@@ -498,6 +506,7 @@ static struct Position *trend_position_select(
   db_trend_state_update(dbcon, String_chars(e->id), String_chars(t->p_id),
                         st_res);
 
+  mutex_unlock(st->mtx);
   return p;
 }
 
@@ -505,7 +514,7 @@ static bool trend_position_close(const char *restrict const dbcon,
                                  const struct Exchange *restrict const e,
                                  const struct Trade *restrict const t,
                                  const struct Position *restrict const p) {
-  struct trend_state *restrict const st = t->a_st;
+  struct trend_state *restrict const st = trend_state(dbcon, e->id, t->p_id);
   bool close = false;
 
   switch (p->side) {
@@ -537,6 +546,7 @@ static bool trend_position_close(const char *restrict const dbcon,
     fatal();
   }
 
+  mutex_unlock(st->mtx);
   return close;
 }
 

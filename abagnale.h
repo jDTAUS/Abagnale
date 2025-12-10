@@ -116,7 +116,6 @@ struct Trade {
   struct Candle bet_cd;
   struct Trigger bet_trg;
   const struct Algorithm *restrict a;
-  void *restrict a_st;
 };
 
 struct Algorithm {
@@ -124,10 +123,6 @@ struct Algorithm {
   struct String *restrict nm;
   void (*init)(void);
   void (*terminate)(void);
-  void (*configure)(const char *restrict const,
-                    const struct Exchange *restrict const,
-                    struct Trade *restrict const);
-  void (*deconfigure)(struct Trade *restrict const);
   struct Position *(*position_select)(const char *restrict const,
                                       const struct Exchange *restrict const,
                                       struct Trade *restrict const,

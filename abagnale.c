@@ -678,7 +678,6 @@ static inline struct Trade *trade_new(
   t->tp_pf = Numeric_copy(one);
   t->tp = Numeric_copy(zero);
   t->a = NULL;
-  t->a_st = NULL;
   candle_init(&t->bet_cd);
   position_init(&t->p_long);
   t->p_long.side = POSITION_SIDE_BUY;
@@ -709,10 +708,6 @@ static inline void trade_delete(void *restrict const t) {
   position_delete(&trade->p_long);
   position_delete(&trade->p_short);
   trigger_delete(&trade->bet_trg);
-
-  if (trade->a != NULL)
-    trade->a->deconfigure(trade);
-
   heap_free(trade);
 }
 
@@ -2444,7 +2439,6 @@ static int orders_process(void *restrict const arg) {
       if (t->status == TRADE_STATUS_BUYING ||
           t->status == TRADE_STATUS_SELLING) {
         t->a = w_ctx->a;
-        t->a->configure(w_ctx->db, w_ctx->ex, t);
         Numeric_copy_to(w_ctx->q_tgt, t->tp);
         trade_pricing(w_ctx, t);
         position_maintain(w_ctx, t, p, samples, Array_tail(samples), order);
@@ -2582,7 +2576,6 @@ static int samples_process(void *restrict const arg) {
     for (size_t i = Array_size(trades); i > 0; i--) {
       struct Trade *restrict const t = items[i - 1];
       t->a = ctx->a;
-      t->a->configure(ctx->db, ctx->ex, t);
       Numeric_copy_to(ctx->q_tgt, t->tp);
       trade_pricing(ctx, t);
       trade_maintain(ctx, t, samples, Array_tail(samples));
