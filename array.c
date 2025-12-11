@@ -142,8 +142,7 @@ inline void *Array_remove_idx(struct Array *restrict const a, const size_t i) {
   if (i < a->size - 1)
     memmove(&a->items[i], &a->items[i + 1], sizeof(void *) * (a->size - 1 - i));
 
-  a->items[a->size - 1] = NULL;
-  a->size--;
+  a->items[--a->size] = NULL;
   return item;
 }
 
