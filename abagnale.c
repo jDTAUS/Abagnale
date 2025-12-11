@@ -2144,6 +2144,12 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
   Numeric_copy_to(r0, p->cl_factor);
   position_create(w_ctx, t, p);
   position_timeout(w_ctx, t, p, samples, sample);
+  char *restrict const p_info = position_string(t, p);
+  wout("%s: %s->%s: %s: %s\n", String_chars(w_ctx->ex->nm),
+       String_chars(t->q_id), String_chars(t->b_id), String_chars(p->id),
+       p_info);
+
+  heap_free(p_info);
 ret:
   Numeric_char_free(b);
   Numeric_char_free(pr);
