@@ -1779,14 +1779,16 @@ static void position_trade(const struct worker_ctx *restrict const w_ctx,
   char *restrict const pr = Numeric_to_char(o_pr, t->p_sc);
   char *restrict const p_info = position_string(t, p);
 
-  wout("%s: %s->%s: %s %s: %s%s@%s%s\n", String_chars(w_ctx->ex->nm),
-       String_chars(t->q_id), String_chars(t->b_id), ac_info, tr_info, b,
-       String_chars(t->b_id), pr, String_chars(t->q_id));
+  wout("%s: %s->%s: %s: %s %s: %s%s@%s%s\n", String_chars(w_ctx->ex->nm),
+       String_chars(t->q_id), String_chars(t->b_id), String_chars(t->id),
+       ac_info, tr_info, b, String_chars(t->b_id), pr, String_chars(t->q_id));
 
-  wout("%s: %s->%s: %s\n", String_chars(w_ctx->ex->nm), String_chars(t->q_id),
-       String_chars(t->b_id), p_info);
+  wout("%s: %s->%s: %s: %s\n", String_chars(w_ctx->ex->nm),
+       String_chars(t->q_id), String_chars(t->b_id), String_chars(p->id),
+       p_info);
 
   struct String *restrict o_id;
+  struct Position *restrict o_p;
   switch (p->side) {
   case POSITION_SIDE_BUY:
     o_id = w_ctx->ex->sell(t->p_id, b, pr);
@@ -1802,6 +1804,7 @@ static void position_trade(const struct worker_ctx *restrict const w_ctx,
     Numeric_copy_to(p->b_filled, t->p_short.b_ordered);
     position_create(w_ctx, t, &t->p_short);
     position_timeout(w_ctx, t, &t->p_short, samples, sample);
+    o_p = &t->p_short;
     break;
   case POSITION_SIDE_SELL:
     o_id = w_ctx->ex->buy(t->p_id, b, pr);
@@ -1817,6 +1820,7 @@ static void position_trade(const struct worker_ctx *restrict const w_ctx,
     Numeric_copy_to(p->b_filled, t->p_long.b_ordered);
     position_create(w_ctx, t, &t->p_long);
     position_timeout(w_ctx, t, &t->p_long, samples, sample);
+    o_p = &t->p_long;
     break;
   default:
     werr("%s: %d: %s: Position neither buy nor sell\n", __FILE__, __LINE__,
@@ -1824,6 +1828,11 @@ static void position_trade(const struct worker_ctx *restrict const w_ctx,
     fatal();
   }
 
+  char *restrict const o_info = position_string(t, o_p);
+  wout("%s: %s->%s: %s: %s\n", String_chars(w_ctx->ex->nm),
+       String_chars(t->q_id), String_chars(t->b_id), String_chars(o_p->id),
+       o_info);
+  heap_free(o_info);
 ret:
   Numeric_char_free(b);
   Numeric_char_free(pr);
