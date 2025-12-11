@@ -1098,9 +1098,11 @@ static void ws_listener(struct mg_connection *restrict c, int ev,
     wdebug("coinbase: %s: %lu: MG_EV_CLOSE\n", channel->name, c->id);
 #endif
     if (running) {
+      struct mg_mgr *restrict const mgr = c->mgr;
+
       do {
         thread_sleep(&api_reconnect_rate);
-        c = mg_ws_connect(c->mgr, ABAG_COINBASE_WEBSOCKET_URL, ws_listener,
+        c = mg_ws_connect(mgr, ABAG_COINBASE_WEBSOCKET_URL, ws_listener,
                           channel, NULL);
         if (!c)
           werr("coinbase: %s: Failure reconnecting\n", channel->name);
