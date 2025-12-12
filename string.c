@@ -78,8 +78,8 @@ inline struct String *String_cnnew(const char *restrict s, size_t maxlen) {
   return str;
 }
 
-inline struct String *String_crnew(const struct String *restrict s,
-                                   const size_t i, const size_t c) {
+inline struct String *String_rnew(const struct String *restrict s,
+                                  const size_t i, const size_t c) {
   const char *s_p;
   // i + c + 1 <= SIZE_MAX
   // => i <= SIZE_MAX - c - 1
