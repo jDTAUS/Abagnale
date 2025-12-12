@@ -277,7 +277,7 @@
 
 #define WCJSON_PRODUCT_ITEM(_doc, _val, _item, _len, _errbuf, _ret)            \
   WCJSON_STRING_ITEM(_doc, _val, _item, _len, _errbuf, _ret)                   \
-  j_##_item##_str = String_new(j_##_item->mbstring);                           \
+  j_##_item##_str = String_cnew(j_##_item->mbstring);                          \
   j_##_item##_p = coinbase_product_name(j_##_item##_str);                      \
   String_delete(j_##_item##_str);                                              \
   j_##_item##_str = NULL;                                                      \
@@ -818,7 +818,7 @@ static void ws_user_update(const struct wcjson_document *restrict const doc,
   struct String *msg = NULL;
 
   if (j_reject_Reason_exists) {
-    msg = String_new(j_reject_Reason->mbstring);
+    msg = String_cnew(j_reject_Reason->mbstring);
     if (String_length(msg) == 0) {
       String_delete(msg);
       msg = NULL;
@@ -826,7 +826,7 @@ static void ws_user_update(const struct wcjson_document *restrict const doc,
   }
 
   if (msg == NULL && j_cancel_reason_exists) {
-    msg = String_new(j_cancel_reason->mbstring);
+    msg = String_cnew(j_cancel_reason->mbstring);
     if (String_length(msg) == 0) {
       String_delete(msg);
       msg = NULL;
@@ -834,7 +834,7 @@ static void ws_user_update(const struct wcjson_document *restrict const doc,
   }
 
   o = Order_new();
-  o->id = String_new(j_order_id->mbstring);
+  o->id = String_cnew(j_order_id->mbstring);
   o->p_id = String_copy(j_product_id_p->id);
   o->status = order_status(j_status->mbstring);
   o->cnanos = j_creation_time_nanos;
@@ -1349,8 +1349,8 @@ cleanup:
 }
 
 static void coinbase_init(void) {
-  exchange_coinbase.id = String_new(COINBASE_UUID);
-  exchange_coinbase.nm = String_new("coinbase");
+  exchange_coinbase.id = String_cnew(COINBASE_UUID);
+  exchange_coinbase.nm = String_cnew("coinbase");
   running = false;
   coinbase_cnf = NULL;
   orders = Queue_new(128, (time_t)0);
@@ -1491,9 +1491,10 @@ parse_product(const struct wcjson_document *restrict const doc,
   const char *restrict const p_dot = strchr(j_price_increment->mbstring, '.');
   const char *restrict const b_dot = strchr(j_base_increment->mbstring, '.');
   const char *restrict const q_dot = strchr(j_quote_increment->mbstring, '.');
-  struct String *restrict const b_id = String_new(j_base_currency_id->mbstring);
+  struct String *restrict const b_id =
+      String_cnew(j_base_currency_id->mbstring);
   struct String *restrict const q_id =
-      String_new(j_quote_currency_id->mbstring);
+      String_cnew(j_quote_currency_id->mbstring);
 
   // Find matching accounts required for trading.
   Array_lock(accounts);
@@ -1507,8 +1508,8 @@ parse_product(const struct wcjson_document *restrict const doc,
   const enum product_type type_value = product_type(j_product_type->mbstring);
 
   p = Product_new();
-  p->id = String_new(p_uuid);
-  p->nm = String_new(j_product_id->mbstring);
+  p->id = String_cnew(p_uuid);
+  p->nm = String_cnew(j_product_id->mbstring);
   p->type = type_value;
   p->status = status_value;
   p->b_id = b_id;
@@ -1680,9 +1681,9 @@ parse_account(const struct wcjson_document *restrict const doc,
   WCJSON_BOOL_ITEM_OPT(doc, acct, ready, 5, errbuf, ret)
 
   a = Account_new();
-  a->id = String_new(j_uuid->mbstring);
-  a->nm = String_new(j_name->mbstring);
-  a->c_id = String_new(j_currency->mbstring);
+  a->id = String_cnew(j_uuid->mbstring);
+  a->nm = String_cnew(j_name->mbstring);
+  a->c_id = String_cnew(j_currency->mbstring);
   a->type = account_type(j_type->mbstring);
   a->avail = j_value_num;
   a->is_active = j_active_exists && j_active->is_true;
@@ -1900,7 +1901,7 @@ parse_order(const struct wcjson_document *restrict const doc,
   struct String *restrict msg = NULL;
 
   if (j_reject_message_exists) {
-    msg = String_new(j_reject_message->mbstring);
+    msg = String_cnew(j_reject_message->mbstring);
     if (String_length(msg) == 0) {
       String_delete(msg);
       msg = NULL;
@@ -1908,7 +1909,7 @@ parse_order(const struct wcjson_document *restrict const doc,
   }
 
   if (msg == NULL && j_cancel_message_exists) {
-    msg = String_new(j_cancel_message->mbstring);
+    msg = String_cnew(j_cancel_message->mbstring);
     if (String_length(msg) == 0) {
       String_delete(msg);
       msg = NULL;
@@ -1916,7 +1917,7 @@ parse_order(const struct wcjson_document *restrict const doc,
   }
 
   o = Order_new();
-  o->id = String_new(j_order_id->mbstring);
+  o->id = String_cnew(j_order_id->mbstring);
   o->p_id = String_copy(j_product_id_p->id);
   o->settled = j_settled->is_true;
   o->status = order_status(j_status->mbstring);
@@ -2097,7 +2098,7 @@ static struct String *coinbase_order_post(
       WCJSON_OBJECT_ITEM(&doc, doc.values, success_response, 16, errbuf, ret)
       WCJSON_STRING_ITEM(&doc, j_success_response, order_id, 8, errbuf, ret)
 
-      o_id = String_new(j_order_id->mbstring);
+      o_id = String_cnew(j_order_id->mbstring);
 
       mutex_lock(&pricing_mutex);
       Pricing_delete(pricing);
@@ -2148,7 +2149,7 @@ parse_pricing(const struct wcjson_document *restrict const doc,
                        : j_maker_fee_rate_num);
 
   struct Pricing *restrict parsed = Pricing_new();
-  parsed->nm = String_new(j_pricing_tier->mbstring);
+  parsed->nm = String_cnew(j_pricing_tier->mbstring);
   parsed->tf_pc = Numeric_mul(j_taker_fee_rate_num, hundred);
   parsed->mf_pc = Numeric_mul(j_maker_fee_rate_num, hundred);
   parsed->ef_pc = Numeric_mul(efr, hundred);
@@ -2160,7 +2161,7 @@ parse_pricing(const struct wcjson_document *restrict const doc,
   return parsed;
 fallback:
   parsed = Pricing_new();
-  parsed->nm = String_new("fallback");
+  parsed->nm = String_cnew("fallback");
   parsed->tf_pc = Numeric_from_char("1.2");
   parsed->mf_pc = Numeric_from_char("1.2");
   parsed->ef_pc = Numeric_from_char("1.2");

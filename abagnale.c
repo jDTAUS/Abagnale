@@ -1077,7 +1077,7 @@ static void position_create(const struct worker_ctx *restrict const w_ctx,
                        String_chars(t->p_id), String_chars(t->b_id),
                        String_chars(t->q_id), String_chars(p->id), p->b_ordered,
                        p->price);
-      t->id = String_new(t_id);
+      t->id = String_cnew(t_id);
     } else
       db_trade_bupdate(w_ctx->db, String_chars(t->id), String_chars(p->id),
                        p->b_ordered, p->price);
@@ -1090,7 +1090,7 @@ static void position_create(const struct worker_ctx *restrict const w_ctx,
                        String_chars(t->p_id), String_chars(t->b_id),
                        String_chars(t->q_id), String_chars(p->id), p->b_ordered,
                        p->price);
-      t->id = String_new(t_id);
+      t->id = String_cnew(t_id);
     } else
       db_trade_supdate(w_ctx->db, String_chars(t->id), String_chars(p->id),
                        p->b_ordered, p->price);
@@ -2251,14 +2251,14 @@ static struct Array *trades_load(const struct worker_ctx *w_ctx,
                   String_copy(w_ctx->p->ba_id), String_copy(w_ctx->p->qa_id),
                   w_ctx->p->b_sc, w_ctx->p->q_sc, w_ctx->p->p_sc);
 
-    t->id = String_new(trade->id);
+    t->id = String_cnew(trade->id);
 
     if (verbose)
       wout("%s: %s->%s: %s: Resuming trade\n", String_chars(w_ctx->ex->nm),
            String_chars(w_ctx->p->q_id), String_chars(w_ctx->p->b_id),
            String_chars(t->id));
 
-    t->p_long.id = trade->bo_id_null ? NULL : String_new(trade->bo_id);
+    t->p_long.id = trade->bo_id_null ? NULL : String_cnew(trade->bo_id);
 
     if (!trade->b_cnanos_null)
       Numeric_copy_to(trade->b_cnanos, t->p_long.cnanos);
@@ -2289,7 +2289,7 @@ static struct Array *trades_load(const struct worker_ctx *w_ctx,
     if (!trade->b_q_filled_null)
       Numeric_copy_to(trade->b_q_filled, t->p_long.q_filled);
 
-    t->p_short.id = trade->so_id_null ? NULL : String_new(trade->so_id);
+    t->p_short.id = trade->so_id_null ? NULL : String_cnew(trade->so_id);
 
     if (!trade->s_cnanos_null)
       Numeric_copy_to(trade->s_cnanos, t->p_short.cnanos);

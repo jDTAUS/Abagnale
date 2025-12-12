@@ -226,8 +226,8 @@ static char *db_candle_trend(const enum candle_trend trend) {
 }
 
 static void trend_init(void) {
-  algorithm_trend.id = String_new(TREND_UUID);
-  algorithm_trend.nm = String_new("trend");
+  algorithm_trend.id = String_cnew(TREND_UUID);
+  algorithm_trend.nm = String_cnew("trend");
   tls_create(&trend_tls_key, trend_tls_dtor);
   states = Map_new(2048);
 }

@@ -25,19 +25,17 @@
 
 struct String;
 
-struct String *String_new(const char *restrict);
-struct String *String_nnew(const char *restrict, size_t);
-struct String *String_subdup(const struct String *restrict const, const size_t,
-                             const size_t);
+struct String *String_cnew(const char *restrict);
+struct String *String_cnnew(const char *restrict, size_t);
+struct String *String_crnew(const struct String *restrict const, const size_t,
+                            const size_t);
+struct String *String_copy(struct String *restrict const);
+bool String_equals(const struct String *restrict const,
+                   const struct String *restrict const);
 void String_delete(void *restrict const);
 
 const char *String_chars(const struct String *restrict const);
 const size_t String_length(const struct String *restrict const);
 const size_t String_hash(const struct String *restrict const);
-
-struct String *String_copy(struct String *restrict const);
-
-bool String_equals(const struct String *restrict const,
-                   const struct String *restrict const);
 
 #endif

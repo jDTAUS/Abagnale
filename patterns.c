@@ -37,7 +37,7 @@
  * Origin: OpenBSD 7.8 httpd/patterns.c
  * Modifications: Use standard C int64_t instead of POSIX off_t
  *                Use struct String instead of char
- *                Replace POSIX strndup with String_nnew
+ *                Replace POSIX strndup with String_cnnew
  *                Prefix functions dealing with the heap with heap_
  */
 
@@ -696,7 +696,7 @@ str_match(const char *string, const char *pattern, struct str_match *m,
 	for (i = 0; i < ret; i++) {
 		if (sm[i].sm_so > sm[i].sm_eo)
 			continue;
-    m->sm_match[i] = String_nnew(string + sm[i].sm_so,
+    m->sm_match[i] = String_cnnew(string + sm[i].sm_so,
         sm[i].sm_eo - sm[i].sm_so);
 	}
 

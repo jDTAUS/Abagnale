@@ -32,7 +32,7 @@ struct String {
   struct Object *restrict obj;
 };
 
-inline struct String *String_new(const char *restrict s) {
+inline struct String *String_cnew(const char *restrict s) {
   size_t hc = 5381;
   const char *s_p;
 
@@ -55,7 +55,7 @@ inline struct String *String_new(const char *restrict s) {
   return str;
 }
 
-inline struct String *String_nnew(const char *restrict s, size_t maxlen) {
+inline struct String *String_cnnew(const char *restrict s, size_t maxlen) {
   size_t hc = 5381;
   const char *s_p;
 
@@ -78,8 +78,8 @@ inline struct String *String_nnew(const char *restrict s, size_t maxlen) {
   return str;
 }
 
-inline struct String *String_subdup(const struct String *restrict s,
-                                    const size_t i, const size_t c) {
+inline struct String *String_crnew(const struct String *restrict s,
+                                   const size_t i, const size_t c) {
   const char *s_p;
   // i + c + 1 <= SIZE_MAX
   // => i <= SIZE_MAX - c - 1

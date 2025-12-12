@@ -254,7 +254,7 @@ static int cmd_markets(int argc, char *argv[]) {
   while ((ch = optparse(&options, "e:s:t:")) != -1) {
     switch (ch) {
     case 'e':
-      exc_name = String_new(options.optarg);
+      exc_name = String_cnew(options.optarg);
       break;
     case 's':
       status = product_status_value(options.optarg);
@@ -309,10 +309,10 @@ static int cmd_market(int argc, char *argv[]) {
   while ((ch = optparse(&options, "e:i:")) != -1) {
     switch (ch) {
     case 'e':
-      exc_name = String_new(options.optarg);
+      exc_name = String_cnew(options.optarg);
       break;
     case 'i':
-      p_id = String_new(options.optarg);
+      p_id = String_cnew(options.optarg);
       break;
     default:
       usage();
@@ -355,7 +355,7 @@ static int cmd_accounts(int argc, char *argv[]) {
   while ((ch = optparse(&options, "e:t:")) != -1) {
     switch (ch) {
     case 'e':
-      exc_name = String_new(options.optarg);
+      exc_name = String_cnew(options.optarg);
       break;
     case 't':
       type = account_type_value(options.optarg);
@@ -404,10 +404,10 @@ static int cmd_account(int argc, char *argv[]) {
   while ((ch = optparse(&options, "e:i:")) != -1) {
     switch (ch) {
     case 'e':
-      exc_name = String_new(options.optarg);
+      exc_name = String_cnew(options.optarg);
       break;
     case 'i':
-      a_id = String_new(options.optarg);
+      a_id = String_cnew(options.optarg);
       break;
     default:
       usage();
@@ -457,10 +457,10 @@ static int cmd_order(int argc, char *argv[]) {
   while ((ch = optparse(&options, "e:i:")) != -1) {
     switch (ch) {
     case 'e':
-      exc_name = String_new(options.optarg);
+      exc_name = String_cnew(options.optarg);
       break;
     case 'i':
-      o_id = String_new(options.optarg);
+      o_id = String_cnew(options.optarg);
       break;
     default:
       usage();
@@ -539,13 +539,13 @@ static int cmd_plot(int argc, char *argv[]) {
   while ((ch = optparse(&options, "e:p:a:f:")) != -1) {
     switch (ch) {
     case 'e':
-      exc_name = String_new(options.optarg);
+      exc_name = String_cnew(options.optarg);
       break;
     case 'm':
-      p_name = String_new(options.optarg);
+      p_name = String_cnew(options.optarg);
       break;
     case 'a':
-      a_name = String_new(options.optarg);
+      a_name = String_cnew(options.optarg);
       break;
     case 'f':
       f_name = options.optarg;

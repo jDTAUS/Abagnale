@@ -249,10 +249,10 @@ dbconf  : conf_db
 
 database  : DATABASE dbconf {
             if (conf->db_tgt == NULL)
-              conf->db_tgt = String_new(ABAG_DATABASE_TARGET);
+              conf->db_tgt = String_cnew(ABAG_DATABASE_TARGET);
 
             if (conf->db_usr == NULL)
-              conf->db_usr = String_new(ABAG_DATABASE_USER);
+              conf->db_usr = String_cnew(ABAG_DATABASE_USER);
 
           }
           ;
@@ -423,8 +423,8 @@ conf_exchange : CDP STRING {
                   YYERROR;
                 }
 
-                e_cnf->jwt_kid = String_new(nm->mbstring);
-                e_cnf->jwt_key = String_new(key->mbstring);
+                e_cnf->jwt_kid = String_cnew(nm->mbstring);
+                e_cnf->jwt_key = String_cnew(key->mbstring);
 
                 String_delete($2);
                 heap_free(mb_buf);
@@ -875,7 +875,7 @@ top:
       break;
     }
 
-    nam = String_new(buf);
+    nam = String_cnew(buf);
     val = symget(nam);
     String_delete(nam);
 
@@ -925,7 +925,7 @@ top:
       }
       *p++ = c;
     }
-    yylval.v.string = String_new(buf);
+    yylval.v.string = String_cnew(buf);
     return (STRING);
   }
 
@@ -978,7 +978,7 @@ top:
     lungetc(c);
     *p = '\0';
     if ((token = lookup(buf)) == STRING)
-      yylval.v.string = String_new(buf);
+      yylval.v.string = String_cnew(buf);
     return (token);
   }
   if (c == '\n') {
@@ -1030,7 +1030,7 @@ int config_fparse(struct Config *const x_conf,
                   const char *restrict const filename) {
   conf = x_conf;
   errors = 0;
-  struct String *restrict const f_nm = String_new(filename);
+  struct String *restrict const f_nm = String_cnew(filename);
   void **items;
 
   if ((file = pushfile(f_nm)) == NULL) {
@@ -1120,7 +1120,7 @@ int config_symset(char *restrict const s) {
     return (-1);
 
   *val = '\0';
-  r = symset(String_new(s), String_new(val + 1), 1);
+  r = symset(String_cnew(s), String_cnew(val + 1), 1);
   *val = '=';
   return r;
 }
@@ -1177,7 +1177,7 @@ static struct Numeric *parse_nanos(const struct String *restrict const str) {
 
       if (String_length(str) > 1) {
         struct String *restrict const s =
-          String_subdup(str, 0, String_length(str) - 1);
+          String_crnew(str, 0, String_length(str) - 1);
 
         r = Numeric_from_char(String_chars(s));
         String_delete(s);
