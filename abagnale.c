@@ -1713,7 +1713,7 @@ static void position_trade(const struct worker_ctx *restrict const w_ctx,
   const char *restrict ac_info;
   switch (p->side) {
   case POSITION_SIDE_BUY:
-    ac_info = "Selling";
+    ac_info = "Offering";
     // Long: Sell at highest price since trigger.
     items = Array_items(samples);
     for (size_t i = Array_size(samples); i > 0; i--) {
@@ -1724,7 +1724,7 @@ static void position_trade(const struct worker_ctx *restrict const w_ctx,
     }
     break;
   case POSITION_SIDE_SELL:
-    ac_info = "Buying";
+    ac_info = "Requesting";
     // Short: Buy at lowest price since trigger.
     items = Array_items(samples);
     for (size_t i = Array_size(samples); i > 0; i--) {
