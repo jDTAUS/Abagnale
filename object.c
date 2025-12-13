@@ -43,12 +43,11 @@ inline bool Object_delete(void *restrict const o) {
   bool del = false;
 
   mutex_lock(obj->mtx);
-  if (obj->r_cnt == 0) {
-    werr("%s: %d: %s: o->r_cnt == 0\n", __FILE__, __LINE__, __func__);
+  if (obj->r_cnt-- == 0) {
+    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
     fatal();
   }
 
-  obj->r_cnt--;
   if (obj->r_cnt == 0)
     del = true;
 
@@ -68,12 +67,13 @@ inline struct Object *Object_copy(struct Object *restrict const o) {
     return NULL;
 
   mutex_lock(o->mtx);
-  size_t saved_cnt = o->r_cnt;
-  o->r_cnt++;
+  size_t saved_cnt = o->r_cnt++;
+
   if (o->r_cnt < saved_cnt) {
-    werr("%s: %d: %s: Too many references\n", __FILE__, __LINE__, __func__);
+    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
     fatal();
   }
+
   mutex_unlock(o->mtx);
   return o;
 }
