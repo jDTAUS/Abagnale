@@ -1177,7 +1177,7 @@ static struct Numeric *parse_nanos(const struct String *restrict const str) {
 
       if (String_length(str) > 1) {
         struct String *restrict const s =
-          String_rnew(str, 0, String_length(str) - 1);
+          String_new(str, 0, String_length(str) - 1);
 
         r = Numeric_from_char(String_chars(s));
         String_delete(s);
