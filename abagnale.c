@@ -944,8 +944,8 @@ static void position_pricing(const struct worker_ctx *restrict const w_ctx,
    *  b = Base amount
    *  p = Order price
    *  p_inc = Price increment
-   *  fee = Fee percent factor (e.g. 0.02% = 1.02)
-   *  tgt = Volatility percent factor (e.g. 0.02% = 1.02)
+   *  fee = Fee percent factor (e.g. 0.2% = 1.002)
+   *  tgt = Volatility percent factor (e.g. 0.2% = 1.002)
    *  tp = Targetted take profit
    *  tp_pr_long = Take profit price for a long position
    *  sl_pr_long = Stop loss price for a long position
