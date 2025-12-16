@@ -544,7 +544,6 @@ static inline void position_init(struct Position *restrict const p) {
   p->b_ordered = Numeric_copy(zero);
   p->b_filled = Numeric_copy(zero);
   p->q_fees = Numeric_copy(zero);
-  p->fee_pc = Numeric_copy(zero);
   p->q_filled = Numeric_copy(zero);
   p->q_ordered = Numeric_copy(zero);
   p->cl_samples = Numeric_copy(zero);
@@ -571,7 +570,6 @@ static inline void position_reset(struct Position *restrict const p) {
   Numeric_copy_to(zero, p->b_ordered);
   Numeric_copy_to(zero, p->b_filled);
   Numeric_copy_to(zero, p->q_fees);
-  Numeric_copy_to(zero, p->fee_pc);
   Numeric_copy_to(zero, p->q_filled);
   Numeric_copy_to(zero, p->q_ordered);
   Numeric_copy_to(zero, p->cl_samples);
@@ -592,7 +590,6 @@ static inline void position_delete(const struct Position *restrict const p) {
   Numeric_delete(p->b_ordered);
   Numeric_delete(p->b_filled);
   Numeric_delete(p->q_fees);
-  Numeric_delete(p->fee_pc);
   Numeric_delete(p->q_filled);
   Numeric_delete(p->q_ordered);
   Numeric_delete(p->cl_samples);
@@ -944,124 +941,142 @@ static void position_pricing(const struct worker_ctx *restrict const w_ctx,
   struct Numeric *restrict const r0 = tls->position_pricing.r0;
   struct Numeric *restrict const r1 = tls->position_pricing.r1;
   struct Numeric *restrict const r2 = tls->position_pricing.r2;
-  struct Numeric *restrict const r3 = tls->position_pricing.r3;
 
   /*
    * Let
-   *  b = Minimum base amount to order.
-   *  p = Order price.
-   *  fee = Fee percent factor (e.g. 0.01).
-   *  tgt = Target percent factor (e.g. 1.01).
-   *  tp = Targetted take profit.
-   *  tp_pr_long = Take profit price for a long position.
-   *  sl_pr_long = Stop loss price for a long position.
-   *  tp_pr_short = Take profit price for a short position.
-   *  sl_pr_short = Stop loss price for a short position.
+   *  b = Base amount
+   *  p = Order price
+   *  p_inc = Price increment
+   *  fee = Fee percent factor (e.g. 0.02% = 1.02)
+   *  tgt = Volatility percent factor (e.g. 0.02% = 1.02)
+   *  tp = Targetted take profit
+   *  tp_pr_long = Take profit price for a long position
+   *  sl_pr_long = Stop loss price for a long position
+   *  tp_pr_short = Take profit price for a short position
+   *  sl_pr_short = Stop loss price for a short position
    *
-   *                tp
-   *    b = ------------------
-   *         (1+fee)(tgt-1)*p
+   * I. b * p * tgt * fee - b * p * fee = tp
    *
-   *    sl_pr_long = p+2*p*fee
+   * => (p * fee)(b * tgt - b) = tp
    *
-   *    tp_pr_long = sl_pr_long * tgt
+   * => p * fee * b * (tgt - 1) = tp
    *
-   *    tp_pr_short = 2*p-tp_pr_long
+   *                 tp
+   * => b = ---------------------
+   *         p * fee * (tgt - 1)
    *
-   *    sl_pr_short = p-2*p*fee
    *
+   * II. b * sl_pr_long * fee - b * p * fee = p_inc
+   *
+   * => (b * fee)(sl_pr_long - p) = p_inc
+   *
+   *                       p_inc
+   * => sl_pr_long = p + ---------
+   *                      b * fee
+   *
+   *
+   * III. b * tp_pr_long * fee - b * p * fee = tp
+   *
+   * => (b * fee)(tp_pr_long - p) = tp
+   *
+   *                        tp
+   * => tp_pr_long = p + ---------
+   *                      b * fee
+   *
+   * IV. b * p * fee - b * sl_pr_short * fee = p_inc
+   *
+   * => (b * fee)(p - sl_pr_short) = p_inc
+   *
+   *
+   *                      p_inc
+   * => - sl_pr_short = --------- - p
+   *                     b * fee
+   *
+   *                        p_inc
+   * => sl_pr_short = p - ---------
+   *                       b * fee
+   *
+   * V. b * p * fee - b * tp_pr_short * fee = tp
+   *
+   * => (b * fee)(p - tp_pr_short) = tp
+   *
+   *                       tp
+   * => - tp_pr_short = --------- - p
+   *                     b * fee
+   *
+   *                         tp
+   * => tp_pr_short = p - ---------
+   *                       b * fee
    */
 
   if (create) {
-    Numeric_div_to(t->fee_pc, hundred, r0);
-    // r0 = fee
-    Numeric_add_to(one, r0, r1);
-    // r1 = (1+fee)
-    Numeric_sub_to(t->tp_pf, one, r2);
-    // r2 = (tgt-1)
-    Numeric_mul_to(r1, r2, r3);
-    Numeric_mul_to(r3, p->price, r1);
-    // r1: (1+fee)(tgt-1)p
-    Numeric_div_to(t->tp, r1, p->b_ordered);
+    Numeric_sub_to(t->tp_pf, one, r0);
+    // r0 = tgt - 1
+    Numeric_mul_to(p->price, t->fee_pf, r1);
+    // r1 = p * fee
+    Numeric_mul_to(r0, r1, r2);
+    // r2 = p * fee * (tgt - 1)
+    Numeric_div_to(t->tp, r2, p->b_ordered);
     Numeric_scale(p->b_ordered, t->b_sc);
   }
 
-  if (Numeric_cmp(t->fee_pc, p->fee_pc) != 0) {
-    Numeric_copy_to(t->fee_pc, p->fee_pc);
-    Numeric_div_to(t->fee_pc, hundred, r0);
-    // r0 = fee
+  // Quote.
+  Numeric_mul_to(p->b_ordered, p->price, p->q_ordered);
+  Numeric_scale(p->q_ordered, t->q_sc);
 
-    // Stop loss price long.
-    Numeric_mul_to(two, r0, r1);
-    // r1 = 2*fee
-    Numeric_mul_to(r1, p->price, r2);
-    // r2 = p*2*fee
-    Numeric_add_to(p->price, r2, p->sl_price);
+  scale_to_increment(p_inc, t->p_sc);
+
+  Numeric_mul_to(p->b_ordered, t->fee_pf, r0);
+  // r0 = b * fee
+  Numeric_div_to(p_inc, r0, r1);
+  // r1 = p_inc / (b * fee)
+  Numeric_div_to(t->tp, r0, r2);
+  // r2 = tp / (b * fee);
+
+  switch (p->side) {
+  case POSITION_SIDE_BUY:
+    Numeric_add_to(p->price, r1, p->sl_price);
     Numeric_scale(p->sl_price, t->p_sc);
-
-    // Take profit price long.
-    Numeric_mul_to(p->sl_price, t->tp_pf, p->tp_price);
+    Numeric_add_to(p->price, r2, p->tp_price);
     Numeric_scale(p->tp_price, t->p_sc);
 
-    // Quote.
-    Numeric_mul_to(p->b_ordered, p->price, p->q_ordered);
-    Numeric_mul_to(p->q_ordered, r0, p->q_fees);
-    Numeric_scale(p->q_fees, t->q_sc);
-    Numeric_scale(p->q_ordered, t->q_sc);
-
-    scale_to_increment(p_inc, t->p_sc);
-
-    switch (p->side) {
-    case POSITION_SIDE_BUY:
-      Numeric_sub_to(p->sl_price, p->price, r1);
-      if (Numeric_cmp(r1, p_inc) < 0) {
-        Numeric_add_to(p->sl_price, p_inc, r1);
-        Numeric_copy_to(r1, p->sl_price);
-        Numeric_scale(p->sl_price, t->p_sc);
-      }
-      Numeric_sub_to(p->tp_price, p->sl_price, r1);
-      if (Numeric_cmp(r1, p_inc) < 0) {
-        Numeric_add_to(p->tp_price, p_inc, r1);
-        Numeric_copy_to(r1, p->tp_price);
-        Numeric_scale(p->tp_price, t->p_sc);
-      }
-      break;
-    case POSITION_SIDE_SELL:
-      // Take profit price short.
-      Numeric_mul_to(two, p->price, r1);
-      // r1 = 2*p
-      Numeric_sub_to(r1, p->tp_price, r2);
-      // r2 = 2*p-tp_pr_long
-      Numeric_copy_to(r2, p->tp_price);
-      Numeric_scale(p->tp_price, t->p_sc);
-
-      // Stop loss price short.
-      Numeric_mul_to(two, r0, r1);
-      // r1 = 2*fee
-      Numeric_mul_to(r1, p->price, r2);
-      // r2 = p*2*fee
-      Numeric_sub_to(p->price, r2, p->sl_price);
+    Numeric_sub_to(p->sl_price, p->price, r1);
+    if (Numeric_cmp(r1, p_inc) < 0) {
+      Numeric_add_to(p->sl_price, p_inc, r1);
+      Numeric_copy_to(r1, p->sl_price);
       Numeric_scale(p->sl_price, t->p_sc);
-
-      Numeric_sub_to(p->price, p->sl_price, r1);
-      if (Numeric_cmp(r1, p_inc) < 0) {
-        Numeric_sub_to(p->sl_price, p_inc, r1);
-        Numeric_copy_to(r1, p->sl_price);
-        Numeric_scale(p->sl_price, t->p_sc);
-      }
-
-      Numeric_sub_to(p->sl_price, p->tp_price, r1);
-      if (Numeric_cmp(r1, p_inc) < 0) {
-        Numeric_sub_to(p->tp_price, p_inc, r1);
-        Numeric_copy_to(r1, p->tp_price);
-        Numeric_scale(p->tp_price, t->p_sc);
-      }
-      break;
-    default:
-      werr("%s: %d: %s: Position neither buy nor sell\n", __FILE__, __LINE__,
-           __func__);
-      fatal();
     }
+    Numeric_sub_to(p->tp_price, p->sl_price, r1);
+    if (Numeric_cmp(r1, p_inc) < 0) {
+      Numeric_add_to(p->tp_price, p_inc, r1);
+      Numeric_copy_to(r1, p->tp_price);
+      Numeric_scale(p->tp_price, t->p_sc);
+    }
+    break;
+  case POSITION_SIDE_SELL:
+    Numeric_sub_to(p->price, r1, p->sl_price);
+    Numeric_scale(p->sl_price, t->p_sc);
+    Numeric_sub_to(p->price, r2, p->tp_price);
+    Numeric_scale(p->tp_price, t->p_sc);
+
+    Numeric_sub_to(p->price, p->sl_price, r1);
+    if (Numeric_cmp(r1, p_inc) < 0) {
+      Numeric_sub_to(p->sl_price, p_inc, r1);
+      Numeric_copy_to(r1, p->sl_price);
+      Numeric_scale(p->sl_price, t->p_sc);
+    }
+
+    Numeric_sub_to(p->sl_price, p->tp_price, r1);
+    if (Numeric_cmp(r1, p_inc) < 0) {
+      Numeric_sub_to(p->tp_price, p_inc, r1);
+      Numeric_copy_to(r1, p->tp_price);
+      Numeric_scale(p->tp_price, t->p_sc);
+    }
+    break;
+  default:
+    werr("%s: %d: %s: Position neither buy nor sell\n", __FILE__, __LINE__,
+         __func__);
+    fatal();
   }
 }
 

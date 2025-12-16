@@ -67,7 +67,6 @@ struct Position {
   struct Numeric *restrict cnanos;
   struct Numeric *restrict dnanos;
   struct Numeric *restrict rnanos;
-  struct Numeric *restrict fee_pc;
   struct Numeric *restrict price;
   struct Numeric *restrict sl_price;
   struct Numeric *restrict tp_price;
