@@ -106,7 +106,6 @@ struct abag_tls {
     struct Numeric *restrict r0;
     struct Numeric *restrict r1;
     struct Numeric *restrict r2;
-    struct Numeric *restrict r3;
   } position_pricing;
   struct position_open_vars {
     struct Numeric *restrict csecs;
@@ -220,7 +219,6 @@ static struct abag_tls *abag_tls(void) {
     tls->position_pricing.r0 = Numeric_new();
     tls->position_pricing.r1 = Numeric_new();
     tls->position_pricing.r2 = Numeric_new();
-    tls->position_pricing.r3 = Numeric_new();
     tls->position_open.csecs = Numeric_new();
     tls->position_fill.csecs = Numeric_new();
     tls->position_fill.dsecs = Numeric_new();
@@ -311,7 +309,6 @@ static void abag_tls_dtor(void *e) {
   Numeric_delete(tls->position_pricing.r0);
   Numeric_delete(tls->position_pricing.r1);
   Numeric_delete(tls->position_pricing.r2);
-  Numeric_delete(tls->position_pricing.r3);
   Numeric_delete(tls->position_open.csecs);
   Numeric_delete(tls->position_fill.csecs);
   Numeric_delete(tls->position_fill.dsecs);
