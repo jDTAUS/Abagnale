@@ -617,15 +617,15 @@ static char *position_string(const struct Trade *restrict const t,
   char *restrict const res = heap_malloc(POSITION_STRING_MAX_LENGTH);
   const char *restrict side;
 
-  switch (p->side) {
-  case POSITION_SIDE_BUY:
-    side = "Buy position";
+  switch (p->type) {
+  case POSITION_TYPE_LONG:
+    side = "Long position";
     break;
-  case POSITION_SIDE_SELL:
-    side = "Sell position";
+  case POSITION_TYPE_SHORT:
+    side = "Short position";
     break;
   default:
-    werr("%s: %d: %s: Position neither buy nor sell\n", __FILE__, __LINE__,
+    werr("%s: %d: %s: Position neither long nor short\n", __FILE__, __LINE__,
          __func__);
     fatal();
   }
@@ -681,9 +681,9 @@ static inline struct Trade *trade_new(
   candle_init(&t->open_cd);
   trigger_init(&t->open_trg);
   position_init(&t->p_long);
-  t->p_long.side = POSITION_SIDE_BUY;
+  t->p_long.type = POSITION_TYPE_LONG;
   position_init(&t->p_short);
-  t->p_short.side = POSITION_SIDE_SELL;
+  t->p_short.type = POSITION_TYPE_SHORT;
   return t;
 }
 
@@ -1035,8 +1035,8 @@ static void position_pricing(const struct worker_ctx *restrict const w_ctx,
   Numeric_div_to(t->tp, r0, r2);
   // r2 = tp / (b * fee);
 
-  switch (p->side) {
-  case POSITION_SIDE_BUY:
+  switch (p->type) {
+  case POSITION_TYPE_LONG:
     Numeric_add_to(p->price, r1, p->sl_price);
     Numeric_scale(p->sl_price, t->p_sc);
     Numeric_add_to(p->price, r2, p->tp_price);
@@ -1055,7 +1055,7 @@ static void position_pricing(const struct worker_ctx *restrict const w_ctx,
       Numeric_scale(p->tp_price, t->p_sc);
     }
     break;
-  case POSITION_SIDE_SELL:
+  case POSITION_TYPE_SHORT:
     Numeric_sub_to(p->price, r1, p->sl_price);
     Numeric_scale(p->sl_price, t->p_sc);
     Numeric_sub_to(p->price, r2, p->tp_price);
@@ -1076,7 +1076,7 @@ static void position_pricing(const struct worker_ctx *restrict const w_ctx,
     }
     break;
   default:
-    werr("%s: %d: %s: Position neither buy nor sell\n", __FILE__, __LINE__,
+    werr("%s: %d: %s: Position neither long nor short\n", __FILE__, __LINE__,
          __func__);
     fatal();
   }
@@ -1087,8 +1087,8 @@ static void position_create(const struct worker_ctx *restrict const w_ctx,
                             struct Position *restrict const p) {
   char t_id[DATABASE_UUID_MAX_LENGTH] = {0};
 
-  switch (p->side) {
-  case POSITION_SIDE_BUY:
+  switch (p->type) {
+  case POSITION_TYPE_LONG:
     if (t->id == NULL) {
       db_trade_bcreate(t_id, w_ctx->db, String_chars(w_ctx->ex->id),
                        String_chars(t->p_id), String_chars(t->b_id),
@@ -1101,7 +1101,7 @@ static void position_create(const struct worker_ctx *restrict const w_ctx,
 
     t->status = TRADE_STATUS_BUYING;
     break;
-  case POSITION_SIDE_SELL:
+  case POSITION_TYPE_SHORT:
     if (t->id == NULL) {
       db_trade_screate(t_id, w_ctx->db, String_chars(w_ctx->ex->id),
                        String_chars(t->p_id), String_chars(t->b_id),
@@ -1115,7 +1115,7 @@ static void position_create(const struct worker_ctx *restrict const w_ctx,
     t->status = TRADE_STATUS_SELLING;
     break;
   default:
-    werr("%s: %d: %s: Position neither buy nor sell\n", __FILE__, __LINE__,
+    werr("%s: %d: %s: Position neither long nor short\n", __FILE__, __LINE__,
          __func__);
     fatal();
   }
@@ -1142,17 +1142,17 @@ static void position_open(const struct worker_ctx *restrict const w_ctx,
   Numeric_div_to(p->cnanos, second_nanos, csecs);
   Numeric_scale(csecs, 0);
 
-  switch (p->side) {
-  case POSITION_SIDE_BUY:
+  switch (p->type) {
+  case POSITION_TYPE_LONG:
     db_trade_bopen(w_ctx->db, String_chars(order->id), csecs, order->b_filled,
                    order->q_filled, order->q_fees);
     break;
-  case POSITION_SIDE_SELL:
+  case POSITION_TYPE_SHORT:
     db_trade_sopen(w_ctx->db, String_chars(order->id), csecs, order->b_filled,
                    order->q_filled, order->q_fees);
     break;
   default:
-    werr("%s: %d: %s: Position neither buy nor sell\n", __FILE__, __LINE__,
+    werr("%s: %d: %s: Position neither long nor short\n", __FILE__, __LINE__,
          __func__);
     fatal();
   }
@@ -1188,8 +1188,8 @@ static void position_fill(const struct worker_ctx *restrict const w_ctx,
   Numeric_scale(csecs, 0);
   Numeric_scale(dsecs, 0);
 
-  switch (p->side) {
-  case POSITION_SIDE_BUY:
+  switch (p->type) {
+  case POSITION_TYPE_LONG:
     db_trade_bfill(w_ctx->db, String_chars(order->id), csecs,
                    order->settled ? dsecs : NULL, order->b_filled,
                    order->q_filled, order->q_fees, t_done);
@@ -1204,7 +1204,7 @@ static void position_fill(const struct worker_ctx *restrict const w_ctx,
       t->status = TRADE_STATUS_BOUGHT;
 
     break;
-  case POSITION_SIDE_SELL:
+  case POSITION_TYPE_SHORT:
     db_trade_sfill(w_ctx->db, String_chars(order->id), csecs,
                    order->settled ? dsecs : NULL, order->b_filled,
                    order->q_filled, order->q_fees, t_done);
@@ -1220,7 +1220,7 @@ static void position_fill(const struct worker_ctx *restrict const w_ctx,
 
     break;
   default:
-    werr("%s: %d: %s: Position neither buy nor sell\n", __FILE__, __LINE__,
+    werr("%s: %d: %s: Position neither long nor short\n", __FILE__, __LINE__,
          __func__);
     fatal();
   }
@@ -1235,8 +1235,8 @@ static void position_cancel(const struct worker_ctx *restrict const w_ctx,
   Numeric_mul_to(twenty_five_percent_factor, p->cl_factor, r0);
   Numeric_copy_to(r0, p->cl_factor);
 
-  switch (p->side) {
-  case POSITION_SIDE_BUY:
+  switch (p->type) {
+  case POSITION_TYPE_LONG:
     if (t->p_short.id != NULL) {
       db_trade_breset(w_ctx->db, String_chars(p->id));
       t->status = TRADE_STATUS_SOLD;
@@ -1246,7 +1246,7 @@ static void position_cancel(const struct worker_ctx *restrict const w_ctx,
                         String_chars(t->p_id), p->cl_factor);
 
     break;
-  case POSITION_SIDE_SELL:
+  case POSITION_TYPE_SHORT:
     if (t->p_long.id != NULL) {
       db_trade_sreset(w_ctx->db, String_chars(p->id));
       t->status = TRADE_STATUS_BOUGHT;
@@ -1257,7 +1257,7 @@ static void position_cancel(const struct worker_ctx *restrict const w_ctx,
 
     break;
   default:
-    werr("%s: %d: %s: Position neither buy nor sell\n", __FILE__, __LINE__,
+    werr("%s: %d: %s: Position neither long nor short\n", __FILE__, __LINE__,
          __func__);
     fatal();
   }
@@ -1293,8 +1293,8 @@ static void position_timeout(const struct worker_ctx *restrict const w_ctx,
   const bool db = db_stats(stats, w_ctx->db, String_chars(w_ctx->ex->id),
                            String_chars(t->p_id));
 
-  switch (p->side) {
-  case POSITION_SIDE_BUY:
+  switch (p->type) {
+  case POSITION_TYPE_LONG:
     if (db && !stats->bd_avg_null)
       Numeric_copy_to(stats->bd_avg, stats_to);
     else
@@ -1309,7 +1309,7 @@ static void position_timeout(const struct worker_ctx *restrict const w_ctx,
       Numeric_copy_to(w_ctx->p_cnf->bo_maxnanos, stats_to);
 
     break;
-  case POSITION_SIDE_SELL:
+  case POSITION_TYPE_SHORT:
     if (db && !stats->sd_avg_null)
       Numeric_copy_to(stats->sd_avg, stats_to);
     else
@@ -1325,7 +1325,7 @@ static void position_timeout(const struct worker_ctx *restrict const w_ctx,
 
     break;
   default:
-    werr("%s: %d: %s: Position neither buy nor sell\n", __FILE__, __LINE__,
+    werr("%s: %d: %s: Position neither long nor short\n", __FILE__, __LINE__,
          __func__);
     fatal();
   }
@@ -1544,8 +1544,8 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
   bool tp = false;
   bool tl = false;
 
-  switch (p->side) {
-  case POSITION_SIDE_BUY:
+  switch (p->type) {
+  case POSITION_TYPE_LONG:
     if (Numeric_cmp(sample->price, p->sl_price) >= 0)
       sl = true;
 
@@ -1553,7 +1553,7 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
       tp = true;
 
     break;
-  case POSITION_SIDE_SELL:
+  case POSITION_TYPE_SHORT:
     if (Numeric_cmp(sample->price, p->sl_price) <= 0)
       sl = true;
 
@@ -1562,7 +1562,7 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
 
     break;
   default:
-    werr("%s: %d: %s: Position neither buy nor sell\n", __FILE__, __LINE__,
+    werr("%s: %d: %s: Position neither long nor short\n", __FILE__, __LINE__,
          __func__);
     fatal();
   }
@@ -1728,8 +1728,8 @@ static void position_trade(const struct worker_ctx *restrict const w_ctx,
     return;
 
   const char *restrict ac_info;
-  switch (p->side) {
-  case POSITION_SIDE_BUY:
+  switch (p->type) {
+  case POSITION_TYPE_LONG:
     ac_info = "Offering";
     // Long: Sell at highest price since trigger.
     items = Array_items(samples);
@@ -1740,7 +1740,7 @@ static void position_trade(const struct worker_ctx *restrict const w_ctx,
         Numeric_copy_to(s->price, o_pr);
     }
     break;
-  case POSITION_SIDE_SELL:
+  case POSITION_TYPE_SHORT:
     ac_info = "Requesting";
     // Short: Buy at lowest price since trigger.
     items = Array_items(samples);
@@ -1752,7 +1752,7 @@ static void position_trade(const struct worker_ctx *restrict const w_ctx,
     }
     break;
   default:
-    werr("%s: %d: %s: Position neither buy nor sell\n", __FILE__, __LINE__,
+    werr("%s: %d: %s: Position neither long nor short\n", __FILE__, __LINE__,
          __func__);
     fatal();
   }
@@ -1806,8 +1806,8 @@ static void position_trade(const struct worker_ctx *restrict const w_ctx,
 
   struct String *restrict o_id;
   struct Position *restrict o_p;
-  switch (p->side) {
-  case POSITION_SIDE_BUY:
+  switch (p->type) {
+  case POSITION_TYPE_LONG:
     o_id = w_ctx->ex->sell(t->p_id, b, pr);
     if (o_id == NULL) {
       werr("%s: %s->%s: %s: Failure posting position\n",
@@ -1823,7 +1823,7 @@ static void position_trade(const struct worker_ctx *restrict const w_ctx,
     position_timeout(w_ctx, t, &t->p_short, samples, sample);
     o_p = &t->p_short;
     break;
-  case POSITION_SIDE_SELL:
+  case POSITION_TYPE_SHORT:
     o_id = w_ctx->ex->buy(t->p_id, b, pr);
     if (o_id == NULL) {
       werr("%s: %s->%s: %s: Failure posting position\n",
@@ -1840,7 +1840,7 @@ static void position_trade(const struct worker_ctx *restrict const w_ctx,
     o_p = &t->p_long;
     break;
   default:
-    werr("%s: %d: %s: Position neither buy nor sell\n", __FILE__, __LINE__,
+    werr("%s: %d: %s: Position neither long nor short\n", __FILE__, __LINE__,
          __func__);
     fatal();
   }
@@ -2069,8 +2069,8 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
   char *restrict const b = Numeric_to_char(p->b_ordered, t->b_sc);
   char *restrict const pr = Numeric_to_char(p->price, t->p_sc);
 
-  switch (p->side) {
-  case POSITION_SIDE_BUY: {
+  switch (p->type) {
+  case POSITION_TYPE_LONG: {
     if (Numeric_cmp(q_avail, q_ordered) < 0) {
       if (verbose) {
         char *restrict const r = Numeric_to_char(q_ordered, t->q_sc);
@@ -2111,7 +2111,7 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
     p->id = o_id;
     break;
   }
-  case POSITION_SIDE_SELL: {
+  case POSITION_TYPE_SHORT: {
     if (Numeric_cmp(q_avail, q_fees) < 0 ||
         Numeric_cmp(b_avail, p->b_ordered) < 0) {
 
@@ -2159,7 +2159,7 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
     break;
   }
   default:
-    werr("%s: %d: %s: Position neither buy nor sell\n", __FILE__, __LINE__,
+    werr("%s: %d: %s: Position neither long nor short\n", __FILE__, __LINE__,
          __func__);
     fatal();
   }

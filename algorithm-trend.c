@@ -488,7 +488,7 @@ static struct Position *trend_position_open(
     Numeric_copy_to(t->open_cd.l, p->price);
     break;
   default:
-    werr("%s: %d: %s: Candle neiter up nor down\n", __FILE__, __LINE__,
+    werr("%s: %d: %s: Candle neither up nor down\n", __FILE__, __LINE__,
          __func__);
     fatal();
   }
@@ -513,8 +513,8 @@ static bool trend_position_close(const char *restrict const dbcon,
   struct trend_state *restrict const st = trend_state(dbcon, e->id, t->p_id);
   bool close = false;
 
-  switch (p->side) {
-  case POSITION_SIDE_BUY:
+  switch (p->type) {
+  case POSITION_TYPE_LONG:
     if (st->cd_ltrend != CANDLE_UP) {
       close = true;
 
@@ -525,7 +525,7 @@ static bool trend_position_close(const char *restrict const dbcon,
       }
     }
     break;
-  case POSITION_SIDE_SELL:
+  case POSITION_TYPE_SHORT:
     if (st->cd_ltrend != CANDLE_DOWN) {
       close = true;
 
@@ -537,7 +537,7 @@ static bool trend_position_close(const char *restrict const dbcon,
     }
     break;
   default:
-    werr("%s: %d: %s: Position neither buy nor sell\n", __FILE__, __LINE__,
+    werr("%s: %d: %s: Position neither long nor short\n", __FILE__, __LINE__,
          __func__);
     fatal();
   }

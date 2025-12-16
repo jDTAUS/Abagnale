@@ -54,15 +54,15 @@ struct Candle {
   struct Numeric *restrict cnanos;
 };
 
-enum position_side {
-  POSITION_SIDE_BUY = 1,
-  POSITION_SIDE_SELL,
+enum position_type {
+  POSITION_TYPE_LONG = 1,
+  POSITION_TYPE_SHORT,
 };
 
 struct Position {
   bool done;
   bool filled;
-  enum position_side side;
+  enum position_type type;
   struct String *restrict id;
   struct Numeric *restrict cnanos;
   struct Numeric *restrict dnanos;
