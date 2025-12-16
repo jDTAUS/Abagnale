@@ -155,6 +155,7 @@ struct abag_tls {
     struct Numeric *restrict q_avail;
     struct Numeric *restrict q_costs;
     struct Numeric *restrict q_ordered;
+    struct Numeric *restrict q_fees;
     struct Numeric *restrict r0;
     struct db_balance_res *restrict hold;
   } trade_bet;
@@ -267,6 +268,7 @@ static struct abag_tls *abag_tls(void) {
     tls->trade_bet.q_avail = Numeric_new();
     tls->trade_bet.q_costs = Numeric_new();
     tls->trade_bet.q_ordered = Numeric_new();
+    tls->trade_bet.q_fees = Numeric_new();
     tls->trade_bet.r0 = Numeric_new();
     tls->trades_load.trade = heap_malloc(sizeof(struct db_trade_res));
     tls->trades_load.trade->b_cnanos = Numeric_new();
@@ -359,6 +361,7 @@ static void abag_tls_dtor(void *e) {
   Numeric_delete(tls->trade_bet.q_avail);
   Numeric_delete(tls->trade_bet.q_costs);
   Numeric_delete(tls->trade_bet.q_ordered);
+  Numeric_delete(tls->trade_bet.q_fees);
   Numeric_delete(tls->trade_bet.r0);
   Numeric_delete(tls->trades_load.trade->b_cnanos);
   Numeric_delete(tls->trades_load.trade->b_dnanos);
@@ -1946,6 +1949,7 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
   struct Numeric *restrict const q_avail = tls->trade_bet.q_avail;
   struct Numeric *restrict const q_costs = tls->trade_bet.q_costs;
   struct Numeric *restrict const q_ordered = tls->trade_bet.q_ordered;
+  struct Numeric *restrict const q_fees = tls->trade_bet.q_fees;
   struct Numeric *restrict const r0 = tls->trade_bet.r0;
   struct db_balance_res *restrict const hold = tls->trade_bet.hold;
   bool pr_changed = false;
@@ -2043,6 +2047,9 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
 
   Numeric_mul_to(p->b_ordered, p->price, q_ordered);
   Numeric_scale(q_ordered, t->q_sc);
+  Numeric_sub_to(t->fee_pf, one, r0);
+  Numeric_mul_to(r0, q_ordered, q_fees);
+  Numeric_scale(q_fees, t->q_sc);
 
   /*
    * Quote accounts are debited with fees charged for orders.
@@ -2052,7 +2059,7 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
    * to ensure fees can always get paid - that is - positions can always get
    * closed without running out of funds.
    */
-  Numeric_mul_to(two, p->q_fees, q_costs);
+  Numeric_mul_to(two, q_fees, q_costs);
   Numeric_sub_to(q_avail, q_costs, r0);
   Numeric_mul_to(r0, ninety_percent_factor, q_avail);
 
@@ -2105,11 +2112,11 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
     break;
   }
   case POSITION_SIDE_SELL: {
-    if (Numeric_cmp(q_avail, p->q_fees) < 0 ||
+    if (Numeric_cmp(q_avail, q_fees) < 0 ||
         Numeric_cmp(b_avail, p->b_ordered) < 0) {
 
       if (verbose) {
-        char *restrict const qr = Numeric_to_char(p->q_fees, t->q_sc);
+        char *restrict const qr = Numeric_to_char(q_fees, t->q_sc);
         char *restrict const qa = Numeric_to_char(q_avail, t->q_sc);
         char *restrict const ba = Numeric_to_char(b_avail, t->b_sc);
 
