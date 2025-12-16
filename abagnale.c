@@ -154,6 +154,7 @@ struct abag_tls {
     struct Numeric *restrict b_avail;
     struct Numeric *restrict q_avail;
     struct Numeric *restrict q_costs;
+    struct Numeric *restrict q_ordered;
     struct Numeric *restrict r0;
     struct db_balance_res *restrict hold;
   } trade_bet;
@@ -265,6 +266,7 @@ static struct abag_tls *abag_tls(void) {
     tls->trade_bet.b_avail = Numeric_new();
     tls->trade_bet.q_avail = Numeric_new();
     tls->trade_bet.q_costs = Numeric_new();
+    tls->trade_bet.q_ordered = Numeric_new();
     tls->trade_bet.r0 = Numeric_new();
     tls->trades_load.trade = heap_malloc(sizeof(struct db_trade_res));
     tls->trades_load.trade->b_cnanos = Numeric_new();
@@ -356,6 +358,7 @@ static void abag_tls_dtor(void *e) {
   Numeric_delete(tls->trade_bet.b_avail);
   Numeric_delete(tls->trade_bet.q_avail);
   Numeric_delete(tls->trade_bet.q_costs);
+  Numeric_delete(tls->trade_bet.q_ordered);
   Numeric_delete(tls->trade_bet.r0);
   Numeric_delete(tls->trades_load.trade->b_cnanos);
   Numeric_delete(tls->trades_load.trade->b_dnanos);
@@ -545,7 +548,6 @@ static inline void position_init(struct Position *restrict const p) {
   p->b_filled = Numeric_copy(zero);
   p->q_fees = Numeric_copy(zero);
   p->q_filled = Numeric_copy(zero);
-  p->q_ordered = Numeric_copy(zero);
   p->cl_samples = Numeric_copy(zero);
   p->cl_factor = Numeric_copy(one);
   p->sl_samples = Numeric_copy(zero);
@@ -571,7 +573,6 @@ static inline void position_reset(struct Position *restrict const p) {
   Numeric_copy_to(zero, p->b_filled);
   Numeric_copy_to(zero, p->q_fees);
   Numeric_copy_to(zero, p->q_filled);
-  Numeric_copy_to(zero, p->q_ordered);
   Numeric_copy_to(zero, p->cl_samples);
   Numeric_copy_to(zero, p->sl_samples);
   trigger_reset(&p->sl_trg);
@@ -591,7 +592,6 @@ static inline void position_delete(const struct Position *restrict const p) {
   Numeric_delete(p->b_filled);
   Numeric_delete(p->q_fees);
   Numeric_delete(p->q_filled);
-  Numeric_delete(p->q_ordered);
   Numeric_delete(p->cl_samples);
   Numeric_delete(p->cl_factor);
   Numeric_delete(p->sl_samples);
@@ -1021,10 +1021,6 @@ static void position_pricing(const struct worker_ctx *restrict const w_ctx,
     Numeric_div_to(t->tp, r2, p->b_ordered);
     Numeric_scale(p->b_ordered, t->b_sc);
   }
-
-  // Quote.
-  Numeric_mul_to(p->b_ordered, p->price, p->q_ordered);
-  Numeric_scale(p->q_ordered, t->q_sc);
 
   scale_to_increment(p_inc, t->p_sc);
   scale_to_increment(q_inc, t->q_sc);
@@ -1949,6 +1945,7 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
   struct Numeric *restrict const b_avail = tls->trade_bet.b_avail;
   struct Numeric *restrict const q_avail = tls->trade_bet.q_avail;
   struct Numeric *restrict const q_costs = tls->trade_bet.q_costs;
+  struct Numeric *restrict const q_ordered = tls->trade_bet.q_ordered;
   struct Numeric *restrict const r0 = tls->trade_bet.r0;
   struct db_balance_res *restrict const hold = tls->trade_bet.hold;
   bool pr_changed = false;
@@ -2044,6 +2041,9 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
   Account_delete(q_acct);
   Account_delete(b_acct);
 
+  Numeric_mul_to(p->b_ordered, p->price, q_ordered);
+  Numeric_scale(q_ordered, t->q_sc);
+
   /*
    * Quote accounts are debited with fees charged for orders.
    * This makes it impossible to predict exact costs for open positions,
@@ -2064,9 +2064,9 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
 
   switch (p->side) {
   case POSITION_SIDE_BUY: {
-    if (Numeric_cmp(q_avail, p->q_ordered) < 0) {
+    if (Numeric_cmp(q_avail, q_ordered) < 0) {
       if (verbose) {
-        char *restrict const r = Numeric_to_char(p->q_ordered, t->q_sc);
+        char *restrict const r = Numeric_to_char(q_ordered, t->q_sc);
         char *restrict const a = Numeric_to_char(q_avail, t->q_sc);
 
         wout("%s: %s->%s: Out of funds betting long: quote required: %s%s, "

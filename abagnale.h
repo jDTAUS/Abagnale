@@ -74,7 +74,6 @@ struct Position {
   struct Numeric *restrict b_filled;
   struct Numeric *restrict q_fees;
   struct Numeric *restrict q_filled;
-  struct Numeric *restrict q_ordered;
   struct Numeric *restrict cl_samples;
   struct Numeric *restrict cl_factor;
   struct Numeric *restrict sl_samples;
