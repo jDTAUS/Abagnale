@@ -960,6 +960,7 @@ static void position_pricing(const struct worker_ctx *restrict const w_ctx,
    *  tp_pr_short = Take profit price for a short position
    *  sl_pr_short = Stop loss price for a short position
    *
+   *
    * I. b * p * tgt * fee - b * p * fee = tp
    *
    * => (p * fee)(b * tgt - b) = tp
@@ -988,10 +989,10 @@ static void position_pricing(const struct worker_ctx *restrict const w_ctx,
    * => tp_pr_long = p + ---------
    *                      b * fee
    *
+   *
    * IV. b * p * fee - b * sl_pr_short * fee = q_inc
    *
    * => (b * fee)(p - sl_pr_short) = q_inc
-   *
    *
    *                      q_inc
    * => - sl_pr_short = --------- - p
@@ -1000,6 +1001,7 @@ static void position_pricing(const struct worker_ctx *restrict const w_ctx,
    *                        q_inc
    * => sl_pr_short = p - ---------
    *                       b * fee
+   *
    *
    * V. b * p * fee - b * tp_pr_short * fee = tp
    *
