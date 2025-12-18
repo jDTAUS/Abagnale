@@ -635,8 +635,8 @@ static char *position_string(const struct Trade *restrict const t,
 
   const int r = snprintf(
       res, POSITION_STRING_MAX_LENGTH,
-      "%s: %s: %s%s@%s%s, b: %s%s, q: %s%s, f: %s%s, sl: %s%s, tp: %s%s", side,
-      c, b_o, String_chars(t->b_id), pr, String_chars(t->q_id), b_f,
+      "%s: %s: %s%s@%s%s, b: %s%s, q: %s%s, f: %s%s, sl: @%s%s, tp: @%s%s",
+      side, c, b_o, String_chars(t->b_id), pr, String_chars(t->q_id), b_f,
       String_chars(t->b_id), q_f, String_chars(t->q_id), q_fee,
       String_chars(t->q_id), sl_pr, String_chars(t->q_id), tp_pr,
       String_chars(t->q_id));
