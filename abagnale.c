@@ -91,6 +91,7 @@ struct abag_tls {
   struct worker_config_vars {
     struct Numeric *restrict sr;
     struct Numeric *restrict now;
+    struct Numeric *restrict q_inc;
     struct Numeric *restrict r0;
   } worker_config;
   struct orders_process_vars {
@@ -213,6 +214,7 @@ static struct abag_tls *abag_tls(void) {
     tls->samples_load.sr = Numeric_new();
     tls->worker_config.sr = Numeric_new();
     tls->worker_config.now = Numeric_new();
+    tls->worker_config.q_inc = Numeric_new();
     tls->worker_config.r0 = Numeric_new();
     tls->orders_process.tp = Numeric_new();
     tls->samples_process.outdated_ns = Numeric_new();
@@ -306,6 +308,7 @@ static void abag_tls_dtor(void *e) {
   Numeric_delete(tls->samples_load.sr);
   Numeric_delete(tls->worker_config.sr);
   Numeric_delete(tls->worker_config.now);
+  Numeric_delete(tls->worker_config.q_inc);
   Numeric_delete(tls->worker_config.r0);
   Numeric_delete(tls->orders_process.tp);
   Numeric_delete(tls->samples_process.outdated_ns);
@@ -837,6 +840,7 @@ static void worker_config(struct worker_ctx *restrict const w_ctx,
   const struct abag_tls *restrict const tls = abag_tls();
   struct Numeric *restrict const sr = tls->worker_config.sr;
   struct Numeric *restrict const now = tls->worker_config.now;
+  struct Numeric *restrict const q_inc = tls->worker_config.q_inc;
   struct Numeric *restrict const r0 = tls->worker_config.r0;
   void **items;
   samples_per_minute(sr, samples);
@@ -930,9 +934,18 @@ static void worker_config(struct worker_ctx *restrict const w_ctx,
 
     Numeric_div_to(one, q_sample->price, r0);
     Numeric_mul_to(r0, w_ctx->p_cnf->q_tgt, w_ctx->q_tgt);
+    Numeric_scale(w_ctx->q_tgt, w_ctx->p->q_sc);
     Array_unlock(q_samples);
   } else
     Numeric_copy_to(w_ctx->p_cnf->q_tgt, w_ctx->q_tgt);
+
+  scale_to_increment(q_inc, w_ctx->p->q_sc);
+
+  if (Numeric_cmp(w_ctx->q_tgt, q_inc) < 0) {
+    Numeric_add_to(w_ctx->q_tgt, q_inc, r0);
+    Numeric_copy_to(r0, w_ctx->q_tgt);
+    Numeric_scale(w_ctx->q_tgt, w_ctx->p->q_sc);
+  }
 }
 
 static void position_pricing(const struct worker_ctx *restrict const w_ctx,
@@ -1796,11 +1809,14 @@ static void position_trade(const struct worker_ctx *restrict const w_ctx,
 
   char *restrict const b = Numeric_to_char(p->b_filled, t->b_sc);
   char *restrict const pr = Numeric_to_char(o_pr, t->p_sc);
+  char *restrict const tp = Numeric_to_char(t->tp, t->q_sc);
   char *restrict const p_info = position_string(t, p);
 
-  wout("%s: %s->%s: %s: %s %s: %s%s@%s%s\n", String_chars(w_ctx->ex->nm),
-       String_chars(t->q_id), String_chars(t->b_id), String_chars(t->id),
-       ac_info, tr_info, b, String_chars(t->b_id), pr, String_chars(t->q_id));
+  wout("%s: %s->%s: %s: %s %s: %s%s@%s%s to return %s%s\n",
+       String_chars(w_ctx->ex->nm), String_chars(t->q_id),
+       String_chars(t->b_id), String_chars(t->id), ac_info, tr_info, b,
+       String_chars(t->b_id), pr, String_chars(t->q_id), tp,
+       String_chars(t->q_id));
 
   wout("%s: %s->%s: %s: %s\n", String_chars(w_ctx->ex->nm),
        String_chars(t->q_id), String_chars(t->b_id), String_chars(p->id),
@@ -1855,6 +1871,7 @@ static void position_trade(const struct worker_ctx *restrict const w_ctx,
 ret:
   Numeric_char_free(b);
   Numeric_char_free(pr);
+  Numeric_char_free(tp);
   heap_free(p_info);
 }
 
@@ -2070,6 +2087,7 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
 
   char *restrict const b = Numeric_to_char(p->b_ordered, t->b_sc);
   char *restrict const pr = Numeric_to_char(p->price, t->p_sc);
+  char *restrict const tp = Numeric_to_char(t->tp, t->q_sc);
 
   switch (p->type) {
   case POSITION_TYPE_LONG: {
@@ -2096,9 +2114,10 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
       goto ret;
     }
 
-    wout("%s: %s->%s: Requesting %s%s@%s%s: %s\n", String_chars(w_ctx->ex->nm),
-         String_chars(t->q_id), String_chars(t->b_id), b, String_chars(t->b_id),
-         pr, String_chars(t->q_id), c);
+    wout("%s: %s->%s: Requesting %s%s@%s%s to return %s%s: %s\n",
+         String_chars(w_ctx->ex->nm), String_chars(t->q_id),
+         String_chars(t->b_id), b, String_chars(t->b_id), pr,
+         String_chars(t->q_id), tp, String_chars(t->q_id), c);
 
     struct String *restrict const o_id = w_ctx->ex->buy(t->p_id, b, pr);
 
@@ -2143,9 +2162,10 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
       goto ret;
     }
 
-    wout("%s: %s->%s: Offering %s%s@%s%s: %s\n", String_chars(w_ctx->ex->nm),
-         String_chars(t->q_id), String_chars(t->b_id), b, String_chars(t->b_id),
-         pr, String_chars(t->q_id), c);
+    wout("%s: %s->%s: Offering %s%s@%s%s to return %s%s: %s\n",
+         String_chars(w_ctx->ex->nm), String_chars(t->q_id),
+         String_chars(t->b_id), b, String_chars(t->b_id), pr,
+         String_chars(t->q_id), tp, String_chars(t->q_id), c);
 
     struct String *restrict const o_id = w_ctx->ex->sell(t->p_id, b, pr);
 
@@ -2180,6 +2200,7 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
 ret:
   Numeric_char_free(b);
   Numeric_char_free(pr);
+  Numeric_char_free(tp);
   heap_free(c);
 }
 
