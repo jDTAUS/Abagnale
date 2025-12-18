@@ -1947,7 +1947,7 @@ parse_order(const struct wcjson_document *restrict const doc,
          wcjsondoc_string(errbuf, sizeof(errbuf), doc, order, NULL));
 
   if (j_size_in_quote_exists && j_size_in_quote->is_true)
-    werr("coinbase: %s: size_in_quote unsupported %s\n", String_chars(o->id),
+    werr("coinbase: %s: size_in_quote unsupported: %s\n", String_chars(o->id),
          wcjsondoc_string(errbuf, sizeof(errbuf), doc, order, NULL));
 
 ret:
