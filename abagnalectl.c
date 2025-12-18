@@ -215,7 +215,7 @@ static int cmd_vacuum(int argc, char *argv[]) {
     usage();
 
   db_connect(__progname);
-  db_samples_vacuum(__progname, file);
+  db_vacuum(__progname, file);
   db_disconnect(__progname);
 
   return EXIT_SUCCESS;

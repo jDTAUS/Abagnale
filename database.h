@@ -135,6 +135,8 @@ void db_tx_begin(const char *const);
 void db_tx_commit(const char *const);
 void db_tx_rollback(const char *const);
 
+bool db_vacuum(const char *const, const char *const);
+
 void db_uuid(char *const, const char *const);
 
 void db_id_to_internal(char *const, const char *const, const char *const,
@@ -149,7 +151,6 @@ void db_samples_open(const char *const, const char *const, const char *const,
                      const struct Numeric *const);
 bool db_samples_next(struct db_sample_res *, const char *const);
 void db_samples_close(const char *const);
-bool db_samples_vacuum(const char *const, const char *const);
 
 bool db_stats(struct db_stats_res *, const char *const, const char *const,
               const char *const);

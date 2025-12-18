@@ -354,7 +354,7 @@ void db_samples_close(const char *const cname) {
 #endif
 }
 
-bool db_samples_vacuum(const char *const cname, const char *const fname) {
+bool db_vacuum(const char *const cname, const char *const fname) {
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(1, stdout);
 #endif
