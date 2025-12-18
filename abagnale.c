@@ -1812,7 +1812,7 @@ static void position_trade(const struct worker_ctx *restrict const w_ctx,
   char *restrict const tp = Numeric_to_char(t->tp, t->q_sc);
   char *restrict const p_info = position_string(t, p);
 
-  wout("%s: %s->%s: %s: %s %s: %s%s@%s%s to return %s%s\n",
+  wout("%s: %s->%s: %s: %s %s: %s%s@%s%s, r: %s%s\n",
        String_chars(w_ctx->ex->nm), String_chars(t->q_id),
        String_chars(t->b_id), String_chars(t->id), ac_info, tr_info, b,
        String_chars(t->b_id), pr, String_chars(t->q_id), tp,
@@ -2114,7 +2114,7 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
       goto ret;
     }
 
-    wout("%s: %s->%s: Requesting %s%s@%s%s to return %s%s: %s\n",
+    wout("%s: %s->%s: Requesting %s%s@%s%s, r: %s%s, c: %s\n",
          String_chars(w_ctx->ex->nm), String_chars(t->q_id),
          String_chars(t->b_id), b, String_chars(t->b_id), pr,
          String_chars(t->q_id), tp, String_chars(t->q_id), c);
@@ -2162,7 +2162,7 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
       goto ret;
     }
 
-    wout("%s: %s->%s: Offering %s%s@%s%s to return %s%s: %s\n",
+    wout("%s: %s->%s: Offering %s%s@%s%s, r: %s%s, c: %s\n",
          String_chars(w_ctx->ex->nm), String_chars(t->q_id),
          String_chars(t->b_id), b, String_chars(t->b_id), pr,
          String_chars(t->q_id), tp, String_chars(t->q_id), c);
