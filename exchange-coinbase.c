@@ -1880,7 +1880,12 @@ parse_order(const struct wcjson_document *restrict const doc,
   WCJSON_DECLARE_STRING_ITEM_OPT(reject_message)
   WCJSON_DECLARE_STRING_ITEM_OPT(cancel_message)
   WCJSON_DECLARE_ISO8601_NANOS_ITEM_OPT(last_fill_time)
-  // XXX: size_inclusive_of_fees boolean not documented.
+  // XXX: size_inclusive_of_fees boolean
+  //      size_in_quote boolean
+  //      Not available at product level and via user channel events.
+  WCJSON_DECLARE_BOOL_ITEM_OPT(size_inclusive_of_fees);
+  WCJSON_DECLARE_BOOL_ITEM_OPT(size_in_quote)
+
   WCJSON_STRING_ITEM(doc, order, order_id, 8, errbuf, ret)
   WCJSON_PRODUCT_ITEM(doc, order, product_id, 10, errbuf, ret)
   WCJSON_NUMERIC_ITEM(doc, order, filled_size, 11, errbuf, ret)
@@ -1889,6 +1894,8 @@ parse_order(const struct wcjson_document *restrict const doc,
   WCJSON_ISO8601_NANOS_ITEM(doc, order, created_time, 12, errbuf, ret)
   WCJSON_STRING_ITEM(doc, order, status, 6, errbuf, ret)
   WCJSON_BOOL_ITEM(doc, order, settled, 7, errbuf, ret)
+  WCJSON_BOOL_ITEM_OPT(doc, order, size_inclusive_of_fees, 22, errbuf, ret)
+  WCJSON_BOOL_ITEM_OPT(doc, order, size_in_quote, 13, errbuf, ret)
   WCJSON_OBJECT_ITEM(doc, order, order_configuration, 19, errbuf, ret)
   WCJSON_OBJECT_ITEM(doc, j_order_configuration, limit_limit_gtc, 15, errbuf,
                      ret)
@@ -1931,7 +1938,17 @@ parse_order(const struct wcjson_document *restrict const doc,
   o->msg = msg;
 
   if (o->status == ORDER_STATUS_UNKNOWN)
-    werr("coinbase: %s: Order status unsupported\n", j_status->mbstring);
+    werr("coinbase: %s: status unsupported: %s\n", String_chars(o->id),
+         wcjsondoc_string(errbuf, sizeof(errbuf), doc, order, NULL));
+
+  if (j_size_inclusive_of_fees_exists && j_size_inclusive_of_fees->is_true)
+    werr("coinbase: %s: size_inclusive_of_fees unsupported: %s\n",
+         String_chars(o->id),
+         wcjsondoc_string(errbuf, sizeof(errbuf), doc, order, NULL));
+
+  if (j_size_in_quote_exists && j_size_in_quote->is_true)
+    werr("coinbase: %s: size_in_quote unsupported %s\n", String_chars(o->id),
+         wcjsondoc_string(errbuf, sizeof(errbuf), doc, order, NULL));
 
 ret:
   Product_delete(j_product_id_p);
