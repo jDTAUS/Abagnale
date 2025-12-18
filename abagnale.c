@@ -622,10 +622,10 @@ static char *position_string(const struct Trade *restrict const t,
 
   switch (p->type) {
   case POSITION_TYPE_LONG:
-    side = "Long position";
+    side = "Request";
     break;
   case POSITION_TYPE_SHORT:
-    side = "Short position";
+    side = "Offer";
     break;
   default:
     werr("%s: %d: %s: Position neither long nor short\n", __FILE__, __LINE__,
@@ -635,9 +635,9 @@ static char *position_string(const struct Trade *restrict const t,
 
   const int r =
       snprintf(res, POSITION_STRING_MAX_LENGTH,
-               "%s: %s: %s%s@%s%s, b: %s%s, q: %s%s, f: %s%s, sl: %s%s@%s%s, "
+               "%s %s%s@%s%s, t: %s, b: %s%s, q: %s%s, f: %s%s, sl: %s%s@%s%s, "
                "tp: %s%s@%s%s",
-               side, c, b_o, String_chars(t->b_id), pr, String_chars(t->q_id),
+               side, b_o, String_chars(t->b_id), pr, String_chars(t->q_id), c,
                b_f, String_chars(t->b_id), q_f, String_chars(t->q_id), q_fee,
                String_chars(t->q_id), b_o, String_chars(t->b_id), sl_pr,
                String_chars(t->q_id), b_o, String_chars(t->b_id), tp_pr,
