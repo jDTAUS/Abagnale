@@ -1375,7 +1375,7 @@ static void position_maintain(const struct worker_ctx *restrict const w_ctx,
 
   if (!p->filled && Numeric_cmp(p->cl_samples, zero) <= 0) {
     if (verbose)
-      wout("%s: %s->%s: %s: Order timed out\n", String_chars(w_ctx->ex->nm),
+      wout("%s: %s->%s: %s: Position timed out\n", String_chars(w_ctx->ex->nm),
            String_chars(t->q_id), String_chars(t->b_id), String_chars(t->id));
 
     cancel = true;
