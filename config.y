@@ -128,9 +128,9 @@ static void sym_delete(void *restrict const v) {
 }
 %}
 
-%token AT CDP DATABASE DEMANDWAITMIN DEMANDWAITMAX DNSTO DNSV4 DNSV6 ERROR
+%token AT CDP DATABASE DEMANDDURMAX DEMANDDURMIN DNSTO DNSV4 DNSV6 ERROR
 %token EXCHANGE INCLUDE MARKET NOT PLOTS RATEMAX RATEMIN RETURN STOPLOSSDELAY
-%token SUPPLYWAITMIN SUPPLYWAITMAX TAKELOSSDELAY TARGET TRADE USER USING
+%token SUPPLYDURMAX SUPPLYDURMIN TAKELOSSDELAY TARGET TRADE USER USING
 %token VOLATILITY WINDOW
 
 %token <v.string> STRING
@@ -492,17 +492,17 @@ opt_trade : TAKELOSSDELAY nanos {
           }
           | MARKET marketconf {
           }
-          | SUPPLYWAITMAX nanos {
+          | SUPPLYDURMAX nanos {
             if (p_cnf->so_maxnanos != NULL) {
-              yyerror("supply-wait-max already specified\n");
+              yyerror("supply-duration-max already specified\n");
               Numeric_delete($2);
               YYERROR;
             }
             p_cnf->so_maxnanos = $2;
           }
-          | SUPPLYWAITMIN nanos {
+          | SUPPLYDURMIN nanos {
             if (p_cnf->so_minnanos != NULL) {
-              yyerror("supply-wait-min already specified\n");
+              yyerror("supply-duration-min already specified\n");
               Numeric_delete($2);
               YYERROR;
             }
@@ -536,17 +536,17 @@ opt_trade : TAKELOSSDELAY nanos {
               YYERROR;
             }
           }
-          | DEMANDWAITMAX nanos {
+          | DEMANDDURMAX nanos {
             if (p_cnf->bo_maxnanos != NULL) {
-              yyerror("demand-wait-max already specified\n");
+              yyerror("demand-duration-max already specified\n");
               Numeric_delete($2);
               YYERROR;
             }
             p_cnf->bo_maxnanos = $2;
           }
-          | DEMANDWAITMIN nanos {
+          | DEMANDDURMIN nanos {
             if (p_cnf->bo_minnanos != NULL) {
-              yyerror("demand-wait-min already specified\n");
+              yyerror("demand-duration-min already specified\n");
               Numeric_delete($2);
               YYERROR;
             }
@@ -699,8 +699,8 @@ int lookup(char *s) {
       {"at", AT},
       {"cdp-api-key", CDP},
       {"database", DATABASE},
-      {"demand-wait-max", DEMANDWAITMAX},
-      {"demand-wait-min", DEMANDWAITMIN},
+      {"demand-duration-max", DEMANDDURMAX},
+      {"demand-duration-min", DEMANDDURMIN},
       {"dns-timeout", DNSTO},
       {"dns-v4", DNSV4},
       {"dns-v6", DNSV6},
@@ -711,8 +711,8 @@ int lookup(char *s) {
       {"plots", PLOTS},
       {"return", RETURN},
       {"stop-loss-delay", STOPLOSSDELAY},
-      {"supply-wait-max", SUPPLYWAITMAX},
-      {"supply-wait-min", SUPPLYWAITMIN},
+      {"supply-duration-max", SUPPLYDURMAX},
+      {"supply-duration-min", SUPPLYDURMIN},
       {"take-loss-delay", TAKELOSSDELAY},
       {"target", TARGET},
       {"tick-rate-max", RATEMAX},
