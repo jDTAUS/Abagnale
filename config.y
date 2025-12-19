@@ -128,10 +128,10 @@ static void sym_delete(void *restrict const v) {
 }
 %}
 
-%token AT CDP DATABASE DNSTO DNSV4 DNSV6 ERROR EXCHANGE INCLUDE MARKET NOT
-%token OFFERWAITMAX OFFERWAITMIN PLOTS RATEMAX RATEMIN REQUESTWAITMAX
-%token REQUESTWAITMIN RETURN STOPLOSSDELAY TAKELOSSDELAY TARGET TRADE
-%token USER USING VOLATILITY WINDOW
+%token AT CDP DATABASE DEMANDWAITMIN DEMANDWAITMAX DNSTO DNSV4 DNSV6 ERROR
+%token EXCHANGE INCLUDE MARKET NOT PLOTS RATEMAX RATEMIN RETURN STOPLOSSDELAY
+%token SUPPLYWAITMIN SUPPLYWAITMAX TAKELOSSDELAY TARGET TRADE USER USING
+%token VOLATILITY WINDOW
 
 %token <v.string> STRING
 %token <v.number> NUMBER
@@ -492,17 +492,17 @@ opt_trade : TAKELOSSDELAY nanos {
           }
           | MARKET marketconf {
           }
-          | OFFERWAITMAX nanos {
+          | SUPPLYWAITMAX nanos {
             if (p_cnf->so_maxnanos != NULL) {
-              yyerror("offer-wait-max already specified\n");
+              yyerror("supply-wait-max already specified\n");
               Numeric_delete($2);
               YYERROR;
             }
             p_cnf->so_maxnanos = $2;
           }
-          | OFFERWAITMIN nanos {
+          | SUPPLYWAITMIN nanos {
             if (p_cnf->so_minnanos != NULL) {
-              yyerror("offer-wait-min already specified\n");
+              yyerror("supply-wait-min already specified\n");
               Numeric_delete($2);
               YYERROR;
             }
@@ -536,17 +536,17 @@ opt_trade : TAKELOSSDELAY nanos {
               YYERROR;
             }
           }
-          | REQUESTWAITMAX nanos {
+          | DEMANDWAITMAX nanos {
             if (p_cnf->bo_maxnanos != NULL) {
-              yyerror("request-wait-max already specified\n");
+              yyerror("demand-wait-max already specified\n");
               Numeric_delete($2);
               YYERROR;
             }
             p_cnf->bo_maxnanos = $2;
           }
-          | REQUESTWAITMIN nanos {
+          | DEMANDWAITMIN nanos {
             if (p_cnf->bo_minnanos != NULL) {
-              yyerror("request-wait-min already specified\n");
+              yyerror("demand-wait-min already specified\n");
               Numeric_delete($2);
               YYERROR;
             }
@@ -699,6 +699,8 @@ int lookup(char *s) {
       {"at", AT},
       {"cdp-api-key", CDP},
       {"database", DATABASE},
+      {"demand-wait-max", DEMANDWAITMAX},
+      {"demand-wait-min", DEMANDWAITMIN},
       {"dns-timeout", DNSTO},
       {"dns-v4", DNSV4},
       {"dns-v6", DNSV6},
@@ -706,13 +708,11 @@ int lookup(char *s) {
       {"include", INCLUDE},
       {"market", MARKET},
       {"not", NOT}, 
-      {"offer-wait-max", OFFERWAITMAX},
-      {"offer-wait-min", OFFERWAITMIN},
       {"plots", PLOTS},
-      {"request-wait-max", REQUESTWAITMAX},
-      {"request-wait-min", REQUESTWAITMIN},
       {"return", RETURN},
       {"stop-loss-delay", STOPLOSSDELAY},
+      {"supply-wait-max", SUPPLYWAITMAX},
+      {"supply-wait-min", SUPPLYWAITMIN},
       {"take-loss-delay", TAKELOSSDELAY},
       {"target", TARGET},
       {"tick-rate-max", RATEMAX},
