@@ -622,7 +622,7 @@ static char *position_string(const struct Trade *restrict const t,
 
   switch (p->type) {
   case POSITION_TYPE_LONG:
-    side = "Request";
+    side = "Demand";
     break;
   case POSITION_TYPE_SHORT:
     side = "Offer";
@@ -1758,7 +1758,7 @@ static void position_trade(const struct worker_ctx *restrict const w_ctx,
     }
     break;
   case POSITION_TYPE_SHORT:
-    ac_info = "Requesting";
+    ac_info = "Demanding";
     // Short: Buy at lowest price since trigger.
     items = Array_items(samples);
     for (size_t i = Array_size(samples); i > 0; i--) {
@@ -2116,7 +2116,7 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
       goto ret;
     }
 
-    wout("%s: %s->%s: Requesting %s%s@%s%s, r: %s%s, c: %s\n",
+    wout("%s: %s->%s: Demanding %s%s@%s%s, r: %s%s, c: %s\n",
          String_chars(w_ctx->ex->nm), String_chars(t->q_id),
          String_chars(t->b_id), b, String_chars(t->b_id), pr,
          String_chars(t->q_id), tp, String_chars(t->q_id), c);
