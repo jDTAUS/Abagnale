@@ -1060,13 +1060,14 @@ static void position_pricing(const struct worker_ctx *restrict const w_ctx,
     Numeric_scale(p->tp_price, t->p_sc);
 
     Numeric_sub_to(p->sl_price, p->price, r0);
-    if (Numeric_cmp(r0, p_inc) < 0) {
+    if (Numeric_cmp(r0, p_inc) <= 0) {
       Numeric_add_to(p->sl_price, p_inc, r0);
       Numeric_copy_to(r0, p->sl_price);
       Numeric_scale(p->sl_price, t->p_sc);
     }
+
     Numeric_sub_to(p->tp_price, p->sl_price, r0);
-    if (Numeric_cmp(r0, p_inc) < 0) {
+    if (Numeric_cmp(r0, p_inc) <= 0) {
       Numeric_add_to(p->tp_price, p_inc, r0);
       Numeric_copy_to(r0, p->tp_price);
       Numeric_scale(p->tp_price, t->p_sc);
@@ -1079,14 +1080,14 @@ static void position_pricing(const struct worker_ctx *restrict const w_ctx,
     Numeric_scale(p->tp_price, t->p_sc);
 
     Numeric_sub_to(p->price, p->sl_price, r0);
-    if (Numeric_cmp(r0, p_inc) < 0) {
+    if (Numeric_cmp(r0, p_inc) <= 0) {
       Numeric_sub_to(p->sl_price, p_inc, r0);
       Numeric_copy_to(r0, p->sl_price);
       Numeric_scale(p->sl_price, t->p_sc);
     }
 
     Numeric_sub_to(p->sl_price, p->tp_price, r0);
-    if (Numeric_cmp(r0, p_inc) < 0) {
+    if (Numeric_cmp(r0, p_inc) <= 0) {
       Numeric_sub_to(p->tp_price, p_inc, r0);
       Numeric_copy_to(r0, p->tp_price);
       Numeric_scale(p->tp_price, t->p_sc);
