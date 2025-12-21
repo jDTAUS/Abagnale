@@ -30,6 +30,8 @@ struct Array {
   mtx_t *restrict mtx;
 };
 
+void Array_grow(struct Array *restrict const);
+
 struct Array *Array_new(const size_t c) {
   struct Array *restrict const a = heap_malloc(sizeof(struct Array));
   a->size = 0;
