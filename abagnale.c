@@ -610,8 +610,8 @@ static char *position_string(const struct Trade *restrict const t,
                              const struct Position *restrict const p) {
 #define POSITION_STRING_MAX_LENGTH (size_t)512
   char *restrict const pr = Numeric_to_char(p->price, t->p_sc);
-  char *restrict const sl_pr = Numeric_to_char(p->sl_price, t->q_sc);
-  char *restrict const tp_pr = Numeric_to_char(p->tp_price, t->q_sc);
+  char *restrict const sl_pr = Numeric_to_char(p->sl_price, t->p_sc);
+  char *restrict const tp_pr = Numeric_to_char(p->tp_price, t->p_sc);
   char *restrict const b_o = Numeric_to_char(p->b_ordered, t->b_sc);
   char *restrict const q_fee = Numeric_to_char(p->q_fees, t->q_sc);
   char *restrict const q_f = Numeric_to_char(p->q_filled, t->q_sc);
