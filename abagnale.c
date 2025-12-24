@@ -69,9 +69,6 @@ struct abag_tls {
   struct candle_string_vars {
     struct Numeric *restrict s;
   } candle_string;
-  struct scale_to_increment_vars {
-    struct Numeric *restrict r0;
-  } scale_to_increment;
   struct samples_per_nano_vars {
     struct Numeric *restrict size;
     struct Numeric *restrict duration;
@@ -194,6 +191,7 @@ static struct Numeric *restrict twenty_five_percent_factor;
 static struct Numeric *restrict ninety_percent_factor;
 static struct Numeric *restrict order_reload_interval_nanos;
 static struct Numeric *restrict boot_delay_nanos;
+static struct Numeric *restrict inc[14] = {0};
 
 int abagnale(int argc, char *argv[]);
 
@@ -202,7 +200,6 @@ static struct abag_tls *abag_tls(void) {
   if (tls == NULL) {
     tls = heap_malloc(sizeof(struct abag_tls));
     tls->candle_string.s = Numeric_new();
-    tls->scale_to_increment.r0 = Numeric_new();
     tls->samples_per_nano.size = Numeric_new();
     tls->samples_per_nano.duration = Numeric_new();
     tls->samples_per_second.n = Numeric_new();
@@ -297,7 +294,6 @@ static struct abag_tls *abag_tls(void) {
 static void abag_tls_dtor(void *e) {
   struct abag_tls *tls = e;
   Numeric_delete(tls->candle_string.s);
-  Numeric_delete(tls->scale_to_increment.r0);
   Numeric_delete(tls->samples_per_nano.size);
   Numeric_delete(tls->samples_per_nano.duration);
   Numeric_delete(tls->samples_per_second.n);
@@ -735,21 +731,12 @@ static inline int sample_cmp(const void *restrict const e1,
 
 static inline void scale_to_increment(struct Numeric *restrict const ret,
                                       const size_t sc) {
-  const struct abag_tls *restrict const tls = abag_tls();
-  struct Numeric *restrict const r0 = tls->scale_to_increment.r0;
-  static const size_t pow10[] = {
-      1UL,           10UL,           100UL,           1000UL,      10000UL,
-      100000UL,      1000000UL,      10000000UL,      100000000UL, 1000000000UL,
-      10000000000UL, 100000000000UL, 1000000000000UL,
-  };
-
-  if (sc >= nitems(pow10)) {
+  if (sc >= nitems(inc)) {
     werr("%s: %d: %s: %zu\n", __FILE__, __LINE__, __func__, sc);
     fatal();
   }
 
-  Numeric_from_long_to(pow10[sc], r0);
-  Numeric_div_to(one, r0, ret);
+  Numeric_copy_to(inc[sc], ret);
 }
 
 void samples_per_nano(struct Numeric *restrict const ret,
@@ -2691,6 +2678,7 @@ static int samples_process(void *restrict const arg) {
 
 int abagnale(int argc, char *argv[]) {
   void **items;
+  struct Numeric *restrict r0 = Numeric_new();
   twenty_five_percent_factor = Numeric_from_char("1.25");
   ninety_percent_factor = Numeric_from_char("0.9");
 
@@ -2698,6 +2686,38 @@ int abagnale(int argc, char *argv[]) {
       Numeric_from_long(ABAG_ORDER_RELOAD_INTERVAL_NANOS);
 
   boot_delay_nanos = Numeric_from_long(ABAG_BOOT_DELAY_NANOS);
+
+  Numeric_from_long_to(1L, r0);
+  inc[0] = Numeric_div(one, r0);
+  Numeric_from_long_to(10L, r0);
+  inc[1] = Numeric_div(one, r0);
+  Numeric_from_long_to(100L, r0);
+  inc[2] = Numeric_div(one, r0);
+  Numeric_from_long_to(1000L, r0);
+  inc[3] = Numeric_div(one, r0);
+  Numeric_from_long_to(10000L, r0);
+  inc[4] = Numeric_div(one, r0);
+  Numeric_from_long_to(100000L, r0);
+  inc[5] = Numeric_div(one, r0);
+  Numeric_from_long_to(1000000L, r0);
+  inc[6] = Numeric_div(one, r0);
+  Numeric_from_long_to(10000000L, r0);
+  inc[7] = Numeric_div(one, r0);
+  Numeric_from_long_to(100000000L, r0);
+  inc[8] = Numeric_div(one, r0);
+  Numeric_from_long_to(1000000000L, r0);
+  inc[9] = Numeric_div(one, r0);
+  Numeric_from_long_to(10000000000L, r0);
+  inc[10] = Numeric_div(one, r0);
+  Numeric_from_long_to(100000000000L, r0);
+  inc[11] = Numeric_div(one, r0);
+  Numeric_from_long_to(1000000000000L, r0);
+  inc[12] = Numeric_div(one, r0);
+  Numeric_from_long_to(10000000000000L, r0);
+  inc[13] = Numeric_div(one, r0);
+
+  Numeric_delete(r0);
+
   product_samples = Map_new(ABAG_MAX_PRODUCTS);
   product_prices = Map_new(ABAG_MAX_PRODUCTS);
   product_trades = Map_new(ABAG_MAX_PRODUCTS);
@@ -2761,6 +2781,21 @@ int abagnale(int argc, char *argv[]) {
   Numeric_delete(ninety_percent_factor);
   Numeric_delete(order_reload_interval_nanos);
   Numeric_delete(boot_delay_nanos);
+  Numeric_delete(inc[0]);
+  Numeric_delete(inc[1]);
+  Numeric_delete(inc[2]);
+  Numeric_delete(inc[3]);
+  Numeric_delete(inc[4]);
+  Numeric_delete(inc[5]);
+  Numeric_delete(inc[6]);
+  Numeric_delete(inc[7]);
+  Numeric_delete(inc[8]);
+  Numeric_delete(inc[9]);
+  Numeric_delete(inc[10]);
+  Numeric_delete(inc[11]);
+  Numeric_delete(inc[12]);
+  Numeric_delete(inc[13]);
+
   heap_free(workers);
   Map_delete(product_samples, sample_array_delete);
   Map_delete(product_prices, Numeric_delete);
