@@ -82,7 +82,7 @@ extern const struct Numeric *restrict const hundred;
 
 extern const struct Config *restrict const cnf;
 extern const bool verbose;
-extern const struct Array *restrict const exchanges;
+extern const size_t all_exchanges_nitems;
 
 static tss_t trend_tls_key;
 static struct Map *states;
@@ -230,7 +230,7 @@ static void trend_init(void) {
   algorithm_trend.id = String_cnew(TREND_UUID);
   algorithm_trend.nm = String_cnew("trend");
   tls_create(&trend_tls_key, trend_tls_dtor);
-  states = Map_new(Array_size(exchanges) * 2048);
+  states = Map_new(all_exchanges_nitems * 2048);
 }
 
 static void trend_destroy(void) {
