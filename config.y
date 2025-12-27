@@ -1069,9 +1069,8 @@ int config_fparse(struct Config *const x_conf,
       errors++;
     }
 
-    // Apply defaults.
     if (p_cnf->sl_dlnanos == NULL)
-      p_cnf->sl_dlnanos = Numeric_copy(zero);
+      p_cnf->sl_dlnanos = Numeric_copy(p_cnf->wnanos);
 
   }
 
