@@ -515,31 +515,20 @@ static bool trend_position_close(const char *restrict const dbcon,
 
   switch (p->type) {
   case POSITION_TYPE_LONG:
-    if (st->cd_ltrend != CANDLE_UP) {
-      close = true;
-
-      if (verbose && !p->tl_trg.set) {
-        wout("%s: %s->%s: %s: Trending against buy position\n",
-             String_chars(e->nm), String_chars(t->q_id), String_chars(t->b_id),
-             String_chars(t->id));
-      }
-    }
+    close = st->cd_ltrend != CANDLE_UP;
     break;
   case POSITION_TYPE_SHORT:
-    if (st->cd_ltrend != CANDLE_DOWN) {
-      close = true;
-
-      if (verbose && !p->tl_trg.set) {
-        wout("%s: %s->%s: %s: Trending against sell position\n",
-             String_chars(e->nm), String_chars(t->q_id), String_chars(t->b_id),
-             String_chars(t->id));
-      }
-    }
+    close = st->cd_ltrend != CANDLE_DOWN;
     break;
   default:
     werr("%s: %d: %s: Position neither long nor short\n", __FILE__, __LINE__,
          __func__);
     fatal();
+  }
+
+  if (close && verbose && !p->tl_trg.set) {
+    wout("%s: %s->%s: %s: Trend not confirmed\n", String_chars(e->nm),
+         String_chars(t->q_id), String_chars(t->b_id), String_chars(t->id));
   }
 
   mutex_unlock(st->mtx);
