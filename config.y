@@ -1068,10 +1068,6 @@ int config_fparse(struct Config *const x_conf,
         String_chars(p_cnf->e_nm));
       errors++;
     }
-
-    if (p_cnf->sl_dlnanos == NULL)
-      p_cnf->sl_dlnanos = Numeric_copy(p_cnf->wnanos);
-
   }
 
   if (conf->db_tgt == NULL || conf->db_usr == NULL) {
