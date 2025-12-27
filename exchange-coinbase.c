@@ -1528,7 +1528,7 @@ parse_product(const struct wcjson_document *restrict const doc,
                  status_value == PRODUCT_STATUS_ONLINE;
 
   if (p->type == PRODUCT_TYPE_UNKNOWN) {
-    werr("coinbase: %s->%s: %s: unsupported product type: %s\n",
+    werr("coinbase: %s->%s: %s: Unsupported product type: %s\n",
          j_quote_currency_id->mbstring, j_base_currency_id->mbstring,
          j_product_type->mbstring,
          wcjsondoc_string(errbuf, sizeof(errbuf), doc, prod, NULL));
