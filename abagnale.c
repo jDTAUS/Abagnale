@@ -156,6 +156,7 @@ struct abag_tls {
     struct Numeric *restrict q_ordered;
     struct Numeric *restrict q_fees;
     struct Numeric *restrict r0;
+    struct Numeric *restrict r1;
     struct db_balance_res *restrict hold;
   } trade_bet;
   struct trades_load_vars {
@@ -271,6 +272,7 @@ static struct abag_tls *abag_tls(void) {
     tls->trade_bet.q_ordered = Numeric_new();
     tls->trade_bet.q_fees = Numeric_new();
     tls->trade_bet.r0 = Numeric_new();
+    tls->trade_bet.r1 = Numeric_new();
     tls->trades_load.trade = heap_malloc(sizeof(struct db_trade_res));
     tls->trades_load.trade->b_cnanos = Numeric_new();
     tls->trades_load.trade->b_dnanos = Numeric_new();
@@ -365,6 +367,7 @@ static void abag_tls_dtor(void *e) {
   Numeric_delete(tls->trade_bet.q_ordered);
   Numeric_delete(tls->trade_bet.q_fees);
   Numeric_delete(tls->trade_bet.r0);
+  Numeric_delete(tls->trade_bet.r1);
   Numeric_delete(tls->trades_load.trade->b_cnanos);
   Numeric_delete(tls->trades_load.trade->b_dnanos);
   Numeric_delete(tls->trades_load.trade->b_price);
@@ -2029,6 +2032,7 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
   struct Numeric *restrict const q_ordered = tls->trade_bet.q_ordered;
   struct Numeric *restrict const q_fees = tls->trade_bet.q_fees;
   struct Numeric *restrict const r0 = tls->trade_bet.r0;
+  struct Numeric *restrict const r1 = tls->trade_bet.r1;
   struct db_balance_res *restrict const hold = tls->trade_bet.hold;
   bool pr_changed = false;
 
@@ -2246,8 +2250,9 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
   }
 
   // Try longer or shorter than average based on angle (1rad approx. 57.3dec).
-  Numeric_mul_to(p->cl_factor, t->open_cd.a, r0);
-  Numeric_copy_to(r0, p->cl_factor);
+  Numeric_cos_to(t->open_cd.a, r0);
+  Numeric_mul_to(p->cl_factor, r0, r1);
+  Numeric_copy_to(r1, p->cl_factor);
   position_create(w_ctx, t, p);
   position_timeout(w_ctx, t, p, samples, sample);
   char *restrict const p_info = position_string(t, p);

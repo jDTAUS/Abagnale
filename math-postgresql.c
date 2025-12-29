@@ -89,6 +89,8 @@ inline char *Numeric_to_char(const struct Numeric *restrict const n,
   return s;
 }
 
+inline void Numeric_char_free(char *restrict const s) { PGTYPESchar_free(s); }
+
 inline struct Numeric *Numeric_add(const struct Numeric *restrict const n1,
                                    const struct Numeric *restrict const n2) {
   struct Numeric *restrict const res = Numeric_new();
@@ -339,4 +341,17 @@ inline void Numeric_atan_to(const struct Numeric *restrict const n,
 #endif
 }
 
-inline void Numeric_char_free(char *restrict const s) { PGTYPESchar_free(s); }
+inline struct Numeric *Numeric_cos(const struct Numeric *restrict const n) {
+  struct Numeric *restrict const res = Numeric_new();
+  Numeric_cos_to(n, res);
+  return res;
+}
+
+inline void Numeric_cos_to(const struct Numeric *restrict const n,
+                           struct Numeric *restrict const res) {
+  Numeric_from_double_to(cos(Numeric_to_double(n)), res);
+#ifdef ABAG_MATH_DEBUG
+  Numeric_char_free(res->s);
+  res->s = Numeric_to_char(res, 20);
+#endif
+}
