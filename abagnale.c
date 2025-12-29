@@ -1369,10 +1369,12 @@ static void position_timeout(const struct worker_ctx *restrict const w_ctx,
   Numeric_sub_to(factor_to, age, total_to);
   samples_per_nano(n, samples);
   Numeric_mul_to(n, total_to, p->cl_samples);
-  Numeric_sub_to(w_ctx->p_cnf->sl_dlnanos != NULL ? w_ctx->p_cnf->sl_dlnanos
-                                                  : w_ctx->p_cnf->wnanos,
-                 age, sl_to);
-  Numeric_mul_to(n, sl_to, p->sl_samples);
+
+  if (w_ctx->p_cnf->sl_dlnanos != NULL) {
+    Numeric_sub_to(w_ctx->p_cnf->sl_dlnanos, age, sl_to);
+    Numeric_mul_to(n, sl_to, p->sl_samples);
+  } else
+    Numeric_copy_to(zero, p->sl_samples);
 }
 
 static void position_maintain(const struct worker_ctx *restrict const w_ctx,
