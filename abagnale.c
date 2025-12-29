@@ -102,7 +102,6 @@ struct abag_tls {
   struct position_pricing_vars {
     struct Numeric *restrict b_inc;
     struct Numeric *restrict p_inc;
-    struct Numeric *restrict q_inc;
     struct Numeric *restrict r0;
     struct Numeric *restrict r1;
     struct Numeric *restrict r2;
@@ -220,7 +219,6 @@ static struct abag_tls *abag_tls(void) {
     tls->samples_process.nanos = Numeric_new();
     tls->position_pricing.b_inc = Numeric_new();
     tls->position_pricing.p_inc = Numeric_new();
-    tls->position_pricing.q_inc = Numeric_new();
     tls->position_pricing.r0 = Numeric_new();
     tls->position_pricing.r1 = Numeric_new();
     tls->position_pricing.r2 = Numeric_new();
@@ -314,7 +312,6 @@ static void abag_tls_dtor(void *e) {
   Numeric_delete(tls->samples_process.nanos);
   Numeric_delete(tls->position_pricing.b_inc);
   Numeric_delete(tls->position_pricing.p_inc);
-  Numeric_delete(tls->position_pricing.q_inc);
   Numeric_delete(tls->position_pricing.r0);
   Numeric_delete(tls->position_pricing.r1);
   Numeric_delete(tls->position_pricing.r2);
@@ -947,7 +944,6 @@ static void position_pricing(const struct worker_ctx *restrict const w_ctx,
   const struct abag_tls *restrict const tls = abag_tls();
   struct Numeric *restrict const b_inc = tls->position_pricing.b_inc;
   struct Numeric *restrict const p_inc = tls->position_pricing.p_inc;
-  struct Numeric *restrict const q_inc = tls->position_pricing.q_inc;
   struct Numeric *restrict const r0 = tls->position_pricing.r0;
   struct Numeric *restrict const r1 = tls->position_pricing.r1;
   struct Numeric *restrict const r2 = tls->position_pricing.r2;
@@ -956,11 +952,10 @@ static void position_pricing(const struct worker_ctx *restrict const w_ctx,
    * Let
    *  b = Base amount
    *  p = Order price
-   *  p_inc = Price increment
-   *  q_inc = Quote increment
-   *  fee = Fee percent factor (e.g. 0.2% = 1.002)
+   *  fpc = Fee percent (e.g. 0.2% = 0.002)
+   *  fee = Fee percent factor (e.g. 0.2% = 1.002; fpc + 1)
    *  tgt = Volatility percent factor (e.g. 0.2% = 1.002)
-   *  tp = Targetted take profit
+   *  tp = Targetted quote profit
    *  tp_pr_long = Take profit price for a long position
    *  sl_pr_long = Stop loss price for a long position
    *  tp_pr_short = Take profit price for a short position
@@ -978,13 +973,24 @@ static void position_pricing(const struct worker_ctx *restrict const w_ctx,
    *         p * fee * (tgt - 1)
    *
    *
-   * II. b * sl_pr_long * fee - b * p * fee = q_inc
+   * II. b * sl_pr_long * fee - b * p * fee = b * sl_pr_long * fpc + b * p * fpc
    *
-   * => (b * fee)(sl_pr_long - p) = q_inc
+   * => b * fee * (sl_pr_long - p) = b * fpc * (sl_pr_long + p)
    *
-   *                       q_inc
-   * => sl_pr_long = p + ---------
-   *                      b * fee
+   * => fee * sl_pr_long - fee * p = fpc * sl_pr_long + fpc * p
+   *
+   * => fee * sl_pr_long - fpc * sl_pr_long = fpc * p + fee * p
+   *
+   * => sl_pr_long * (fee - fpc) = p * (fpc + fee)
+   *
+   *                  p * (fpc + fee)
+   * => sl_pr_long = -----------------
+   *                     fee - fpc
+   *
+   * Let
+   *  fpc = fee - 1
+   *
+   * => sl_pr_long = p * (2 * fee - 1)
    *
    *
    * III. b * tp_pr_long * fee - b * p * fee = tp
@@ -996,17 +1002,27 @@ static void position_pricing(const struct worker_ctx *restrict const w_ctx,
    *                      b * fee
    *
    *
-   * IV. b * p * fee - b * sl_pr_short * fee = q_inc
+   * IV. b * p * fee - b * sl_pr_short * fee
+   *     = b * sl_pr_short * fpc + b * p * fpc
    *
-   * => (b * fee)(p - sl_pr_short) = q_inc
+   * => b * fee * (p - sl_pr_short) = b * fpc * (sl_pr_short + p)
    *
-   *                      q_inc
-   * => - sl_pr_short = --------- - p
-   *                     b * fee
+   * => fee * p - fee * sl_pr_short = fpc * sl_pr_short + fpc * p
    *
-   *                        q_inc
-   * => sl_pr_short = p - ---------
-   *                       b * fee
+   * => fee * p - fpc * p = fpc * sl_pr_short + fee * sl_pr_short
+   *
+   * => p * (fee - fpc) = sl_pr_short * (fpc + fee)
+   *
+   *                   p * (fee - fpc)
+   * => sl_pr_short = -----------------
+   *                      fpc + fee
+   *
+   * Let
+   *   fpc = fee - 1
+   *
+   *                        p
+   * => sl_pr_short = -------------
+   *                   2 * fee - 1
    *
    *
    * V. b * p * fee - b * tp_pr_short * fee = tp
@@ -1024,7 +1040,6 @@ static void position_pricing(const struct worker_ctx *restrict const w_ctx,
 
   scale_to_increment(b_inc, t->b_sc);
   scale_to_increment(p_inc, t->p_sc);
-  scale_to_increment(q_inc, t->q_sc);
 
   if (create) {
     Numeric_sub_to(t->tp_pf, one, r0);
@@ -1045,14 +1060,16 @@ static void position_pricing(const struct worker_ctx *restrict const w_ctx,
 
   Numeric_mul_to(p->b_ordered, t->fee_pf, r0);
   // r0 = b * fee
-  Numeric_div_to(q_inc, r0, r1);
-  // r1 = q_inc / (b * fee)
   Numeric_div_to(t->tp, r0, r2);
   // r2 = tp / (b * fee)
+  Numeric_mul_to(two, t->fee_pf, r1);
+  // r1 = 2 * fee
+  Numeric_sub_to(r1, one, r0);
+  // r0 = 2 * fee - 1
 
   switch (p->type) {
   case POSITION_TYPE_LONG:
-    Numeric_add_to(p->price, r1, p->sl_price);
+    Numeric_mul_to(p->price, r0, p->sl_price);
     Numeric_scale(p->sl_price, t->p_sc);
     Numeric_add_to(p->price, r2, p->tp_price);
     Numeric_scale(p->tp_price, t->p_sc);
@@ -1072,7 +1089,7 @@ static void position_pricing(const struct worker_ctx *restrict const w_ctx,
     }
     break;
   case POSITION_TYPE_SHORT:
-    Numeric_sub_to(p->price, r1, p->sl_price);
+    Numeric_div_to(p->price, r0, p->sl_price);
     Numeric_scale(p->sl_price, t->p_sc);
     Numeric_sub_to(p->price, r2, p->tp_price);
     Numeric_scale(p->tp_price, t->p_sc);
