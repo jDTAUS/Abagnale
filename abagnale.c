@@ -106,8 +106,6 @@ struct abag_tls {
     struct Numeric *restrict r1;
     struct Numeric *restrict r2;
     struct Numeric *restrict r3;
-    struct Numeric *restrict r4;
-    struct Numeric *restrict r5;
   } position_pricing;
   struct position_open_vars {
     struct Numeric *restrict csecs;
@@ -226,8 +224,6 @@ static struct abag_tls *abag_tls(void) {
     tls->position_pricing.r1 = Numeric_new();
     tls->position_pricing.r2 = Numeric_new();
     tls->position_pricing.r3 = Numeric_new();
-    tls->position_pricing.r4 = Numeric_new();
-    tls->position_pricing.r5 = Numeric_new();
     tls->position_open.csecs = Numeric_new();
     tls->position_fill.csecs = Numeric_new();
     tls->position_fill.dsecs = Numeric_new();
@@ -322,8 +318,6 @@ static void abag_tls_dtor(void *e) {
   Numeric_delete(tls->position_pricing.r1);
   Numeric_delete(tls->position_pricing.r2);
   Numeric_delete(tls->position_pricing.r3);
-  Numeric_delete(tls->position_pricing.r4);
-  Numeric_delete(tls->position_pricing.r5);
   Numeric_delete(tls->position_open.csecs);
   Numeric_delete(tls->position_fill.csecs);
   Numeric_delete(tls->position_fill.dsecs);
@@ -957,8 +951,6 @@ static void position_pricing(const struct worker_ctx *restrict const w_ctx,
   struct Numeric *restrict const r1 = tls->position_pricing.r1;
   struct Numeric *restrict const r2 = tls->position_pricing.r2;
   struct Numeric *restrict const r3 = tls->position_pricing.r2;
-  struct Numeric *restrict const r4 = tls->position_pricing.r2;
-  struct Numeric *restrict const r5 = tls->position_pricing.r2;
 
   /*
    * Let
@@ -1025,7 +1017,7 @@ static void position_pricing(const struct worker_ctx *restrict const w_ctx,
    *                             b
    *
    *                  tp
-   * => tp_pr_long = ---- + p * (2 * fee - 1)
+   * => tp_pr_long = ---- + sl_pr_long
    *                  b
    *
    *
@@ -1071,6 +1063,14 @@ static void position_pricing(const struct worker_ctx *restrict const w_ctx,
    *                      b * p - tp
    * => tp_pr_short = -------------------
    *                   b * (2 * fee - 1)
+   *
+   *                        p                  tp
+   * => tp_pr_short = ------------- - -------------------
+   *                   2 * fee - 1     b * (2 * fee - 1)
+   *
+   *                                        tp
+   *                = sl_pr_short - -------------------
+   *                                 b * (2 * fee - 1)
    */
 
   scale_to_increment(b_inc, t->b_sc);
@@ -1097,22 +1097,18 @@ static void position_pricing(const struct worker_ctx *restrict const w_ctx,
   // r1 = 2 * fee
   Numeric_sub_to(r1, one, r0);
   // r0 = 2 * fee - 1
-  Numeric_mul_to(p->b_ordered, r0, r1);
-  // r1 = b * (2 * fee - 1)
-  Numeric_mul_to(p->b_ordered, p->price, r2);
-  // r2 = b * p
-  Numeric_sub_to(r2, t->tp, r3);
-  // r3 = b * p - tp
-  Numeric_mul_to(p->price, r0, r4);
-  // r4 = p * (2 * fee - 1)
-  Numeric_div_to(t->tp, p->b_ordered, r5);
-  // r5 = tp / b
+  Numeric_div_to(t->tp, p->b_ordered, r1);
+  // r1 = tp / b
+  Numeric_mul_to(p->b_ordered, r0, r2);
+  // r2 = b * (2 * fee - 1)
+  Numeric_div_to(t->tp, r2, r3);
+  // r3 = tp / (b * (2 * fee - 1))
 
   switch (p->type) {
   case POSITION_TYPE_LONG:
     Numeric_mul_to(p->price, r0, p->sl_price);
+    Numeric_add_to(p->sl_price, r1, p->tp_price);
     Numeric_scale(p->sl_price, t->p_sc);
-    Numeric_add_to(r4, r5, p->tp_price);
     Numeric_scale(p->tp_price, t->p_sc);
 
     Numeric_sub_to(p->sl_price, p->price, r0);
@@ -1131,8 +1127,8 @@ static void position_pricing(const struct worker_ctx *restrict const w_ctx,
     break;
   case POSITION_TYPE_SHORT:
     Numeric_div_to(p->price, r0, p->sl_price);
+    Numeric_sub_to(p->sl_price, r3, p->tp_price);
     Numeric_scale(p->sl_price, t->p_sc);
-    Numeric_div_to(r3, r1, p->tp_price);
     Numeric_scale(p->tp_price, t->p_sc);
 
     Numeric_sub_to(p->price, p->sl_price, r0);
