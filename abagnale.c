@@ -2151,12 +2151,8 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
   Numeric_sub_to(q_avail, q_costs, r0);
   Numeric_mul_to(r0, ninety_percent_factor, q_avail);
 
-  char *restrict const c =
-      candle_string(&t->open_cd, String_chars(t->q_id), t->p_sc);
-
   char *restrict const b = Numeric_to_char(p->b_ordered, t->b_sc);
   char *restrict const pr = Numeric_to_char(p->price, t->p_sc);
-  char *restrict const tp = Numeric_to_char(t->tp, t->q_sc);
 
   switch (p->type) {
   case POSITION_TYPE_LONG: {
@@ -2164,6 +2160,8 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
       if (verbose) {
         char *restrict const r = Numeric_to_char(q_ordered, t->q_sc);
         char *restrict const a = Numeric_to_char(q_avail, t->q_sc);
+        char *restrict const c =
+            candle_string(&t->open_cd, String_chars(t->q_id), t->p_sc);
 
         wout("%s: %s->%s: Out of funds betting long: quote required: %s%s, "
              "quote available: %s%s, candle: %s\n",
@@ -2173,6 +2171,7 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
 
         Numeric_char_free(r);
         Numeric_char_free(a);
+        heap_free(c);
 
         wout("%s: %s->%s: Leaving open(%" PRIuMAX ")\n",
              String_chars(w_ctx->ex->nm), String_chars(t->q_id),
@@ -2183,10 +2182,19 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
       goto ret;
     }
 
-    wout("%s: %s->%s: Demanding %s%s@%s%s, r: %s%s, c: %s\n",
-         String_chars(w_ctx->ex->nm), String_chars(t->q_id),
-         String_chars(t->b_id), b, String_chars(t->b_id), pr,
-         String_chars(t->q_id), tp, String_chars(t->q_id), c);
+    if (verbose) {
+      char *restrict const tp = Numeric_to_char(t->tp, t->q_sc);
+      char *restrict const c =
+          candle_string(&t->open_cd, String_chars(t->q_id), t->p_sc);
+
+      wout("%s: %s->%s: Demanding %s%s@%s%s, r: %s%s, c: %s\n",
+           String_chars(w_ctx->ex->nm), String_chars(t->q_id),
+           String_chars(t->b_id), b, String_chars(t->b_id), pr,
+           String_chars(t->q_id), tp, String_chars(t->q_id), c);
+
+      Numeric_char_free(tp);
+      heap_free(c);
+    }
 
     struct String *restrict const o_id = w_ctx->ex->buy(t->p_id, b, pr);
 
@@ -2209,6 +2217,8 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
         char *restrict const qr = Numeric_to_char(q_fees, t->q_sc);
         char *restrict const qa = Numeric_to_char(q_avail, t->q_sc);
         char *restrict const ba = Numeric_to_char(b_avail, t->b_sc);
+        char *restrict const c =
+            candle_string(&t->open_cd, String_chars(t->q_id), t->p_sc);
 
         wout("%s: %s->%s: Out of funds betting short: quote required: %s%s, "
              "quote available: %s%s, base required: %s%s, base available: "
@@ -2221,6 +2231,7 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
         Numeric_char_free(qr);
         Numeric_char_free(qa);
         Numeric_char_free(ba);
+        heap_free(c);
 
         wout("%s: %s->%s: Leaving open(%" PRIuMAX ")\n",
              String_chars(w_ctx->ex->nm), String_chars(t->q_id),
@@ -2231,10 +2242,19 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
       goto ret;
     }
 
-    wout("%s: %s->%s: Supplying %s%s@%s%s, r: %s%s, c: %s\n",
-         String_chars(w_ctx->ex->nm), String_chars(t->q_id),
-         String_chars(t->b_id), b, String_chars(t->b_id), pr,
-         String_chars(t->q_id), tp, String_chars(t->q_id), c);
+    if (verbose) {
+      char *restrict const tp = Numeric_to_char(t->tp, t->q_sc);
+      char *restrict const c =
+          candle_string(&t->open_cd, String_chars(t->q_id), t->p_sc);
+
+      wout("%s: %s->%s: Supplying %s%s@%s%s, r: %s%s, c: %s\n",
+           String_chars(w_ctx->ex->nm), String_chars(t->q_id),
+           String_chars(t->b_id), b, String_chars(t->b_id), pr,
+           String_chars(t->q_id), tp, String_chars(t->q_id), c);
+
+      Numeric_char_free(tp);
+      heap_free(c);
+    }
 
     struct String *restrict const o_id = w_ctx->ex->sell(t->p_id, b, pr);
 
@@ -2261,17 +2281,18 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
   Numeric_copy_to(r1, p->cl_factor);
   position_create(w_ctx, t, p);
   position_timeout(w_ctx, t, p, samples, sample);
-  char *restrict const p_info = position_string(t, p);
-  wout("%s: %s->%s: %s: %s\n", String_chars(w_ctx->ex->nm),
-       String_chars(t->q_id), String_chars(t->b_id), String_chars(p->id),
-       p_info);
 
-  heap_free(p_info);
+  if (verbose) {
+    char *restrict const p_info = position_string(t, p);
+    wout("%s: %s->%s: %s: %s\n", String_chars(w_ctx->ex->nm),
+         String_chars(t->q_id), String_chars(t->b_id), String_chars(p->id),
+         p_info);
+
+    heap_free(p_info);
+  }
 ret:
   Numeric_char_free(b);
   Numeric_char_free(pr);
-  Numeric_char_free(tp);
-  heap_free(c);
 }
 
 static void trade_maintain(const struct worker_ctx *restrict const w_ctx,
