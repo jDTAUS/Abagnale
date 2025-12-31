@@ -1871,18 +1871,24 @@ static void position_trade(const struct worker_ctx *restrict const w_ctx,
 
   char *restrict const b = Numeric_to_char(p->b_filled, t->b_sc);
   char *restrict const pr = Numeric_to_char(o_pr, t->p_sc);
-  char *restrict const tp = Numeric_to_char(t->tp, t->q_sc);
-  char *restrict const p_info = position_string(t, p);
 
-  wout("%s: %s->%s: %s: %s %s: %s%s@%s%s, r: %s%s\n",
-       String_chars(w_ctx->ex->nm), String_chars(t->q_id),
-       String_chars(t->b_id), String_chars(t->id), ac_info, tr_info, b,
-       String_chars(t->b_id), pr, String_chars(t->q_id), tp,
-       String_chars(t->q_id));
+  if (verbose) {
+    char *restrict const tp = Numeric_to_char(t->tp, t->q_sc);
+    char *restrict const p_info = position_string(t, p);
 
-  wout("%s: %s->%s: %s: %s\n", String_chars(w_ctx->ex->nm),
-       String_chars(t->q_id), String_chars(t->b_id), String_chars(p->id),
-       p_info);
+    wout("%s: %s->%s: %s: %s %s: %s%s@%s%s, r: %s%s\n",
+         String_chars(w_ctx->ex->nm), String_chars(t->q_id),
+         String_chars(t->b_id), String_chars(t->id), ac_info, tr_info, b,
+         String_chars(t->b_id), pr, String_chars(t->q_id), tp,
+         String_chars(t->q_id));
+
+    wout("%s: %s->%s: %s: %s\n", String_chars(w_ctx->ex->nm),
+         String_chars(t->q_id), String_chars(t->b_id), String_chars(p->id),
+         p_info);
+
+    Numeric_char_free(tp);
+    heap_free(p_info);
+  }
 
   struct String *restrict o_id;
   struct Position *restrict o_p;
@@ -1925,16 +1931,16 @@ static void position_trade(const struct worker_ctx *restrict const w_ctx,
     fatal();
   }
 
-  char *restrict const o_info = position_string(t, o_p);
-  wout("%s: %s->%s: %s: %s\n", String_chars(w_ctx->ex->nm),
-       String_chars(t->q_id), String_chars(t->b_id), String_chars(o_p->id),
-       o_info);
-  heap_free(o_info);
+  if (verbose) {
+    char *restrict const o_info = position_string(t, o_p);
+    wout("%s: %s->%s: %s: %s\n", String_chars(w_ctx->ex->nm),
+         String_chars(t->q_id), String_chars(t->b_id), String_chars(o_p->id),
+         o_info);
+    heap_free(o_info);
+  }
 ret:
   Numeric_char_free(b);
   Numeric_char_free(pr);
-  Numeric_char_free(tp);
-  heap_free(p_info);
 }
 
 static const struct {
