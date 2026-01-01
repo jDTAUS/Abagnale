@@ -1541,8 +1541,8 @@ parse_product(const struct wcjson_document *restrict const doc,
       String_cnew(j_quote_currency_id->mbstring);
 
   // Find matching accounts required for trading.
-  const struct Account *restrict const qa = coinbase_account_currency(q_id);
-  const struct Account *restrict const ba = coinbase_account_currency(b_id);
+  const struct Account *restrict qa = coinbase_account_currency(q_id);
+  const struct Account *restrict ba = coinbase_account_currency(b_id);
   struct String *restrict qa_id = NULL;
   struct String *restrict ba_id = NULL;
   bool qa_active_and_ready = false;
@@ -1608,8 +1608,8 @@ parse_product(const struct wcjson_document *restrict const doc,
    * safe to not set a product's tradeable flag for inactive or unready
    * accounts.
    */
-  p->is_tradeable = p->is_tradeable && qa_is_active_and_ready;
-  p->is_tradeable = p->is_tradeable && ba_is_active_and_ready;
+  p->is_tradeable = p->is_tradeable && qa_active_and_ready;
+  p->is_tradeable = p->is_tradeable && ba_active_and_ready;
 
 #ifdef ABAG_COINBASE_DEBUG
   if (!p->is_active) {
