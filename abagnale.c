@@ -183,7 +183,7 @@ extern const struct Numeric *restrict const boot_nanos;
 
 static thrd_t *workers;
 static struct Map *product_samples;
-static mtx_t global_mtx;
+static mtx_t db_mtx;
 static struct Map *product_prices;
 static struct Map *product_trades;
 static tss_t abag_tls_key;
@@ -2669,17 +2669,17 @@ static int samples_process(void *restrict const arg) {
 
     mutex_unlock(p->mtx);
 
-    mutex_lock(&global_mtx);
+    mutex_lock(&db_mtx);
     db_sample_create(ctx->db, String_chars(ctx->ex->id),
                      String_chars(ctx->p->id), sample->nanos, sample->price);
 
     if (!ctx->p->is_tradeable) {
-      mutex_unlock(&global_mtx);
+      mutex_unlock(&db_mtx);
       Sample_delete(sample);
       Product_delete(ctx->p);
       continue;
     }
-    mutex_unlock(&global_mtx);
+    mutex_unlock(&db_mtx);
 
     Map_lock(product_samples);
     struct Array *restrict samples = Map_get(product_samples, ctx->p->id);
@@ -2838,7 +2838,7 @@ int abagnale(int argc, char *argv[]) {
   product_prices = Map_new(ABAG_MAX_PRODUCTS);
   product_trades = Map_new(ABAG_MAX_PRODUCTS);
 
-  mutex_init(&global_mtx);
+  mutex_init(&db_mtx);
   tls_create(&abag_tls_key, abag_tls_dtor);
 
   // ABAG_WORKERS * Array_size(exchanges) <= SIZE_MAX
@@ -2916,7 +2916,7 @@ int abagnale(int argc, char *argv[]) {
   Map_delete(product_samples, sample_array_delete);
   Map_delete(product_prices, Numeric_delete);
   Map_delete(product_trades, trade_array_delete);
-  mutex_destroy(&global_mtx);
+  mutex_destroy(&db_mtx);
   tls_delete(abag_tls_key);
 
   return EXIT_SUCCESS;
