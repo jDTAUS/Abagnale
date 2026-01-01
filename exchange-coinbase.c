@@ -814,7 +814,7 @@ static void ws_ticker_update(const struct wcjson_document *restrict const doc,
     Numeric_delete(j_price_num);
 
 ret:
-  if (j_product_id_p != NULL && j_product_id_p->mtx != NULL)
+  if (j_product_id_p != NULL)
     mutex_unlock(j_product_id_p->mtx);
 
   return;
@@ -904,7 +904,7 @@ static void ws_user_update(const struct wcjson_document *restrict const doc,
 
   Queue_enqueue(orders, o);
 ret:
-  if (j_product_id_p != NULL && j_product_id_p->mtx != NULL)
+  if (j_product_id_p != NULL)
     mutex_unlock(j_product_id_p->mtx);
 
   Numeric_delete(j_leaves_quantity_num);
@@ -2002,7 +2002,7 @@ parse_order(const struct wcjson_document *restrict const doc,
          wcjsondoc_string(errbuf, sizeof(errbuf), doc, order, NULL));
 
 ret:
-  if (j_product_id_p != NULL && j_product_id_p->mtx != NULL)
+  if (j_product_id_p != NULL)
     mutex_unlock(j_product_id_p->mtx);
 
   return o;
