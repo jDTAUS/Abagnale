@@ -24,13 +24,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-static mtx_t stdout_mutex;
-static mtx_t stderr_mutex;
+mtx_t stdout_mutex;
+mtx_t stderr_mutex;
 
 #ifdef ABAG_DEBUG
-_Noreturn void fatal(void) { abort(); }
+inline _Noreturn void fatal(void) { abort(); }
 #else
-_Noreturn void fatal(void) { exit(EXIT_FAILURE); }
+inline _Noreturn void fatal(void) { exit(EXIT_FAILURE); }
 #endif
 
 void proc_init(void) {
@@ -43,7 +43,7 @@ void proc_destroy(void) {
   mutex_destroy(&stderr_mutex);
 }
 
-void wout(const char *restrict fmt, ...) {
+inline void wout(const char *restrict fmt, ...) {
   va_list ap;
   mutex_lock(&stdout_mutex);
   (void)fprintf(stdout, " info: ");
@@ -54,7 +54,7 @@ void wout(const char *restrict fmt, ...) {
   mutex_unlock(&stdout_mutex);
 }
 
-void werr(const char *restrict fmt, ...) {
+inline void werr(const char *restrict fmt, ...) {
   va_list ap;
   mutex_lock(&stderr_mutex);
   (void)fprintf(stderr, "error: ");
@@ -66,7 +66,7 @@ void werr(const char *restrict fmt, ...) {
 }
 
 #ifdef ABAG_DEBUG
-void wdebug(const char *restrict fmt, ...) {
+inline void wdebug(const char *restrict fmt, ...) {
   va_list ap;
   mutex_lock(&stdout_mutex);
   (void)fprintf(stdout, "debug: ");

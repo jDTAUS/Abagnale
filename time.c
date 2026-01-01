@@ -54,6 +54,22 @@ extern const struct Numeric *restrict const second_nanos;
 static tss_t time_tls_key;
 static mtx_t time_mtx;
 
+static struct time_tls *time_tls(void) {
+  struct time_tls *tls = tls_get(time_tls_key);
+  if (tls == NULL) {
+    tls = heap_malloc(sizeof(struct time_tls));
+    tls->nanos_from_iso8601.s_ns = Numeric_new();
+    tls->nanos_from_iso8601.f_ns = Numeric_new();
+    tls->nanos_from_iso8601.secs = Numeric_new();
+    tls->nanos_from_ts.s = Numeric_new();
+    tls->nanos_from_ts.s_ns = Numeric_new();
+    tls->nanos_from_ts.ns = Numeric_new();
+    tls->nanos_to_iso8601.s = Numeric_new();
+    tls_set(time_tls_key, tls);
+  }
+  return tls;
+}
+
 static void time_tls_dtor(void *restrict e) {
   struct time_tls *restrict const tls = e;
   Numeric_delete(tls->nanos_from_iso8601.s_ns);
@@ -82,22 +98,6 @@ inline void time_now(struct timespec *restrict const ts) {
     werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
     fatal();
   }
-}
-
-static struct time_tls *time_tls(void) {
-  struct time_tls *tls = tls_get(time_tls_key);
-  if (tls == NULL) {
-    tls = heap_malloc(sizeof(struct time_tls));
-    tls->nanos_from_iso8601.s_ns = Numeric_new();
-    tls->nanos_from_iso8601.f_ns = Numeric_new();
-    tls->nanos_from_iso8601.secs = Numeric_new();
-    tls->nanos_from_ts.s = Numeric_new();
-    tls->nanos_from_ts.s_ns = Numeric_new();
-    tls->nanos_from_ts.ns = Numeric_new();
-    tls->nanos_to_iso8601.s = Numeric_new();
-    tls_set(time_tls_key, tls);
-  }
-  return tls;
 }
 
 bool nanos_from_iso8601(const char *restrict const iso, const size_t len,
