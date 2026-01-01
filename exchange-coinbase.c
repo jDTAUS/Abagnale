@@ -1545,17 +1545,23 @@ parse_product(const struct wcjson_document *restrict const doc,
   const struct Account *restrict const ba = coinbase_account_currency(b_id);
   struct String *restrict qa_id = NULL;
   struct String *restrict ba_id = NULL;
+  bool qa_active_and_ready = false;
+  bool ba_active_and_ready = false;
 
   if (qa != NULL) {
     qa_id = String_copy(qa->id);
+    qa_active_and_ready = qa->is_active && qa->is_ready;
     if (qa->mtx != NULL)
       mutex_unlock(qa->mtx);
+    qa = NULL;
   }
 
   if (ba != NULL) {
     ba_id = String_copy(ba->id);
+    ba_active_and_ready = ba->is_active && ba->is_ready;
     if (ba->mtx != NULL)
       mutex_unlock(ba->mtx);
+    ba = NULL;
   }
 
   const enum product_status status_value = product_status(j_status->mbstring);
@@ -1602,11 +1608,8 @@ parse_product(const struct wcjson_document *restrict const doc,
    * safe to not set a product's tradeable flag for inactive or unready
    * accounts.
    */
-  if (qa != NULL)
-    p->is_tradeable = p->is_tradeable && qa->is_active && qa->is_ready;
-
-  if (ba != NULL)
-    p->is_tradeable = p->is_tradeable && ba->is_active && ba->is_ready;
+  p->is_tradeable = p->is_tradeable && qa_is_active_and_ready;
+  p->is_tradeable = p->is_tradeable && ba_is_active_and_ready;
 
 #ifdef ABAG_COINBASE_DEBUG
   if (!p->is_active) {
