@@ -805,7 +805,7 @@ static void ws_ticker_update(const struct wcjson_document *restrict const doc,
 
   if (Numeric_cmp(j_price_num, zero) > 0) {
     struct Sample *restrict const s = Sample_new();
-    s->p_id = String_use(j_product_id_p->id);
+    s->p_id = String_reuse(j_product_id_p->id);
     s->nanos = Numeric_copy(nanos);
     s->price = j_price_num;
 
@@ -878,7 +878,7 @@ static void ws_user_update(const struct wcjson_document *restrict const doc,
 
   o = Order_new();
   o->id = String_cnew(j_order_id->mbstring);
-  o->p_id = String_use(j_product_id_p->id);
+  o->p_id = String_reuse(j_product_id_p->id);
   o->status = order_status(j_status->mbstring);
   o->cnanos = j_creation_time_nanos;
   o->b_ordered = Numeric_add(j_cumulative_quantity_num, j_leaves_quantity_num);
@@ -1546,7 +1546,7 @@ parse_product(const struct wcjson_document *restrict const doc,
   bool ba_active_and_ready = false;
 
   if (qa != NULL) {
-    qa_id = String_use(qa->id);
+    qa_id = String_reuse(qa->id);
     qa_active_and_ready = qa->is_active && qa->is_ready;
     if (qa->mtx != NULL)
       mutex_unlock(qa->mtx);
@@ -1554,7 +1554,7 @@ parse_product(const struct wcjson_document *restrict const doc,
   }
 
   if (ba != NULL) {
-    ba_id = String_use(ba->id);
+    ba_id = String_reuse(ba->id);
     ba_active_and_ready = ba->is_active && ba->is_ready;
     if (ba->mtx != NULL)
       mutex_unlock(ba->mtx);
@@ -1969,7 +1969,7 @@ parse_order(const struct wcjson_document *restrict const doc,
 
   o = Order_new();
   o->id = String_cnew(j_order_id->mbstring);
-  o->p_id = String_use(j_product_id_p->id);
+  o->p_id = String_reuse(j_product_id_p->id);
   o->settled = j_settled->is_true;
   o->status = order_status(j_status->mbstring);
   o->cnanos = j_created_time_nanos;

@@ -471,12 +471,12 @@ void Candle_copy_to(const struct Candle *restrict const src,
 
 static struct Product *product_dup(const struct Product *restrict const p) {
   struct Product *restrict pd = Product_new();
-  pd->id = String_use(p->id);
-  pd->nm = String_use(p->nm);
-  pd->b_id = String_use(p->b_id);
-  pd->ba_id = String_use(p->ba_id);
-  pd->q_id = String_use(p->q_id);
-  pd->qa_id = String_use(p->qa_id);
+  pd->id = String_reuse(p->id);
+  pd->nm = String_reuse(p->nm);
+  pd->b_id = String_reuse(p->b_id);
+  pd->ba_id = String_reuse(p->ba_id);
+  pd->q_id = String_reuse(p->q_id);
+  pd->qa_id = String_reuse(p->qa_id);
   pd->mtx = NULL;
   pd->type = p->type;
   pd->status = p->status;
@@ -817,7 +817,7 @@ samples_load(const struct worker_ctx *restrict const w_ctx) {
 
   while (!terminated && db_samples_next(sample, w_ctx->db)) {
     struct Sample *restrict const s = Sample_new();
-    s->p_id = String_use(w_ctx->p->id);
+    s->p_id = String_reuse(w_ctx->p->id);
     s->nanos = Numeric_copy(sample->nanos);
     s->price = Numeric_copy(sample->price);
 
@@ -908,7 +908,7 @@ static void worker_config(struct worker_ctx *restrict const w_ctx,
       return;
     }
 
-    struct String *restrict q_p_id = String_use(q_p->id);
+    struct String *restrict q_p_id = String_reuse(q_p->id);
     q_p = NULL;
     Array_unlock(products);
 
@@ -2404,9 +2404,9 @@ static struct Array *trades_load(const struct worker_ctx *w_ctx,
 
   while (db_trades_next(trade, w_ctx->db)) {
     struct Trade *restrict const t =
-        trade_new(String_use(w_ctx->ex->id), String_use(w_ctx->p->id),
-                  String_use(w_ctx->p->b_id), String_use(w_ctx->p->q_id),
-                  String_use(w_ctx->p->ba_id), String_use(w_ctx->p->qa_id),
+        trade_new(String_reuse(w_ctx->ex->id), String_reuse(w_ctx->p->id),
+                  String_reuse(w_ctx->p->b_id), String_reuse(w_ctx->p->q_id),
+                  String_reuse(w_ctx->p->ba_id), String_reuse(w_ctx->p->qa_id),
                   w_ctx->p->b_sc, w_ctx->p->q_sc, w_ctx->p->p_sc);
 
     t->id = String_cnew(trade->id);
@@ -2770,9 +2770,9 @@ static int samples_process(void *restrict const arg) {
 
     if (!(betting || pending)) {
       struct Trade *t =
-          trade_new(String_use(ctx->ex->id), String_use(ctx->p->id),
-                    String_use(ctx->p->b_id), String_use(ctx->p->q_id),
-                    String_use(ctx->p->ba_id), String_use(ctx->p->qa_id),
+          trade_new(String_reuse(ctx->ex->id), String_reuse(ctx->p->id),
+                    String_reuse(ctx->p->b_id), String_reuse(ctx->p->q_id),
+                    String_reuse(ctx->p->ba_id), String_reuse(ctx->p->qa_id),
                     ctx->p->b_sc, ctx->p->q_sc, ctx->p->p_sc);
 
       trade_create(ctx, t, samples, sample);

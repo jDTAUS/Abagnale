@@ -145,7 +145,7 @@ inline void String_delete(void *restrict const s) {
   heap_free(s);
 }
 
-inline struct String *String_use(struct String *restrict const str) {
+inline struct String *String_reuse(struct String *restrict const str) {
   if (str == NULL)
     return NULL;
 
