@@ -1214,8 +1214,7 @@ static void http_listener(struct mg_connection *restrict c, int ev,
     int r = snprintf(uri, sizeof(uri), "%s %.*s%s", method, (int)host.len,
                      host.buf, http_ctx->path);
     if (r < 0 || (size_t)r >= sizeof(uri)) {
-      werr("%s: %d: %s: URI exceeds %zu characters\n", __FILE__, __LINE__,
-           __func__, sizeof(uri));
+      werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
       fatal();
     }
 
@@ -1275,16 +1274,14 @@ static void http_listener(struct mg_connection *restrict c, int ev,
         // => i <= SIZE_MAX - mb_len
         // => mb_len <= SIZE_MAX - i
         if (i > SIZE_MAX - mb_len || mb_len > SIZE_MAX - i) {
-          werr("%s: %d: %s: Response body exceeds %zu bytes\n", __FILE__,
-               __LINE__, __func__, SIZE_MAX);
+          werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
           fatal();
         }
 
         // rsp_len + 1 <= HTTP_RESPONSE_MAX_WCHARS
         // => rsp_len <= HTTP_RESPONSE_MAX_WCHARS -1
         if (http_ctx->rsp_len > HTTP_RESPONSE_MAX_WCHARS - 1) {
-          werr("%s: %d: %s: Response body exceeds %zu characters\n", __FILE__,
-               __LINE__, __func__, HTTP_RESPONSE_MAX_WCHARS);
+          werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
           fatal();
         }
       }
@@ -1656,7 +1653,7 @@ static struct Array *coinbase_products(void) {
         snprintf(url, sizeof(url), "%s", ABAG_COINBASE_PRODUCTS_RESOURCE_URL);
 
     if (r < 0 || (size_t)r >= sizeof(url)) {
-      werr("%s: URL exceeds %zu characters\n", __func__, sizeof(url));
+      werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
       fatal();
     }
 
@@ -1788,8 +1785,7 @@ static struct Array *accounts_with_cursor(struct Array *restrict result,
                  ABAG_COINBASE_ACCOUNTS_RESOURCE_LIMIT, cursor);
 
     if (r < 0 || (size_t)r >= sizeof(url)) {
-      werr("%s: %d: %s: URL exceeds %zu bytes\n", __FILE__, __LINE__, __func__,
-           sizeof(url));
+      werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
       fatal();
     }
   } else {
@@ -1798,8 +1794,7 @@ static struct Array *accounts_with_cursor(struct Array *restrict result,
                  ABAG_COINBASE_ACCOUNTS_RESOURCE_LIMIT);
 
     if (r < 0 || (size_t)r >= sizeof(url)) {
-      werr("%s: %d: %s: URL exceeds %zu characters\n", __FILE__, __LINE__,
-           __func__, sizeof(url));
+      werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
       fatal();
     }
   }
@@ -1886,15 +1881,13 @@ coinbase_account(const struct String *restrict const id) {
                    String_chars(id));
 
   if (r < 0 || (size_t)r >= sizeof(path)) {
-    werr("%s: %d: %s: Path exceeds %zu bytes\n", __FILE__, __LINE__, __func__,
-         sizeof(path));
+    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
     fatal();
   }
 
   r = snprintf(url, sizeof(url), "%s%s", ABAG_COINBASE_ADVANCED_API_URI, path);
   if (r < 0 || (size_t)r >= sizeof(url)) {
-    werr("%s: %d: %s: URL exceeds %zu bytes\n", __FILE__, __LINE__, __func__,
-         sizeof(url));
+    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
     fatal();
   }
 
@@ -2019,15 +2012,13 @@ static struct Order *coinbase_order(const struct String *restrict const id) {
       snprintf(path, sizeof(path), ABAG_COINBASE_ORDER_PATH, String_chars(id));
 
   if (r < 0 || (size_t)r >= sizeof(path)) {
-    werr("%s: %d: %s: Path exceeds %zu bytes\n", __FILE__, __LINE__, __func__,
-         sizeof(path));
+    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
     fatal();
   }
 
   r = snprintf(url, sizeof(url), "%s%s", ABAG_COINBASE_ADVANCED_API_URI, path);
   if (r < 0 || (size_t)r >= sizeof(url)) {
-    werr("%s: %d: %s: URL exceeds %zu bytes\n", __FILE__, __LINE__, __func__,
-         sizeof(url));
+    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
     fatal();
   }
 
@@ -2251,8 +2242,7 @@ static struct Pricing *coinbase_pricing(void) {
                    ABAG_COINBASE_FEES_RESOURCE_URL);
 
   if (r < 0 || (size_t)r >= sizeof(url)) {
-    werr("%s: %d: %s: URL exceeds %zu bytes\n", __FILE__, __LINE__, __func__,
-         sizeof(url));
+    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
     fatal();
   }
 

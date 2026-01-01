@@ -383,10 +383,10 @@ bool db_vacuum(const char *const cname, const char *const fname) {
                nanos_asc, fname);
 
   if (r < 0 || (size_t)r >= sizeof(stmt)) {
-    werr("%s: %d: %s: Statement exceeds %zu bytes\n", __FILE__, __LINE__,
-         __func__, sizeof(stmt));
+    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
     fatal();
   }
+
   Numeric_char_free(nanos_asc);
   // clang-format off
   EXEC SQL AT :con PREPARE copy FROM :stmt;

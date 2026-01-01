@@ -544,8 +544,7 @@ static char *candle_string(const struct Candle *restrict const c,
       c_id, h, c_id, l, c_id, cl, c_id, s_info, c_id, pc, a, open, close);
 
   if (r < 0 || (size_t)r >= CANDLE_STRING_MAX_LENGTH) {
-    werr("%s: %d: %s: Candle string exceeds %zu characters\n", __FILE__,
-         __LINE__, __func__, CANDLE_STRING_MAX_LENGTH);
+    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
     fatal();
   }
 
@@ -665,8 +664,7 @@ static char *position_string(const struct Trade *restrict const t,
                String_chars(t->q_id));
 
   if (r < 0 || (size_t)r >= POSITION_STRING_MAX_LENGTH) {
-    werr("%s: %d: %s: Position string exceeds %zu characters\n", __FILE__,
-         __LINE__, __func__, POSITION_STRING_MAX_LENGTH);
+    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
     fatal();
   }
 
@@ -2041,8 +2039,7 @@ static void trade_plot(const struct worker_ctx *restrict const w_ctx,
                    String_chars(cnf->plts_dir), String_chars(w_ctx->p->nm));
 
   if (r < 0 || (size_t)r >= sizeof(plot_fn)) {
-    werr("%s: %d: %s: Plot filename exceeds %zu characters\n", __FILE__,
-         __LINE__, __func__, sizeof(plot_fn));
+    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
     fatal();
   }
 
@@ -2845,13 +2842,11 @@ int abagnale(int argc, char *argv[]) {
   // => Array_size(exchanges) <= SIZE_MAX / ABAG_WORKERS
   // => ABAG_WORKERS <= SIZE_MAX / Array_size(exchanges)
   if (Array_size(exchanges) > SIZE_MAX / ABAG_WORKERS) {
-    werr("%s: %d: %s: Number of exchanges exceeds limit of %zu exchanges\n",
-         __FILE__, __LINE__, __func__, SIZE_MAX / ABAG_WORKERS);
+    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
     fatal();
   }
   if (ABAG_WORKERS > SIZE_MAX / Array_size(exchanges)) {
-    werr("%s: %d: %s: Number of worker threads exceeds limit of %zu workers\n",
-         __FILE__, __LINE__, __func__, SIZE_MAX / Array_size(exchanges));
+    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
     fatal();
   }
 
@@ -2870,8 +2865,7 @@ int abagnale(int argc, char *argv[]) {
                              String_chars(e->nm), j);
 
       if (r < 0 || (size_t)r >= sizeof(w_ctx->db)) {
-        werr("%s: %d: %s: Database connection name exceeds %zu characters\n",
-             __FILE__, __LINE__, __func__, sizeof(w_ctx->db));
+        werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
         fatal();
       }
 
