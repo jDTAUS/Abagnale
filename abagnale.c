@@ -2333,14 +2333,16 @@ static void trade_maintain(const struct worker_ctx *restrict const w_ctx,
     char *restrict const s_b = Numeric_to_char(t->p_short.b_filled, t->b_sc);
     char *restrict const b_info = position_string(t, &t->p_long);
     char *restrict const q_info = position_string(t, &t->p_short);
+    char *restrict const tp = Numeric_to_char(t->tp, t->q_sc);
+    char *restrict const v = Numeric_to_char(t->tp_pc, 4);
 
-    wout("%s: %s->%s: %s: Trade done: %s%s@%s%s -> %s%s@%s%s, profit: %s%s, "
-         "costs: %s%s\n",
+    wout("%s: %s->%s: %s: Trade done: %s%s@%s%s -> %s%s@%s%s, return: %s%s, "
+         "volatility: %s%%, costs: %s%s, outcome: %s%s\n",
          String_chars(w_ctx->ex->nm), String_chars(t->q_id),
          String_chars(t->b_id), String_chars(t->id), l_b, String_chars(t->b_id),
          l_p, String_chars(t->q_id), s_b, String_chars(t->b_id), s_p,
-         String_chars(t->q_id), profit, String_chars(t->q_id), costs,
-         String_chars(t->q_id));
+         String_chars(t->q_id), tp, String_chars(t->q_id), v, costs,
+         String_chars(t->q_id), profit, String_chars(t->q_id));
 
     wout("%s: %s->%s: %s: %s\n", String_chars(w_ctx->ex->nm),
          String_chars(t->q_id), String_chars(t->b_id),
@@ -2356,6 +2358,8 @@ static void trade_maintain(const struct worker_ctx *restrict const w_ctx,
     Numeric_char_free(s_b);
     Numeric_char_free(profit);
     Numeric_char_free(costs);
+    Numeric_char_free(tp);
+    Numeric_char_free(v);
     heap_free(b_info);
     heap_free(q_info);
     break;
