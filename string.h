@@ -29,7 +29,7 @@ struct String *String_new(const struct String *restrict const, const size_t,
                           const size_t);
 struct String *String_cnew(const char *restrict);
 struct String *String_cnnew(const char *restrict, size_t);
-struct String *String_copy(struct String *restrict const);
+struct String *String_use(struct String *restrict const);
 bool String_equals(const struct String *restrict const,
                    const struct String *restrict const);
 void String_delete(void *restrict const);

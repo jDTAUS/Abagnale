@@ -87,7 +87,7 @@ inline void *Map_put(struct Map *restrict const m,
     bucket->value = e;
   } else {
     bucket = heap_malloc(sizeof(struct Entry));
-    bucket->key = String_copy(key);
+    bucket->key = String_use(key);
     bucket->value = e;
     bucket->next = m->buckets[i];
     m->buckets[i] = bucket;
