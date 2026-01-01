@@ -469,6 +469,25 @@ void Candle_copy_to(const struct Candle *restrict const src,
   Numeric_copy_to(src->lnanos, tgt->lnanos);
 }
 
+static struct Product *product_dup(const struct Product *restrict const p) {
+  struct Product *restrict pd = Product_new();
+  pd->id = String_copy(p->id);
+  pd->nm = String_copy(p->nm);
+  pd->b_id = String_copy(p->b_id);
+  pd->ba_id = String_copy(p->ba_id);
+  pd->q_id = String_copy(p->q_id);
+  pd->qa_id = String_copy(p->qa_id);
+  pd->mtx = NULL;
+  pd->type = p->type;
+  pd->status = p->status;
+  pd->p_sc = p->p_sc;
+  pd->b_sc = p->b_sc;
+  pd->q_sc = p->q_sc;
+  pd->is_tradeable = p->is_tradeable;
+  pd->is_active = p->is_active;
+  return pd;
+}
+
 const struct Algorithm *algorithm(const struct String *restrict const nm) {
   void **items = Array_items(algorithms);
   for (size_t i = Array_size(algorithms); i > 0; i--)
@@ -868,17 +887,15 @@ static void worker_config(struct worker_ctx *restrict const w_ctx,
     struct Product *restrict q_p = NULL;
     struct Array *restrict const products = w_ctx->ex->products();
 
-    Array_lock(products);
     items = Array_items(products);
     for (size_t i = Array_size(products); i > 0; i--) {
       struct Product *restrict const needle = items[i - 1];
       if (String_equals(needle->q_id, w_ctx->p_cnf->q_id) &&
           String_equals(needle->b_id, w_ctx->p->q_id)) {
-        q_p = Product_copy(needle);
+        q_p = needle;
         break;
       }
     }
-    Array_unlock(products);
 
     if (q_p == NULL) {
       nanos_now(now);
@@ -889,13 +906,18 @@ static void worker_config(struct worker_ctx *restrict const w_ctx,
              String_chars(w_ctx->p->q_id));
 
       w_ctx->q_tgt = NULL;
+      Array_unlock(products);
       return;
     }
 
-    Map_lock(product_samples);
-    struct Array *restrict const q_samples = Map_get(product_samples, q_p->id);
+    struct String *restrict q_p_id = String_copy(q_p->id);
+    q_p = NULL;
+    Array_unlock(products);
 
-    Product_delete(q_p);
+    Map_lock(product_samples);
+    struct Array *restrict const q_samples = Map_get(product_samples, q_p_id);
+    String_delete(q_p_id);
+    q_p_id = NULL;
 
     if (q_samples == NULL) {
       nanos_now(now);
@@ -2533,9 +2555,11 @@ static int orders_process(void *restrict const arg) {
     }
 
     w_ctx->a = NULL;
-    w_ctx->p = product;
+    w_ctx->p = product_dup(product);
     w_ctx->p_cnf = NULL;
     w_ctx->q_tgt = tp;
+
+    mutex_unlock(product->mtx);
 
     Map_lock(product_samples);
     samples = Map_get(product_samples, order->p_id);
@@ -2639,9 +2663,11 @@ static int samples_process(void *restrict const arg) {
     }
 
     ctx->a = NULL;
-    ctx->p = p;
+    ctx->p = product_dup(p);
     ctx->p_cnf = NULL;
     ctx->q_tgt = tp;
+
+    mutex_unlock(p->mtx);
 
     mutex_lock(&global_mtx);
     db_sample_create(ctx->db, String_chars(ctx->ex->id),

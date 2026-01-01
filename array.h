@@ -21,6 +21,7 @@
 #define ABAG_ARRAY_H
 
 #include <stddef.h>
+#include <threads.h>
 
 struct Array;
 
@@ -28,6 +29,7 @@ struct Array *Array_new(const size_t);
 void Array_delete(struct Array *restrict const,
                   void (*cb)(void *restrict const));
 
+mtx_t *Array_mutex(struct Array *restrict const);
 void Array_lock(struct Array *restrict const);
 void Array_unlock(struct Array *restrict const);
 

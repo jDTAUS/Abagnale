@@ -22,7 +22,6 @@
 
 #include "array.h"
 #include "math.h"
-#include "object.h"
 #include "string.h"
 
 #include <stdbool.h>
@@ -43,18 +42,18 @@ enum product_status {
 struct Product {
   struct String *restrict id;
   struct String *restrict nm;
-  enum product_type type;
-  enum product_status status;
   struct String *restrict b_id;
   struct String *restrict ba_id;
   struct String *restrict q_id;
   struct String *restrict qa_id;
+  mtx_t *restrict mtx;
+  enum product_type type;
+  enum product_status status;
   size_t p_sc;
   size_t b_sc;
   size_t q_sc;
   bool is_tradeable;
   bool is_active;
-  struct Object *restrict obj;
 };
 
 enum account_type {
@@ -69,18 +68,17 @@ struct Account {
   struct String *restrict id;
   struct String *restrict nm;
   struct String *restrict c_id;
-  enum account_type type;
   struct Numeric *restrict avail;
+  mtx_t *restrict mtx;
+  enum account_type type;
   bool is_active;
   bool is_ready;
-  struct Object *restrict obj;
 };
 
 struct Sample {
   struct String *restrict p_id;
   struct Numeric *restrict nanos;
   struct Numeric *restrict price;
-  struct Object *restrict obj;
 };
 
 enum order_status {
@@ -98,8 +96,6 @@ enum order_status {
 struct Order {
   struct String *restrict id;
   struct String *restrict p_id;
-  bool settled;
-  enum order_status status;
   struct Numeric *restrict cnanos;
   struct Numeric *restrict dnanos;
   struct Numeric *restrict b_ordered;
@@ -108,7 +104,8 @@ struct Order {
   struct Numeric *restrict q_filled;
   struct Numeric *restrict q_fees;
   struct String *restrict msg;
-  struct Object *restrict obj;
+  enum order_status status;
+  bool settled;
 };
 
 struct Pricing {
@@ -116,13 +113,11 @@ struct Pricing {
   struct Numeric *restrict tf_pc;
   struct Numeric *restrict mf_pc;
   struct Numeric *restrict ef_pc;
-  struct Object *restrict obj;
 };
 
 struct ExchangeConfig {
   struct String *restrict jwt_kid;
   struct String *restrict jwt_key;
-  struct Object *restrict obj;
 };
 
 struct Exchange {
@@ -151,7 +146,6 @@ struct Exchange {
 
 struct Product *Product_new(void);
 void Product_delete(void *restrict const);
-struct Product *Product_copy(struct Product *restrict const);
 
 struct Account *Account_new(void);
 void Account_delete(void *restrict const);

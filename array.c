@@ -27,7 +27,7 @@ struct Array {
   void **items;
   size_t size;
   size_t capacity;
-  mtx_t *restrict mtx;
+  mtx_t mtx;
 };
 
 void Array_grow(struct Array *restrict const);
@@ -37,8 +37,7 @@ struct Array *Array_new(const size_t c) {
   a->size = 0;
   a->capacity = ((c | !c) + 1) & ~1U;
   a->items = heap_calloc(a->capacity, sizeof(void *));
-  a->mtx = heap_malloc(sizeof(mtx_t));
-  mutex_init(a->mtx);
+  mutex_init(&a->mtx);
   return a;
 }
 
@@ -48,15 +47,15 @@ inline void Array_delete(struct Array *restrict const a,
     for (size_t i = a->size; i > 0; i--)
       cb(a->items[i - 1]);
 
-  mutex_destroy(a->mtx);
-  heap_free(a->mtx);
+  mutex_destroy(&a->mtx);
   heap_free(a->items);
   heap_free(a);
 }
 
-inline void Array_lock(struct Array *restrict const a) { mutex_lock(a->mtx); }
+inline mtx_t *Array_mutex(struct Array *restrict const a) { return &a->mtx; }
+inline void Array_lock(struct Array *restrict const a) { mutex_lock(&a->mtx); }
 inline void Array_unlock(struct Array *restrict const a) {
-  mutex_unlock(a->mtx);
+  mutex_unlock(&a->mtx);
 }
 
 inline struct Array *Array_copy(const struct Array *restrict const a,

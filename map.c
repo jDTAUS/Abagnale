@@ -30,7 +30,7 @@ struct Entry {
 struct Map {
   size_t capacity;
   struct Entry **restrict buckets;
-  mtx_t *restrict mtx;
+  mtx_t mtx;
 };
 
 struct MapIterator {
@@ -43,8 +43,7 @@ inline struct Map *Map_new(const size_t capacity) {
   struct Map *restrict const m = heap_malloc(sizeof(struct Map));
   m->capacity = capacity;
   m->buckets = heap_calloc(capacity, sizeof(struct Entry *));
-  m->mtx = heap_malloc(sizeof(mtx_t));
-  mutex_init(m->mtx);
+  mutex_init(&m->mtx);
   return m;
 }
 
@@ -65,14 +64,13 @@ inline void Map_delete(struct Map *restrict const m,
     }
   }
 
-  mutex_destroy(m->mtx);
-  heap_free(m->mtx);
+  mutex_destroy(&m->mtx);
   heap_free(m->buckets);
   heap_free(m);
 }
 
-inline void Map_lock(struct Map *restrict const m) { mutex_lock(m->mtx); }
-inline void Map_unlock(struct Map *restrict const m) { mutex_unlock(m->mtx); }
+inline void Map_lock(struct Map *restrict const m) { mutex_lock(&m->mtx); }
+inline void Map_unlock(struct Map *restrict const m) { mutex_unlock(&m->mtx); }
 
 inline void *Map_put(struct Map *restrict const m,
                      struct String *restrict const key,

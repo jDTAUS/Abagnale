@@ -282,7 +282,8 @@ static int cmd_markets(int argc, char *argv[]) {
     goto ret;
   }
 
-  const struct Array *restrict const products = exc->products();
+  struct Array *restrict const products = exc->products();
+
   items = Array_items(products);
   for (size_t i = Array_size(products); i > 0; i--) {
     const struct Product *restrict const p = items[i - 1];
@@ -292,6 +293,7 @@ static int cmd_markets(int argc, char *argv[]) {
       print_product(p);
   }
 
+  Array_unlock(products);
   r = EXIT_SUCCESS;
 ret:
   String_delete(exc_name);
@@ -378,7 +380,8 @@ static int cmd_accounts(int argc, char *argv[]) {
     goto ret;
   }
 
-  const struct Array *restrict const accounts = exc->accounts();
+  struct Array *restrict const accounts = exc->accounts();
+
   items = Array_items(accounts);
   for (size_t i = Array_size(accounts); i > 0; i--) {
     const struct Account *restrict const a = items[i - 1];
@@ -387,6 +390,7 @@ static int cmd_accounts(int argc, char *argv[]) {
       print_account(a);
   }
 
+  Array_unlock(accounts);
   r = EXIT_SUCCESS;
 ret:
   String_delete(exc_name);
@@ -568,27 +572,26 @@ static int cmd_plot(int argc, char *argv[]) {
   }
 
   struct Array *restrict const products = exc->products();
-  Array_lock(products);
+
   items = Array_items(products);
   for (size_t i = Array_size(products); i > 0; i--) {
     struct Product *restrict const needle = items[i - 1];
     if (String_equals(needle->nm, p_name)) {
-      p = Product_copy(needle);
+      p = needle;
       break;
     }
   }
-  Array_unlock(products);
 
   if (p == NULL) {
     werr("%s: %s: Market not found\n", __progname, String_chars(p_name));
-    goto ret;
+    goto unlock;
   }
 
   a = algorithm(a_name);
 
   if (a == NULL) {
     werr("%s: %s: Algorithm not found\n", __progname, String_chars(a_name));
-    goto ret;
+    goto unlock;
   }
 
   db_connect(__progname);
@@ -596,18 +599,18 @@ static int cmd_plot(int argc, char *argv[]) {
   if (!a->product_plot(f_name, __progname, exc, p)) {
     werr("%s: %s: Algortihm does not provide plots\n", __progname,
          String_chars(a_name));
-    db_disconnect(__progname);
-    goto ret;
+    goto disconnect;
   }
 
-  db_disconnect(__progname);
-
   r = EXIT_SUCCESS;
+disconnect:
+  db_disconnect(__progname);
+unlock:
+  Array_unlock(products);
 ret:
   String_delete(exc_name);
   String_delete(p_name);
   String_delete(a_name);
-  Product_delete(p);
   return r;
 }
 

@@ -22,9 +22,7 @@
 #include "math.h"
 
 inline struct Sample *Sample_new(void) {
-  struct Sample *restrict const s = heap_calloc(1, sizeof(struct Sample));
-  s->obj = Object_new();
-  return s;
+  return heap_calloc(1, sizeof(struct Sample));
 }
 
 inline void Sample_delete(void *restrict const s) {
@@ -33,32 +31,13 @@ inline void Sample_delete(void *restrict const s) {
 
   struct Sample *restrict const sample = s;
   String_delete(sample->p_id);
-
-  if (Object_delete(sample->obj)) {
-    Numeric_delete(sample->price);
-    Numeric_delete(sample->nanos);
-    heap_free(sample);
-  }
+  Numeric_delete(sample->price);
+  Numeric_delete(sample->nanos);
+  heap_free(sample);
 }
 
 inline struct Product *Product_new(void) {
-  struct Product *restrict const p = heap_calloc(1, sizeof(struct Product));
-  p->obj = Object_new();
-  return p;
-}
-
-inline struct Product *Product_copy(struct Product *restrict const p) {
-  if (p == NULL)
-    return NULL;
-
-  String_copy(p->id);
-  String_copy(p->nm);
-  String_copy(p->b_id);
-  String_copy(p->ba_id);
-  String_copy(p->q_id);
-  String_copy(p->qa_id);
-  Object_copy(p->obj);
-  return p;
+  return heap_calloc(1, sizeof(struct Product));
 }
 
 inline void Product_delete(void *restrict const p) {
@@ -72,15 +51,11 @@ inline void Product_delete(void *restrict const p) {
   String_delete(product->ba_id);
   String_delete(product->q_id);
   String_delete(product->qa_id);
-
-  if (Object_delete(product->obj))
-    heap_free(product);
+  heap_free(product);
 }
 
 inline struct Account *Account_new(void) {
-  struct Account *restrict const a = heap_calloc(1, sizeof(struct Account));
-  a->obj = Object_new();
-  return a;
+  return heap_calloc(1, sizeof(struct Account));
 }
 
 inline void Account_delete(void *restrict const a) {
@@ -91,17 +66,12 @@ inline void Account_delete(void *restrict const a) {
   String_delete(account->id);
   String_delete(account->nm);
   String_delete(account->c_id);
-
-  if (Object_delete(account->obj)) {
-    Numeric_delete(account->avail);
-    heap_free(account);
-  }
+  Numeric_delete(account->avail);
+  heap_free(account);
 }
 
 inline struct Order *Order_new(void) {
-  struct Order *restrict const o = heap_calloc(1, sizeof(struct Order));
-  o->obj = Object_new();
-  return o;
+  return heap_calloc(1, sizeof(struct Order));
 }
 
 inline void Order_delete(void *restrict const o) {
@@ -112,23 +82,18 @@ inline void Order_delete(void *restrict const o) {
   String_delete(order->id);
   String_delete(order->p_id);
   String_delete(order->msg);
-
-  if (Object_delete(order->obj)) {
-    Numeric_delete(order->cnanos);
-    Numeric_delete(order->dnanos);
-    Numeric_delete(order->b_ordered);
-    Numeric_delete(order->p_ordered);
-    Numeric_delete(order->b_filled);
-    Numeric_delete(order->q_filled);
-    Numeric_delete(order->q_fees);
-    heap_free(order);
-  }
+  Numeric_delete(order->cnanos);
+  Numeric_delete(order->dnanos);
+  Numeric_delete(order->b_ordered);
+  Numeric_delete(order->p_ordered);
+  Numeric_delete(order->b_filled);
+  Numeric_delete(order->q_filled);
+  Numeric_delete(order->q_fees);
+  heap_free(order);
 }
 
 inline struct Pricing *Pricing_new(void) {
-  struct Pricing *restrict const p = heap_calloc(1, sizeof(struct Pricing));
-  p->obj = Object_new();
-  return p;
+  return heap_calloc(1, sizeof(struct Pricing));
 }
 
 inline void Pricing_delete(void *restrict const p) {
@@ -137,21 +102,14 @@ inline void Pricing_delete(void *restrict const p) {
 
   struct Pricing *restrict const pricing = p;
   String_delete(pricing->nm);
-
-  if (Object_delete(pricing->obj)) {
-    Numeric_delete(pricing->tf_pc);
-    Numeric_delete(pricing->mf_pc);
-    Numeric_delete(pricing->ef_pc);
-    heap_free(pricing);
-  }
+  Numeric_delete(pricing->tf_pc);
+  Numeric_delete(pricing->mf_pc);
+  Numeric_delete(pricing->ef_pc);
+  heap_free(pricing);
 }
 
 inline struct ExchangeConfig *ExchangeConfig_new(void) {
-  struct ExchangeConfig *restrict const e =
-      heap_calloc(1, sizeof(struct ExchangeConfig));
-
-  e->obj = Object_new();
-  return e;
+  return heap_calloc(1, sizeof(struct ExchangeConfig));
 }
 
 inline void ExchangeConfig_delete(void *restrict const e) {
@@ -161,7 +119,5 @@ inline void ExchangeConfig_delete(void *restrict const e) {
   struct ExchangeConfig *restrict const cnf = e;
   String_delete(cnf->jwt_kid);
   String_delete(cnf->jwt_key);
-
-  if (Object_delete(cnf->obj))
-    heap_free(cnf);
+  heap_free(cnf);
 }

@@ -814,7 +814,9 @@ static void ws_ticker_update(const struct wcjson_document *restrict const doc,
     Numeric_delete(j_price_num);
 
 ret:
-  Product_delete(j_product_id_p);
+  if (j_product_id_p != NULL && j_product_id_p->mtx != NULL)
+    mutex_unlock(j_product_id_p->mtx);
+
   return;
 }
 
@@ -902,7 +904,9 @@ static void ws_user_update(const struct wcjson_document *restrict const doc,
 
   Queue_enqueue(orders, o);
 ret:
-  Product_delete(j_product_id_p);
+  if (j_product_id_p != NULL && j_product_id_p->mtx != NULL)
+    mutex_unlock(j_product_id_p->mtx);
+
   Numeric_delete(j_leaves_quantity_num);
   Numeric_delete(j_outstanding_hold_amount_num);
 }
@@ -1029,19 +1033,18 @@ static void ws_subscribe(struct mg_connection *restrict const c,
   struct wcjson_document *restrict const doc = wcjsondoc_new();
   void **items;
 
-  Array_lock(products);
-  const struct Array *restrict const p = coinbase_products();
+  struct Array *restrict const p_array = coinbase_products();
   struct wcjson_value *restrict const j_msg = wcjson_object(doc);
   struct wcjson_value *restrict const j_arr = wcjson_array(doc);
 
-  items = Array_items(p);
-  for (size_t i = Array_size(p); i > 0; i--) {
+  items = Array_items(p_array);
+  for (size_t i = Array_size(p_array); i > 0; i--) {
     struct wcjson_value *restrict const j_nm =
         wcjson_string(doc, String_chars(((struct Product *)items[i - 1])->nm));
 
     wcjson_array_add(doc, j_arr, j_nm);
   }
-  Array_unlock(products);
+  Array_unlock(p_array);
 
   struct wcjson_value *restrict const j_subscribe =
       wcjson_string(doc, "subscribe");
@@ -1538,12 +1541,22 @@ parse_product(const struct wcjson_document *restrict const doc,
       String_cnew(j_quote_currency_id->mbstring);
 
   // Find matching accounts required for trading.
-  Array_lock(accounts);
   const struct Account *restrict const qa = coinbase_account_currency(q_id);
   const struct Account *restrict const ba = coinbase_account_currency(b_id);
-  struct String *restrict const qa_id = qa != NULL ? String_copy(qa->id) : NULL;
-  struct String *restrict const ba_id = ba != NULL ? String_copy(ba->id) : NULL;
-  Array_unlock(accounts);
+  struct String *restrict qa_id = NULL;
+  struct String *restrict ba_id = NULL;
+
+  if (qa != NULL) {
+    qa_id = String_copy(qa->id);
+    if (qa->mtx != NULL)
+      mutex_unlock(qa->mtx);
+  }
+
+  if (ba != NULL) {
+    ba_id = String_copy(ba->id);
+    if (ba->mtx != NULL)
+      mutex_unlock(ba->mtx);
+  }
 
   const enum product_status status_value = product_status(j_status->mbstring);
   const enum product_type type_value = product_type(j_product_type->mbstring);
@@ -1671,7 +1684,6 @@ static struct Array *coinbase_products(void) {
     }
   }
 
-  Array_unlock(products);
   heap_free(doc.values);
   heap_free(doc.strings);
   heap_free(doc.mbstrings);
@@ -1681,20 +1693,17 @@ static struct Array *coinbase_products(void) {
 
 static struct Product *
 coinbase_product(const struct String *restrict const id) {
-  Array_lock(products);
-  coinbase_products();
-  struct Product *restrict p = Product_copy(Map_get(products_by_id, id));
-  Array_unlock(products);
+  struct Array *restrict const p_array = coinbase_products();
+  struct Product *restrict p = Map_get(products_by_id, id);
+  p->mtx = Array_mutex(p_array);
   return p;
 }
 
 static struct Product *
 coinbase_product_name(const struct String *restrict const name) {
-  Array_lock(products);
-  coinbase_products();
-  struct Product *restrict const p =
-      Product_copy(Map_get(products_by_name, name));
-  Array_unlock(products);
+  struct Array *restrict const p_array = coinbase_products();
+  struct Product *restrict const p = Map_get(products_by_name, name);
+  p->mtx = Array_mutex(p_array);
   return p;
 }
 
@@ -1843,13 +1852,11 @@ static struct Array *coinbase_accounts(void) {
     }
   }
 
-  Array_unlock(accounts);
   return accounts;
 }
 
 static struct Account *
 coinbase_account_currency(const struct String *restrict const currency) {
-  Array_lock(accounts);
   const struct Array *restrict const haystack = coinbase_accounts();
   struct Account *restrict needle = NULL;
   void **items = Array_items(haystack);
@@ -1857,10 +1864,10 @@ coinbase_account_currency(const struct String *restrict const currency) {
   for (size_t i = Array_size(haystack); i > 0; i--)
     if (String_equals(((struct Account *)items[i - 1])->c_id, currency)) {
       needle = items[i - 1];
+      needle->mtx = Array_mutex(accounts);
       break;
     }
 
-  Array_unlock(accounts);
   return needle;
 }
 
@@ -1992,7 +1999,9 @@ parse_order(const struct wcjson_document *restrict const doc,
          wcjsondoc_string(errbuf, sizeof(errbuf), doc, order, NULL));
 
 ret:
-  Product_delete(j_product_id_p);
+  if (j_product_id_p != NULL && j_product_id_p->mtx != NULL)
+    mutex_unlock(j_product_id_p->mtx);
+
   return o;
 }
 

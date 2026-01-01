@@ -19,8 +19,8 @@
 
 #include "string.h"
 #include "heap.h"
-#include "object.h"
 #include "proc.h"
+#include "thread.h"
 
 #include <stdint.h>
 #include <string.h>
@@ -29,7 +29,8 @@ struct String {
   char *restrict s;
   size_t len;
   size_t hc;
-  struct Object *restrict obj;
+  size_t r_cnt;
+  mtx_t mtx;
 };
 
 inline struct String *String_cnew(const char *restrict s) {
@@ -40,18 +41,20 @@ inline struct String *String_cnew(const char *restrict s) {
     hc = ((hc << 5) + hc) + (unsigned char)*s_p;
 
   struct String *restrict const str = heap_malloc(sizeof(struct String));
-  str->obj = Object_new();
   str->len = s_p - s;
   str->hc = hc;
+
   // str->len + 1 <= SIZE_MAX
   // => str->len <= SIZE_MAX - 1
   if (str->len > SIZE_MAX - 1) {
-    werr("%s: %d: %s: String exceeds %zu bytes", __FILE__, __LINE__, __func__,
-         SIZE_MAX);
+    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
     fatal();
   }
+
   str->s = heap_calloc(str->len + 1, sizeof(char));
   memcpy(str->s, s, str->len);
+  mutex_init(&str->mtx);
+  str->r_cnt = 1;
   return str;
 }
 
@@ -63,18 +66,20 @@ inline struct String *String_cnnew(const char *restrict s, size_t maxlen) {
     hc = ((hc << 5) + hc) + (unsigned char)*s_p;
 
   struct String *restrict const str = heap_malloc(sizeof(struct String));
-  str->obj = Object_new();
   str->len = s_p - s;
   str->hc = hc;
+
   // str->len + 1 <= SIZE_MAX
   // => str->len <= SIZE_MAX - 1
   if (str->len > SIZE_MAX - 1) {
-    werr("%s: %d: %s: String exceeds %zu bytes", __FILE__, __LINE__, __func__,
-         SIZE_MAX);
+    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
     fatal();
   }
+
   str->s = heap_calloc(str->len + 1, sizeof(char));
   memcpy(str->s, s, str->len);
+  mutex_init(&str->mtx);
+  str->r_cnt = 1;
   return str;
 }
 
@@ -91,7 +96,6 @@ inline struct String *String_new(const struct String *restrict s,
   }
 
   struct String *restrict const str = heap_malloc(sizeof(struct String));
-  str->obj = Object_new();
   str->len = c;
   str->hc = 5381;
   str->s = heap_calloc(str->len + 1, sizeof(char));
@@ -100,6 +104,8 @@ inline struct String *String_new(const struct String *restrict s,
   for (s_p = str->s; *s_p; s_p++)
     str->hc = ((str->hc << 5) + str->hc) + (unsigned char)*s_p;
 
+  mutex_init(&str->mtx);
+  str->r_cnt = 1;
   return str;
 }
 
@@ -120,17 +126,41 @@ inline void String_delete(void *restrict const s) {
     return;
 
   struct String *restrict const str = s;
-  if (Object_delete(str->obj)) {
-    heap_free(str->s);
-    heap_free(str);
+
+  mutex_lock(&str->mtx);
+
+  if (str->r_cnt-- == 0) {
+    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
+    fatal();
   }
+
+  if (str->r_cnt > 0) {
+    mutex_unlock(&str->mtx);
+    return;
+  }
+
+  mutex_unlock(&str->mtx);
+  mutex_destroy(&str->mtx);
+  heap_free(str->s);
+  heap_free(s);
 }
 
 inline struct String *String_copy(struct String *restrict const str) {
   if (str == NULL)
     return NULL;
 
-  Object_copy(str->obj);
+  mutex_lock(&str->mtx);
+
+  // str->r_cnt + 1 <= SIZE_MAX
+  // => str->r_cnt <= SIZE_MAX - 1
+  if (str->r_cnt > SIZE_MAX - 1) {
+    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
+    fatal();
+  }
+
+  str->r_cnt++;
+
+  mutex_unlock(&str->mtx);
   return str;
 }
 
