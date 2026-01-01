@@ -469,25 +469,6 @@ void Candle_copy_to(const struct Candle *restrict const src,
   Numeric_copy_to(src->lnanos, tgt->lnanos);
 }
 
-static struct Product *product_dup(const struct Product *restrict const p) {
-  struct Product *restrict pd = Product_new();
-  pd->id = String_copy(p->id);
-  pd->nm = String_copy(p->nm);
-  pd->b_id = String_copy(p->b_id);
-  pd->ba_id = String_copy(p->ba_id);
-  pd->q_id = String_copy(p->q_id);
-  pd->qa_id = String_copy(p->qa_id);
-  pd->mtx = NULL;
-  pd->type = p->type;
-  pd->status = p->status;
-  pd->p_sc = p->p_sc;
-  pd->b_sc = p->b_sc;
-  pd->q_sc = p->q_sc;
-  pd->is_tradeable = p->is_tradeable;
-  pd->is_active = p->is_active;
-  return pd;
-}
-
 const struct Algorithm *algorithm(const struct String *restrict const nm) {
   void **items = Array_items(algorithms);
   for (size_t i = Array_size(algorithms); i > 0; i--)
@@ -2552,7 +2533,7 @@ static int orders_process(void *restrict const arg) {
     }
 
     w_ctx->a = NULL;
-    w_ctx->p = product_dup(product);
+    w_ctx->p = Product_copy(product);
     w_ctx->p_cnf = NULL;
     w_ctx->q_tgt = tp;
 
@@ -2660,7 +2641,7 @@ static int samples_process(void *restrict const arg) {
     }
 
     ctx->a = NULL;
-    ctx->p = product_dup(p);
+    ctx->p = Product_copy(p);
     ctx->p_cnf = NULL;
     ctx->q_tgt = tp;
 

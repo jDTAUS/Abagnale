@@ -145,6 +145,7 @@ struct Exchange {
 };
 
 struct Product *Product_new(void);
+struct Product *Product_copy(const struct Product *restrict const);
 void Product_delete(void *restrict const);
 
 struct Account *Account_new(void);

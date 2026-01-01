@@ -40,6 +40,25 @@ inline struct Product *Product_new(void) {
   return heap_calloc(1, sizeof(struct Product));
 }
 
+inline struct Product *Product_copy(const struct Product *restrict const p) {
+  struct Product *restrict pd = Product_new();
+  pd->id = String_copy(p->id);
+  pd->nm = String_copy(p->nm);
+  pd->b_id = String_copy(p->b_id);
+  pd->ba_id = String_copy(p->ba_id);
+  pd->q_id = String_copy(p->q_id);
+  pd->qa_id = String_copy(p->qa_id);
+  pd->mtx = NULL;
+  pd->type = p->type;
+  pd->status = p->status;
+  pd->p_sc = p->p_sc;
+  pd->b_sc = p->b_sc;
+  pd->q_sc = p->q_sc;
+  pd->is_tradeable = p->is_tradeable;
+  pd->is_active = p->is_active;
+  return pd;
+}
+
 inline void Product_delete(void *restrict const p) {
   if (p == NULL)
     return;
