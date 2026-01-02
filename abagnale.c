@@ -841,7 +841,7 @@ static void worker_config(struct worker_ctx *restrict const w_ctx,
       nanos_now(now);
       Numeric_sub_to(now, boot_nanos, r0);
       if (Numeric_cmp(r0, boot_delay_nanos) > 0)
-        werr("%s: Failure calculating funds: Product %s->%s not found\n",
+        werr("%s: Failure calculating funds: Price %s->%s not found\n",
              String_chars(w_ctx->e->nm), String_chars(w_ctx->m_cnf->q_id),
              String_chars(w_ctx->m->q_id));
 
@@ -863,7 +863,7 @@ static void worker_config(struct worker_ctx *restrict const w_ctx,
       nanos_now(now);
       Numeric_sub_to(now, boot_nanos, r0);
       if (Numeric_cmp(r0, boot_delay_nanos) > 0)
-        werr("%s: Failure calculating funds: Product %s->%s not found\n",
+        werr("%s: Failure calculating funds: Price %s->%s not found\n",
              String_chars(w_ctx->e->nm), String_chars(w_ctx->m_cnf->q_id),
              String_chars(w_ctx->m->q_id));
 
