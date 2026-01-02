@@ -1521,10 +1521,6 @@ parse_product(const struct wcjson_document *restrict const doc,
   WCJSON_STRING_ITEM(doc, prod, status, 6, errbuf, ret)
   WCJSON_STRING_ITEM(doc, prod, product_type, 12, errbuf, ret)
 
-  Numeric_delete(j_price_increment_num);
-  Numeric_delete(j_base_increment_num);
-  Numeric_delete(j_quote_increment_num);
-
   db_id_to_internal(p_uuid, COINBASE_DBCON, COINBASE_UUID,
                     j_product_id->mbstring);
 
@@ -1574,8 +1570,11 @@ parse_product(const struct wcjson_document *restrict const doc,
   p->q_id = q_id;
   p->qa_id = qa_id;
   p->p_sc = p_dot ? strlen(p_dot + 1) : 0;
+  p->p_inc = j_price_increment_num;
   p->b_sc = b_dot ? strlen(b_dot + 1) : 0;
+  p->b_inc = j_base_increment_num;
   p->q_sc = q_dot ? strlen(q_dot + 1) : 0;
+  p->q_inc = j_quote_increment_num;
   p->is_tradeable =
       qa_id != NULL && ba_id != NULL && type_value == PRODUCT_TYPE_SPOT;
 

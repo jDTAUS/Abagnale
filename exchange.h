@@ -46,6 +46,9 @@ struct Product {
   struct String *restrict ba_id;
   struct String *restrict q_id;
   struct String *restrict qa_id;
+  struct Numeric *restrict b_inc;
+  struct Numeric *restrict p_inc;
+  struct Numeric *restrict q_inc;
   mtx_t *restrict mtx;
   enum product_type type;
   enum product_status status;

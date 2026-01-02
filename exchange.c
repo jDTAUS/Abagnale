@@ -54,6 +54,9 @@ inline struct Product *Product_copy(const struct Product *restrict const p) {
   pd->p_sc = p->p_sc;
   pd->b_sc = p->b_sc;
   pd->q_sc = p->q_sc;
+  pd->b_inc = Numeric_copy(p->b_inc);
+  pd->p_inc = Numeric_copy(p->p_inc);
+  pd->q_inc = Numeric_copy(p->q_inc);
   pd->is_tradeable = p->is_tradeable;
   pd->is_active = p->is_active;
   return pd;
@@ -70,6 +73,9 @@ inline void Product_delete(void *restrict const p) {
   String_delete(product->ba_id);
   String_delete(product->q_id);
   String_delete(product->qa_id);
+  Numeric_delete(product->b_inc);
+  Numeric_delete(product->p_inc);
+  Numeric_delete(product->q_inc);
   heap_free(product);
 }
 

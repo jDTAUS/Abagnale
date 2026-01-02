@@ -186,10 +186,11 @@ static void trend_init(void);
 static void trend_destroy(void);
 static struct Position *trend_position_open(
     const char *restrict const, const struct Exchange *restrict const,
-    struct Trade *restrict const, const struct Array *restrict const,
-    const struct Sample *restrict const);
+    const struct Product *restrict const, struct Trade *restrict const,
+    const struct Array *restrict const, const struct Sample *restrict const);
 static bool trend_position_close(const char *restrict const,
                                  const struct Exchange *restrict const,
+                                 const struct Product *restrict const,
                                  const struct Trade *restrict const,
                                  const struct Position *restrict const);
 static bool trend_product_plot(const char *restrict const,
@@ -272,7 +273,8 @@ static struct trend_state *trend_state(const char *dbcon,
 
 static struct Position *trend_position_open(
     const char *restrict const dbcon, const struct Exchange *restrict const e,
-    struct Trade *restrict const t, const struct Array *restrict const samples,
+    const struct Product *restrict const m, struct Trade *restrict const t,
+    const struct Array *restrict const samples,
     const struct Sample *restrict const sample) {
   const struct trend_tls *restrict const tls = trend_tls();
   struct Numeric *restrict const r0 = tls->trend_position_open.r0;
@@ -292,7 +294,7 @@ static struct Position *trend_position_open(
   struct db_trend_state_res *restrict const st_res =
       tls->trend_position_open.st_res;
   struct db_candle_res candle_res = {0};
-  struct trend_state *restrict const st = trend_state(dbcon, e->id, t->p_id);
+  struct trend_state *restrict const st = trend_state(dbcon, e->id, m->id);
   struct Position *restrict p = NULL;
   void **items;
 
@@ -438,8 +440,7 @@ static struct Position *trend_position_open(
     Numeric_copy_to(cd_first->cnanos, plot_res->enanos);
 
     db_tx_begin(dbcon);
-    db_tx_trend_plot(plot_res, dbcon, String_chars(e->id),
-                     String_chars(t->p_id));
+    db_tx_trend_plot(plot_res, dbcon, String_chars(e->id), String_chars(m->id));
 
     items = Array_items(samples);
     for (size_t i = Array_size(samples);
@@ -462,13 +463,13 @@ static struct Position *trend_position_open(
     candle_res.lnanos = cd_first->lnanos;
     candle_res.cnanos = cd_first->cnanos;
 
-    db_tx_trend_plot_candle(dbcon, String_chars(e->id), String_chars(t->p_id),
+    db_tx_trend_plot_candle(dbcon, String_chars(e->id), String_chars(m->id),
                             &candle_res);
 
-    db_tx_trend_plot_marker(dbcon, String_chars(e->id), String_chars(t->p_id),
+    db_tx_trend_plot_marker(dbcon, String_chars(e->id), String_chars(m->id),
                             cd_first->hnanos, cd_first->h);
 
-    db_tx_trend_plot_marker(dbcon, String_chars(e->id), String_chars(t->p_id),
+    db_tx_trend_plot_marker(dbcon, String_chars(e->id), String_chars(m->id),
                             cd_first->lnanos, cd_first->l);
 
     db_tx_commit(dbcon);
@@ -500,7 +501,7 @@ static struct Position *trend_position_open(
   Numeric_copy_to(st->cd_langle, st_res->cd_langle);
   st_res->cd_ltrend = db_candle_trend(st->cd_ltrend);
 
-  db_trend_state_update(dbcon, String_chars(e->id), String_chars(t->p_id),
+  db_trend_state_update(dbcon, String_chars(e->id), String_chars(m->id),
                         st_res);
 
   mutex_unlock(st->mtx);
@@ -509,9 +510,10 @@ static struct Position *trend_position_open(
 
 static bool trend_position_close(const char *restrict const dbcon,
                                  const struct Exchange *restrict const e,
+                                 const struct Product *restrict const m,
                                  const struct Trade *restrict const t,
                                  const struct Position *restrict const p) {
-  struct trend_state *restrict const st = trend_state(dbcon, e->id, t->p_id);
+  struct trend_state *restrict const st = trend_state(dbcon, e->id, m->id);
   bool close = false;
 
   switch (p->type) {
@@ -529,7 +531,7 @@ static bool trend_position_close(const char *restrict const dbcon,
 
   if (close && verbose && !p->tl_trg.set) {
     wout("%s: %s->%s: %s: Trend not confirmed\n", String_chars(e->nm),
-         String_chars(t->q_id), String_chars(t->b_id), String_chars(t->id));
+         String_chars(m->q_id), String_chars(m->b_id), String_chars(t->id));
   }
 
   mutex_unlock(st->mtx);

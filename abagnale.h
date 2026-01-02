@@ -94,26 +94,17 @@ enum trade_status {
 
 struct Trade {
   struct String *restrict id;
-  struct String *restrict e_id;
-  struct String *restrict p_id;
-  struct String *restrict b_id;
-  struct String *restrict q_id;
-  struct String *restrict ba_id;
-  struct String *restrict qa_id;
-  size_t b_sc;
-  size_t q_sc;
-  size_t p_sc;
-  enum trade_status status;
   struct Numeric *restrict tp;
   struct Numeric *restrict fee_pc;
   struct Numeric *restrict fee_pf;
   struct Numeric *restrict tp_pc;
   struct Numeric *restrict tp_pf;
+  const struct Algorithm *restrict a;
+  enum trade_status status;
   struct Position p_long;
   struct Position p_short;
   struct Candle open_cd;
   struct Trigger open_trg;
-  const struct Algorithm *restrict a;
 };
 
 struct Algorithm {
@@ -123,11 +114,13 @@ struct Algorithm {
   void (*destroy)(void);
   struct Position *(*position_open)(const char *restrict const,
                                     const struct Exchange *restrict const,
+                                    const struct Product *restrict const,
                                     struct Trade *restrict const,
                                     const struct Array *restrict const,
                                     const struct Sample *restrict const);
   bool (*position_close)(const char *restrict const,
                          const struct Exchange *restrict const,
+                         const struct Product *restrict const,
                          const struct Trade *restrict const,
                          const struct Position *restrict const);
   bool (*product_plot)(const char *restrict const, const char *restrict const,
