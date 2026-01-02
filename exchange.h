@@ -79,7 +79,7 @@ struct Account {
 };
 
 struct Sample {
-  struct String *restrict p_id;
+  struct String *restrict m_id;
   struct Numeric *restrict nanos;
   struct Numeric *restrict price;
 };
@@ -98,7 +98,7 @@ enum order_status {
 
 struct Order {
   struct String *restrict id;
-  struct String *restrict p_id;
+  struct String *restrict m_id;
   struct Numeric *restrict cnanos;
   struct Numeric *restrict dnanos;
   struct Numeric *restrict b_ordered;

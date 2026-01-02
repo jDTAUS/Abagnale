@@ -760,7 +760,7 @@ samples_load(const struct worker_ctx *restrict const w_ctx) {
 
   while (!terminated && db_samples_next(sample, w_ctx->db)) {
     struct Sample *restrict const s = Sample_new();
-    s->p_id = String_copy(w_ctx->m->id);
+    s->m_id = String_copy(w_ctx->m->id);
     s->nanos = Numeric_copy(sample->nanos);
     s->price = Numeric_copy(sample->price);
 
@@ -2488,23 +2488,23 @@ static int orders_process(void *restrict const arg) {
     if (order == NULL)
       continue;
 
-    struct Product *restrict const product = w_ctx->e->product(order->p_id);
+    struct Product *restrict const market = w_ctx->e->product(order->m_id);
 
-    if (product == NULL) {
-      werr("%s: %d: %s: %s: Product not found\n", __FILE__, __LINE__, __func__,
-           String_chars(order->p_id));
+    if (market == NULL) {
+      werr("%s: %d: %s: %s: Market not found\n", __FILE__, __LINE__, __func__,
+           String_chars(order->m_id));
       fatal();
     }
 
     w_ctx->a = NULL;
-    w_ctx->m = Product_copy(product);
+    w_ctx->m = Product_copy(market);
     w_ctx->m_cnf = NULL;
     w_ctx->q_tgt = tp;
 
-    mutex_unlock(product->mtx);
+    mutex_unlock(market->mtx);
 
     Map_lock(product_samples);
-    samples = Map_get(product_samples, order->p_id);
+    samples = Map_get(product_samples, order->m_id);
     Map_unlock(product_samples);
 
     if (samples == NULL || Array_size(samples) < 2) {
@@ -2525,7 +2525,7 @@ static int orders_process(void *restrict const arg) {
     }
 
     Map_lock(product_trades);
-    trades = Map_get(product_trades, order->p_id);
+    trades = Map_get(product_trades, order->m_id);
     Map_unlock(product_trades);
 
     if (trades == NULL) {
@@ -2596,20 +2596,20 @@ static int samples_process(void *restrict const arg) {
     if (sample == NULL)
       continue;
 
-    struct Product *restrict const p = ctx->e->product(sample->p_id);
+    struct Product *restrict const m = ctx->e->product(sample->m_id);
 
-    if (p == NULL) {
-      werr("%s: %d: %s: %s: Product not found\n", __FILE__, __LINE__, __func__,
-           String_chars(sample->p_id));
+    if (m == NULL) {
+      werr("%s: %d: %s: %s: Market not found\n", __FILE__, __LINE__, __func__,
+           String_chars(sample->m_id));
       fatal();
     }
 
     ctx->a = NULL;
-    ctx->m = Product_copy(p);
+    ctx->m = Product_copy(m);
     ctx->m_cnf = NULL;
     ctx->q_tgt = tp;
 
-    mutex_unlock(p->mtx);
+    mutex_unlock(m->mtx);
 
     mutex_lock(&db_mtx);
     db_sample_create(ctx->db, String_chars(ctx->e->id),

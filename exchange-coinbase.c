@@ -805,7 +805,7 @@ static void ws_ticker_update(const struct wcjson_document *restrict const doc,
 
   if (Numeric_cmp(j_price_num, zero) > 0) {
     struct Sample *restrict const s = Sample_new();
-    s->p_id = String_copy(j_product_id_p->id);
+    s->m_id = String_copy(j_product_id_p->id);
     s->nanos = Numeric_copy(nanos);
     s->price = j_price_num;
 
@@ -878,7 +878,7 @@ static void ws_user_update(const struct wcjson_document *restrict const doc,
 
   o = Order_new();
   o->id = String_cnew(j_order_id->mbstring);
-  o->p_id = String_copy(j_product_id_p->id);
+  o->m_id = String_copy(j_product_id_p->id);
   o->status = order_status(j_status->mbstring);
   o->cnanos = j_creation_time_nanos;
   o->b_ordered = Numeric_add(j_cumulative_quantity_num, j_leaves_quantity_num);
@@ -1968,7 +1968,7 @@ parse_order(const struct wcjson_document *restrict const doc,
 
   o = Order_new();
   o->id = String_cnew(j_order_id->mbstring);
-  o->p_id = String_copy(j_product_id_p->id);
+  o->m_id = String_copy(j_product_id_p->id);
   o->settled = j_settled->is_true;
   o->status = order_status(j_status->mbstring);
   o->cnanos = j_created_time_nanos;

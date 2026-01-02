@@ -30,7 +30,7 @@ inline void Sample_delete(void *restrict const s) {
     return;
 
   struct Sample *restrict const sample = s;
-  String_delete(sample->p_id);
+  String_delete(sample->m_id);
   Numeric_delete(sample->price);
   Numeric_delete(sample->nanos);
   heap_free(sample);
@@ -105,7 +105,7 @@ inline void Order_delete(void *restrict const o) {
 
   struct Order *restrict const order = o;
   String_delete(order->id);
-  String_delete(order->p_id);
+  String_delete(order->m_id);
   String_delete(order->msg);
   Numeric_delete(order->cnanos);
   Numeric_delete(order->dnanos);

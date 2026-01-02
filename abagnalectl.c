@@ -447,7 +447,7 @@ static int cmd_order(int argc, char *argv[]) {
   struct String *restrict exc_name = NULL;
   struct String *restrict o_id = NULL;
   struct Order *restrict o = NULL;
-  struct Product *restrict p = NULL;
+  struct Product *restrict m = NULL;
   char *restrict c_iso8601 = NULL;
   char *restrict d_iso8601 = NULL;
   char *restrict b_ordered = NULL;
@@ -489,34 +489,34 @@ static int cmd_order(int argc, char *argv[]) {
     goto ret;
   }
 
-  p = exc->product(o->p_id);
+  m = exc->product(o->m_id);
 
-  if (p == NULL) {
-    werr("%s: %s: Product not found\n", __progname, String_chars(o->p_id));
+  if (m == NULL) {
+    werr("%s: %s: Market not found\n", __progname, String_chars(o->m_id));
     goto ret;
   }
 
   c_iso8601 = nanos_to_iso8601(o->cnanos);
   d_iso8601 = nanos_to_iso8601(o->dnanos);
-  b_ordered = Numeric_to_char(o->b_ordered, p->b_sc);
-  p_ordered = Numeric_to_char(o->p_ordered, p->p_sc);
-  b_filled = Numeric_to_char(o->b_filled, p->b_sc);
-  q_filled = Numeric_to_char(o->q_filled, p->q_sc);
-  q_fees = Numeric_to_char(o->q_fees, p->q_sc);
+  b_ordered = Numeric_to_char(o->b_ordered, m->b_sc);
+  p_ordered = Numeric_to_char(o->p_ordered, m->p_sc);
+  b_filled = Numeric_to_char(o->b_filled, m->b_sc);
+  q_filled = Numeric_to_char(o->q_filled, m->q_sc);
+  q_fees = Numeric_to_char(o->q_fees, m->q_sc);
 
   printf("%s\t%s\t%s\t%d\t%s\t%s\t%s%s@%s%s\t%s%s\t%s%s\t%s%s\t%s\n",
-         String_chars(o->id), String_chars(p->id), order_status_name(o->status),
+         String_chars(o->id), String_chars(m->id), order_status_name(o->status),
          o->settled ? 1 : 0, c_iso8601, d_iso8601, b_ordered,
-         String_chars(p->b_id), p_ordered, String_chars(p->q_id), b_filled,
-         String_chars(p->b_id), q_filled, String_chars(p->q_id), q_fees,
-         String_chars(p->q_id), o->msg ? String_chars(o->msg) : "");
+         String_chars(m->b_id), p_ordered, String_chars(m->q_id), b_filled,
+         String_chars(m->b_id), q_filled, String_chars(m->q_id), q_fees,
+         String_chars(m->q_id), o->msg ? String_chars(o->msg) : "");
 
   r = EXIT_SUCCESS;
 ret:
   String_delete(exc_name);
   String_delete(o_id);
   Order_delete(o);
-  Product_delete(p);
+  Product_delete(m);
   Numeric_char_free(b_ordered);
   Numeric_char_free(p_ordered);
   Numeric_char_free(b_filled);
