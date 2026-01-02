@@ -3,7 +3,7 @@
 /* $JDTAUS$ */
 
 /*
- * Copyright (c) 2025 Christian Schulte <cs@schulte.it>
+ * Copyright (c) 2025 - 2026 Christian Schulte <cs@schulte.it>
  * Copyright (c) 2008 Gilles Chehade <gilles@poolp.org>
  * Copyright (c) 2008 Pierre-Yves Ritschard <pyr@openbsd.org>
  * Copyright (c) 2002, 2003, 2004 Henning Brauer <henning@openbsd.org>

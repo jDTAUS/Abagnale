@@ -2,7 +2,7 @@
 /* $JDTAUS$ */
 
 /*
- * Copyright (c) 2018 - 2025 Christian Schulte <cs@schulte.it>
+ * Copyright (c) 2018 - 2026 Christian Schulte <cs@schulte.it>
  *
  * Permission to use, copy, modify, and distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
