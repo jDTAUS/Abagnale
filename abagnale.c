@@ -87,7 +87,6 @@ struct abag_tls {
   } samples_load;
   struct worker_config_vars {
     struct Numeric *restrict sr;
-    struct Numeric *restrict now;
     struct Numeric *restrict r0;
   } worker_config;
   struct orders_process_vars {
@@ -176,7 +175,6 @@ extern const struct Numeric *restrict const two;
 extern const struct Numeric *restrict const hundred;
 extern const struct Numeric *restrict const second_nanos;
 extern const struct Numeric *restrict const minute_nanos;
-extern const struct Numeric *restrict const boot_nanos;
 
 static thrd_t *workers;
 static struct Map *product_samples;
@@ -188,7 +186,6 @@ static tss_t abag_tls_key;
 static struct Numeric *restrict twenty_five_percent_factor;
 static struct Numeric *restrict ninety_percent_factor;
 static struct Numeric *restrict order_reload_interval_nanos;
-static struct Numeric *restrict boot_delay_nanos;
 
 int abagnale(int argc, char *argv[]);
 
@@ -208,7 +205,6 @@ static struct abag_tls *abag_tls(void) {
     tls->samples_load.filter = Numeric_new();
     tls->samples_load.sr = Numeric_new();
     tls->worker_config.sr = Numeric_new();
-    tls->worker_config.now = Numeric_new();
     tls->worker_config.r0 = Numeric_new();
     tls->orders_process.tp = Numeric_new();
     tls->samples_process.outdated_ns = Numeric_new();
@@ -300,7 +296,6 @@ static void abag_tls_dtor(void *e) {
   Numeric_delete(tls->samples_load.filter);
   Numeric_delete(tls->samples_load.sr);
   Numeric_delete(tls->worker_config.sr);
-  Numeric_delete(tls->worker_config.now);
   Numeric_delete(tls->worker_config.r0);
   Numeric_delete(tls->orders_process.tp);
   Numeric_delete(tls->samples_process.outdated_ns);
@@ -794,7 +789,6 @@ static void worker_config(struct worker_ctx *restrict const w_ctx,
                           const struct Array *restrict const samples) {
   const struct abag_tls *restrict const tls = abag_tls();
   struct Numeric *restrict const sr = tls->worker_config.sr;
-  struct Numeric *restrict const now = tls->worker_config.now;
   struct Numeric *restrict const r0 = tls->worker_config.r0;
   void **items;
   samples_per_minute(sr, samples);
@@ -838,12 +832,9 @@ static void worker_config(struct worker_ctx *restrict const w_ctx,
     }
 
     if (q_p == NULL) {
-      nanos_now(now);
-      Numeric_sub_to(now, boot_nanos, r0);
-      if (Numeric_cmp(r0, boot_delay_nanos) > 0)
-        werr("%s: Failure calculating funds: Price %s->%s not found\n",
-             String_chars(w_ctx->e->nm), String_chars(w_ctx->m_cnf->q_id),
-             String_chars(w_ctx->m->q_id));
+      wout("%s: %s->%s: Price %s->%s not found\n", String_chars(w_ctx->e->nm),
+           String_chars(w_ctx->m->q_id), String_chars(w_ctx->m->b_id),
+           String_chars(w_ctx->m_cnf->q_id), String_chars(w_ctx->m->q_id));
 
       w_ctx->q_tgt = NULL;
       Array_unlock(products);
@@ -860,12 +851,9 @@ static void worker_config(struct worker_ctx *restrict const w_ctx,
     q_p_id = NULL;
 
     if (q_samples == NULL) {
-      nanos_now(now);
-      Numeric_sub_to(now, boot_nanos, r0);
-      if (Numeric_cmp(r0, boot_delay_nanos) > 0)
-        werr("%s: Failure calculating funds: Price %s->%s not found\n",
-             String_chars(w_ctx->e->nm), String_chars(w_ctx->m_cnf->q_id),
-             String_chars(w_ctx->m->q_id));
+      wout("%s: %s->%s: Price %s->%s not found\n", String_chars(w_ctx->e->nm),
+           String_chars(w_ctx->m->q_id), String_chars(w_ctx->m->b_id),
+           String_chars(w_ctx->m_cnf->q_id), String_chars(w_ctx->m->q_id));
 
       Map_unlock(product_samples);
       w_ctx->q_tgt = NULL;
@@ -877,12 +865,9 @@ static void worker_config(struct worker_ctx *restrict const w_ctx,
     const struct Sample *restrict const q_sample = Array_tail(q_samples);
 
     if (q_sample == NULL) {
-      nanos_now(now);
-      Numeric_sub_to(now, boot_nanos, r0);
-      if (Numeric_cmp(r0, boot_delay_nanos) > 0)
-        werr("%s: Failure calculating funds: Price %s->%s not found\n",
-             String_chars(w_ctx->e->nm), String_chars(w_ctx->m_cnf->q_id),
-             String_chars(w_ctx->m->q_id));
+      wout("%s: %s->%s: Price %s->%s not found\n", String_chars(w_ctx->e->nm),
+           String_chars(w_ctx->m->q_id), String_chars(w_ctx->m->b_id),
+           String_chars(w_ctx->m_cnf->q_id), String_chars(w_ctx->m->q_id));
 
       Array_unlock(q_samples);
       w_ctx->q_tgt = NULL;
@@ -2737,8 +2722,6 @@ int abagnale(int argc, char *argv[]) {
   order_reload_interval_nanos =
       Numeric_from_long(ABAG_ORDER_RELOAD_INTERVAL_NANOS);
 
-  boot_delay_nanos = Numeric_from_long(ABAG_BOOT_DELAY_NANOS);
-
   product_samples = Map_new(ABAG_MAX_PRODUCTS);
   product_prices = Map_new(ABAG_MAX_PRODUCTS);
   product_trades = Map_new(ABAG_MAX_PRODUCTS);
@@ -2798,7 +2781,6 @@ int abagnale(int argc, char *argv[]) {
   Numeric_delete(twenty_five_percent_factor);
   Numeric_delete(ninety_percent_factor);
   Numeric_delete(order_reload_interval_nanos);
-  Numeric_delete(boot_delay_nanos);
 
   heap_free(workers);
   Map_delete(product_samples, sample_array_delete);
