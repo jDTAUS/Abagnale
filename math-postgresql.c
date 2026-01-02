@@ -38,8 +38,7 @@ extern const struct Numeric *restrict const n_one;
 inline struct Numeric *Numeric_new(void) {
   numeric *res = PGTYPESnumeric_new();
   if (res == NULL) {
-    werr("%s: %d: %s: Failure allocating numeric\n", __FILE__, __LINE__,
-         __func__);
+    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
     fatal();
   }
   struct Numeric *restrict n = heap_malloc(sizeof(struct Numeric));
@@ -82,8 +81,7 @@ inline char *Numeric_to_char(const struct Numeric *restrict const n,
                              const int d) {
   char *restrict const s = PGTYPESnumeric_to_asc(n->n, d);
   if (s == NULL) {
-    werr("%s: %d: %s: Failure creating string from numeric\n", __FILE__,
-         __LINE__, __func__);
+    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
     fatal();
   }
   return s;
@@ -103,7 +101,7 @@ inline void Numeric_add_to(const struct Numeric *restrict const n1,
                            struct Numeric *restrict const res) {
   const int ret = PGTYPESnumeric_add(n1->n, n2->n, res->n);
   if (ret < 0) {
-    werr("%s: %d: %s: Failure adding numerics\n", __FILE__, __LINE__, __func__);
+    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
     fatal();
   }
 #ifdef ABAG_MATH_DEBUG
@@ -124,8 +122,7 @@ inline void Numeric_sub_to(const struct Numeric *restrict const n1,
                            struct Numeric *restrict const res) {
   const int ret = PGTYPESnumeric_sub(n1->n, n2->n, res->n);
   if (ret < 0) {
-    werr("%s: %d: %s: Failure substracting numerics\n", __FILE__, __LINE__,
-         __func__);
+    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
     fatal();
   }
 #ifdef ABAG_MATH_DEBUG
@@ -146,8 +143,7 @@ inline void Numeric_mul_to(const struct Numeric *restrict const n1,
                            struct Numeric *restrict const res) {
   const int ret = PGTYPESnumeric_mul(n1->n, n2->n, res->n);
   if (ret < 0) {
-    werr("%s: %d: %s: Failure multiplying numerics\n", __FILE__, __LINE__,
-         __func__);
+    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
     fatal();
   }
 #ifdef ABAG_MATH_DEBUG
@@ -168,8 +164,7 @@ inline void Numeric_div_to(const struct Numeric *restrict const n1,
                            struct Numeric *restrict const res) {
   const int ret = PGTYPESnumeric_div(n1->n, n2->n, res->n);
   if (ret < 0) {
-    werr("%s: %d: %s: Failure dividing numerics\n", __FILE__, __LINE__,
-         __func__);
+    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
     fatal();
   }
 #ifdef ABAG_MATH_DEBUG
@@ -182,8 +177,7 @@ inline int Numeric_cmp(const struct Numeric *restrict const n1,
                        const struct Numeric *restrict const n2) {
   const int ret = PGTYPESnumeric_cmp(n1->n, n2->n);
   if (ret == INT_MAX) {
-    werr("%s: %d: %s: Failure comparing numerics\n", __FILE__, __LINE__,
-         __func__);
+    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
     fatal();
   }
   return ret;
@@ -199,8 +193,7 @@ inline void Numeric_from_int_to(const signed int i,
                                 struct Numeric *restrict const res) {
   const int ret = PGTYPESnumeric_from_int(i, res->n);
   if (ret < 0) {
-    werr("%s: %d: %s: %d: Failure creating numeric from integer\n", __FILE__,
-         __LINE__, __func__, i);
+    werr("%s: %d: %s: %d\n", __FILE__, __LINE__, __func__, i);
     fatal();
   }
 #ifdef ABAG_MATH_DEBUG
@@ -212,8 +205,7 @@ inline int Numeric_to_int(const struct Numeric *restrict const n) {
   int res = 0;
   const int ret = PGTYPESnumeric_to_int(n->n, &res);
   if (ret < 0) {
-    werr("%s: %d: %s: Failure creating integer from numeric\n", __FILE__,
-         __LINE__, __func__);
+    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
     fatal();
   }
   return res;
@@ -229,8 +221,7 @@ inline void Numeric_from_long_to(const signed long int l,
                                  struct Numeric *restrict const res) {
   const int ret = PGTYPESnumeric_from_long(l, res->n);
   if (ret < 0) {
-    werr("%s: %d: %s: %ld: Failure creating numeric from long\n", __FILE__,
-         __LINE__, __func__, l);
+    werr("%s: %d: %s: %ld\n", __FILE__, __LINE__, __func__, l);
     fatal();
   }
 #ifdef ABAG_MATH_DEBUG
@@ -242,8 +233,7 @@ inline long Numeric_to_long(const struct Numeric *restrict const n) {
   long res = 0;
   const int ret = PGTYPESnumeric_to_long(n->n, &res);
   if (ret < 0) {
-    werr("%s: %d: %s: Failure creating long integer from numeric\n", __FILE__,
-         __LINE__, __func__);
+    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
     fatal();
   }
   return res;
@@ -259,8 +249,7 @@ inline void Numeric_copy_to(const struct Numeric *restrict const n,
                             struct Numeric *restrict const res) {
   const int ret = PGTYPESnumeric_copy(n->n, res->n);
   if (ret < 0) {
-    werr("%s: %d: %s: Failure copying numerics\n", __FILE__, __LINE__,
-         __func__);
+    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
     fatal();
   }
 #ifdef ABAG_MATH_DEBUG
@@ -279,8 +268,7 @@ inline void Numeric_from_double_to(const double d,
                                    struct Numeric *restrict const res) {
   const int ret = PGTYPESnumeric_from_double(d, res->n);
   if (ret < 0) {
-    werr("%s: %d: %s: %lf: Failure creating numeric from double\n", __FILE__,
-         __LINE__, __func__, d);
+    werr("%s: %d: %s: %lf\n", __FILE__, __LINE__, __func__, d);
     fatal();
   }
 #ifdef ABAG_MATH_DEBUG
@@ -292,8 +280,7 @@ inline double Numeric_to_double(const struct Numeric *restrict const n) {
   double res = 0;
   const int ret = PGTYPESnumeric_to_double(n->n, &res);
   if (ret < 0) {
-    werr("%s: %d: %s: Failure creating double from numeric\n", __FILE__,
-         __LINE__, __func__);
+    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
     fatal();
   }
   return res;
@@ -303,8 +290,7 @@ inline void Numeric_abs(struct Numeric *restrict const n) {
   if (Numeric_cmp(n, zero) < 0) {
     const int ret = PGTYPESnumeric_mul(n_one->n, n->n, n->n);
     if (ret < 0) {
-      werr("%s: %d: %s: Failure calculating absolute numeric value\n", __FILE__,
-           __LINE__, __func__);
+      werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
       fatal();
     }
   }
@@ -318,7 +304,7 @@ inline void Numeric_scale(struct Numeric *restrict const n, const int scale) {
   char *restrict const s = Numeric_to_char(n, scale);
   struct Numeric *restrict const scaled = Numeric_from_char(s);
   if (scaled == NULL) {
-    werr("%s: %d: %s: Failure scaling numeric\n", __FILE__, __LINE__, __func__);
+    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
     fatal();
   }
   Numeric_copy_to(scaled, n);

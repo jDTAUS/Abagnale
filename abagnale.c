@@ -2476,7 +2476,7 @@ static int orders_process(void *restrict const arg) {
     struct Product *restrict const market = w_ctx->e->product(order->m_id);
 
     if (market == NULL) {
-      werr("%s: %d: %s: %s: Market not found\n", __FILE__, __LINE__, __func__,
+      werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__,
            String_chars(order->m_id));
       fatal();
     }
@@ -2584,7 +2584,7 @@ static int samples_process(void *restrict const arg) {
     struct Product *restrict const m = ctx->e->product(sample->m_id);
 
     if (m == NULL) {
-      werr("%s: %d: %s: %s: Market not found\n", __FILE__, __LINE__, __func__,
+      werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__,
            String_chars(sample->m_id));
       fatal();
     }

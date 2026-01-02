@@ -33,7 +33,7 @@ inline const char *strthrd(const int r) {
   case thrd_nomem:
     return "nomem";
   case thrd_timedout:
-    return "timedout";
+    return "timeout";
   default:
     werr("%s: %d: %s: %d\n", __FILE__, __LINE__, __func__, r);
     fatal();

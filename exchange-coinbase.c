@@ -552,7 +552,7 @@ static int wcjsontoerrno(const struct wcjson *restrict const wcjson) {
   case WCJSON_ABORT_ERROR:
     return wcjson->errnum;
   default:
-    werr("%s: %d: %s: Invalid wcjson status\n", __FILE__, __LINE__, __func__);
+    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
     fatal();
   }
 }
