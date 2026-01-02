@@ -2300,7 +2300,7 @@ static void trade_maintain(const struct worker_ctx *restrict const w_ctx,
         Numeric_to_char(t->p_short.b_filled, w_ctx->m->b_sc);
 
     wout("%s: %s->%s: %s: Trade done: %s%s@%s%s -> %s%s@%s%s, return: %s%s, "
-         "volatility: %s%%, costs: %s%s, outcome: %s%s\n",
+         "volatility: %s%%, fees: %s%s, outcome: %s%s\n",
          String_chars(w_ctx->e->nm), String_chars(w_ctx->m->q_id),
          String_chars(w_ctx->m->b_id), String_chars(t->id), l_b,
          String_chars(w_ctx->m->b_id), l_p, String_chars(w_ctx->m->q_id), s_b,
