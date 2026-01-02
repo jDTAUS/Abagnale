@@ -38,8 +38,6 @@ Spades, the Ace of Spades. Enough said.
 ./math-postgresql.c       - PostgreSQL math implementation source code
 ./mongoose.h              - Mongoose.WS API header file
 ./mongoose.c              - Mongoose.WS implementation source code
-./object.h                - Object API header file
-./object.c                - Object implementation source code
 ./optparse.h              - Optparse API and implementation
 ./patterns.h              - Pattern API 
 ./patterns.c              - Pattern implementation source code
