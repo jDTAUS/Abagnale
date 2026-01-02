@@ -541,7 +541,7 @@ static bool trend_position_close(const char *restrict const dbcon,
 static bool trend_product_plot(const char *restrict const fn,
                                const char *restrict const dbcon,
                                const struct Exchange *restrict const e,
-                               const struct Product *restrict const p) {
+                               const struct Product *restrict const m) {
   const struct trend_tls *restrict const tls = trend_tls();
   struct db_datapoint_res *restrict const pt_res =
       tls->trend_product_plot.pt_res;
@@ -559,10 +559,10 @@ static bool trend_product_plot(const char *restrict const fn,
 
   fprintf(f, "samples = [\n");
   db_tx_trend_plot_samples_open(dbcon, String_chars(e->id),
-                                String_chars(p->id));
+                                String_chars(m->id));
   while (!terminated && db_tx_trend_plot_samples_next(pt_res, dbcon)) {
     char *restrict const x = Numeric_to_char(pt_res->x, 0);
-    char *restrict const y = Numeric_to_char(pt_res->y, p->q_sc);
+    char *restrict const y = Numeric_to_char(pt_res->y, m->q_sc);
     fprintf(f, "\t%s, %s;\n", x, y);
     Numeric_char_free(x);
     Numeric_char_free(y);
@@ -571,16 +571,16 @@ static bool trend_product_plot(const char *restrict const fn,
   fprintf(f, "];\n");
 
   db_tx_trend_plot_candles_open(dbcon, String_chars(e->id),
-                                String_chars(p->id));
+                                String_chars(m->id));
   while (!terminated && db_tx_trend_plot_candles_next(cd_res, dbcon)) {
     char *restrict const onanos = Numeric_to_char(cd_res->onanos, 0);
-    char *restrict const o = Numeric_to_char(cd_res->o, p->q_sc);
+    char *restrict const o = Numeric_to_char(cd_res->o, m->q_sc);
     char *restrict const hnanos = Numeric_to_char(cd_res->hnanos, 0);
-    char *restrict const h = Numeric_to_char(cd_res->h, p->q_sc);
+    char *restrict const h = Numeric_to_char(cd_res->h, m->q_sc);
     char *restrict const lnanos = Numeric_to_char(cd_res->lnanos, 0);
-    char *restrict const l = Numeric_to_char(cd_res->l, p->q_sc);
+    char *restrict const l = Numeric_to_char(cd_res->l, m->q_sc);
     char *restrict const cnanos = Numeric_to_char(cd_res->cnanos, 0);
-    char *restrict const c = Numeric_to_char(cd_res->c, p->q_sc);
+    char *restrict const c = Numeric_to_char(cd_res->c, m->q_sc);
     const bool red = Numeric_cmp(cd_res->o, cd_res->c) > 0;
 
     fprintf(f, "%scandle%zu = [\n", red ? "red_" : "green_",
@@ -600,11 +600,11 @@ static bool trend_product_plot(const char *restrict const fn,
   db_tx_trend_plot_candles_close(dbcon);
 
   db_tx_trend_plot_markers_open(dbcon, String_chars(e->id),
-                                String_chars(p->id));
+                                String_chars(m->id));
   while (!terminated && db_tx_trend_plot_markers_next(pt_res, dbcon)) {
     fprintf(f, "marker%zu = [", mk_cnt);
     char *restrict const x = Numeric_to_char(pt_res->x, 0);
-    char *restrict const y = Numeric_to_char(pt_res->y, p->q_sc);
+    char *restrict const y = Numeric_to_char(pt_res->y, m->q_sc);
 
     fprintf(f, "\t%s, %s;\t];\n", x, y);
     mk_cnt++;
@@ -616,7 +616,7 @@ static bool trend_product_plot(const char *restrict const fn,
   db_tx_commit(dbcon);
 
   fprintf(f, "plot(\n");
-  fprintf(f, "\tsamples(:,1), samples(:,2), \"-k;%s;\"", String_chars(p->nm));
+  fprintf(f, "\tsamples(:,1), samples(:,2), \"-k;%s;\"", String_chars(m->nm));
 
   for (size_t i = cd_red_cnt; i > 0; i--)
     fprintf(f, ",\n\tred_candle%zu(:,1), red_candle%zu(:,2), \"-r\"", i - 1,
@@ -634,7 +634,7 @@ static bool trend_product_plot(const char *restrict const fn,
   fprintf(f,
           "legend(\"off\")\ntitle(\"%s Trends\")\nxlabel(\"Time "
           "(ns)\")\nylabel(\"Price (%s)\")\n",
-          String_chars(p->nm), String_chars(p->q_id));
+          String_chars(m->nm), String_chars(m->q_id));
 
   if (fclose(f) == EOF) {
     werr("%s: %d: %s: %s: %s\n", __FILE__, __LINE__, __func__, fn,
