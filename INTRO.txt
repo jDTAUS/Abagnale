@@ -34,13 +34,13 @@ Spades, the Ace of Spades. Enough said.
 ./main.c                  - Application main entry point source code
 ./map.h                   - Map API header file
 ./map.c                   - Map implementation source code
-./math.h                  - Math API
+./math.h                  - Math API header file
 ./math-postgresql.c       - PostgreSQL math implementation source code
 ./mongoose.h              - Mongoose.WS API header file
 ./mongoose.c              - Mongoose.WS implementation source code
-./optparse.h              - Optparse API and implementation
-./patterns.h              - Pattern API 
-./patterns.c              - Pattern implementation source code
+./optparse.h              - Optparse API and implementation source code
+./patterns.h              - Lua Patterns API header file
+./patterns.c              - Lua Patterns implementation source code
 ./proc.h                  - Process environment API header file
 ./proc.c                  - Process environment implementation source code
 ./queue.h                 - Queue API header file
