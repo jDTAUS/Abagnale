@@ -1464,9 +1464,9 @@ static void coinbase_start(void) {
 }
 
 static void coinbase_stop(void) {
+  running = false;
   Queue_stop(orders);
   Queue_stop(samples);
-  running = false;
   thread_join(mg_mgr_worker, NULL);
 }
 
