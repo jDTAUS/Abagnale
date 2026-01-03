@@ -199,10 +199,8 @@ int main(int argc, char *argv[]) {
     r = abagnalectl(argc - options.optind, argv);
 
   items = Array_items(exchanges);
-  for (size_t i = Array_size(exchanges); i > 0; i--) {
-    ((struct Exchange *)items[i - 1])->stop();
+  for (size_t i = Array_size(exchanges); i > 0; i--)
     ((struct Exchange *)items[i - 1])->destroy();
-  }
 
   items = Array_items(algorithms);
   for (size_t i = Array_size(algorithms); i > 0; i--)
