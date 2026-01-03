@@ -114,18 +114,18 @@ struct Algorithm {
   void (*destroy)(void);
   struct Position *(*position_open)(const char *restrict const,
                                     const struct Exchange *restrict const,
-                                    const struct Product *restrict const,
+                                    const struct Market *restrict const,
                                     struct Trade *restrict const,
                                     const struct Array *restrict const,
                                     const struct Sample *restrict const);
   bool (*position_close)(const char *restrict const,
                          const struct Exchange *restrict const,
-                         const struct Product *restrict const,
+                         const struct Market *restrict const,
                          const struct Trade *restrict const,
                          const struct Position *restrict const);
-  bool (*product_plot)(const char *restrict const, const char *restrict const,
-                       const struct Exchange *restrict const,
-                       const struct Product *restrict const);
+  bool (*market_plot)(const char *restrict const, const char *restrict const,
+                      const struct Exchange *restrict const,
+                      const struct Market *restrict const);
 };
 
 struct Candle *Candle_new(void);

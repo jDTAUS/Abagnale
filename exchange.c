@@ -36,47 +36,47 @@ inline void Sample_delete(void *restrict const s) {
   heap_free(sample);
 }
 
-inline struct Product *Product_new(void) {
-  return heap_calloc(1, sizeof(struct Product));
+inline struct Market *Market_new(void) {
+  return heap_calloc(1, sizeof(struct Market));
 }
 
-inline struct Product *Product_copy(const struct Product *restrict const p) {
-  struct Product *restrict pd = Product_new();
-  pd->id = String_copy(p->id);
-  pd->nm = String_copy(p->nm);
-  pd->b_id = String_copy(p->b_id);
-  pd->ba_id = String_copy(p->ba_id);
-  pd->q_id = String_copy(p->q_id);
-  pd->qa_id = String_copy(p->qa_id);
-  pd->mtx = NULL;
-  pd->type = p->type;
-  pd->status = p->status;
-  pd->p_sc = p->p_sc;
-  pd->b_sc = p->b_sc;
-  pd->q_sc = p->q_sc;
-  pd->b_inc = Numeric_copy(p->b_inc);
-  pd->p_inc = Numeric_copy(p->p_inc);
-  pd->q_inc = Numeric_copy(p->q_inc);
-  pd->is_tradeable = p->is_tradeable;
-  pd->is_active = p->is_active;
-  return pd;
+inline struct Market *Market_copy(const struct Market *restrict const m) {
+  struct Market *restrict mc = Market_new();
+  mc->id = String_copy(m->id);
+  mc->nm = String_copy(m->nm);
+  mc->b_id = String_copy(m->b_id);
+  mc->ba_id = String_copy(m->ba_id);
+  mc->q_id = String_copy(m->q_id);
+  mc->qa_id = String_copy(m->qa_id);
+  mc->mtx = NULL;
+  mc->type = m->type;
+  mc->status = m->status;
+  mc->p_sc = m->p_sc;
+  mc->b_sc = m->b_sc;
+  mc->q_sc = m->q_sc;
+  mc->b_inc = Numeric_copy(m->b_inc);
+  mc->p_inc = Numeric_copy(m->p_inc);
+  mc->q_inc = Numeric_copy(m->q_inc);
+  mc->is_tradeable = m->is_tradeable;
+  mc->is_active = m->is_active;
+  return mc;
 }
 
-inline void Product_delete(void *restrict const p) {
-  if (p == NULL)
+inline void Market_delete(void *restrict const m) {
+  if (m == NULL)
     return;
 
-  struct Product *restrict const product = p;
-  String_delete(product->id);
-  String_delete(product->nm);
-  String_delete(product->b_id);
-  String_delete(product->ba_id);
-  String_delete(product->q_id);
-  String_delete(product->qa_id);
-  Numeric_delete(product->b_inc);
-  Numeric_delete(product->p_inc);
-  Numeric_delete(product->q_inc);
-  heap_free(product);
+  struct Market *restrict const market = m;
+  String_delete(market->id);
+  String_delete(market->nm);
+  String_delete(market->b_id);
+  String_delete(market->ba_id);
+  String_delete(market->q_id);
+  String_delete(market->qa_id);
+  Numeric_delete(market->b_inc);
+  Numeric_delete(market->p_inc);
+  Numeric_delete(market->q_inc);
+  heap_free(market);
 }
 
 inline struct Account *Account_new(void) {

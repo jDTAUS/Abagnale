@@ -60,8 +60,8 @@ struct worker_ctx {
   char db[DATABASE_CONNECTION_NAME_MAX_LENGTH];
   const struct Algorithm *restrict a;
   const struct Exchange *restrict e;
-  const struct ProductConfig *restrict m_cnf;
-  struct Product *restrict m;
+  const struct MarketConfig *restrict m_cnf;
+  struct Market *restrict m;
   struct Numeric *restrict q_tgt;
 };
 
@@ -177,10 +177,10 @@ extern const struct Numeric *restrict const second_nanos;
 extern const struct Numeric *restrict const minute_nanos;
 
 static thrd_t *workers;
-static struct Map *product_samples;
+static struct Map *market_samples;
 static mtx_t db_mtx;
-static struct Map *product_prices;
-static struct Map *product_trades;
+static struct Map *market_prices;
+static struct Map *market_trades;
 static tss_t abag_tls_key;
 
 static struct Numeric *restrict twenty_five_percent_factor;
@@ -615,8 +615,7 @@ static char *position_string(const struct worker_ctx *restrict const w_ctx,
     side = "Supply";
     break;
   default:
-    werr("%s: %d: %s: Position neither long nor short\n", __FILE__, __LINE__,
-         __func__);
+    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
     fatal();
   }
 
@@ -793,24 +792,24 @@ static void worker_config(struct worker_ctx *restrict const w_ctx,
   void **items;
   samples_per_minute(sr, samples);
 
-  items = Array_items(cnf->p_cnf);
-  for (size_t i = Array_size(cnf->p_cnf); i > 0; i--) {
-    const struct ProductConfig *restrict const c = items[i - 1];
+  items = Array_items(cnf->m_cnf);
+  for (size_t i = Array_size(cnf->m_cnf); i > 0; i--) {
+    const struct MarketConfig *restrict const m_cnf = items[i - 1];
 
-    if (!String_equals(c->e_nm, w_ctx->e->nm))
+    if (!String_equals(m_cnf->e_nm, w_ctx->e->nm))
       continue;
 
-    if (c->sr_min != NULL && Numeric_cmp(sr, c->sr_min) < 0)
+    if (m_cnf->sr_min != NULL && Numeric_cmp(sr, m_cnf->sr_min) < 0)
       continue;
 
-    if (c->sr_max != NULL && Numeric_cmp(sr, c->sr_max) >= 0)
+    if (m_cnf->sr_max != NULL && Numeric_cmp(sr, m_cnf->sr_max) >= 0)
       continue;
 
-    if (!ProductConfig_market(c, w_ctx->m->nm))
+    if (!MarketConfig_match(m_cnf, w_ctx->m->nm))
       continue;
 
-    w_ctx->m_cnf = c;
-    w_ctx->a = algorithm(c->a_nm);
+    w_ctx->m_cnf = m_cnf;
+    w_ctx->a = algorithm(m_cnf->a_nm);
     break;
   }
 
@@ -818,48 +817,48 @@ static void worker_config(struct worker_ctx *restrict const w_ctx,
     return;
 
   if (!String_equals(w_ctx->m->q_id, w_ctx->m_cnf->q_id)) {
-    struct Product *restrict q_p = NULL;
-    struct Array *restrict const products = w_ctx->e->products();
+    struct Market *restrict q_m = NULL;
+    struct Array *restrict const markets = w_ctx->e->markets();
 
-    items = Array_items(products);
-    for (size_t i = Array_size(products); i > 0; i--) {
-      struct Product *restrict const needle = items[i - 1];
+    items = Array_items(markets);
+    for (size_t i = Array_size(markets); i > 0; i--) {
+      struct Market *restrict const needle = items[i - 1];
       if (String_equals(needle->q_id, w_ctx->m_cnf->q_id) &&
           String_equals(needle->b_id, w_ctx->m->q_id)) {
-        q_p = needle;
+        q_m = needle;
         break;
       }
     }
 
-    if (q_p == NULL) {
+    if (q_m == NULL) {
       wout("%s: %s->%s: Price %s->%s not found\n", String_chars(w_ctx->e->nm),
            String_chars(w_ctx->m->q_id), String_chars(w_ctx->m->b_id),
            String_chars(w_ctx->m_cnf->q_id), String_chars(w_ctx->m->q_id));
 
       w_ctx->q_tgt = NULL;
-      Array_unlock(products);
+      Array_unlock(markets);
       return;
     }
 
-    struct String *restrict q_p_id = String_copy(q_p->id);
-    q_p = NULL;
-    Array_unlock(products);
+    struct String *restrict q_m_id = String_copy(q_m->id);
+    q_m = NULL;
+    Array_unlock(markets);
 
-    Map_lock(product_samples);
-    struct Array *restrict const q_samples = Map_get(product_samples, q_p_id);
-    String_delete(q_p_id);
-    q_p_id = NULL;
+    Map_lock(market_samples);
+    struct Array *restrict const q_samples = Map_get(market_samples, q_m_id);
+    String_delete(q_m_id);
+    q_m_id = NULL;
 
     if (q_samples == NULL) {
       wout("%s: %s->%s: Price %s->%s not found\n", String_chars(w_ctx->e->nm),
            String_chars(w_ctx->m->q_id), String_chars(w_ctx->m->b_id),
            String_chars(w_ctx->m_cnf->q_id), String_chars(w_ctx->m->q_id));
 
-      Map_unlock(product_samples);
+      Map_unlock(market_samples);
       w_ctx->q_tgt = NULL;
       return;
     }
-    Map_unlock(product_samples);
+    Map_unlock(market_samples);
 
     Array_lock(q_samples);
     const struct Sample *restrict const q_sample = Array_tail(q_samples);
@@ -1089,8 +1088,7 @@ static void position_pricing(const struct worker_ctx *restrict const w_ctx,
     }
     break;
   default:
-    werr("%s: %d: %s: Position neither long nor short\n", __FILE__, __LINE__,
-         __func__);
+    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
     fatal();
   }
 }
@@ -1128,8 +1126,7 @@ static void position_create(const struct worker_ctx *restrict const w_ctx,
     t->status = TRADE_STATUS_SELLING;
     break;
   default:
-    werr("%s: %d: %s: Position neither long nor short\n", __FILE__, __LINE__,
-         __func__);
+    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
     fatal();
   }
 
@@ -1165,8 +1162,7 @@ static void position_open(const struct worker_ctx *restrict const w_ctx,
                    order->q_filled, order->q_fees);
     break;
   default:
-    werr("%s: %d: %s: Position neither long nor short\n", __FILE__, __LINE__,
-         __func__);
+    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
     fatal();
   }
 }
@@ -1233,8 +1229,7 @@ static void position_fill(const struct worker_ctx *restrict const w_ctx,
 
     break;
   default:
-    werr("%s: %d: %s: Position neither long nor short\n", __FILE__, __LINE__,
-         __func__);
+    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
     fatal();
   }
 }
@@ -1270,8 +1265,7 @@ static void position_cancel(const struct worker_ctx *restrict const w_ctx,
 
     break;
   default:
-    werr("%s: %d: %s: Position neither long nor short\n", __FILE__, __LINE__,
-         __func__);
+    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
     fatal();
   }
 
@@ -1339,8 +1333,7 @@ static void position_timeout(const struct worker_ctx *restrict const w_ctx,
 
     break;
   default:
-    werr("%s: %d: %s: Position neither long nor short\n", __FILE__, __LINE__,
-         __func__);
+    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
     fatal();
   }
 
@@ -1582,8 +1575,7 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
 
     break;
   default:
-    werr("%s: %d: %s: Position neither long nor short\n", __FILE__, __LINE__,
-         __func__);
+    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
     fatal();
   }
 
@@ -1775,8 +1767,7 @@ static void position_trade(const struct worker_ctx *restrict const w_ctx,
     }
     break;
   default:
-    werr("%s: %d: %s: Position neither long nor short\n", __FILE__, __LINE__,
-         __func__);
+    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
     fatal();
   }
 
@@ -1872,8 +1863,7 @@ static void position_trade(const struct worker_ctx *restrict const w_ctx,
     o_p = &t->p_long;
     break;
   default:
-    werr("%s: %d: %s: Position neither long nor short\n", __FILE__, __LINE__,
-         __func__);
+    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
     fatal();
   }
 
@@ -1969,7 +1959,7 @@ static void trade_plot(const struct worker_ctx *restrict const w_ctx,
     fatal();
   }
 
-  t->a->product_plot(plot_fn, w_ctx->db, w_ctx->e, w_ctx->m);
+  t->a->market_plot(plot_fn, w_ctx->db, w_ctx->e, w_ctx->m);
 }
 
 static void trade_bet(const struct worker_ctx *restrict const w_ctx,
@@ -1987,17 +1977,17 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
   struct db_balance_res *restrict const hold = tls->trade_bet.hold;
   bool pr_changed = false;
 
-  Map_lock(product_prices);
-  struct Numeric *restrict pr_last = Map_get(product_prices, w_ctx->m->id);
+  Map_lock(market_prices);
+  struct Numeric *restrict pr_last = Map_get(market_prices, w_ctx->m->id);
   if (pr_last == NULL) {
     pr_last = Numeric_copy(zero);
-    Map_put(product_prices, w_ctx->m->id, pr_last);
+    Map_put(market_prices, w_ctx->m->id, pr_last);
   }
   if (Numeric_cmp(pr_last, sample->price)) {
     Numeric_copy_to(sample->price, pr_last);
     pr_changed = true;
   }
-  Map_unlock(product_prices);
+  Map_unlock(market_prices);
 
   if (!pr_changed)
     return;
@@ -2215,8 +2205,7 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
     break;
   }
   default:
-    werr("%s: %d: %s: Position neither long nor short\n", __FILE__, __LINE__,
-         __func__);
+    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
     fatal();
   }
 
@@ -2473,7 +2462,7 @@ static int orders_process(void *restrict const arg) {
     if (order == NULL)
       continue;
 
-    struct Product *restrict const market = w_ctx->e->product(order->m_id);
+    struct Market *restrict const market = w_ctx->e->market(order->m_id);
 
     if (market == NULL) {
       werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__,
@@ -2482,19 +2471,19 @@ static int orders_process(void *restrict const arg) {
     }
 
     w_ctx->a = NULL;
-    w_ctx->m = Product_copy(market);
+    w_ctx->m = Market_copy(market);
     w_ctx->m_cnf = NULL;
     w_ctx->q_tgt = tp;
 
     mutex_unlock(market->mtx);
 
-    Map_lock(product_samples);
-    samples = Map_get(product_samples, order->m_id);
-    Map_unlock(product_samples);
+    Map_lock(market_samples);
+    samples = Map_get(market_samples, order->m_id);
+    Map_unlock(market_samples);
 
     if (samples == NULL || Array_size(samples) < 2) {
       Order_delete(order);
-      Product_delete(w_ctx->m);
+      Market_delete(w_ctx->m);
       continue;
     }
 
@@ -2504,19 +2493,19 @@ static int orders_process(void *restrict const arg) {
     if (!(w_ctx->m_cnf != NULL && w_ctx->q_tgt != NULL &&
           w_ctx->m->is_active)) {
       Array_unlock(samples);
-      Product_delete(w_ctx->m);
+      Market_delete(w_ctx->m);
       Order_delete(order);
       continue;
     }
 
-    Map_lock(product_trades);
-    trades = Map_get(product_trades, order->m_id);
-    Map_unlock(product_trades);
+    Map_lock(market_trades);
+    trades = Map_get(market_trades, order->m_id);
+    Map_unlock(market_trades);
 
     if (trades == NULL) {
       Array_unlock(samples);
       Order_delete(order);
-      Product_delete(w_ctx->m);
+      Market_delete(w_ctx->m);
       continue;
     }
 
@@ -2559,7 +2548,7 @@ static int orders_process(void *restrict const arg) {
     Array_unlock(trades);
     Array_unlock(samples);
     Order_delete(order);
-    Product_delete(w_ctx->m);
+    Market_delete(w_ctx->m);
   }
 
   db_disconnect(w_ctx->db);
@@ -2581,7 +2570,7 @@ static int samples_process(void *restrict const arg) {
     if (sample == NULL)
       continue;
 
-    struct Product *restrict const m = ctx->e->product(sample->m_id);
+    struct Market *restrict const m = ctx->e->market(sample->m_id);
 
     if (m == NULL) {
       werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__,
@@ -2590,7 +2579,7 @@ static int samples_process(void *restrict const arg) {
     }
 
     ctx->a = NULL;
-    ctx->m = Product_copy(m);
+    ctx->m = Market_copy(m);
     ctx->m_cnf = NULL;
     ctx->q_tgt = tp;
 
@@ -2603,18 +2592,18 @@ static int samples_process(void *restrict const arg) {
     if (!ctx->m->is_tradeable) {
       mutex_unlock(&db_mtx);
       Sample_delete(sample);
-      Product_delete(ctx->m);
+      Market_delete(ctx->m);
       continue;
     }
     mutex_unlock(&db_mtx);
 
-    Map_lock(product_samples);
-    struct Array *restrict samples = Map_get(product_samples, ctx->m->id);
+    Map_lock(market_samples);
+    struct Array *restrict samples = Map_get(market_samples, ctx->m->id);
     if (samples == NULL) {
       samples = samples_load(ctx);
-      Map_put(product_samples, ctx->m->id, samples);
+      Map_put(market_samples, ctx->m->id, samples);
     }
-    Map_unlock(product_samples);
+    Map_unlock(market_samples);
 
     Array_lock(samples);
     Array_add_tail(samples, sample);
@@ -2631,7 +2620,7 @@ static int samples_process(void *restrict const arg) {
 
     if (Array_size(samples) < 2) {
       Array_unlock(samples);
-      Product_delete(ctx->m);
+      Market_delete(ctx->m);
       continue;
     }
 
@@ -2644,7 +2633,7 @@ static int samples_process(void *restrict const arg) {
       Numeric_sub_to(youngest->nanos, oldest->nanos, nanos);
       if (Numeric_cmp(nanos, ctx->m_cnf->wnanos) < 0) {
         Array_unlock(samples);
-        Product_delete(ctx->m);
+        Market_delete(ctx->m);
         continue;
       }
     }
@@ -2663,17 +2652,17 @@ static int samples_process(void *restrict const arg) {
 
     if (!(ctx->m_cnf != NULL && ctx->q_tgt != NULL && ctx->m->is_active)) {
       Array_unlock(samples);
-      Product_delete(ctx->m);
+      Market_delete(ctx->m);
       continue;
     }
 
-    Map_lock(product_trades);
-    struct Array *restrict trades = Map_get(product_trades, ctx->m->id);
+    Map_lock(market_trades);
+    struct Array *restrict trades = Map_get(market_trades, ctx->m->id);
     if (trades == NULL) {
       trades = trades_load(ctx, samples, sample);
-      Map_put(product_trades, ctx->m->id, trades);
+      Map_put(market_trades, ctx->m->id, trades);
     }
-    Map_unlock(product_trades);
+    Map_unlock(market_trades);
     Array_lock(trades);
     bool betting = false;
     bool pending = false;
@@ -2706,7 +2695,7 @@ static int samples_process(void *restrict const arg) {
 
     Array_unlock(trades);
     Array_unlock(samples);
-    Product_delete(ctx->m);
+    Market_delete(ctx->m);
   }
 
   db_disconnect(ctx->db);
@@ -2722,9 +2711,9 @@ int abagnale(int argc, char *argv[]) {
   order_reload_interval_nanos =
       Numeric_from_long(ABAG_ORDER_RELOAD_INTERVAL_NANOS);
 
-  product_samples = Map_new(ABAG_MAX_PRODUCTS);
-  product_prices = Map_new(ABAG_MAX_PRODUCTS);
-  product_trades = Map_new(ABAG_MAX_PRODUCTS);
+  market_samples = Map_new(ABAG_MAX_PRODUCTS);
+  market_prices = Map_new(ABAG_MAX_PRODUCTS);
+  market_trades = Map_new(ABAG_MAX_PRODUCTS);
 
   mutex_init(&db_mtx);
   tls_create(&abag_tls_key, abag_tls_dtor);
@@ -2783,9 +2772,9 @@ int abagnale(int argc, char *argv[]) {
   Numeric_delete(order_reload_interval_nanos);
 
   heap_free(workers);
-  Map_delete(product_samples, sample_array_delete);
-  Map_delete(product_prices, Numeric_delete);
-  Map_delete(product_trades, trade_array_delete);
+  Map_delete(market_samples, sample_array_delete);
+  Map_delete(market_prices, Numeric_delete);
+  Map_delete(market_trades, trade_array_delete);
   mutex_destroy(&db_mtx);
   tls_delete(abag_tls_key);
 

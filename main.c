@@ -171,13 +171,13 @@ int main(int argc, char *argv[]) {
   exchanges = Array_new(nitems(all_exchanges));
   algorithms = Array_new(nitems(all_algorithms));
 
-  items = Array_items(cnf->p_cnf);
+  items = Array_items(cnf->m_cnf);
   for (size_t i = nitems(all_algorithms); i > 0; i--) {
     bool a_found = false;
 
-    for (size_t j = Array_size(cnf->p_cnf); j > 0; j--)
+    for (size_t j = Array_size(cnf->m_cnf); j > 0; j--)
       if (String_equals(all_algorithms[i - 1]->nm,
-                        ((struct ProductConfig *)items[j - 1])->a_nm)) {
+                        ((struct MarketConfig *)items[j - 1])->a_nm)) {
         a_found = true;
         break;
       }

@@ -97,7 +97,7 @@ static struct Numeric *parse_nanos(const struct String *restrict const);
 
 static struct Config *conf = NULL;
 static struct ExchangeConfig *e_cnf = NULL;
-static struct ProductConfig *p_cnf = NULL;
+static struct MarketConfig *m_cnf = NULL;
 
 static int errors = 0;
 
@@ -471,10 +471,10 @@ conf_market : negate STRING {
                 String_delete($2);
                 YYERROR;
               }
-              struct Pattern *restrict const p = Pattern_new();
-              p->p = $2;
-              p->neg = $1;
-              Array_add_tail(p_cnf->p_pats, p);
+              struct Pattern *restrict const pat = Pattern_new();
+              pat->pat = $2;
+              pat->neg = $1;
+              Array_add_tail(m_cnf->m_pats, pat);
             }
             ;
 
@@ -483,93 +483,93 @@ marketconf  : conf_market
             ;
 
 opt_trade : TAKELOSSDELAY nanos {
-            if (p_cnf->tl_dlnanos != NULL) {
+            if (m_cnf->tl_dlnanos != NULL) {
               yyerror("take-loss-delay already specified");
               Numeric_delete($2);
               YYERROR;
             }
-            p_cnf->tl_dlnanos = $2;
+            m_cnf->tl_dlnanos = $2;
           }
           | MARKET marketconf {
           }
           | SUPPLYDURMAX nanos {
-            if (p_cnf->so_maxnanos != NULL) {
+            if (m_cnf->so_maxnanos != NULL) {
               yyerror("supply-duration-max already specified\n");
               Numeric_delete($2);
               YYERROR;
             }
-            p_cnf->so_maxnanos = $2;
+            m_cnf->so_maxnanos = $2;
           }
           | SUPPLYDURMIN nanos {
-            if (p_cnf->so_minnanos != NULL) {
+            if (m_cnf->so_minnanos != NULL) {
               yyerror("supply-duration-min already specified\n");
               Numeric_delete($2);
               YYERROR;
             }
-            p_cnf->so_minnanos = $2;
+            m_cnf->so_minnanos = $2;
           }
           | RATEMAX NUMBER {
-            if (p_cnf->sr_max != NULL) {
+            if (m_cnf->sr_max != NULL) {
               yyerror("rate-max already specified\n");
               Numeric_delete($2);
               YYERROR;
             }
-            p_cnf->sr_max = $2;
+            m_cnf->sr_max = $2;
 
-            if (Numeric_cmp(p_cnf->sr_max, zero) <= 0) {
-              Numeric_delete(p_cnf->sr_max);
+            if (Numeric_cmp(m_cnf->sr_max, zero) <= 0) {
+              Numeric_delete(m_cnf->sr_max);
               yyerror("rate-max must be positive\n");
               YYERROR;
             }
           }
           | RATEMIN NUMBER {
-            if (p_cnf->sr_min != NULL) {
+            if (m_cnf->sr_min != NULL) {
               yyerror("rate-min alrady specified\n");
               Numeric_delete($2);
               YYERROR;
             }
-            p_cnf->sr_min = $2;
+            m_cnf->sr_min = $2;
 
-            if (Numeric_cmp(p_cnf->sr_min, zero) <= 0) {
-              Numeric_delete(p_cnf->sr_min);
+            if (Numeric_cmp(m_cnf->sr_min, zero) <= 0) {
+              Numeric_delete(m_cnf->sr_min);
               yyerror("rate-min must be positive\n");
               YYERROR;
             }
           }
           | DEMANDDURMAX nanos {
-            if (p_cnf->bo_maxnanos != NULL) {
+            if (m_cnf->bo_maxnanos != NULL) {
               yyerror("demand-duration-max already specified\n");
               Numeric_delete($2);
               YYERROR;
             }
-            p_cnf->bo_maxnanos = $2;
+            m_cnf->bo_maxnanos = $2;
           }
           | DEMANDDURMIN nanos {
-            if (p_cnf->bo_minnanos != NULL) {
+            if (m_cnf->bo_minnanos != NULL) {
               yyerror("demand-duration-min already specified\n");
               Numeric_delete($2);
               YYERROR;
             }
-            p_cnf->bo_minnanos = $2;
+            m_cnf->bo_minnanos = $2;
           }
           | STOPLOSSDELAY nanos {
-            if (p_cnf->sl_dlnanos != NULL) {
+            if (m_cnf->sl_dlnanos != NULL) {
               yyerror("stop-loss-delay already specified\n");
               Numeric_delete($2);
               YYERROR;
             }
-            p_cnf->sl_dlnanos = $2;
+            m_cnf->sl_dlnanos = $2;
           }
           | VOLATILITY NUMBER {
-            if (p_cnf->v_pc != NULL) {
+            if (m_cnf->v_pc != NULL) {
               yyerror("volatility already specified\n");
               Numeric_delete($2);
               YYERROR;
             }
-            p_cnf->v_pc = $2;
+            m_cnf->v_pc = $2;
 
-            if (Numeric_cmp(p_cnf->v_pc, zero) <= 0) {
-              Numeric_delete(p_cnf->v_pc);
+            if (Numeric_cmp(m_cnf->v_pc, zero) <= 0) {
+              Numeric_delete(m_cnf->v_pc);
               yyerror("volatility must be positive\n");
               YYERROR;
             }
@@ -581,49 +581,49 @@ tradeopts : opt_trade tradeopts
           ;
 
 conf_trade  : WINDOW nanos {
-              if (p_cnf->wnanos != NULL) {
+              if (m_cnf->wnanos != NULL) {
                 yyerror("window allready specified\n");
                 Numeric_delete($2);
                 YYERROR;
               }
-              p_cnf->wnanos = $2;
+              m_cnf->wnanos = $2;
             }
             | RETURN NUMBER STRING {
-              if (p_cnf->q_tgt != NULL) {
+              if (m_cnf->q_tgt != NULL) {
                 yyerror("return already specified\n");
                 Numeric_delete($2);
                 String_delete($3);
                 YYERROR;
               }
-              p_cnf->q_tgt = $2;
-              p_cnf->q_id = $3;
+              m_cnf->q_tgt = $2;
+              m_cnf->q_id = $3;
 
-              if (Numeric_cmp(p_cnf->q_tgt, zero) <= 0) {
-                Numeric_delete(p_cnf->q_tgt);
-                String_delete(p_cnf->q_id);
+              if (Numeric_cmp(m_cnf->q_tgt, zero) <= 0) {
+                Numeric_delete(m_cnf->q_tgt);
+                String_delete(m_cnf->q_id);
                 yyerror("return must be positive\n");
                 YYERROR;
               }
             }
             | USING STRING {
-              if (p_cnf->a_nm != NULL) {
+              if (m_cnf->a_nm != NULL) {
                 yyerror("using already specified\n");
                 String_delete($2);
                 YYERROR;
               }
-              p_cnf->a_nm = $2;
+              m_cnf->a_nm = $2;
 
               bool a_found = false;
               for (size_t i = all_algorithms_nitems; i > 0; i--)
-                if (String_equals(p_cnf->a_nm, all_algorithms[i - 1].nm)) {
+                if (String_equals(m_cnf->a_nm, all_algorithms[i - 1].nm)) {
                   a_found = true;
                   break;
                 }
 
               if (!a_found) {
-                yyerror("%s not found\n", String_chars(p_cnf->a_nm));
-                String_delete(p_cnf->a_nm);
-                p_cnf->a_nm = NULL;
+                yyerror("%s not found\n", String_chars(m_cnf->a_nm));
+                String_delete(m_cnf->a_nm);
+                m_cnf->a_nm = NULL;
                 YYERROR;
               }
             }
@@ -634,34 +634,34 @@ tradeconf : conf_trade
           ;
 
 trade : TRADE AT STRING {
-        p_cnf  = ProductConfig_new();
-        p_cnf->e_nm = $3;
+        m_cnf  = MarketConfig_new();
+        m_cnf->e_nm = $3;
 
         bool e_found = false;
         for (size_t i = all_exchanges_nitems; i > 0; i--)
-          if (String_equals(p_cnf->e_nm, all_exchanges[i - 1].nm)) {
+          if (String_equals(m_cnf->e_nm, all_exchanges[i - 1].nm)) {
             e_found = true;
             break;
           }
 
         if (!e_found) {
-          yyerror("%s not found\n", String_chars(p_cnf->e_nm));
+          yyerror("%s not found\n", String_chars(m_cnf->e_nm));
           String_delete($3);
-          ProductConfig_delete(p_cnf);
-          p_cnf = NULL;
+          MarketConfig_delete(m_cnf);
+          m_cnf = NULL;
           YYERROR;
         }
 
-        Array_add_head(conf->p_cnf, p_cnf);
+        Array_add_head(conf->m_cnf, m_cnf);
       } tradeconf {
-        if (p_cnf->wnanos == NULL || p_cnf->q_tgt == NULL || p_cnf->a_nm == NULL) {
+        if (m_cnf->wnanos == NULL || m_cnf->q_tgt == NULL || m_cnf->a_nm == NULL) {
           yyerror("return, using and window required\n");
-          ProductConfig_delete(Array_remove_tail(conf->p_cnf));
-          p_cnf = NULL;
+          MarketConfig_delete(Array_remove_tail(conf->m_cnf));
+          m_cnf = NULL;
           YYERROR;
         }
       } tradeopts {
-        p_cnf = NULL;
+        m_cnf = NULL;
       }
       ;
 
@@ -1056,16 +1056,16 @@ int config_fparse(struct Config *const x_conf,
   if (errors)
     return (-1);
 
-  items = Array_items(conf->p_cnf);
-  for (size_t i = Array_size(conf->p_cnf); i > 0; i--) {
-    p_cnf = items[i - 1];
+  items = Array_items(conf->m_cnf);
+  for (size_t i = Array_size(conf->m_cnf); i > 0; i--) {
+    m_cnf = items[i - 1];
     if (conf->wnanos_max == NULL
-        || Numeric_cmp(conf->wnanos_max, p_cnf->wnanos) < 0)
-      conf->wnanos_max = p_cnf->wnanos;
+        || Numeric_cmp(conf->wnanos_max, m_cnf->wnanos) < 0)
+      conf->wnanos_max = m_cnf->wnanos;
 
-    if (Map_get(conf->e_cnf, p_cnf->e_nm) == NULL) {
+    if (Map_get(conf->e_cnf, m_cnf->e_nm) == NULL) {
       werr("%s: %s: Exchange configuration required\n", __progname,
-        String_chars(p_cnf->e_nm));
+        String_chars(m_cnf->e_nm));
       errors++;
     }
   }
@@ -1218,7 +1218,7 @@ struct Config *Config_new(void) {
   c->plts_dir = NULL;
   c->wnanos_max = NULL;
   c->e_cnf = Map_new(4);
-  c->p_cnf = Array_new(16);
+  c->m_cnf = Array_new(16);
   return c;
 }
 
@@ -1235,7 +1235,7 @@ void Config_delete(void *restrict const c) {
   String_delete(cfg->plts_dir);
   cfg->wnanos_max = NULL;
   Map_delete(cfg->e_cnf, ExchangeConfig_delete);
-  Array_delete(cfg->p_cnf, ProductConfig_delete);
+  Array_delete(cfg->m_cnf, MarketConfig_delete);
   heap_free(cfg);
 }
 
@@ -1247,13 +1247,12 @@ void Pattern_delete(void *restrict const p) {
   heap_free(p);
 }
 
-struct ProductConfig *ProductConfig_new(void) {
-  struct ProductConfig *restrict const c =
-    heap_calloc(1, sizeof(struct ProductConfig));
+struct MarketConfig *MarketConfig_new(void) {
+  struct MarketConfig *restrict const c = heap_calloc(1, sizeof(struct MarketConfig));
 
   c->e_nm = NULL;
   c->a_nm = NULL;
-  c->p_pats = Array_new(4);
+  c->m_pats = Array_new(4);
   c->q_tgt = NULL;
   c->q_id = NULL;
   c->v_pc = NULL;
@@ -1269,14 +1268,14 @@ struct ProductConfig *ProductConfig_new(void) {
   return c;
 }
 
-void ProductConfig_delete(void *restrict const c) {
+void MarketConfig_delete(void *restrict const c) {
   if (c == NULL)
     return;
 
-  struct ProductConfig *restrict const cfg = c;
+  struct MarketConfig *restrict const cfg = c;
   String_delete(cfg->e_nm);
   String_delete(cfg->a_nm);
-  Array_delete(cfg->p_pats, Pattern_delete);
+  Array_delete(cfg->m_pats, Pattern_delete);
   Numeric_delete(cfg->q_tgt);
   String_delete(cfg->q_id);
   Numeric_delete(cfg->v_pc);
@@ -1291,23 +1290,22 @@ void ProductConfig_delete(void *restrict const c) {
   Numeric_delete(cfg->tl_dlnanos);
 }
 
-bool ProductConfig_market(const struct ProductConfig *restrict const c,
-                          const struct String *restrict const m) {
+bool MarketConfig_match(const struct MarketConfig *restrict const c, const struct String *restrict const m) {
   bool market = true;
   struct str_find sm[MAXCAPTURES] = {0};
   const char *errstr = NULL;
-  void **items = Array_items(c->p_pats);
+  void **items = Array_items(c->m_pats);
   const char *mk = String_chars(m);
 
-  for (size_t i = Array_size(c->p_pats); i > 0 && market; i--) {
-    market = str_find(mk, String_chars(((struct Pattern *)items[i - 1])->p),
+  for (size_t i = Array_size(c->m_pats); i > 0 && market; i--) {
+    market = str_find(mk, String_chars(((struct Pattern *)items[i - 1])->pat),
                       sm, MAXCAPTURES, &errstr)
              ? !((struct Pattern *)items[i - 1])->neg
              : ((struct Pattern *)items[i - 1])->neg;
 
     if (errstr != NULL) {
       werr("%s: %s: %s\n",
-           mk, String_chars(((struct Pattern *)items[i - 1])->p), errstr);
+           mk, String_chars(((struct Pattern *)items[i - 1])->pat), errstr);
       market = false;
     }
   }

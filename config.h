@@ -47,18 +47,18 @@ struct Config {
   struct Numeric *restrict dns_to;
   struct Numeric *restrict wnanos_max;
   struct Map *restrict e_cnf;
-  struct Array *restrict p_cnf;
+  struct Array *restrict m_cnf;
 };
 
 struct Pattern {
-  struct String *restrict p;
+  struct String *restrict pat;
   bool neg;
 };
 
-struct ProductConfig {
+struct MarketConfig {
   struct String *restrict e_nm;
   struct String *restrict a_nm;
-  struct Array *restrict p_pats;
+  struct Array *restrict m_pats;
   struct Numeric *restrict q_tgt;
   struct String *restrict q_id;
   struct Numeric *restrict v_pc;
@@ -82,10 +82,10 @@ void Config_delete(void *restrict const);
 struct Pattern *Pattern_new(void);
 void Pattern_delete(void *restrict const);
 
-struct ProductConfig *ProductConfig_new(void);
-void ProductConfig_delete(void *restrict const);
-bool ProductConfig_market(const struct ProductConfig *restrict const,
-                          const struct String *restrict const);
+struct MarketConfig *MarketConfig_new(void);
+void MarketConfig_delete(void *restrict const);
+bool MarketConfig_match(const struct MarketConfig *restrict const,
+                        const struct String *restrict const);
 
 int config_symset(char *restrict const);
 int config_fparse(struct Config *const restrict, const char *restrict const);

@@ -273,15 +273,15 @@
 #define WCJSON_DECLARE_PRODUCT_ITEM(_item)                                     \
   WCJSON_DECLARE_STRING_ITEM(_item)                                            \
   struct String *restrict j_##_item##_str = NULL;                              \
-  struct Product *restrict j_##_item##_p = NULL;
+  struct Market *restrict j_##_item##_m = NULL;
 
 #define WCJSON_PRODUCT_ITEM(_doc, _val, _item, _len, _errbuf, _ret)            \
   WCJSON_STRING_ITEM(_doc, _val, _item, _len, _errbuf, _ret)                   \
   j_##_item##_str = String_cnew(j_##_item->mbstring);                          \
-  j_##_item##_p = coinbase_product_name(j_##_item##_str);                      \
+  j_##_item##_m = coinbase_product_name(j_##_item##_str);                      \
   String_delete(j_##_item##_str);                                              \
   j_##_item##_str = NULL;                                                      \
-  if (j_##_item##_p == NULL) {                                                 \
+  if (j_##_item##_m == NULL) {                                                 \
     werr("coinbase: Product '%s' not found: %s\n", j_##_item->mbstring,        \
          wcjsondoc_string(_errbuf, sizeof(_errbuf), _doc, _val, NULL));        \
     goto _ret;                                                                 \
@@ -319,19 +319,19 @@ static const struct {
 
 static const struct {
   const char *restrict json;
-  const enum product_type type;
-} product_type_map[] = {
-    {"UNKNOWN_PRODUCT_TYPE", PRODUCT_TYPE_UNKNOWN},
-    {"SPOT", PRODUCT_TYPE_SPOT},
-    {"FUTURE", PRODUCT_TYPE_FUTURE},
+  const enum market_type type;
+} market_type_map[] = {
+    {"UNKNOWN_PRODUCT_TYPE", MARKET_TYPE_UNKNOWN},
+    {"SPOT", MARKET_TYPE_SPOT},
+    {"FUTURE", MARKET_TYPE_FUTURE},
 };
 
 static const struct {
   const char *restrict json;
-  const enum product_status status;
-} product_status_map[] = {
-    {"online", PRODUCT_STATUS_ONLINE},
-    {"delisted", PRODUCT_STATUS_DELISTED},
+  const enum market_status status;
+} market_status_map[] = {
+    {"online", MARKET_STATUS_ONLINE},
+    {"delisted", MARKET_STATUS_DELISTED},
 };
 
 struct http_listener_ctx {
@@ -390,8 +390,8 @@ static struct Order *coinbase_order_await(void);
 static struct Sample *coinbase_sample_await(void);
 static struct Pricing *coinbase_pricing(void);
 static struct Array *coinbase_products(void);
-static struct Product *coinbase_product(const struct String *restrict const);
-static struct Product *
+static struct Market *coinbase_product(const struct String *restrict const);
+static struct Market *
 coinbase_product_name(const struct String *restrict const);
 static struct Array *coinbase_accounts(void);
 static struct Account *
@@ -427,8 +427,8 @@ struct Exchange exchange_coinbase = {
     .order_await = coinbase_order_await,
     .sample_await = coinbase_sample_await,
     .pricing = coinbase_pricing,
-    .products = coinbase_products,
-    .product = coinbase_product,
+    .markets = coinbase_products,
+    .market = coinbase_product,
     .accounts = coinbase_accounts,
     .account = coinbase_account,
     .order = coinbase_order,
@@ -511,20 +511,20 @@ static enum order_status order_status(const char *restrict status) {
   return ORDER_STATUS_UNKNOWN;
 }
 
-static enum product_type product_type(const char *restrict const type) {
-  for (int i = nitems(product_type_map); i > 0; i--)
-    if (!strcmp(product_type_map[i - 1].json, type))
-      return product_type_map[i - 1].type;
+static enum market_type market_type(const char *restrict const type) {
+  for (int i = nitems(market_type_map); i > 0; i--)
+    if (!strcmp(market_type_map[i - 1].json, type))
+      return market_type_map[i - 1].type;
 
-  return PRODUCT_TYPE_UNKNOWN;
+  return MARKET_TYPE_UNKNOWN;
 }
 
-static enum product_status product_status(const char *restrict const status) {
-  for (int i = nitems(product_status_map); i > 0; i--)
-    if (!strcmp(product_status_map[i - 1].json, status))
-      return product_status_map[i - 1].status;
+static enum market_status market_status(const char *restrict const status) {
+  for (int i = nitems(market_status_map); i > 0; i--)
+    if (!strcmp(market_status_map[i - 1].json, status))
+      return market_status_map[i - 1].status;
 
-  return PRODUCT_STATUS_UNKNOWN;
+  return MARKET_STATUS_UNKNOWN;
 }
 
 static enum account_type account_type(const char *restrict const type) {
@@ -805,7 +805,7 @@ static void ws_ticker_update(const struct wcjson_document *restrict const doc,
 
   if (Numeric_cmp(j_price_num, zero) > 0) {
     struct Sample *restrict const s = Sample_new();
-    s->m_id = String_copy(j_product_id_p->id);
+    s->m_id = String_copy(j_product_id_m->id);
     s->nanos = Numeric_copy(nanos);
     s->price = j_price_num;
 
@@ -814,8 +814,8 @@ static void ws_ticker_update(const struct wcjson_document *restrict const doc,
     Numeric_delete(j_price_num);
 
 ret:
-  if (j_product_id_p != NULL)
-    mutex_unlock(j_product_id_p->mtx);
+  if (j_product_id_m != NULL)
+    mutex_unlock(j_product_id_m->mtx);
 
   return;
 }
@@ -878,7 +878,7 @@ static void ws_user_update(const struct wcjson_document *restrict const doc,
 
   o = Order_new();
   o->id = String_cnew(j_order_id->mbstring);
-  o->m_id = String_copy(j_product_id_p->id);
+  o->m_id = String_copy(j_product_id_m->id);
   o->status = order_status(j_status->mbstring);
   o->cnanos = j_creation_time_nanos;
   o->b_ordered = Numeric_add(j_cumulative_quantity_num, j_leaves_quantity_num);
@@ -904,8 +904,8 @@ static void ws_user_update(const struct wcjson_document *restrict const doc,
 
   Queue_enqueue(orders, o);
 ret:
-  if (j_product_id_p != NULL)
-    mutex_unlock(j_product_id_p->mtx);
+  if (j_product_id_m != NULL)
+    mutex_unlock(j_product_id_m->mtx);
 
   Numeric_delete(j_leaves_quantity_num);
   Numeric_delete(j_outstanding_hold_amount_num);
@@ -1040,7 +1040,7 @@ static void ws_subscribe(struct mg_connection *restrict const c,
   items = Array_items(p_array);
   for (size_t i = Array_size(p_array); i > 0; i--) {
     struct wcjson_value *restrict const j_nm =
-        wcjson_string(doc, String_chars(((struct Product *)items[i - 1])->nm));
+        wcjson_string(doc, String_chars(((struct Market *)items[i - 1])->nm));
 
     wcjson_array_add(doc, j_arr, j_nm);
   }
@@ -1425,7 +1425,7 @@ static void coinbase_destroy(void) {
   String_delete(exchange_coinbase.nm);
   Queue_delete(orders, Order_delete);
   Queue_delete(samples, Sample_delete);
-  Array_delete(products, Product_delete);
+  Array_delete(products, Market_delete);
   Map_delete(products_by_name, NULL);
   Map_delete(products_by_id, NULL);
   Array_delete(accounts, Account_delete);
@@ -1479,12 +1479,12 @@ static struct Order *coinbase_order_await(void) {
   return Queue_dequeue(orders);
 }
 
-static struct Product *
+static struct Market *
 parse_product(const struct wcjson_document *restrict const doc,
               const struct wcjson_value *restrict const prod) {
   char p_uuid[DATABASE_UUID_MAX_LENGTH] = {0};
   char errbuf[WCJSON_BODY_MAX + 1] = {0};
-  struct Product *restrict p = NULL;
+  struct Market *restrict m = NULL;
   WCJSON_DECLARE_STRING_ITEM(product_id)
   WCJSON_DECLARE_STRING_ITEM(base_currency_id)
   WCJSON_DECLARE_STRING_ITEM(quote_currency_id)
@@ -1557,41 +1557,41 @@ parse_product(const struct wcjson_document *restrict const doc,
     ba = NULL;
   }
 
-  const enum product_status status_value = product_status(j_status->mbstring);
-  const enum product_type type_value = product_type(j_product_type->mbstring);
+  const enum market_status status_value = market_status(j_status->mbstring);
+  const enum market_type type_value = market_type(j_product_type->mbstring);
 
-  p = Product_new();
-  p->id = String_cnew(p_uuid);
-  p->nm = String_cnew(j_product_id->mbstring);
-  p->type = type_value;
-  p->status = status_value;
-  p->b_id = b_id;
-  p->ba_id = ba_id;
-  p->q_id = q_id;
-  p->qa_id = qa_id;
-  p->p_sc = p_dot ? strlen(p_dot + 1) : 0;
-  p->p_inc = j_price_increment_num;
-  p->b_sc = b_dot ? strlen(b_dot + 1) : 0;
-  p->b_inc = j_base_increment_num;
-  p->q_sc = q_dot ? strlen(q_dot + 1) : 0;
-  p->q_inc = j_quote_increment_num;
-  p->is_tradeable =
-      qa_id != NULL && ba_id != NULL && type_value == PRODUCT_TYPE_SPOT;
+  m = Market_new();
+  m->id = String_cnew(p_uuid);
+  m->nm = String_cnew(j_product_id->mbstring);
+  m->type = type_value;
+  m->status = status_value;
+  m->b_id = b_id;
+  m->ba_id = ba_id;
+  m->q_id = q_id;
+  m->qa_id = qa_id;
+  m->p_sc = p_dot ? strlen(p_dot + 1) : 0;
+  m->p_inc = j_price_increment_num;
+  m->b_sc = b_dot ? strlen(b_dot + 1) : 0;
+  m->b_inc = j_base_increment_num;
+  m->q_sc = q_dot ? strlen(q_dot + 1) : 0;
+  m->q_inc = j_quote_increment_num;
+  m->is_tradeable =
+      qa_id != NULL && ba_id != NULL && type_value == MARKET_TYPE_SPOT;
 
-  p->is_active = !(j_is_disabled->is_true || j_cancel_only->is_true ||
+  m->is_active = !(j_is_disabled->is_true || j_cancel_only->is_true ||
                    j_post_only->is_true || j_trading_disabled->is_true ||
                    j_new->is_true) &&
-                 status_value == PRODUCT_STATUS_ONLINE;
+                 status_value == MARKET_STATUS_ONLINE;
 
-  if (p->type == PRODUCT_TYPE_UNKNOWN) {
-    werr("coinbase: %s->%s: %s: Unsupported product type: %s\n",
+  if (m->type == MARKET_TYPE_UNKNOWN) {
+    werr("coinbase: %s->%s: %s: Unsupported market type: %s\n",
          j_quote_currency_id->mbstring, j_base_currency_id->mbstring,
          j_product_type->mbstring,
          wcjsondoc_string(errbuf, sizeof(errbuf), doc, prod, NULL));
   }
 
-  if (p->status == PRODUCT_STATUS_UNKNOWN) {
-    werr("coinbase: %s->%s: %s: Unsupported product status: %s\n",
+  if (m->status == MARKET_STATUS_UNKNOWN) {
+    werr("coinbase: %s->%s: %s: Unsupported market status: %s\n",
          j_quote_currency_id->mbstring, j_base_currency_id->mbstring,
          j_status->mbstring,
          wcjsondoc_string(errbuf, sizeof(errbuf), doc, prod, NULL));
@@ -1604,18 +1604,18 @@ parse_product(const struct wcjson_document *restrict const doc,
    * safe to not set a product's tradeable flag for inactive or unready
    * accounts.
    */
-  p->is_tradeable = p->is_tradeable && qa_active_and_ready;
-  p->is_tradeable = p->is_tradeable && ba_active_and_ready;
+  m->is_tradeable = m->is_tradeable && qa_active_and_ready;
+  m->is_tradeable = m->is_tradeable && ba_active_and_ready;
 
 #ifdef ABAG_COINBASE_DEBUG
-  if (!p->is_active) {
-    wdebug("coinbase: %s->%s: Product not active: %s\n",
+  if (!m->is_active) {
+    wdebug("coinbase: %s->%s: Market not active: %s\n",
            j_quote_currency_id->mbstring, j_base_currency_id->mbstring,
            wcjsondoc_string(errbuf, sizeof(errbuf), doc, prod, NULL));
   }
 #endif
 ret:
-  return p;
+  return m;
 }
 
 static struct Array *
@@ -1628,7 +1628,7 @@ parse_products(struct Array *restrict const p,
 
   const struct wcjson_value *restrict j_product = NULL;
   wcjson_value_foreach(j_product, doc, j_products) {
-    struct Product *restrict const parsed = parse_product(doc, j_product);
+    struct Market *restrict const parsed = parse_product(doc, j_product);
 
     if (parsed != NULL)
       Array_add_tail(p, parsed);
@@ -1657,7 +1657,7 @@ static struct Array *coinbase_products(void) {
     }
 
     if (http_req(&doc, url, ABAG_COINBASE_PRODUCTS_PATH, NULL, 0) == 0) {
-      Array_clear(products, Product_delete);
+      Array_clear(products, Market_delete);
       parse_products(products, &doc);
       Array_shrink(products);
       Map_delete(products_by_name, NULL);
@@ -1667,16 +1667,16 @@ static struct Array *coinbase_products(void) {
 
       items = Array_items(products);
       for (size_t i = Array_size(products); i > 0; i--) {
-        if (Map_put(products_by_name, ((struct Product *)items[i - 1])->nm,
+        if (Map_put(products_by_name, ((struct Market *)items[i - 1])->nm,
                     items[i - 1])) {
-          werr("%s: %d: %s: %s: Duplicate product\n", __FILE__, __LINE__,
-               __func__, String_chars(((struct Product *)items[i - 1])->nm));
+          werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__,
+               String_chars(((struct Market *)items[i - 1])->nm));
           fatal();
         }
-        if (Map_put(products_by_id, ((struct Product *)items[i - 1])->id,
+        if (Map_put(products_by_id, ((struct Market *)items[i - 1])->id,
                     items[i - 1])) {
-          werr("%s: %d: %s: %s: Duplicate product\n", __FILE__, __LINE__,
-               __func__, String_chars(((struct Product *)items[i - 1])->id));
+          werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__,
+               String_chars(((struct Market *)items[i - 1])->id));
           fatal();
         }
       }
@@ -1690,20 +1690,19 @@ static struct Array *coinbase_products(void) {
   return products;
 }
 
-static struct Product *
-coinbase_product(const struct String *restrict const id) {
+static struct Market *coinbase_product(const struct String *restrict const id) {
   struct Array *restrict const p_array = coinbase_products();
-  struct Product *restrict p = Map_get(products_by_id, id);
-  p->mtx = Array_mutex(p_array);
-  return p;
+  struct Market *restrict m = Map_get(products_by_id, id);
+  m->mtx = Array_mutex(p_array);
+  return m;
 }
 
-static struct Product *
+static struct Market *
 coinbase_product_name(const struct String *restrict const name) {
   struct Array *restrict const p_array = coinbase_products();
-  struct Product *restrict const p = Map_get(products_by_name, name);
-  p->mtx = Array_mutex(p_array);
-  return p;
+  struct Market *restrict const m = Map_get(products_by_name, name);
+  m->mtx = Array_mutex(p_array);
+  return m;
 }
 
 static struct Account *
@@ -1968,7 +1967,7 @@ parse_order(const struct wcjson_document *restrict const doc,
 
   o = Order_new();
   o->id = String_cnew(j_order_id->mbstring);
-  o->m_id = String_copy(j_product_id_p->id);
+  o->m_id = String_copy(j_product_id_m->id);
   o->settled = j_settled->is_true;
   o->status = order_status(j_status->mbstring);
   o->cnanos = j_created_time_nanos;
@@ -1994,8 +1993,8 @@ parse_order(const struct wcjson_document *restrict const doc,
          wcjsondoc_string(errbuf, sizeof(errbuf), doc, order, NULL));
 
 ret:
-  if (j_product_id_p != NULL)
-    mutex_unlock(j_product_id_p->mtx);
+  if (j_product_id_m != NULL)
+    mutex_unlock(j_product_id_m->mtx);
 
   return o;
 }

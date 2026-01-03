@@ -27,19 +27,19 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-enum product_type {
-  PRODUCT_TYPE_UNKNOWN = 1,
-  PRODUCT_TYPE_SPOT,
-  PRODUCT_TYPE_FUTURE,
+enum market_type {
+  MARKET_TYPE_UNKNOWN = 1,
+  MARKET_TYPE_SPOT,
+  MARKET_TYPE_FUTURE,
 };
 
-enum product_status {
-  PRODUCT_STATUS_UNKNOWN = 1,
-  PRODUCT_STATUS_ONLINE,
-  PRODUCT_STATUS_DELISTED,
+enum market_status {
+  MARKET_STATUS_UNKNOWN = 1,
+  MARKET_STATUS_ONLINE,
+  MARKET_STATUS_DELISTED,
 };
 
-struct Product {
+struct Market {
   struct String *restrict id;
   struct String *restrict nm;
   struct String *restrict b_id;
@@ -50,8 +50,8 @@ struct Product {
   struct Numeric *restrict p_inc;
   struct Numeric *restrict q_inc;
   mtx_t *restrict mtx;
-  enum product_type type;
-  enum product_status status;
+  enum market_type type;
+  enum market_status status;
   size_t p_sc;
   size_t b_sc;
   size_t q_sc;
@@ -131,8 +131,8 @@ struct Exchange {
   void (*destroy)(void);
   void (*start)(void);
   void (*stop)(void);
-  struct Array *(*products)(void);
-  struct Product *(*product)(const struct String *restrict const);
+  struct Array *(*markets)(void);
+  struct Market *(*market)(const struct String *restrict const);
   struct Array *(*accounts)(void);
   struct Account *(*account)(const struct String *restrict const);
   struct Order *(*order)(const struct String *restrict const);
@@ -147,9 +147,9 @@ struct Exchange {
   bool (*cancel)(const struct String *restrict const);
 };
 
-struct Product *Product_new(void);
-struct Product *Product_copy(const struct Product *restrict const);
-void Product_delete(void *restrict const);
+struct Market *Market_new(void);
+struct Market *Market_copy(const struct Market *restrict const);
+void Market_delete(void *restrict const);
 
 struct Account *Account_new(void);
 void Account_delete(void *restrict const);
