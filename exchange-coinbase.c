@@ -1852,7 +1852,7 @@ static struct Array *coinbase_accounts(void) {
 
 static struct Account *
 coinbase_account_currency(const struct String *restrict const currency) {
-  const struct Array *restrict const haystack = coinbase_accounts();
+  struct Array *restrict const haystack = coinbase_accounts();
   struct Account *restrict needle = NULL;
   void **items = Array_items(haystack);
 
