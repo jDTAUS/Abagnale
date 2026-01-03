@@ -35,7 +35,7 @@
 #include <string.h>
 
 #ifndef ABAG_WORKERS
-#define ABAG_WORKERS 13
+#define ABAG_WORKERS 14
 #endif
 
 #ifndef ABAG_MAX_PRODUCTS
@@ -2703,6 +2703,20 @@ static int samples_process(void *restrict const arg) {
   thread_exit(EXIT_SUCCESS);
 }
 
+static int exchange_stop(void *restrict const arg) {
+  const struct Exchange *restrict const e = arg;
+  struct timespec sleep_rate = {
+      .tv_sec = 15,
+      .tv_nsec = 0L,
+  };
+
+  while (!terminated)
+    thread_sleep(&sleep_rate);
+
+  e->stop();
+  thread_exit(EXIT_SUCCESS);
+}
+
 int abagnale(int argc, char *argv[]) {
   void **items;
   twenty_five_percent_factor = Numeric_from_char("1.25");
@@ -2734,12 +2748,13 @@ int abagnale(int argc, char *argv[]) {
 
   items = Array_items(exchanges);
   for (size_t i = Array_size(exchanges); i > 0 && !terminated; i--) {
-    const struct Exchange *restrict const e = items[i - 1];
+    struct Exchange *restrict const e = items[i - 1];
     for (int j = 0; j < ABAG_WORKERS && !terminated; j++) {
       struct worker_ctx *restrict const w_ctx =
           heap_calloc(1, sizeof(struct worker_ctx));
 
       w_ctx->e = e;
+      e->start();
 
       const int r = snprintf(w_ctx->db, sizeof(w_ctx->db), "%s-worker-%.3d",
                              String_chars(e->nm), j);
@@ -2751,16 +2766,20 @@ int abagnale(int argc, char *argv[]) {
 
       db_connect(w_ctx->db);
 
-      if (j == 0)
+      switch (j) {
+      case 0:
+        thread_create(&workers[(i - 1) * ABAG_WORKERS + j], exchange_stop, e);
+        break;
+      case 1:
         thread_create(&workers[(i - 1) * ABAG_WORKERS + j], orders_process,
                       w_ctx);
-      else
+        break;
+      default:
         thread_create(&workers[(i - 1) * ABAG_WORKERS + j], samples_process,
                       w_ctx);
+        break;
+      }
     }
-
-    if (!terminated)
-      e->start();
   }
 
   if (!terminated)
