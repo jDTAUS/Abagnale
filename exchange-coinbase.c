@@ -1003,14 +1003,14 @@ static void ws_handle_message(const struct mg_ws_message *restrict const msg) {
 
     channel->last_message = mg_millis();
 
-    if (!strcmp("update", j_type->mbstring)) {
+    if (j_type->mb_len == 6 && !strcmp("update", j_type->mbstring)) {
       if (channel->update) {
         const struct wcjson_value *restrict j_evt_item = NULL;
         wcjson_value_foreach(j_evt_item, ws_doc, j_evt_items) {
           channel->update(ws_doc, j_evt_item, j_timestamp_nanos);
         }
       }
-    } else if (!strcmp("snapshot", j_type->mbstring)) {
+    } else if (j_type->mb_len == 8 && !strcmp("snapshot", j_type->mbstring)) {
       if (channel->snapshot) {
         const struct wcjson_value *restrict j_evt_item = NULL;
         wcjson_value_foreach(j_evt_item, ws_doc, j_evt_items) {

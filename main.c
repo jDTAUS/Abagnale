@@ -82,13 +82,7 @@ struct Array *restrict algorithms;
 int abagnale(int argc, char *argv[]);
 int abagnalectl(int argc, char *argv[]);
 
-static void terminate(int signum) {
-  terminated = true;
-  void **items = Array_items(exchanges);
-
-  for (size_t i = Array_size(exchanges); i > 0; i--)
-    ((struct Exchange *)items[i - 1])->stop();
-}
+static void terminate(int signum) { terminated = true; }
 
 int main(int argc, char *argv[]) {
   int c, r = EXIT_FAILURE;
@@ -205,8 +199,10 @@ int main(int argc, char *argv[]) {
     r = abagnalectl(argc - options.optind, argv);
 
   items = Array_items(exchanges);
-  for (size_t i = Array_size(exchanges); i > 0; i--)
+  for (size_t i = Array_size(exchanges); i > 0; i--) {
+    ((struct Exchange *)items[i - 1])->stop();
     ((struct Exchange *)items[i - 1])->destroy();
+  }
 
   items = Array_items(algorithms);
   for (size_t i = Array_size(algorithms); i > 0; i--)
