@@ -2749,12 +2749,13 @@ int abagnale(int argc, char *argv[]) {
   items = Array_items(exchanges);
   for (size_t i = Array_size(exchanges); i > 0 && !terminated; i--) {
     struct Exchange *restrict const e = items[i - 1];
+    e->start();
+
     for (int j = 0; j < ABAG_WORKERS && !terminated; j++) {
       struct worker_ctx *restrict const w_ctx =
           heap_calloc(1, sizeof(struct worker_ctx));
 
       w_ctx->e = e;
-      e->start();
 
       const int r = snprintf(w_ctx->db, sizeof(w_ctx->db), "%s-worker-%.3d",
                              String_chars(e->nm), j);
