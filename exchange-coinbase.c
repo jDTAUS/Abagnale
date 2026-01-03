@@ -1860,10 +1860,11 @@ coinbase_account_currency(const struct String *restrict const currency) {
     if (String_equals(((struct Account *)items[i - 1])->c_id, currency)) {
       needle = items[i - 1];
       needle->mtx = Array_mutex(accounts);
-      break;
+      return needle;
     }
 
-  return needle;
+  Array_unlock(haystack);
+  return NULL;
 }
 
 static struct Account *
