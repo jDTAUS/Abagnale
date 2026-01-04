@@ -1543,16 +1543,14 @@ parse_product(const struct wcjson_document *restrict const doc,
   if (qa != NULL) {
     qa_id = String_copy(qa->id);
     qa_active_and_ready = qa->is_active && qa->is_ready;
-    if (qa->mtx != NULL)
-      mutex_unlock(qa->mtx);
+    mutex_unlock(qa->mtx);
     qa = NULL;
   }
 
   if (ba != NULL) {
     ba_id = String_copy(ba->id);
     ba_active_and_ready = ba->is_active && ba->is_ready;
-    if (ba->mtx != NULL)
-      mutex_unlock(ba->mtx);
+    mutex_unlock(ba->mtx);
     ba = NULL;
   }
 
