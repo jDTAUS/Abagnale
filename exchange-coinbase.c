@@ -1690,16 +1690,28 @@ static struct Array *coinbase_products(void) {
 static struct Market *coinbase_product(const struct String *restrict const id) {
   struct Array *restrict const p_array = coinbase_products();
   struct Market *restrict m = Map_get(products_by_id, id);
-  m->mtx = Array_mutex(p_array);
-  return m;
+
+  if (m != NULL) {
+    m->mtx = Array_mutex(p_array);
+    return m;
+  }
+
+  Array_unlock(p_array);
+  return NULL;
 }
 
 static struct Market *
 coinbase_product_name(const struct String *restrict const name) {
   struct Array *restrict const p_array = coinbase_products();
   struct Market *restrict const m = Map_get(products_by_name, name);
-  m->mtx = Array_mutex(p_array);
-  return m;
+
+  if (m != NULL) {
+    m->mtx = Array_mutex(p_array);
+    return m;
+  }
+
+  Array_unlock(p_array);
+  return NULL;
 }
 
 static struct Account *
