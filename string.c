@@ -109,7 +109,7 @@ inline struct String *String_new(const struct String *restrict s,
   return str;
 }
 
-inline const char *String_chars(const struct String *restrict const s) {
+inline const char *const String_chars(const struct String *restrict const s) {
   return s->s;
 }
 

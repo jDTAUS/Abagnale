@@ -34,7 +34,7 @@ bool String_equals(const struct String *restrict const,
                    const struct String *restrict const);
 void String_delete(void *restrict const);
 
-const char *String_chars(const struct String *restrict const);
+const char *const String_chars(const struct String *restrict const);
 const size_t String_length(const struct String *restrict const);
 const size_t String_hash(const struct String *restrict const);
 
