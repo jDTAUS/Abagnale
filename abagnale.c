@@ -692,8 +692,8 @@ static inline void trade_array_delete(void *restrict const entry) {
 
 static inline int sample_cmp(const void *restrict const e1,
                              const void *restrict const e2) {
-  return Numeric_cmp(((const struct Sample **)e1)[0]->nanos,
-                     ((const struct Sample **)e2)[0]->nanos);
+  return Numeric_cmp(((const struct Sample *const *)e1)[0]->nanos,
+                     ((const struct Sample *const *)e2)[0]->nanos);
 }
 
 void samples_per_nano(struct Numeric *restrict const ret,

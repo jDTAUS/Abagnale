@@ -750,9 +750,11 @@ static char *jwt_encode_cdp(const char *restrict const uri) {
     fatal();
   }
 
-  r = jwt_set_alg(jwt, JWT_ALG_ES256,
-                  (unsigned char *)String_chars(coinbase_cnf->jwt_key),
-                  String_length(coinbase_cnf->jwt_key));
+  r = jwt_set_alg(
+      jwt, JWT_ALG_ES256,
+      (const unsigned char *const)String_chars(coinbase_cnf->jwt_key),
+      String_length(coinbase_cnf->jwt_key));
+
   if (r != 0) {
     werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__, strerror(r));
     fatal();
