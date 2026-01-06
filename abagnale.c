@@ -183,7 +183,6 @@ static struct Map *market_prices;
 static struct Map *market_trades;
 static tss_t abag_tls_key;
 
-static struct Numeric *restrict twenty_five_percent_factor;
 static struct Numeric *restrict ninety_percent_factor;
 static struct Numeric *restrict order_reload_interval_nanos;
 
@@ -1240,7 +1239,7 @@ static void position_cancel(const struct worker_ctx *restrict const w_ctx,
   const struct abag_tls *restrict const tls = abag_tls();
   struct Numeric *restrict const r0 = tls->position_cancel.r0;
 
-  Numeric_mul_to(twenty_five_percent_factor, p->cl_factor, r0);
+  Numeric_mul_to(p->cl_factor, two, r0);
   Numeric_copy_to(r0, p->cl_factor);
 
   switch (p->type) {
@@ -2719,7 +2718,6 @@ static int exchange_stop(void *restrict const arg) {
 
 int abagnale(int argc, char *argv[]) {
   void **items;
-  twenty_five_percent_factor = Numeric_from_char("1.25");
   ninety_percent_factor = Numeric_from_char("0.9");
 
   order_reload_interval_nanos =
@@ -2787,7 +2785,6 @@ int abagnale(int argc, char *argv[]) {
     for (size_t i = ABAG_WORKERS * Array_size(exchanges); i > 0; i--)
       thread_join(workers[i - 1], NULL);
 
-  Numeric_delete(twenty_five_percent_factor);
   Numeric_delete(ninety_percent_factor);
   Numeric_delete(order_reload_interval_nanos);
 
