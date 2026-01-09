@@ -33,8 +33,12 @@ YACC=yacc
 #   https://clang.llvm.org/docs/ClangFormat.html
 FORMAT=clang-format
 
-INCLUDES=-I/usr/include/postgresql
+INCLUDES=-I/usr/include
+INCLUDES+=-I/usr/include/postgresql
+INCLUDES+=-I/usr/include/wcjson
 INCLUDES+=-I/usr/local/include
+INCLUDES+=-I/usr/local/include/postgresql
+INCLUDES+=-I/usr/local/include/wcjson
 
 DEBUG=
 DEBUG+=-g
