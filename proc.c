@@ -46,7 +46,7 @@ void proc_destroy(void) {
 inline void wout(const char *restrict fmt, ...) {
   va_list ap;
   mutex_lock(&stdout_mutex);
-  (void)fprintf(stdout, " info: ");
+  (void)fprintf(stdout, "<6>");
   va_start(ap, fmt);
   (void)vfprintf(stdout, fmt, ap);
   va_end(ap);
@@ -57,7 +57,7 @@ inline void wout(const char *restrict fmt, ...) {
 inline void werr(const char *restrict fmt, ...) {
   va_list ap;
   mutex_lock(&stderr_mutex);
-  (void)fprintf(stderr, "error: ");
+  (void)fprintf(stderr, "<3>");
   va_start(ap, fmt);
   (void)vfprintf(stderr, fmt, ap);
   va_end(ap);
