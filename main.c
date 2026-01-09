@@ -91,7 +91,6 @@ int main(int argc, char *argv[]) {
   verbose = false;
   struct optparse options = {0};
   void **items;
-  char *p_nm;
 
   proc_init();
   time_init();
@@ -107,17 +106,16 @@ int main(int argc, char *argv[]) {
     fatal();
   }
 
-  if (!argv[0] || *argv[0] == '\0') {
-    werr("%s: %d: :%s\n", __FILE__, __LINE__, __func__);
-    fatal();
-  }
+  if (argv[0] != NULL) {
+    char *p_nm = strrchr(argv[0], '/');
 
-  p_nm = strrchr(argv[0], '/');
+    if (p_nm == NULL)
+      p_nm = strrchr(argv[0], '\\');
 
-  if (p_nm == NULL)
-    p_nm = strrchr(argv[0], '\\');
+    progname = String_cnew(p_nm != NULL ? p_nm + 1 : argv[0]);
+  } else
+    progname = String_cnew(".");
 
-  progname = String_cnew(p_nm != NULL ? p_nm + 1 : argv[0]);
   prog_abagnale = String_cnew(ABAGNALE);
   prog_abagnalectl = String_cnew(ABAGNALECTL);
   zero = Numeric_from_int(0);
@@ -212,6 +210,11 @@ int main(int argc, char *argv[]) {
     r = abagnale(argc - options.optind, argv);
   else if (String_equals(progname, prog_abagnalectl))
     r = abagnalectl(argc - options.optind, argv);
+  else {
+    werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__,
+         String_chars(progname));
+    fatal();
+  }
 
   items = Array_items(exchanges);
   for (size_t i = Array_size(exchanges); i > 0; i--)
