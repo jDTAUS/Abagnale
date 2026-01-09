@@ -980,8 +980,8 @@ static void ws_handle_message(const struct mg_ws_message *restrict const msg) {
 
 #ifdef ABAG_COINBASE_DEBUG
   if (channel->debug)
-    wdebug("coinbase: %s: %.*s\n", j_channel->mbstring, (int)msg->data.len,
-           msg->data.buf);
+    wout("coinbase: %s: %.*s\n", j_channel->mbstring, (int)msg->data.len,
+         msg->data.buf);
 #endif
 
   if (channel->items == NULL)
@@ -1087,7 +1087,7 @@ static void ws_listener(struct mg_connection *restrict c, int ev,
   switch (ev) {
   case MG_EV_CONNECT: {
 #ifdef ABAG_COINBASE_DEBUG
-    wdebug("coinbase: %s: %lu: MG_EV_CONNECT\n", channel->name, c->id);
+    wout("coinbase: %s: %lu: MG_EV_CONNECT\n", channel->name, c->id);
 #endif
     struct mg_tls_opts ws_tls_opts = {
         .ca = mg_str(""),
@@ -1107,7 +1107,7 @@ static void ws_listener(struct mg_connection *restrict c, int ev,
   }
   case MG_EV_WS_OPEN: {
 #ifdef ABAG_COINBASE_DEBUG
-    wdebug("coinbase: %s: %lu: MG_EV_WS_OPEN\n", channel->name, c->id);
+    wout("coinbase: %s: %lu: MG_EV_WS_OPEN\n", channel->name, c->id);
 #endif
     if (running) {
       products_reload = true;
@@ -1127,7 +1127,7 @@ static void ws_listener(struct mg_connection *restrict c, int ev,
         ws_handle_message(wm);
       } else if (type == WEBSOCKET_OP_CLOSE) {
 #ifdef ABAG_COINBASE_DEBUG
-        wdebug("coinbase: %s: %lu: WEBSOCKET_OP_CLOSE\n", channel->name, c->id);
+        wout("coinbase: %s: %lu: WEBSOCKET_OP_CLOSE\n", channel->name, c->id);
 #endif
         c->is_closing = 1;
       } else
@@ -1140,7 +1140,7 @@ static void ws_listener(struct mg_connection *restrict c, int ev,
   }
   case MG_EV_CLOSE: {
 #ifdef ABAG_COINBASE_DEBUG
-    wdebug("coinbase: %s: %lu: MG_EV_CLOSE\n", channel->name, c->id);
+    wout("coinbase: %s: %lu: MG_EV_CLOSE\n", channel->name, c->id);
 #endif
     if (running) {
       struct mg_mgr *restrict const mgr = c->mgr;
@@ -1246,7 +1246,7 @@ static void http_listener(struct mg_connection *restrict c, int ev,
     http_ctx->success = mg_http_status(msg) == 200;
 
 #ifdef ABAG_COINBASE_DEBUG
-    wdebug("coinbase: %.*s\n", (int)msg->message.len, msg->message.buf);
+    wout("coinbase: %.*s\n", (int)msg->message.len, msg->message.buf);
 #endif
 
     if (http_ctx->success) {
@@ -1316,9 +1316,9 @@ static int http_req(struct wcjson_document *restrict const doc,
   };
 
 #ifdef ABAG_COINBASE_DEBUG
-  wdebug("coinbase: HTTP %s %s\n", body != NULL ? "POST" : "GET", url);
+  wout("coinbase: HTTP %s %s\n", body != NULL ? "POST" : "GET", url);
   if (body != NULL)
-    wdebug("%.*s\n", (int)body_len, body);
+    wout("%.*s\n", (int)body_len, body);
 #endif
 
   thread_sleep(&api_request_rate);
@@ -1608,9 +1608,9 @@ parse_product(const struct wcjson_document *restrict const doc,
 
 #ifdef ABAG_COINBASE_DEBUG
   if (!m->is_active) {
-    wdebug("coinbase: %s->%s: Market not active: %s\n",
-           j_quote_currency_id->mbstring, j_base_currency_id->mbstring,
-           wcjsondoc_string(errbuf, sizeof(errbuf), doc, prod, NULL));
+    wout("coinbase: %s->%s: Market not active: %s\n",
+         j_quote_currency_id->mbstring, j_base_currency_id->mbstring,
+         wcjsondoc_string(errbuf, sizeof(errbuf), doc, prod, NULL));
   }
 #endif
 ret:

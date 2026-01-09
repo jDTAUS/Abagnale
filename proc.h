@@ -26,9 +26,5 @@ void proc_destroy(void);
 void wout(const char *, ...) __attribute__((__format__(printf, 1, 2)));
 void werr(const char *, ...) __attribute__((__format__(printf, 1, 2)));
 
-#ifdef ABAG_DEBUG
-void wdebug(const char *, ...) __attribute__((__format__(printf, 1, 2)));
-#endif
-
 _Noreturn void fatal(void);
 #endif

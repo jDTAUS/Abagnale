@@ -64,16 +64,3 @@ inline void werr(const char *restrict fmt, ...) {
   (void)fflush(stderr);
   mutex_unlock(&stderr_mutex);
 }
-
-#ifdef ABAG_DEBUG
-inline void wdebug(const char *restrict fmt, ...) {
-  va_list ap;
-  mutex_lock(&stdout_mutex);
-  (void)fprintf(stdout, "debug: ");
-  va_start(ap, fmt);
-  (void)vfprintf(stdout, fmt, ap);
-  va_end(ap);
-  (void)fflush(stdout);
-  mutex_unlock(&stdout_mutex);
-}
-#endif
