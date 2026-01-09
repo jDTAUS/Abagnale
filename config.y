@@ -40,7 +40,7 @@
 
 #include <wcjson-document.h>
 
-extern char *restrict const __progname;
+extern struct String *restrict const progname;
 
 extern const struct Exchange *restrict const all_exchanges;
 extern const size_t all_exchanges_nitems;
@@ -996,7 +996,8 @@ struct file *pushfile(struct String *restrict const name) {
   nfile = heap_calloc(1, sizeof(struct file));
   nfile->name = name;
   if ((nfile->stream = fopen(String_chars(name), "r")) == NULL) {
-    werr("%s: %s: %s\n", __progname, String_chars(name), strerror(errno));
+    werr("%s: %s: %s\n", String_chars(progname), String_chars(name),
+      strerror(errno));
     heap_free(nfile);
     return (NULL);
   }
@@ -1047,7 +1048,8 @@ int config_fparse(struct Config *const x_conf,
   while(MapIterator_next(it)) {
     const struct sym *restrict const sym = MapIterator_value(it);
     if (!sym->used)
-      werr("%s: macro '%s' not used\n", __progname, String_chars(sym->nam));
+      werr("%s: macro '%s' not used\n", String_chars(progname),
+        String_chars(sym->nam));
     if (!sym->persist)
       sym_delete(MapIterator_remove(it));
   }
@@ -1064,14 +1066,14 @@ int config_fparse(struct Config *const x_conf,
       conf->wnanos_max = m_cnf->wnanos;
 
     if (Map_get(conf->e_cnf, m_cnf->e_nm) == NULL) {
-      werr("%s: %s: Exchange configuration required\n", __progname,
+      werr("%s: %s: Exchange configuration required\n", String_chars(progname),
         String_chars(m_cnf->e_nm));
       errors++;
     }
   }
 
   if (conf->db_tgt == NULL || conf->db_usr == NULL) {
-    werr("%s: Database target and user required\n", __progname);
+    werr("%s: Database target and user required\n", String_chars(progname));
     errors++;
   }
 

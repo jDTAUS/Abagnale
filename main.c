@@ -38,7 +38,10 @@
 
 #define nitems(a) (sizeof((a)) / sizeof((a)[0]))
 
-extern char *__progname;
+struct String *restrict progname;
+struct String *restrict prog_abagnale;
+struct String *restrict prog_abagnalectl;
+_Atomic bool terminated;
 
 extern struct Exchange exchange_coinbase;
 struct Exchange *all_exchanges[] = {
@@ -51,8 +54,6 @@ struct Algorithm *all_algorithms[] = {
     &algorithm_trend,
 };
 const size_t all_algorithms_nitems = nitems(all_algorithms);
-
-_Atomic bool terminated;
 
 struct Numeric *restrict zero;
 struct Numeric *restrict one;
@@ -90,6 +91,7 @@ int main(int argc, char *argv[]) {
   verbose = false;
   struct optparse options = {0};
   void **items;
+  char *p_nm;
 
   proc_init();
   time_init();
@@ -105,6 +107,19 @@ int main(int argc, char *argv[]) {
     fatal();
   }
 
+  if (!argv[0] || *argv[0] == '\0') {
+    werr("%s: %d: :%s\n", __FILE__, __LINE__, __func__);
+    fatal();
+  }
+
+  p_nm = strrchr(argv[0], '/');
+
+  if (p_nm == NULL)
+    p_nm = strrchr(argv[0], '\\');
+
+  progname = String_cnew(p_nm != NULL ? p_nm + 1 : argv[0]);
+  prog_abagnale = String_cnew(ABAGNALE);
+  prog_abagnalectl = String_cnew(ABAGNALECTL);
   zero = Numeric_from_int(0);
   one = Numeric_from_int(1);
   n_one = Numeric_from_int(-1);
@@ -144,7 +159,7 @@ int main(int argc, char *argv[]) {
       verbose = true;
       break;
     case '?':
-      werr("%s: %s\n", __progname, options.errmsg);
+      werr("%s: %s\n", String_chars(progname), options.errmsg);
       fatal();
     }
   }
@@ -193,9 +208,9 @@ int main(int argc, char *argv[]) {
       all_exchanges[i - 1]->destroy();
   }
 
-  if (!strcmp(ABAGNALE, __progname))
+  if (String_equals(progname, prog_abagnale))
     r = abagnale(argc - options.optind, argv);
-  else if (!strcmp(ABAGNALECTL, __progname))
+  else if (String_equals(progname, prog_abagnalectl))
     r = abagnalectl(argc - options.optind, argv);
 
   items = Array_items(exchanges);
@@ -227,6 +242,9 @@ int main(int argc, char *argv[]) {
   Numeric_delete(day_nanos);
   Numeric_delete(week_nanos);
   Numeric_delete(boot_nanos);
+  String_delete(progname);
+  String_delete(prog_abagnale);
+  String_delete(prog_abagnalectl);
   time_destroy();
   proc_destroy();
   config_destroy();

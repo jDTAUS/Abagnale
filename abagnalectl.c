@@ -36,7 +36,7 @@
 #define nitems(_a) (sizeof((_a)) / sizeof((_a)[0]))
 #endif
 
-extern char *__progname;
+extern struct String *restrict const progname;
 extern bool terminated;
 
 extern const struct Algorithm *restrict const all_algorithms;
@@ -194,10 +194,10 @@ static void print_market(const struct Market *restrict const m) {
 }
 
 static _Noreturn void usage(void) {
-  werr("usage: %s\n", __progname);
+  werr("usage: %s\n", String_chars(progname));
 
   for (size_t i = nitems(cmd_tab); i > 0; i--)
-    werr("       %s %s %s\n", __progname, cmd_tab[i - 1].name,
+    werr("       %s %s %s\n", String_chars(progname), cmd_tab[i - 1].name,
          cmd_tab[i - 1].usage);
 
   fatal();
@@ -223,9 +223,9 @@ static int cmd_vacuum(int argc, char *argv[]) {
   if (argc > 0 || file == NULL)
     usage();
 
-  db_connect(__progname);
-  db_vacuum(__progname, file);
-  db_disconnect(__progname);
+  db_connect(String_chars(progname));
+  db_vacuum(String_chars(progname), file);
+  db_disconnect(String_chars(progname));
 
   return EXIT_SUCCESS;
 }
@@ -287,7 +287,8 @@ static int cmd_markets(int argc, char *argv[]) {
   const struct Exchange *restrict const e = exchange(e_nm);
 
   if (e == NULL) {
-    werr("%s: %s: Exchange not found\n", __progname, String_chars(e_nm));
+    werr("%s: %s: Exchange not found\n", String_chars(progname),
+         String_chars(e_nm));
     goto ret;
   }
 
@@ -337,7 +338,8 @@ static int cmd_market(int argc, char *argv[]) {
   const struct Exchange *restrict const e = exchange(e_nm);
 
   if (e == NULL) {
-    werr("%s: %s: Exchange not found\n", __progname, String_chars(e_nm));
+    werr("%s: %s: Exchange not found\n", String_chars(progname),
+         String_chars(e_nm));
     goto ret;
   }
 
@@ -387,7 +389,8 @@ static int cmd_accounts(int argc, char *argv[]) {
   const struct Exchange *restrict const e = exchange(e_nm);
 
   if (e == NULL) {
-    werr("%s: %s: Exchange not found\n", __progname, String_chars(e_nm));
+    werr("%s: %s: Exchange not found\n", String_chars(progname),
+         String_chars(e_nm));
     goto ret;
   }
 
@@ -436,7 +439,8 @@ static int cmd_account(int argc, char *argv[]) {
   const struct Exchange *restrict const e = exchange(e_nm);
 
   if (e == NULL) {
-    werr("%s: %s: Exchange not found\n", __progname, String_chars(e_nm));
+    werr("%s: %s: Exchange not found\n", String_chars(progname),
+         String_chars(e_nm));
     goto ret;
   }
 
@@ -491,21 +495,24 @@ static int cmd_order(int argc, char *argv[]) {
   const struct Exchange *restrict const e = exchange(e_nm);
 
   if (e == NULL) {
-    werr("%s: %s: Exchange not found\n", __progname, String_chars(e_nm));
+    werr("%s: %s: Exchange not found\n", String_chars(progname),
+         String_chars(e_nm));
     goto ret;
   }
 
   o = e->order(o_id);
 
   if (o == NULL) {
-    werr("%s: %s: Order not found\n", __progname, String_chars(o_id));
+    werr("%s: %s: Order not found\n", String_chars(progname),
+         String_chars(o_id));
     goto ret;
   }
 
   m = e->market(o->m_id);
 
   if (m == NULL) {
-    werr("%s: %s: Market not found\n", __progname, String_chars(o->m_id));
+    werr("%s: %s: Market not found\n", String_chars(progname),
+         String_chars(o->m_id));
     goto ret;
   }
 
@@ -580,7 +587,8 @@ static int cmd_plot(int argc, char *argv[]) {
   const struct Exchange *restrict const e = exchange(e_nm);
 
   if (e == NULL) {
-    werr("%s: %s: Exchange not found\n", __progname, String_chars(e_nm));
+    werr("%s: %s: Exchange not found\n", String_chars(progname),
+         String_chars(e_nm));
     goto ret;
   }
 
@@ -596,28 +604,30 @@ static int cmd_plot(int argc, char *argv[]) {
   }
 
   if (m == NULL) {
-    werr("%s: %s: Market not found\n", __progname, String_chars(m_nm));
+    werr("%s: %s: Market not found\n", String_chars(progname),
+         String_chars(m_nm));
     goto unlock;
   }
 
   a = algorithm(a_nm);
 
   if (a == NULL) {
-    werr("%s: %s: Algorithm not found\n", __progname, String_chars(a_nm));
+    werr("%s: %s: Algorithm not found\n", String_chars(progname),
+         String_chars(a_nm));
     goto unlock;
   }
 
-  db_connect(__progname);
+  db_connect(String_chars(progname));
 
-  if (!a->market_plot(f_nm, __progname, e, m)) {
-    werr("%s: %s: Algortihm does not provide plots\n", __progname,
+  if (!a->market_plot(f_nm, String_chars(progname), e, m)) {
+    werr("%s: %s: Algortihm does not provide plots\n", String_chars(progname),
          String_chars(a_nm));
     goto disconnect;
   }
 
   r = EXIT_SUCCESS;
 disconnect:
-  db_disconnect(__progname);
+  db_disconnect(String_chars(progname));
 unlock:
   Array_unlock(markets);
 ret:

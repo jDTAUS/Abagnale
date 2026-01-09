@@ -160,7 +160,6 @@ struct abag_tls {
   } trades_load;
 };
 
-extern char *__progname;
 extern _Atomic bool terminated;
 
 extern const struct Array *restrict const algorithms;
