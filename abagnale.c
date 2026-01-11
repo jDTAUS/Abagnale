@@ -184,6 +184,7 @@ static tss_t abag_tls_key;
 
 static struct Numeric *restrict ninety_percent_factor;
 static struct Numeric *restrict order_reload_interval_nanos;
+static struct Numeric *restrict five_minute_nanos;
 
 int abagnale(int argc, char *argv[]);
 
@@ -1925,21 +1926,28 @@ static void trade_pricing(const struct worker_ctx *restrict const w_ctx,
   const struct Pricing *restrict const pricing = w_ctx->e->pricing();
 
   if (Numeric_cmp(t->fee_pc, pricing->ef_pc) < 0) {
-    if (verbose) {
-      char *restrict const pr = Numeric_to_char(pricing->ef_pc, 2);
-      wout("%s: %s->%s: Effective fee: %s%%\n", String_chars(w_ctx->e->nm),
-           String_chars(w_ctx->m->q_id), String_chars(w_ctx->m->b_id), pr);
-
-      Numeric_char_free(pr);
-    }
-
     Numeric_copy_to(pricing->ef_pc, t->fee_pc);
     Numeric_div_to(t->fee_pc, hundred, r0);
     Numeric_add_to(r0, one, t->fee_pf);
 
-    Numeric_copy_to(w_ctx->m_cnf->v_pc != NULL ? w_ctx->m_cnf->v_pc
-                                               : pricing->ef_pc,
-                    t->tp_pc);
+    if (w_ctx->m_cnf->v_pc != NULL)
+      Numeric_copy_to(w_ctx->m_cnf->v_pc, t->tp_pc);
+    else
+      db_samples_stddev(t->tp_pc, w_ctx->db, String_chars(w_ctx->e->id),
+                        String_chars(w_ctx->m->id),
+                        w_ctx->m_cnf->v_wnanos != NULL ? w_ctx->m_cnf->v_wnanos
+                                                       : five_minute_nanos);
+
+    if (verbose) {
+      char *restrict const pr = Numeric_to_char(pricing->ef_pc, 2);
+      char *restrict const v = Numeric_to_char(t->tp_pc, 4);
+      wout("%s: %s->%s: Pricing: fee: %s%%, volatility: %s%%\n",
+           String_chars(w_ctx->e->nm), String_chars(w_ctx->m->q_id),
+           String_chars(w_ctx->m->b_id), pr, v);
+
+      Numeric_char_free(pr);
+      Numeric_char_free(v);
+    }
 
     Numeric_div_to(t->tp_pc, hundred, r0);
     Numeric_add_to(r0, one, t->tp_pf);
@@ -2397,8 +2405,6 @@ static struct Array *trades_load(const struct worker_ctx *w_ctx,
 
     t->status = trade_status(trade->status);
 
-    trade_pricing(w_ctx, t);
-
     if (t->p_long.id != NULL) {
       position_pricing(w_ctx, t, &t->p_long, false);
 
@@ -2435,6 +2441,7 @@ static struct Array *trades_load(const struct worker_ctx *w_ctx,
   items = Array_items(trades);
   for (size_t i = Array_size(trades); i > 0; i--) {
     struct Trade *restrict const t = items[i - 1];
+    trade_pricing(w_ctx, t);
     trade_create(w_ctx, t, samples, sample);
     Numeric_copy_to(zero, t->p_long.rnanos);
     Numeric_copy_to(zero, t->p_short.rnanos);
@@ -2722,6 +2729,7 @@ int abagnale(int argc, char *argv[]) {
   order_reload_interval_nanos =
       Numeric_from_long(ABAG_ORDER_RELOAD_INTERVAL_NANOS);
 
+  five_minute_nanos = Numeric_from_long(300000000000L);
   market_samples = Map_new(ABAG_MAX_PRODUCTS);
   market_prices = Map_new(ABAG_MAX_PRODUCTS);
   market_trades = Map_new(ABAG_MAX_PRODUCTS);
@@ -2786,6 +2794,7 @@ int abagnale(int argc, char *argv[]) {
 
   Numeric_delete(ninety_percent_factor);
   Numeric_delete(order_reload_interval_nanos);
+  Numeric_delete(five_minute_nanos);
 
   heap_free(workers);
   Map_delete(market_samples, sample_array_delete);

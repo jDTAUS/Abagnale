@@ -289,6 +289,58 @@ void db_sample_create(const char *const cname, const char *const exc_id,
   // clang-format on
 }
 
+void db_samples_stddev(struct Numeric *const stddev, const char *const cname,
+                       const char *const e_id, const char *const m_id,
+                       const struct Numeric *const wnanos) {
+  // clang-format off
+  EXEC SQL BEGIN DECLARE SECTION;
+  const char *con = cname;
+  const char *e = e_id;
+  const char *m = m_id;
+  const numeric *window = Numeric_db(wnanos);
+  const numeric *dev = Numeric_db(stddev);
+  EXEC SQL END DECLARE SECTION;
+  EXEC SQL WHENEVER SQLWARNING CALL db_warn();
+  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
+  EXEC SQL AT :con
+    WITH price_changes AS (
+      SELECT
+        "NANOS",
+        "PRICE"
+      FROM (
+        SELECT
+          "NANOS",
+          "PRICE",
+          lag("PRICE", 1) OVER (ORDER BY "NANOS") AS "PREVIOUS"
+        FROM "SAMPLES"
+        WHERE "EXCHANGE_ID" = :e
+          AND "PRODUCT_ID" = :m
+      ) sub
+      WHERE "PRICE" <> "PREVIOUS" OR "PREVIOUS" IS NULL
+    ),
+    returns AS (
+      SELECT
+        "NANOS",
+        "PRICE",
+        ln("PRICE" / lag("PRICE", 1) OVER (ORDER BY "NANOS")) AS "RETURN"
+      FROM price_changes
+    ),
+    stddev AS (
+      SELECT
+        "NANOS",
+        "PRICE",
+        stddev_samp("RETURN") OVER
+          (ORDER BY "NANOS" RANGE BETWEEN :window PRECEDING AND CURRENT ROW) * 100
+            AS "VOLATILITY_PERCENT"
+      FROM returns
+      ORDER BY "NANOS"
+    )
+    SELECT max("VOLATILITY_PERCENT") INTO :dev FROM stddev;
+  EXEC SQL AT :con COMMIT;
+  // clang-format on
+}
+
 void db_samples_open(const char *const cname, const char *const exc_id,
                      const char *const p_id,
                      const struct Numeric *const later_than) {

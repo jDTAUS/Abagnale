@@ -146,6 +146,9 @@ void db_id_to_external(char *const, const char *const, const char *const,
 
 void db_sample_create(const char *const, const char *const, const char *const,
                       const struct Numeric *const, const struct Numeric *const);
+void db_samples_stddev(struct Numeric *const, const char *const,
+                       const char *const, const char *const,
+                       const struct Numeric *const);
 
 void db_samples_open(const char *const, const char *const, const char *const,
                      const struct Numeric *const);

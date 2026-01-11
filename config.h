@@ -62,6 +62,7 @@ struct MarketConfig {
   struct Numeric *restrict q_tgt;
   struct String *restrict q_id;
   struct Numeric *restrict v_pc;
+  struct Numeric *restrict v_wnanos;
   struct Numeric *restrict wnanos;
   struct Numeric *restrict sr_min;
   struct Numeric *restrict sr_max;

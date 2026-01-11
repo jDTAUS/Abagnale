@@ -566,10 +566,34 @@ opt_trade : TAKELOSSDELAY nanos {
               Numeric_delete($2);
               YYERROR;
             }
+            if (m_cnf->v_wnanos != NULL) {
+              yyerror("volatility already specified\n");
+              Numeric_delete($2);
+              YYERROR;
+            }
             m_cnf->v_pc = $2;
 
             if (Numeric_cmp(m_cnf->v_pc, zero) <= 0) {
               Numeric_delete(m_cnf->v_pc);
+              yyerror("volatility must be positive\n");
+              YYERROR;
+            }
+          }
+          | VOLATILITY nanos {
+            if (m_cnf->v_pc != NULL) {
+              yyerror("volatility already specified\n");
+              Numeric_delete($2);
+              YYERROR;
+            }
+            if (m_cnf->v_wnanos != NULL) {
+              yyerror("volatility already specified\n");
+              Numeric_delete($2);
+              YYERROR;
+            }
+            m_cnf->v_wnanos = $2;
+
+            if (Numeric_cmp(m_cnf->v_wnanos, zero) <= 0) {
+              Numeric_delete(m_cnf->v_wnanos);
               yyerror("volatility must be positive\n");
               YYERROR;
             }
@@ -1250,7 +1274,8 @@ void Pattern_delete(void *restrict const p) {
 }
 
 struct MarketConfig *MarketConfig_new(void) {
-  struct MarketConfig *restrict const c = heap_calloc(1, sizeof(struct MarketConfig));
+  struct MarketConfig *restrict const c =
+    heap_calloc(1, sizeof(struct MarketConfig));
 
   c->e_nm = NULL;
   c->a_nm = NULL;
@@ -1258,6 +1283,7 @@ struct MarketConfig *MarketConfig_new(void) {
   c->q_tgt = NULL;
   c->q_id = NULL;
   c->v_pc = NULL;
+  c->v_wnanos = NULL;
   c->wnanos = NULL;
   c->sr_min = NULL;
   c->sr_max = NULL;
@@ -1281,6 +1307,7 @@ void MarketConfig_delete(void *restrict const c) {
   Numeric_delete(cfg->q_tgt);
   String_delete(cfg->q_id);
   Numeric_delete(cfg->v_pc);
+  Numeric_delete(cfg->v_wnanos);
   Numeric_delete(cfg->wnanos);
   Numeric_delete(cfg->sr_min);
   Numeric_delete(cfg->sr_max);
@@ -1292,7 +1319,8 @@ void MarketConfig_delete(void *restrict const c) {
   Numeric_delete(cfg->tl_dlnanos);
 }
 
-bool MarketConfig_match(const struct MarketConfig *restrict const c, const struct String *restrict const m) {
+bool MarketConfig_match(const struct MarketConfig *restrict const c,
+                        const struct String *restrict const m) {
   bool market = true;
   struct str_find sm[MAXCAPTURES] = {0};
   const char *errstr = NULL;
