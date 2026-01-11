@@ -319,7 +319,7 @@ void db_samples_open(const char *const cname, const char *const exc_id,
 #endif
 }
 
-bool db_samples_next(struct db_sample_res *const res, const char *const cname) {
+bool db_samples_next(struct db_sample_rec *const res, const char *const cname) {
   // clang-format off
   EXEC SQL BEGIN DECLARE SECTION;
   const char *con = cname;
@@ -408,7 +408,7 @@ bool db_vacuum(const char *const cname, const char *const fname) {
   return true;
 }
 
-bool db_stats(struct db_stats_res *const res, const char *const cname,
+bool db_stats(struct db_stats_rec *const res, const char *const cname,
               const char *const e_id, const char *const p_id) {
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(1, stdout);
@@ -755,7 +755,7 @@ void db_trades_open(const char *const cname, const char *const exc_id,
 #endif
 }
 
-bool db_trades_next(struct db_trade_res *const res, const char *const cname) {
+bool db_trades_next(struct db_trade_rec *const res, const char *const cname) {
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(1, stdout);
 #endif
@@ -1124,7 +1124,7 @@ void db_trade_sreset(const char *const cname, const char *const o_id) {
 #endif
 }
 
-void db_trades_hold(struct db_balance_res *res, const char *const cname,
+void db_trades_hold(struct db_balance_rec *res, const char *const cname,
                     const char *const e_id, const char *const q_id,
                     const char *const b_id) {
 #ifdef ABAG_SQL_DEBUG
@@ -1221,7 +1221,7 @@ void db_tx_plot_datapoint(const char *const cname, const char *const pl_id,
 #endif
 }
 
-void db_tx_trend_plot(struct db_plot_res *res, const char *const cname,
+void db_tx_trend_plot(struct db_plot_rec *res, const char *const cname,
                       const char *const e_id, const char *const p_id) {
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(1, stdout);
@@ -1279,7 +1279,7 @@ not_found:
 
 void db_tx_trend_plot_candle(const char *const cname, const char *const e_id,
                              const char *const p_id,
-                             const struct db_candle_res *const cd) {
+                             const struct db_candle_rec *const cd) {
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(1, stdout);
 #endif
@@ -1383,7 +1383,7 @@ void db_tx_trend_plot_samples_open(const char *const cname,
 #endif
 }
 
-bool db_tx_trend_plot_samples_next(struct db_datapoint_res *restrict const res,
+bool db_tx_trend_plot_samples_next(struct db_datapoint_rec *restrict const res,
                                    const char *const cname) {
   // clang-format off
   EXEC SQL BEGIN DECLARE SECTION;
@@ -1450,7 +1450,7 @@ void db_tx_trend_plot_candles_open(const char *const cname,
 #endif
 }
 
-bool db_tx_trend_plot_candles_next(struct db_candle_res *restrict const res,
+bool db_tx_trend_plot_candles_next(struct db_candle_rec *restrict const res,
                                    const char *const cname) {
   // clang-format off
   EXEC SQL BEGIN DECLARE SECTION;
@@ -1526,7 +1526,7 @@ void db_tx_trend_plot_markers_open(const char *const cname,
 #endif
 }
 
-bool db_tx_trend_plot_markers_next(struct db_datapoint_res *restrict const res,
+bool db_tx_trend_plot_markers_next(struct db_datapoint_rec *restrict const res,
                                    const char *const cname) {
   // clang-format off
   EXEC SQL BEGIN DECLARE SECTION;
@@ -1562,7 +1562,7 @@ void db_tx_trend_plot_markers_close(const char *const cname) {
 #endif
 }
 
-void db_trend_state(struct db_trend_state_res *const res,
+void db_trend_state(struct db_trend_state_rec *const res,
                     const char *const cname, const char *const e_id,
                     const char *const p_id) {
 #ifdef ABAG_SQL_DEBUG
@@ -1612,7 +1612,7 @@ not_found:
 
 void db_trend_state_update(const char *const cname, const char *const e_id,
                            const char *const p_id,
-                           const struct db_trend_state_res *const st) {
+                           const struct db_trend_state_rec *const st) {
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(1, stdout);
 #endif

@@ -83,7 +83,7 @@ struct abag_tls {
     struct Numeric *restrict now;
     struct Numeric *restrict filter;
     struct Numeric *restrict sr;
-    struct db_sample_res *restrict sample;
+    struct db_sample_rec *restrict sample;
   } samples_load;
   struct worker_config_vars {
     struct Numeric *restrict sr;
@@ -120,7 +120,7 @@ struct abag_tls {
     struct Numeric *restrict total_to;
     struct Numeric *restrict sl_to;
     struct Numeric *restrict n;
-    struct db_stats_res *restrict stats;
+    struct db_stats_rec *restrict stats;
   } position_timeout;
   struct position_maintain_vars {
     struct Numeric *restrict m;
@@ -135,7 +135,7 @@ struct abag_tls {
     struct Numeric *restrict r0;
   } position_trade;
   struct trade_create_vars {
-    struct db_stats_res *restrict stats;
+    struct db_stats_rec *restrict stats;
   } trade_create;
   struct trade_maintain_vars {
     struct Numeric *restrict q_delta;
@@ -153,10 +153,10 @@ struct abag_tls {
     struct Numeric *restrict q_fees;
     struct Numeric *restrict r0;
     struct Numeric *restrict r1;
-    struct db_balance_res *restrict hold;
+    struct db_balance_rec *restrict hold;
   } trade_bet;
   struct trades_load_vars {
-    struct db_trade_res *restrict trade;
+    struct db_trade_rec *restrict trade;
   } trades_load;
 };
 
@@ -196,7 +196,7 @@ static struct abag_tls *abag_tls(void) {
     tls->samples_per_nano.duration = Numeric_new();
     tls->samples_per_second.n = Numeric_new();
     tls->samples_per_minute.s = Numeric_new();
-    tls->samples_load.sample = heap_malloc(sizeof(struct db_sample_res));
+    tls->samples_load.sample = heap_malloc(sizeof(struct db_sample_rec));
     tls->samples_load.sample->nanos = Numeric_new();
     tls->samples_load.sample->price = Numeric_new();
     tls->samples_load.now = Numeric_new();
@@ -222,7 +222,7 @@ static struct abag_tls *abag_tls(void) {
     tls->position_timeout.total_to = Numeric_new();
     tls->position_timeout.sl_to = Numeric_new();
     tls->position_timeout.n = Numeric_new();
-    tls->position_timeout.stats = heap_malloc(sizeof(struct db_stats_res));
+    tls->position_timeout.stats = heap_malloc(sizeof(struct db_stats_rec));
     tls->position_timeout.stats->bd_min = Numeric_new();
     tls->position_timeout.stats->bd_max = Numeric_new();
     tls->position_timeout.stats->bd_avg = Numeric_new();
@@ -237,7 +237,7 @@ static struct abag_tls *abag_tls(void) {
     tls->position_trigger.age = Numeric_new();
     tls->position_trade.o_pr = Numeric_new();
     tls->position_trade.r0 = Numeric_new();
-    tls->trade_create.stats = heap_malloc(sizeof(struct db_stats_res));
+    tls->trade_create.stats = heap_malloc(sizeof(struct db_stats_rec));
     tls->trade_create.stats->bd_min = Numeric_new();
     tls->trade_create.stats->bd_max = Numeric_new();
     tls->trade_create.stats->bd_avg = Numeric_new();
@@ -250,7 +250,7 @@ static struct abag_tls *abag_tls(void) {
     tls->trade_maintain.q_costs = Numeric_new();
     tls->trade_maintain.q_profit = Numeric_new();
     tls->trade_pricing.r0 = Numeric_new();
-    tls->trade_bet.hold = heap_malloc(sizeof(struct db_balance_res));
+    tls->trade_bet.hold = heap_malloc(sizeof(struct db_balance_rec));
     tls->trade_bet.hold->b = Numeric_new();
     tls->trade_bet.hold->q = Numeric_new();
     tls->trade_bet.b_avail = Numeric_new();
@@ -260,7 +260,7 @@ static struct abag_tls *abag_tls(void) {
     tls->trade_bet.q_fees = Numeric_new();
     tls->trade_bet.r0 = Numeric_new();
     tls->trade_bet.r1 = Numeric_new();
-    tls->trades_load.trade = heap_malloc(sizeof(struct db_trade_res));
+    tls->trades_load.trade = heap_malloc(sizeof(struct db_trade_rec));
     tls->trades_load.trade->b_cnanos = Numeric_new();
     tls->trades_load.trade->b_dnanos = Numeric_new();
     tls->trades_load.trade->b_price = Numeric_new();
@@ -741,7 +741,7 @@ samples_load(const struct worker_ctx *restrict const w_ctx) {
   struct Numeric *restrict const now = tls->samples_load.now;
   struct Numeric *restrict const filter = tls->samples_load.filter;
   struct Numeric *restrict const sr = tls->samples_load.sr;
-  struct db_sample_res *restrict const sample = tls->samples_load.sample;
+  struct db_sample_rec *restrict const sample = tls->samples_load.sample;
 
   nanos_now(now);
   Numeric_sub_to(now, cnf->wnanos_max, filter);
@@ -1295,7 +1295,7 @@ static void position_timeout(const struct worker_ctx *restrict const w_ctx,
   struct Numeric *restrict const total_to = tls->position_timeout.total_to;
   struct Numeric *restrict const sl_to = tls->position_timeout.sl_to;
   struct Numeric *restrict const n = tls->position_timeout.n;
-  struct db_stats_res *restrict const stats = tls->position_timeout.stats;
+  struct db_stats_rec *restrict const stats = tls->position_timeout.stats;
   const bool db = db_stats(stats, w_ctx->db, String_chars(w_ctx->e->id),
                            String_chars(w_ctx->m->id));
 
@@ -1901,7 +1901,7 @@ static void trade_create(const struct worker_ctx *restrict const w_ctx,
                          const struct Array *restrict const samples,
                          const struct Sample *restrict const sample) {
   const struct abag_tls *restrict const tls = abag_tls();
-  struct db_stats_res *restrict const stats = tls->trade_create.stats;
+  struct db_stats_rec *restrict const stats = tls->trade_create.stats;
 
   if (db_stats(stats, w_ctx->db, String_chars(w_ctx->e->id),
                String_chars(w_ctx->m->id))) {
@@ -1972,7 +1972,7 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
   struct Numeric *restrict const q_fees = tls->trade_bet.q_fees;
   struct Numeric *restrict const r0 = tls->trade_bet.r0;
   struct Numeric *restrict const r1 = tls->trade_bet.r1;
-  struct db_balance_res *restrict const hold = tls->trade_bet.hold;
+  struct db_balance_rec *restrict const hold = tls->trade_bet.hold;
   bool pr_changed = false;
 
   Map_lock(market_prices);
@@ -2315,7 +2315,7 @@ static struct Array *trades_load(const struct worker_ctx *w_ctx,
                                  const struct Array *restrict const samples,
                                  const struct Sample *restrict const sample) {
   const struct abag_tls *restrict const tls = abag_tls();
-  struct db_trade_res *restrict const trade = tls->trades_load.trade;
+  struct db_trade_rec *restrict const trade = tls->trades_load.trade;
   void **items;
 
   db_trades_open(w_ctx->db, String_chars(w_ctx->e->id),

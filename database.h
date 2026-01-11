@@ -31,12 +31,12 @@
 #define DATABASE_TRADE_STATUS_MAX_LENGTH (size_t)16
 #define DATABASE_CANDLE_VALUE_MAX_LENGTH (size_t)5
 
-struct db_sample_res {
+struct db_sample_rec {
   struct Numeric *nanos;
   struct Numeric *price;
 };
 
-struct db_stats_res {
+struct db_stats_rec {
   bool bd_min_null;
   bool bd_max_null;
   bool bd_avg_null;
@@ -53,7 +53,7 @@ struct db_stats_res {
   struct Numeric *scl_factor;
 };
 
-struct db_trade_res {
+struct db_trade_rec {
   bool bo_id_null;
   bool so_id_null;
   bool b_cnanos_null;
@@ -94,23 +94,23 @@ struct db_trade_res {
   struct Numeric *s_q_filled;
 };
 
-struct db_balance_res {
+struct db_balance_rec {
   struct Numeric *q;
   struct Numeric *b;
 };
 
-struct db_plot_res {
+struct db_plot_rec {
   char *id;
   struct Numeric *snanos;
   struct Numeric *enanos;
 };
 
-struct db_datapoint_res {
+struct db_datapoint_rec {
   struct Numeric *x;
   struct Numeric *y;
 };
 
-struct db_candle_res {
+struct db_candle_rec {
   struct Numeric *o;
   struct Numeric *h;
   struct Numeric *l;
@@ -121,7 +121,7 @@ struct db_candle_res {
   struct Numeric *cnanos;
 };
 
-struct db_trend_state_res {
+struct db_trend_state_rec {
   struct Numeric *cd_lnanos;
   struct Numeric *cd_langle;
   char *cd_ltrend;
@@ -149,10 +149,10 @@ void db_sample_create(const char *const, const char *const, const char *const,
 
 void db_samples_open(const char *const, const char *const, const char *const,
                      const struct Numeric *const);
-bool db_samples_next(struct db_sample_res *, const char *const);
+bool db_samples_next(struct db_sample_rec *, const char *const);
 void db_samples_close(const char *const);
 
-bool db_stats(struct db_stats_res *, const char *const, const char *const,
+bool db_stats(struct db_stats_rec *, const char *const, const char *const,
               const char *const);
 void db_stats_bcl_factor(const char *const, const char *const,
                          const char *const, struct Numeric *const);
@@ -160,10 +160,10 @@ void db_stats_scl_factor(const char *const, const char *const,
                          const char *const, struct Numeric *const);
 
 void db_trades_open(const char *const, const char *const, const char *const);
-bool db_trades_next(struct db_trade_res *const, const char *const);
+bool db_trades_next(struct db_trade_rec *const, const char *const);
 void db_trades_close(const char *const);
 
-void db_trades_hold(struct db_balance_res *, const char *const,
+void db_trades_hold(struct db_balance_rec *, const char *const,
                     const char *const, const char *const, const char *const);
 
 void db_trade_bcreate(char *const, const char *const, const char *const,
@@ -204,12 +204,12 @@ void db_tx_plot_datapoint(const char *const, const char *const,
                           const struct Numeric *const,
                           const struct Numeric *const);
 
-void db_tx_trend_plot(struct db_plot_res *const, const char *const,
+void db_tx_trend_plot(struct db_plot_rec *const, const char *const,
                       const char *const, const char *const);
 
 void db_tx_trend_plot_candle(const char *const, const char *const,
                              const char *const,
-                             const struct db_candle_res *const);
+                             const struct db_candle_rec *const);
 
 void db_tx_trend_plot_marker(const char *const, const char *const,
                              const char *const, const struct Numeric *const,
@@ -217,26 +217,26 @@ void db_tx_trend_plot_marker(const char *const, const char *const,
 
 void db_tx_trend_plot_samples_open(const char *const, const char *const,
                                    const char *const);
-bool db_tx_trend_plot_samples_next(struct db_datapoint_res *restrict const,
+bool db_tx_trend_plot_samples_next(struct db_datapoint_rec *restrict const,
                                    const char *const);
 void db_tx_trend_plot_samples_close(const char *const);
 
 void db_tx_trend_plot_candles_open(const char *const, const char *const,
                                    const char *const);
-bool db_tx_trend_plot_candles_next(struct db_candle_res *restrict const,
+bool db_tx_trend_plot_candles_next(struct db_candle_rec *restrict const,
                                    const char *const);
 void db_tx_trend_plot_candles_close(const char *const);
 
 void db_tx_trend_plot_markers_open(const char *const, const char *const,
                                    const char *const);
-bool db_tx_trend_plot_markers_next(struct db_datapoint_res *restrict const,
+bool db_tx_trend_plot_markers_next(struct db_datapoint_rec *restrict const,
                                    const char *const);
 void db_tx_trend_plot_markers_close(const char *const);
 
-void db_trend_state(struct db_trend_state_res *const res, const char *const,
+void db_trend_state(struct db_trend_state_rec *const res, const char *const,
                     const char *const, const char *const);
 void db_trend_state_update(const char *const, const char *const,
                            const char *const,
-                           const struct db_trend_state_res *const);
+                           const struct db_trend_state_rec *const);
 
 #endif

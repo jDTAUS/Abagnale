@@ -42,7 +42,7 @@ struct trend_state {
 
 struct trend_tls {
   struct trend_state_vars {
-    struct db_trend_state_res *restrict st_res;
+    struct db_trend_state_rec *restrict st_res;
   } trend_state;
   struct trend_position_open_vars {
     struct Numeric *restrict r0;
@@ -57,12 +57,12 @@ struct trend_tls {
     struct Candle *restrict cd_cur;
     struct Candle *restrict cd_first;
     struct Candle *restrict cd_last;
-    struct db_plot_res *restrict plot_res;
-    struct db_trend_state_res *restrict st_res;
+    struct db_plot_rec *restrict plot_res;
+    struct db_trend_state_rec *restrict st_res;
   } trend_position_open;
   struct trend_market_plot_vars {
-    struct db_datapoint_res *restrict pt_res;
-    struct db_candle_res *restrict cd_res;
+    struct db_datapoint_rec *restrict pt_res;
+    struct db_candle_rec *restrict cd_res;
   } trend_market_plot;
 };
 
@@ -103,7 +103,7 @@ static struct trend_tls *trend_tls(void) {
   struct trend_tls *tls = tls_get(trend_tls_key);
   if (tls == NULL) {
     tls = heap_malloc(sizeof(struct trend_tls));
-    tls->trend_state.st_res = heap_malloc(sizeof(struct db_trend_state_res));
+    tls->trend_state.st_res = heap_malloc(sizeof(struct db_trend_state_rec));
     tls->trend_state.st_res->cd_lnanos = Numeric_new();
     tls->trend_state.st_res->cd_langle = Numeric_new();
     tls->trend_position_open.r0 = Numeric_from_int(0);
@@ -118,18 +118,18 @@ static struct trend_tls *trend_tls(void) {
     tls->trend_position_open.cd_cur = Candle_new();
     tls->trend_position_open.cd_first = Candle_new();
     tls->trend_position_open.cd_last = Candle_new();
-    tls->trend_position_open.plot_res = heap_malloc(sizeof(struct db_plot_res));
+    tls->trend_position_open.plot_res = heap_malloc(sizeof(struct db_plot_rec));
     tls->trend_position_open.plot_res->snanos = Numeric_from_int(0);
     tls->trend_position_open.plot_res->enanos = Numeric_from_int(0);
     tls->trend_position_open.st_res =
-        heap_malloc(sizeof(struct db_trend_state_res));
+        heap_malloc(sizeof(struct db_trend_state_rec));
     tls->trend_position_open.st_res->cd_lnanos = Numeric_new();
     tls->trend_position_open.st_res->cd_langle = Numeric_new();
     tls->trend_market_plot.pt_res =
-        heap_malloc(sizeof(struct db_datapoint_res));
+        heap_malloc(sizeof(struct db_datapoint_rec));
     tls->trend_market_plot.pt_res->x = Numeric_new();
     tls->trend_market_plot.pt_res->y = Numeric_new();
-    tls->trend_market_plot.cd_res = heap_malloc(sizeof(struct db_candle_res));
+    tls->trend_market_plot.cd_res = heap_malloc(sizeof(struct db_candle_rec));
     tls->trend_market_plot.cd_res->o = Numeric_new();
     tls->trend_market_plot.cd_res->h = Numeric_new();
     tls->trend_market_plot.cd_res->l = Numeric_new();
@@ -244,7 +244,7 @@ static struct trend_state *trend_state(const char *dbcon,
                                        struct String *restrict const m_id) {
   const struct trend_tls *restrict const tls = trend_tls();
   struct trend_state *restrict st = NULL;
-  struct db_trend_state_res *restrict const st_res = tls->trend_state.st_res;
+  struct db_trend_state_rec *restrict const st_res = tls->trend_state.st_res;
   char ltrend[DATABASE_CANDLE_VALUE_MAX_LENGTH] = {0};
   st_res->cd_ltrend = ltrend;
 
@@ -287,11 +287,11 @@ static struct Position *trend_position_open(
   struct Candle *restrict const cd_cur = tls->trend_position_open.cd_cur;
   struct Candle *restrict const cd_first = tls->trend_position_open.cd_first;
   struct Candle *restrict const cd_last = tls->trend_position_open.cd_last;
-  struct db_plot_res *restrict const plot_res =
+  struct db_plot_rec *restrict const plot_res =
       tls->trend_position_open.plot_res;
-  struct db_trend_state_res *restrict const st_res =
+  struct db_trend_state_rec *restrict const st_res =
       tls->trend_position_open.st_res;
-  struct db_candle_res candle_res = {0};
+  struct db_candle_rec candle_res = {0};
   struct trend_state *restrict const st = trend_state(dbcon, e->id, m->id);
   struct Position *restrict p = NULL;
   void **items;
@@ -539,9 +539,9 @@ static bool trend_market_plot(const char *restrict const fn,
                               const struct Exchange *restrict const e,
                               const struct Market *restrict const m) {
   const struct trend_tls *restrict const tls = trend_tls();
-  struct db_datapoint_res *restrict const pt_res =
+  struct db_datapoint_rec *restrict const pt_res =
       tls->trend_market_plot.pt_res;
-  struct db_candle_res *restrict const cd_res = tls->trend_market_plot.cd_res;
+  struct db_candle_rec *restrict const cd_res = tls->trend_market_plot.cd_res;
   size_t cd_red_cnt = 0, cd_green_cnt = 0, mk_cnt = 0;
   FILE *restrict const f = fopen(fn, "w");
 
