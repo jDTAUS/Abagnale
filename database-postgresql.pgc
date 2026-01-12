@@ -334,7 +334,6 @@ void db_samples_stddev(struct Numeric *const stddev, const char *const cname,
           (ORDER BY "NANOS" RANGE BETWEEN :window PRECEDING AND CURRENT ROW) * 100
             AS "VOLATILITY_PERCENT"
       FROM returns
-      ORDER BY "NANOS"
     )
     SELECT max("VOLATILITY_PERCENT") INTO :dev FROM stddev;
   EXEC SQL AT :con COMMIT;
