@@ -104,6 +104,7 @@ LDFLAGS+=-lssl
 #LDFLAGS+=-lpthread
 
 YACCFLAGS=
+YACCFLAGS+=-o
 
 HEADERS=abagnale.h 
 HEADERS+=array.h
@@ -178,7 +179,7 @@ abagnalectl: $(OBJS)
 .c.o:
 	$(CC) $(STANDARD) $(CFLAGS) -c -o $@ $<
 
-mongoose.o:
+mongoose.o: mongoose.c
 	$(CC) $(CFLAGS) -c -o $@ $<
 
 .pgc.c:
