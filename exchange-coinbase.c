@@ -1,7 +1,5 @@
 /* $SchulteIT: exchange-coinbase.c 15282 2025-11-05 22:54:21Z schulte $ */
-// clang-format off
 /* $JDTAUS$ */
-// clang-format on
 
 /*
  * Copyright (c) 2018 - 2026 Christian Schulte <cs@schulte.it>
@@ -1229,9 +1227,8 @@ static void http_listener(struct mg_connection *restrict c, int ev,
               "Content-Type: application/json\r\n"
               "Content-Length: %u\r\n"
               "Connection: close\r\n"
-              // clang-format off
-              "User-Agent: Abagnale/0 $JDTAUS$\r\n"
-              // clang-format on
+              "User-Agent: Abagnale/0; "
+              "https://github.com/jDTAUS/Abagnale/tree/master\r\n"
               "\r\n",
               method, mg_url_uri(http_ctx->url), jwt, (int)host.len, host.buf,
               http_ctx->body_len);
