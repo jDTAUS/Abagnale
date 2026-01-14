@@ -287,7 +287,7 @@ static int cmd_markets(int argc, char *argv[]) {
   const struct Exchange *restrict const e = exchange(e_nm);
 
   if (e == NULL) {
-    werr("%s: %s: Exchange not found\n", String_chars(progname),
+    werr("%s: %s: Exchange not available\n", String_chars(progname),
          String_chars(e_nm));
     goto ret;
   }
@@ -338,7 +338,7 @@ static int cmd_market(int argc, char *argv[]) {
   const struct Exchange *restrict const e = exchange(e_nm);
 
   if (e == NULL) {
-    werr("%s: %s: Exchange not found\n", String_chars(progname),
+    werr("%s: %s: Exchange not available\n", String_chars(progname),
          String_chars(e_nm));
     goto ret;
   }
@@ -389,7 +389,7 @@ static int cmd_accounts(int argc, char *argv[]) {
   const struct Exchange *restrict const e = exchange(e_nm);
 
   if (e == NULL) {
-    werr("%s: %s: Exchange not found\n", String_chars(progname),
+    werr("%s: %s: Exchange not available\n", String_chars(progname),
          String_chars(e_nm));
     goto ret;
   }
@@ -439,7 +439,7 @@ static int cmd_account(int argc, char *argv[]) {
   const struct Exchange *restrict const e = exchange(e_nm);
 
   if (e == NULL) {
-    werr("%s: %s: Exchange not found\n", String_chars(progname),
+    werr("%s: %s: Exchange not available\n", String_chars(progname),
          String_chars(e_nm));
     goto ret;
   }
@@ -495,7 +495,7 @@ static int cmd_order(int argc, char *argv[]) {
   const struct Exchange *restrict const e = exchange(e_nm);
 
   if (e == NULL) {
-    werr("%s: %s: Exchange not found\n", String_chars(progname),
+    werr("%s: %s: Exchange not available\n", String_chars(progname),
          String_chars(e_nm));
     goto ret;
   }
@@ -503,7 +503,7 @@ static int cmd_order(int argc, char *argv[]) {
   o = e->order(o_id);
 
   if (o == NULL) {
-    werr("%s: %s: Order not found\n", String_chars(progname),
+    werr("%s: %s: Order not available\n", String_chars(progname),
          String_chars(o_id));
     goto ret;
   }
@@ -511,7 +511,7 @@ static int cmd_order(int argc, char *argv[]) {
   m = e->market(o->m_id);
 
   if (m == NULL) {
-    werr("%s: %s: Market not found\n", String_chars(progname),
+    werr("%s: %s: Market not available\n", String_chars(progname),
          String_chars(o->m_id));
     goto ret;
   }
@@ -587,7 +587,7 @@ static int cmd_plot(int argc, char *argv[]) {
   const struct Exchange *restrict const e = exchange(e_nm);
 
   if (e == NULL) {
-    werr("%s: %s: Exchange not found\n", String_chars(progname),
+    werr("%s: %s: Exchange not available\n", String_chars(progname),
          String_chars(e_nm));
     goto ret;
   }
@@ -604,7 +604,7 @@ static int cmd_plot(int argc, char *argv[]) {
   }
 
   if (m == NULL) {
-    werr("%s: %s: Market not found\n", String_chars(progname),
+    werr("%s: %s: Market not available\n", String_chars(progname),
          String_chars(m_nm));
     goto unlock;
   }
@@ -612,7 +612,7 @@ static int cmd_plot(int argc, char *argv[]) {
   a = algorithm(a_nm);
 
   if (a == NULL) {
-    werr("%s: %s: Algorithm not found\n", String_chars(progname),
+    werr("%s: %s: Algorithm not available\n", String_chars(progname),
          String_chars(a_nm));
     goto unlock;
   }

@@ -280,7 +280,7 @@
   String_delete(j_##_item##_str);                                              \
   j_##_item##_str = NULL;                                                      \
   if (j_##_item##_m == NULL) {                                                 \
-    werr("coinbase: Product '%s' not found: %s\n", j_##_item->mbstring,        \
+    werr("coinbase: Product '%s' not available: %s\n", j_##_item->mbstring,    \
          wcjsondoc_string(_errbuf, sizeof(_errbuf), _doc, _val, NULL));        \
     goto _ret;                                                                 \
   }
@@ -2087,7 +2087,7 @@ static bool coinbase_cancel(const struct String *restrict const id) {
     }
 
     if (!found) {
-      werr("coinbase: %s: Order id not found: %s\n", String_chars(id),
+      werr("coinbase: %s: Order id not available: %s\n", String_chars(id),
            wcjsondoc_string(errbuf, sizeof(errbuf), &doc, doc.values, NULL));
     }
 

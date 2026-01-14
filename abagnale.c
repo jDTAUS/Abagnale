@@ -830,9 +830,10 @@ static void worker_config(struct worker_ctx *restrict const w_ctx,
     }
 
     if (q_m == NULL) {
-      wout("%s: %s->%s: Price %s->%s not found\n", String_chars(w_ctx->e->nm),
-           String_chars(w_ctx->m->q_id), String_chars(w_ctx->m->b_id),
-           String_chars(w_ctx->m_cnf->q_id), String_chars(w_ctx->m->q_id));
+      wout("%s: %s->%s: Price %s->%s not available\n",
+           String_chars(w_ctx->e->nm), String_chars(w_ctx->m->q_id),
+           String_chars(w_ctx->m->b_id), String_chars(w_ctx->m_cnf->q_id),
+           String_chars(w_ctx->m->q_id));
 
       w_ctx->q_tgt = NULL;
       Array_unlock(markets);
@@ -849,9 +850,10 @@ static void worker_config(struct worker_ctx *restrict const w_ctx,
     q_m_id = NULL;
 
     if (q_samples == NULL) {
-      wout("%s: %s->%s: Price %s->%s not found\n", String_chars(w_ctx->e->nm),
-           String_chars(w_ctx->m->q_id), String_chars(w_ctx->m->b_id),
-           String_chars(w_ctx->m_cnf->q_id), String_chars(w_ctx->m->q_id));
+      wout("%s: %s->%s: Price %s->%s not available\n",
+           String_chars(w_ctx->e->nm), String_chars(w_ctx->m->q_id),
+           String_chars(w_ctx->m->b_id), String_chars(w_ctx->m_cnf->q_id),
+           String_chars(w_ctx->m->q_id));
 
       Map_unlock(market_samples);
       w_ctx->q_tgt = NULL;
@@ -863,9 +865,10 @@ static void worker_config(struct worker_ctx *restrict const w_ctx,
     const struct Sample *restrict const q_sample = Array_tail(q_samples);
 
     if (q_sample == NULL) {
-      wout("%s: %s->%s: Price %s->%s not found\n", String_chars(w_ctx->e->nm),
-           String_chars(w_ctx->m->q_id), String_chars(w_ctx->m->b_id),
-           String_chars(w_ctx->m_cnf->q_id), String_chars(w_ctx->m->q_id));
+      wout("%s: %s->%s: Price %s->%s not available\n",
+           String_chars(w_ctx->e->nm), String_chars(w_ctx->m->q_id),
+           String_chars(w_ctx->m->b_id), String_chars(w_ctx->m_cnf->q_id),
+           String_chars(w_ctx->m->q_id));
 
       Array_unlock(q_samples);
       w_ctx->q_tgt = NULL;

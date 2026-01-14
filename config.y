@@ -439,7 +439,7 @@ exchange  : EXCHANGE STRING {
               }
 
             if (!e_found) {
-              yyerror("%s: not found\n", String_chars($2));
+              yyerror("%s: not available\n", String_chars($2));
               String_delete($2);
               YYERROR;
             }
@@ -639,7 +639,7 @@ conf_trade  : RETURN NUMBER STRING {
                 }
 
               if (!a_found) {
-                yyerror("%s not found\n", String_chars(m_cnf->a_nm));
+                yyerror("%s not available\n", String_chars(m_cnf->a_nm));
                 String_delete(m_cnf->a_nm);
                 m_cnf->a_nm = NULL;
                 YYERROR;
@@ -663,7 +663,7 @@ trade : TRADE AT STRING {
           }
 
         if (!e_found) {
-          yyerror("%s not found\n", String_chars(m_cnf->e_nm));
+          yyerror("%s not available\n", String_chars(m_cnf->e_nm));
           String_delete($3);
           MarketConfig_delete(m_cnf);
           m_cnf = NULL;
