@@ -220,23 +220,23 @@ void db_tx_trend_plot_marker(const char *const, const char *const,
 
 void db_tx_trend_plot_samples_open(const char *const, const char *const,
                                    const char *const);
-bool db_tx_trend_plot_samples_next(struct db_datapoint_rec *restrict const,
+bool db_tx_trend_plot_samples_next(struct db_datapoint_rec *const,
                                    const char *const);
 void db_tx_trend_plot_samples_close(const char *const);
 
 void db_tx_trend_plot_candles_open(const char *const, const char *const,
                                    const char *const);
-bool db_tx_trend_plot_candles_next(struct db_candle_rec *restrict const,
+bool db_tx_trend_plot_candles_next(struct db_candle_rec *const,
                                    const char *const);
 void db_tx_trend_plot_candles_close(const char *const);
 
 void db_tx_trend_plot_markers_open(const char *const, const char *const,
                                    const char *const);
-bool db_tx_trend_plot_markers_next(struct db_datapoint_rec *restrict const,
+bool db_tx_trend_plot_markers_next(struct db_datapoint_rec *const,
                                    const char *const);
 void db_tx_trend_plot_markers_close(const char *const);
 
-void db_trend_state(struct db_trend_state_rec *const res, const char *const,
+void db_trend_state(struct db_trend_state_rec *const, const char *const,
                     const char *const, const char *const);
 void db_trend_state_update(const char *const, const char *const,
                            const char *const,
