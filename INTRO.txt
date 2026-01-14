@@ -24,7 +24,7 @@ Spades, the Ace of Spades. Enough said.
 ./config.h                - Configuration API header file
 ./config.y                - Configuration implementation source code
 ./database.h              - Database API header file
-./database.sql            - Database schema file
+./database-postgresql.sql - PostgreSQL database dump file.
 ./database-postgresql.pgc - PostgreSQL implememtation source code
 ./exchange.h              - Exchange API header file
 ./exchange.c              - Common exchange implementation source code
