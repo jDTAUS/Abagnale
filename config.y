@@ -56,6 +56,8 @@ extern const struct Numeric *restrict const hour_nanos;
 extern const struct Numeric *restrict const day_nanos;
 extern const struct Numeric *restrict const week_nanos;
 
+static struct Numeric *restrict thirty_six_hours;
+
 static struct file {
   FILE *stream;
   struct String *restrict name;
@@ -590,21 +592,21 @@ opt_trade : TAKELOSSDELAY nanos {
               YYERROR;
             }
           }
+          | WINDOW nanos {
+            if (m_cnf->wnanos != NULL) {
+              yyerror("window already specified\n");
+              Numeric_delete($2);
+              YYERROR;
+            }
+            m_cnf->wnanos = $2;
+          }
           ;
 
 tradeopts : opt_trade tradeopts
           | /* empty */
           ;
 
-conf_trade  : WINDOW nanos {
-              if (m_cnf->wnanos != NULL) {
-                yyerror("window allready specified\n");
-                Numeric_delete($2);
-                YYERROR;
-              }
-              m_cnf->wnanos = $2;
-            }
-            | RETURN NUMBER STRING {
+conf_trade  : RETURN NUMBER STRING {
               if (m_cnf->q_tgt != NULL) {
                 yyerror("return already specified\n");
                 Numeric_delete($2);
@@ -670,13 +672,16 @@ trade : TRADE AT STRING {
 
         Array_add_head(conf->m_cnf, m_cnf);
       } tradeconf {
-        if (m_cnf->wnanos == NULL || m_cnf->q_tgt == NULL || m_cnf->a_nm == NULL) {
-          yyerror("return, using and window required\n");
+        if (m_cnf->q_tgt == NULL || m_cnf->a_nm == NULL) {
+          yyerror("return and using required\n");
           MarketConfig_delete(Array_remove_tail(conf->m_cnf));
           m_cnf = NULL;
           YYERROR;
         }
       } tradeopts {
+        if (m_cnf->wnanos == NULL)
+          m_cnf->wnanos = Numeric_copy(thirty_six_hours);
+
         m_cnf = NULL;
       }
       ;
@@ -1220,11 +1225,13 @@ static struct Numeric *parse_nanos(const struct String *restrict const str) {
 void config_init(void) {
   symbols = Map_new(64);
   files = Array_new(64);
+  thirty_six_hours = Numeric_from_long(36 * 60 * 60 * 1000000000L);
 }
 
 void config_destroy(void) {
   Array_delete(files, file_delete);
   Map_delete(symbols, sym_delete);
+  Numeric_delete(thirty_six_hours);
 }
 
 struct Config *Config_new(void) {
