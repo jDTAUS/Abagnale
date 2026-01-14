@@ -100,7 +100,7 @@ struct db_balance_rec {
 };
 
 struct db_plot_rec {
-  char *id;
+  char id[DATABASE_UUID_MAX_LENGTH];
   struct Numeric *snanos;
   struct Numeric *enanos;
 };

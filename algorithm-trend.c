@@ -296,9 +296,6 @@ static struct Position *trend_position_open(
   struct Position *restrict p = NULL;
   void **items;
 
-  char pl_id[DATABASE_UUID_MAX_LENGTH] = {0};
-  plot_res->id = pl_id;
-
   Numeric_copy_to(t->tp_pc, cd_pc);
   Numeric_mul_to(t->tp_pc, n_one, r0);
   Numeric_copy_to(r0, cd_n_pc);
