@@ -191,8 +191,6 @@ int main(int argc, char *argv[]) {
 
     if (a_found)
       Array_add_tail(algorithms, all_algorithms[i - 1]);
-    else
-      all_algorithms[i - 1]->destroy();
   }
 
   for (size_t i = nitems(all_exchanges); i > 0; i--) {
@@ -202,8 +200,7 @@ int main(int argc, char *argv[]) {
     if (e_cnf != NULL) {
       all_exchanges[i - 1]->configure(e_cnf);
       Array_add_tail(exchanges, all_exchanges[i - 1]);
-    } else
-      all_exchanges[i - 1]->destroy();
+    }
   }
 
   if (String_equals(progname, prog_abagnale))
@@ -216,13 +213,11 @@ int main(int argc, char *argv[]) {
     fatal();
   }
 
-  items = Array_items(exchanges);
-  for (size_t i = Array_size(exchanges); i > 0; i--)
-    ((struct Exchange *)items[i - 1])->destroy();
+  for (size_t i = nitems(all_algorithms); i > 0; i--)
+    all_algorithms[i - 1]->destroy();
 
-  items = Array_items(algorithms);
-  for (size_t i = Array_size(algorithms); i > 0; i--)
-    ((struct Algorithm *)items[i - 1])->destroy();
+  for (size_t i = nitems(all_exchanges); i > 0; i--)
+    all_exchanges[i - 1]->destroy();
 
   Array_delete(algorithms, NULL);
   Array_delete(exchanges, NULL);

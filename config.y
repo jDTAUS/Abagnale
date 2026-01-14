@@ -247,15 +247,7 @@ dbconf  : conf_db
         | conf_db dbconf
         ;
 
-database  : DATABASE dbconf {
-            if (conf->db_tgt == NULL)
-              conf->db_tgt = String_cnew(ABAG_DATABASE_TARGET);
-
-            if (conf->db_usr == NULL)
-              conf->db_usr = String_cnew(ABAG_DATABASE_USER);
-
-          }
-          ;
+database  : DATABASE dbconf;
  
 nanos : STRING {
         $$ = parse_nanos($1);
@@ -1096,10 +1088,11 @@ int config_fparse(struct Config *const x_conf,
     }
   }
 
-  if (conf->db_tgt == NULL || conf->db_usr == NULL) {
-    werr("%s: Database target and user required\n", String_chars(progname));
-    errors++;
-  }
+  if (conf->db_tgt == NULL)
+   conf->db_tgt = String_cnew(ABAG_DATABASE_TARGET);
+
+  if (conf->db_usr == NULL)
+    conf->db_usr = String_cnew(ABAG_DATABASE_USER);
 
   if (errors)
     return (-1);
