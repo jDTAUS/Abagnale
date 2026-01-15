@@ -29,7 +29,7 @@
 #define DATABASE_UUID_MAX_LENGTH (size_t)64
 #define DATABASE_CID_MAX_LENGTH (size_t)255
 #define DATABASE_TRADE_STATUS_MAX_LENGTH (size_t)16
-#define DATABASE_CANDLE_TREND_MAX_LENGTH (size_t)5
+#define DATABASE_CANDLE_TREND_MAX_LENGTH (size_t)4
 
 struct db_sample_rec {
   struct Numeric *nanos;
@@ -70,14 +70,14 @@ struct db_trade_rec {
   bool s_b_filled_null;
   bool s_q_fees_null;
   bool s_q_filled_null;
-  char id[DATABASE_UUID_MAX_LENGTH];
-  char e_id[DATABASE_UUID_MAX_LENGTH];
-  char m_id[DATABASE_UUID_MAX_LENGTH];
-  char b_id[DATABASE_CID_MAX_LENGTH];
-  char q_id[DATABASE_CID_MAX_LENGTH];
-  char status[DATABASE_TRADE_STATUS_MAX_LENGTH];
-  char bo_id[DATABASE_UUID_MAX_LENGTH];
-  char so_id[DATABASE_UUID_MAX_LENGTH];
+  char id[DATABASE_UUID_MAX_LENGTH + 1];
+  char e_id[DATABASE_UUID_MAX_LENGTH + 1];
+  char m_id[DATABASE_UUID_MAX_LENGTH + 1];
+  char b_id[DATABASE_CID_MAX_LENGTH + 1];
+  char q_id[DATABASE_CID_MAX_LENGTH + 1];
+  char status[DATABASE_TRADE_STATUS_MAX_LENGTH + 1];
+  char bo_id[DATABASE_UUID_MAX_LENGTH + 1];
+  char so_id[DATABASE_UUID_MAX_LENGTH + 1];
   struct Numeric *b_cnanos;
   struct Numeric *b_dnanos;
   struct Numeric *b_price;
@@ -100,7 +100,7 @@ struct db_balance_rec {
 };
 
 struct db_plot_rec {
-  char id[DATABASE_UUID_MAX_LENGTH];
+  char id[DATABASE_UUID_MAX_LENGTH + 1];
   struct Numeric *snanos;
   struct Numeric *enanos;
 };
@@ -124,7 +124,7 @@ struct db_candle_rec {
 struct db_trend_state_rec {
   struct Numeric *cd_lnanos;
   struct Numeric *cd_langle;
-  char cd_ltrend[DATABASE_CANDLE_TREND_MAX_LENGTH];
+  char cd_ltrend[DATABASE_CANDLE_TREND_MAX_LENGTH + 1];
 };
 
 void *db_connect(const char *const);
