@@ -28,7 +28,7 @@
 #define DATABASE_CONNECTION_NAME_MAX_LENGTH (size_t)64
 #define DATABASE_UUID_MAX_LENGTH (size_t)64
 #define DATABASE_CID_MAX_LENGTH (size_t)255
-#define DATABASE_TRADE_STATUS_MAX_LENGTH (size_t)16
+#define DATABASE_TRADE_STATUS_MAX_LENGTH (size_t)7
 #define DATABASE_CANDLE_TREND_MAX_LENGTH (size_t)4
 
 struct db_sample_rec {
