@@ -34,19 +34,15 @@
 #include <wcjson-document.h>
 #include <wcjson.h>
 
-#define SIGNATURE_MAX_LENGTH (size_t)16384
-#define TIMESTAMP_MAX_LENGTH (size_t)64
-#define HEADER_MAX_LENGTH (size_t)1024
 #define URL_MAX_LENGTH (size_t)512
-#define PRODUCT_NAME_MAX_LENGTH (size_t)30
 #define HTTP_RESPONSE_MAX_WCHARS (size_t)5242880
 
-#define WCJSON_MAX_VALUES 65536         // 5MB
-#define WCJSON_MAX_CHARACTERS 786432    // 3MB
-#define WCJSON_MAX_MBCHARACTERS 1048576 // 1MB
-#define WCJSON_MAX_ESCCHARACTERS 512    // 2kb
-#define WCJSON_STRLEN_MAX 8192
-#define WCJSON_BODY_MAX 32767
+#define WCJSON_MAX_VALUES (size_t)65536         // 5MB
+#define WCJSON_MAX_CHARACTERS (size_t)786432    // 3MB
+#define WCJSON_MAX_MBCHARACTERS (size_t)1048576 // 1MB
+#define WCJSON_MAX_ESCCHARACTERS (size_t)512    // 2kb
+#define WCJSON_STRLEN_MAX (size_t)8192
+#define WCJSON_BODY_MAX (size_t)32767
 
 #define COINBASE_UUID "74cc13c5-4835-491b-95f2-6af672ad141a"
 #define COINBASE_DBCON "coinbase"
@@ -616,7 +612,7 @@ wcjsondoc_string(char *restrict const dst, size_t dst_nitems,
 static struct wcjson_value *
 wcjson_string(struct wcjson_document *restrict const doc,
               const char *restrict const s) {
-  wchar_t wc[WCJSON_STRLEN_MAX] = {0};
+  wchar_t wc[WCJSON_STRLEN_MAX + 1] = {0};
   const size_t wc_len = mbstowcs(wc, s, nitems(wc));
 
   if (wc_len == (size_t)-1) {
@@ -1210,7 +1206,7 @@ static void http_listener(struct mg_connection *restrict c, int ev,
       mg_tls_init(c, &http_tls_opts);
     }
 
-    char uri[URL_MAX_LENGTH] = {0};
+    char uri[URL_MAX_LENGTH + 1] = {0};
     int r = snprintf(uri, sizeof(uri), "%s %.*s%s", method, (int)host.len,
                      host.buf, http_ctx->path);
     if (r < 0 || (size_t)r >= sizeof(uri)) {
@@ -1249,7 +1245,8 @@ static void http_listener(struct mg_connection *restrict c, int ev,
 
     if (http_ctx->success) {
       http_ctx->rsp_len = 0;
-      http_ctx->rsp = heap_calloc(HTTP_RESPONSE_MAX_WCHARS, sizeof(wchar_t));
+      http_ctx->rsp =
+          heap_calloc(HTTP_RESPONSE_MAX_WCHARS + 1, sizeof(wchar_t));
 
       for (size_t i = 0, mb_len = 0; i < msg->body.len;
            i += mb_len, http_ctx->rsp_len++) {
@@ -1277,9 +1274,9 @@ static void http_listener(struct mg_connection *restrict c, int ev,
           fatal();
         }
 
-        // rsp_len + 1 <= HTTP_RESPONSE_MAX_WCHARS
-        // => rsp_len <= HTTP_RESPONSE_MAX_WCHARS -1
-        if (http_ctx->rsp_len > HTTP_RESPONSE_MAX_WCHARS - 1) {
+        // rsp_len + 1 <= HTTP_RESPONSE_MAX_WCHARS + 1
+        // => rsp_len <= HTTP_RESPONSE_MAX_WCHARS
+        if (http_ctx->rsp_len > HTTP_RESPONSE_MAX_WCHARS) {
           werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
           fatal();
         }
@@ -1637,7 +1634,7 @@ ret:
 
 static struct Array *coinbase_products(void) {
   struct wcjson_document doc = WCJSON_DOCUMENT_INITIALIZER;
-  char url[URL_MAX_LENGTH];
+  char url[URL_MAX_LENGTH + 1] = {0};
   void **items;
 
   Array_lock(products);
@@ -1779,7 +1776,7 @@ ret:
 
 static struct Array *accounts_with_cursor(struct Array *restrict result,
                                           const char *restrict const cursor) {
-  char url[URL_MAX_LENGTH];
+  char url[URL_MAX_LENGTH + 1] = {0};
   struct wcjson_document doc = WCJSON_DOCUMENT_INITIALIZER;
   char errbuf[WCJSON_BODY_MAX + 1] = {0};
   int r;
@@ -1879,8 +1876,8 @@ coinbase_account_currency(const struct String *restrict const currency) {
 
 static struct Account *
 coinbase_account(const struct String *restrict const id) {
-  char path[URL_MAX_LENGTH] = {0};
-  char url[URL_MAX_LENGTH] = {0};
+  char path[URL_MAX_LENGTH + 1] = {0};
+  char url[URL_MAX_LENGTH + 1] = {0};
   char errbuf[WCJSON_BODY_MAX + 1] = {0};
   struct Account *restrict a = NULL;
   struct wcjson_document doc = WCJSON_DOCUMENT_INITIALIZER;
@@ -2010,8 +2007,8 @@ ret:
 }
 
 static struct Order *coinbase_order(const struct String *restrict const id) {
-  char path[URL_MAX_LENGTH] = {0};
-  char url[URL_MAX_LENGTH] = {0};
+  char path[URL_MAX_LENGTH + 1] = {0};
+  char url[URL_MAX_LENGTH + 1] = {0};
   char errbuf[WCJSON_BODY_MAX + 1] = {0};
   struct Order *restrict o = NULL;
   struct wcjson_document doc = WCJSON_DOCUMENT_INITIALIZER;
@@ -2238,7 +2235,7 @@ fallback:
 }
 
 static struct Pricing *coinbase_pricing(void) {
-  char url[URL_MAX_LENGTH];
+  char url[URL_MAX_LENGTH + 1] = {0};
   struct wcjson_document doc = WCJSON_DOCUMENT_INITIALIZER;
 
   mutex_lock(&pricing_mutex);
