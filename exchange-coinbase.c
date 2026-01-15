@@ -52,8 +52,8 @@
   "advanced-trade-ws.coinbase.com"
 #endif
 
-#ifndef ABAG_COINBASE_WEBSOCKET_URL
-#define ABAG_COINBASE_WEBSOCKET_URL                                            \
+#ifndef ABAG_COINBASE_WEBSOCKET_URI
+#define ABAG_COINBASE_WEBSOCKET_URI                                            \
   "wss://" ABAG_COINBASE_ADVANCED_API_WEBSOCKET_HOST
 #endif
 
@@ -1088,7 +1088,7 @@ static void ws_listener(struct mg_connection *restrict c, int ev,
         .ca = mg_str(""),
         .cert = mg_str(""),
         .key = mg_str(""),
-        .name = mg_url_host(ABAG_COINBASE_WEBSOCKET_URL),
+        .name = mg_url_host(ABAG_COINBASE_WEBSOCKET_URI),
     };
 
     mg_tls_init(c, &ws_tls_opts);
@@ -1142,7 +1142,7 @@ static void ws_listener(struct mg_connection *restrict c, int ev,
 
       do {
         thread_sleep(&api_reconnect_rate);
-        c = mg_ws_connect(mgr, ABAG_COINBASE_WEBSOCKET_URL, ws_listener,
+        c = mg_ws_connect(mgr, ABAG_COINBASE_WEBSOCKET_URI, ws_listener,
                           channel, NULL);
         if (!c)
           werr("coinbase: %s: Failure reconnecting\n", channel->name);
@@ -1445,7 +1445,7 @@ static void coinbase_start(void) {
   for (size_t i = nitems(ws_channels); i > 0; i--) {
     if (ws_channels[i - 1].items != NULL) {
       struct mg_connection *restrict const c =
-          mg_ws_connect(mgr, ABAG_COINBASE_WEBSOCKET_URL, ws_listener,
+          mg_ws_connect(mgr, ABAG_COINBASE_WEBSOCKET_URI, ws_listener,
                         &ws_channels[i - 1], NULL);
 
       ws_channels[i - 1].last_message = mg_millis();
