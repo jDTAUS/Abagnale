@@ -276,7 +276,7 @@
   String_delete(j_##_item##_str);                                              \
   j_##_item##_str = NULL;                                                      \
   if (j_##_item##_m == NULL) {                                                 \
-    werr("coinbase: Product '%s' not available: %s\n", j_##_item->mbstring,    \
+    werr("coinbase: Market '%s' not available: %s\n", j_##_item->mbstring,     \
          wcjsondoc_string(_errbuf, sizeof(_errbuf), _doc, _val, NULL));        \
     goto _ret;                                                                 \
   }
@@ -1188,8 +1188,8 @@ static void http_listener(struct mg_connection *restrict c, int ev,
   }
   case MG_EV_ERROR: {
     http_ctx->success = false;
-    werr("coinbase: HTTP %s %s: %lu: %s\n", method, http_ctx->url, c->id,
-         (char *)ev_data);
+    werr("coinbase: MG_EV_ERROR: HTTP %s %s: %lu: %s\n", method, http_ctx->url,
+         c->id, (char *)ev_data);
     break;
   }
   case MG_EV_CONNECT: {
@@ -1225,7 +1225,7 @@ static void http_listener(struct mg_connection *restrict c, int ev,
               "Content-Length: %u\r\n"
               "Connection: close\r\n"
               "User-Agent: Abagnale/0; "
-              "https://github.com/jDTAUS/Abagnale/tree/master\r\n"
+              "https://github.com/jdtaus/Abagnale/tree/master\r\n"
               "\r\n",
               method, mg_url_uri(http_ctx->url), jwt, (int)host.len, host.buf,
               http_ctx->body_len);
