@@ -352,6 +352,7 @@ extern const struct Config *restrict const cnf;
 extern const bool verbose;
 
 static const struct ExchangeConfig *coinbase_cnf;
+static void *coinbase_db;
 
 static struct Array *products;
 static struct Map *products_by_name;
@@ -1392,6 +1393,7 @@ static void coinbase_init(void) {
   exchange_coinbase.nm = String_cnew("coinbase");
   running = false;
   coinbase_cnf = NULL;
+  coinbase_db = NULL;
   orders = Queue_new(128, (time_t)0);
   samples = Queue_new((MG_MAX_RECV_SIZE) / sizeof(struct Sample *),
                       (time_t)(WEBSOCKET_STALL_MILLIS / 1000));
@@ -1411,12 +1413,12 @@ static void coinbase_init(void) {
 
 static void coinbase_configure(const struct ExchangeConfig *restrict const c) {
   coinbase_cnf = c;
-  db_connect(COINBASE_DBCON);
+  coinbase_db = db_connect(COINBASE_DBCON);
 }
 
 static void coinbase_destroy(void) {
-  if (coinbase_cnf)
-    db_disconnect(COINBASE_DBCON);
+  if (coinbase_db)
+    db_disconnect(coinbase_db);
 
   coinbase_cnf = NULL;
   String_delete(exchange_coinbase.id);
@@ -1519,8 +1521,7 @@ parse_product(const struct wcjson_document *restrict const doc,
   WCJSON_STRING_ITEM(doc, prod, status, 6, errbuf, ret)
   WCJSON_STRING_ITEM(doc, prod, product_type, 12, errbuf, ret)
 
-  db_id_to_internal(p_uuid, COINBASE_DBCON, COINBASE_UUID,
-                    j_product_id->mbstring);
+  db_id_to_internal(p_uuid, coinbase_db, COINBASE_UUID, j_product_id->mbstring);
 
   // Extract scale from price increment.
   const char *restrict const p_dot = strchr(j_price_increment->mbstring, '.');
@@ -2118,8 +2119,8 @@ static void order_create_body(char *restrict const mbbody, size_t mbbody_nitems,
   struct wcjson_value *restrict const conf = wcjson_object(doc);
   struct wcjson_value *restrict const llgtc = wcjson_object(doc);
 
-  db_uuid(client_id, COINBASE_DBCON);
-  db_id_to_external(ext_id, COINBASE_DBCON, COINBASE_UUID, String_chars(p_id));
+  db_uuid(client_id, coinbase_db);
+  db_id_to_external(ext_id, coinbase_db, COINBASE_UUID, String_chars(p_id));
 
   struct wcjson_value *restrict const j_client_id =
       wcjson_string(doc, client_id);

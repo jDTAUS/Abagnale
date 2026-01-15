@@ -29,7 +29,7 @@
 #define DATABASE_UUID_MAX_LENGTH (size_t)64
 #define DATABASE_CID_MAX_LENGTH (size_t)255
 #define DATABASE_TRADE_STATUS_MAX_LENGTH (size_t)16
-#define DATABASE_CANDLE_VALUE_MAX_LENGTH (size_t)5
+#define DATABASE_CANDLE_TREND_MAX_LENGTH (size_t)5
 
 struct db_sample_rec {
   struct Numeric *nanos;
@@ -72,7 +72,7 @@ struct db_trade_rec {
   bool s_q_filled_null;
   char id[DATABASE_UUID_MAX_LENGTH];
   char e_id[DATABASE_UUID_MAX_LENGTH];
-  char p_id[DATABASE_UUID_MAX_LENGTH];
+  char m_id[DATABASE_UUID_MAX_LENGTH];
   char b_id[DATABASE_CID_MAX_LENGTH];
   char q_id[DATABASE_CID_MAX_LENGTH];
   char status[DATABASE_TRADE_STATUS_MAX_LENGTH];
@@ -124,121 +124,120 @@ struct db_candle_rec {
 struct db_trend_state_rec {
   struct Numeric *cd_lnanos;
   struct Numeric *cd_langle;
-  char *cd_ltrend;
+  char cd_ltrend[DATABASE_CANDLE_TREND_MAX_LENGTH];
 };
 
-void db_connect(const char *const);
-void db_disconnect(const char *const);
-void db_disconnect_all(void);
+void *db_connect(const char *const);
+void db_disconnect(void *const);
 
-void db_tx_begin(const char *const);
-void db_tx_commit(const char *const);
-void db_tx_rollback(const char *const);
+void db_tx_begin(const void *const);
+void db_tx_commit(const void *const);
+void db_tx_rollback(const void *const);
 
-bool db_vacuum(const char *const, const char *const);
+bool db_vacuum(const void *const, const char *const);
 
-void db_uuid(char *const, const char *const);
+void db_uuid(char *const, const void *const);
 
-void db_id_to_internal(char *const, const char *const, const char *const,
+void db_id_to_internal(char *const, const void *const, const char *const,
                        const char *const);
-void db_id_to_external(char *const, const char *const, const char *const,
+void db_id_to_external(char *const, const void *const, const char *const,
                        const char *const);
 
-void db_sample_create(const char *const, const char *const, const char *const,
+void db_sample_create(const void *const, const char *const, const char *const,
                       const struct Numeric *const, const struct Numeric *const);
-void db_samples_stddev(struct Numeric *const, const char *const,
+void db_samples_stddev(struct Numeric *const, const void *const,
                        const char *const, const char *const,
                        const struct Numeric *const);
 
-void db_samples_open(const char *const, const char *const, const char *const,
+void db_samples_open(const void *const, const char *const, const char *const,
                      const struct Numeric *const);
-bool db_samples_next(struct db_sample_rec *, const char *const);
-void db_samples_close(const char *const);
+bool db_samples_next(struct db_sample_rec *, const void *const);
+void db_samples_close(const void *const);
 
-bool db_stats(struct db_stats_rec *, const char *const, const char *const,
+bool db_stats(struct db_stats_rec *, const void *const, const char *const,
               const char *const);
-void db_stats_bcl_factor(const char *const, const char *const,
+void db_stats_bcl_factor(const void *const, const char *const,
                          const char *const, struct Numeric *const);
-void db_stats_scl_factor(const char *const, const char *const,
+void db_stats_scl_factor(const void *const, const char *const,
                          const char *const, struct Numeric *const);
 
-void db_trades_open(const char *const, const char *const, const char *const);
-bool db_trades_next(struct db_trade_rec *const, const char *const);
-void db_trades_close(const char *const);
+void db_trades_open(const void *const, const char *const, const char *const);
+bool db_trades_next(struct db_trade_rec *const, const void *const);
+void db_trades_close(const void *const);
 
-void db_trades_hold(struct db_balance_rec *, const char *const,
+void db_trades_hold(struct db_balance_rec *, const void *const,
                     const char *const, const char *const, const char *const);
 
-void db_trade_bcreate(char *const, const char *const, const char *const,
+void db_trade_bcreate(char *const, const void *const, const char *const,
                       const char *const, const char *const, const char *const,
                       const char *const, const struct Numeric *const,
                       const struct Numeric *const);
-void db_trade_bupdate(const char *const, const char *const, const char *const,
+void db_trade_bupdate(const void *const, const char *const, const char *const,
                       const struct Numeric *const, const struct Numeric *const);
-void db_trade_breset(const char *const, const char *const);
-void db_trade_bopen(const char *const, const char *const,
+void db_trade_breset(const void *const, const char *const);
+void db_trade_bopen(const void *const, const char *const,
                     const struct Numeric *const, const struct Numeric *const,
                     const struct Numeric *const, const struct Numeric *const);
-void db_trade_bfill(const char *const, const char *const,
+void db_trade_bfill(const void *const, const char *const,
                     const struct Numeric *const, const struct Numeric *const,
                     const struct Numeric *const, const struct Numeric *const,
                     const struct Numeric *const, const bool);
 
-void db_trade_screate(char *const, const char *const, const char *const,
+void db_trade_screate(char *const, const void *const, const char *const,
                       const char *const, const char *const, const char *const,
                       const char *const, const struct Numeric *const,
                       const struct Numeric *const);
-void db_trade_supdate(const char *const, const char *const, const char *const,
+void db_trade_supdate(const void *const, const char *const, const char *const,
                       const struct Numeric *const, const struct Numeric *const);
-void db_trade_sreset(const char *const, const char *const);
-void db_trade_sopen(const char *const, const char *const,
+void db_trade_sreset(const void *const, const char *const);
+void db_trade_sopen(const void *const, const char *const,
                     const struct Numeric *const, const struct Numeric *const,
                     const struct Numeric *const, const struct Numeric *const);
-void db_trade_sfill(const char *const, const char *const,
+void db_trade_sfill(const void *const, const char *const,
                     const struct Numeric *const, const struct Numeric *const,
                     const struct Numeric *const, const struct Numeric *const,
                     const struct Numeric *const, const bool);
 
-void db_trade_delete(const char *const, const char *const);
+void db_trade_delete(const void *const, const char *const);
 
-void db_tx_plot_enanos(const char *const, const char *const,
+void db_tx_plot_enanos(const void *const, const char *const,
                        const struct Numeric *const);
-void db_tx_plot_datapoint(const char *const, const char *const,
+void db_tx_plot_datapoint(const void *const, const char *const,
                           const struct Numeric *const,
                           const struct Numeric *const);
 
-void db_tx_trend_plot(struct db_plot_rec *const, const char *const,
+void db_tx_trend_plot(struct db_plot_rec *const, const void *const,
                       const char *const, const char *const);
 
-void db_tx_trend_plot_candle(const char *const, const char *const,
+void db_tx_trend_plot_candle(const void *const, const char *const,
                              const char *const,
                              const struct db_candle_rec *const);
 
-void db_tx_trend_plot_marker(const char *const, const char *const,
+void db_tx_trend_plot_marker(const void *const, const char *const,
                              const char *const, const struct Numeric *const,
                              const struct Numeric *const);
 
-void db_tx_trend_plot_samples_open(const char *const, const char *const,
+void db_tx_trend_plot_samples_open(const void *const, const char *const,
                                    const char *const);
 bool db_tx_trend_plot_samples_next(struct db_datapoint_rec *const,
-                                   const char *const);
-void db_tx_trend_plot_samples_close(const char *const);
+                                   const void *const);
+void db_tx_trend_plot_samples_close(const void *const);
 
-void db_tx_trend_plot_candles_open(const char *const, const char *const,
+void db_tx_trend_plot_candles_open(const void *const, const char *const,
                                    const char *const);
 bool db_tx_trend_plot_candles_next(struct db_candle_rec *const,
-                                   const char *const);
-void db_tx_trend_plot_candles_close(const char *const);
+                                   const void *const);
+void db_tx_trend_plot_candles_close(const void *const);
 
-void db_tx_trend_plot_markers_open(const char *const, const char *const,
+void db_tx_trend_plot_markers_open(const void *const, const char *const,
                                    const char *const);
 bool db_tx_trend_plot_markers_next(struct db_datapoint_rec *const,
-                                   const char *const);
-void db_tx_trend_plot_markers_close(const char *const);
+                                   const void *const);
+void db_tx_trend_plot_markers_close(const void *const);
 
-void db_trend_state(struct db_trend_state_rec *const, const char *const,
+void db_trend_state(struct db_trend_state_rec *const, const void *const,
                     const char *const, const char *const);
-void db_trend_state_update(const char *const, const char *const,
+void db_trend_state_update(const void *const, const char *const,
                            const char *const,
                            const struct db_trend_state_rec *const);
 

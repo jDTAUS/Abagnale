@@ -223,9 +223,9 @@ static int cmd_vacuum(int argc, char *argv[]) {
   if (argc > 0 || file == NULL)
     usage();
 
-  db_connect(String_chars(progname));
-  db_vacuum(String_chars(progname), file);
-  db_disconnect(String_chars(progname));
+  void *restrict const db = db_connect(String_chars(progname));
+  db_vacuum(db, file);
+  db_disconnect(db);
 
   return EXIT_SUCCESS;
 }
@@ -617,9 +617,9 @@ static int cmd_plot(int argc, char *argv[]) {
     goto unlock;
   }
 
-  db_connect(String_chars(progname));
+  void *restrict const db = db_connect(String_chars(progname));
 
-  if (!a->market_plot(f_nm, String_chars(progname), e, m)) {
+  if (!a->market_plot(db, e, m, f_nm)) {
     werr("%s: %s: Algortihm does not provide plots\n", String_chars(progname),
          String_chars(a_nm));
     goto disconnect;
@@ -627,7 +627,7 @@ static int cmd_plot(int argc, char *argv[]) {
 
   r = EXIT_SUCCESS;
 disconnect:
-  db_disconnect(String_chars(progname));
+  db_disconnect(db);
 unlock:
   Array_unlock(markets);
 ret:

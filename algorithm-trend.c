@@ -34,7 +34,7 @@
 #define TREND_UUID "bfd87009-ea0f-4664-a03a-f9b6e91274dd"
 
 struct trend_state {
-  mtx_t *restrict mtx;
+  mtx_t mtx;
   struct Numeric *restrict cd_lnanos;
   struct Numeric *restrict cd_langle;
   enum candle_trend cd_ltrend;
@@ -42,7 +42,7 @@ struct trend_state {
 
 struct trend_tls {
   struct trend_state_vars {
-    struct db_trend_state_rec *restrict st_res;
+    struct db_trend_state_rec *restrict db_st;
   } trend_state;
   struct trend_position_open_vars {
     struct Numeric *restrict r0;
@@ -57,22 +57,23 @@ struct trend_tls {
     struct Candle *restrict cd_cur;
     struct Candle *restrict cd_first;
     struct Candle *restrict cd_last;
-    struct db_plot_rec *restrict plot_res;
-    struct db_trend_state_rec *restrict st_res;
+    struct db_plot_rec *restrict db_plot;
+    struct db_trend_state_rec *restrict db_st;
   } trend_position_open;
   struct trend_market_plot_vars {
-    struct db_datapoint_rec *restrict pt_res;
-    struct db_candle_rec *restrict cd_res;
+    struct db_datapoint_rec *restrict db_pt;
+    struct db_candle_rec *restrict db_cd;
   } trend_market_plot;
 };
 
 static const struct {
   enum candle_trend trend;
   char *restrict db;
+  size_t db_len;
 } candle_trend_map[] = {
-    {CANDLE_UP, "UP"},
-    {CANDLE_DOWN, "DOWN"},
-    {CANDLE_NONE, "NONE"},
+    {CANDLE_UP, "UP", 2},
+    {CANDLE_DOWN, "DOWN", 4},
+    {CANDLE_NONE, "NONE", 4},
 };
 
 extern _Atomic bool terminated;
@@ -94,8 +95,7 @@ static void trend_state_delete(void *restrict const e) {
   struct trend_state *restrict st = e;
   Numeric_delete(st->cd_lnanos);
   Numeric_delete(st->cd_langle);
-  mutex_destroy(st->mtx);
-  heap_free(st->mtx);
+  mutex_destroy(&st->mtx);
   heap_free(e);
 }
 
@@ -103,9 +103,9 @@ static struct trend_tls *trend_tls(void) {
   struct trend_tls *tls = tls_get(trend_tls_key);
   if (tls == NULL) {
     tls = heap_malloc(sizeof(struct trend_tls));
-    tls->trend_state.st_res = heap_malloc(sizeof(struct db_trend_state_rec));
-    tls->trend_state.st_res->cd_lnanos = Numeric_new();
-    tls->trend_state.st_res->cd_langle = Numeric_new();
+    tls->trend_state.db_st = heap_malloc(sizeof(struct db_trend_state_rec));
+    tls->trend_state.db_st->cd_lnanos = Numeric_new();
+    tls->trend_state.db_st->cd_langle = Numeric_new();
     tls->trend_position_open.r0 = Numeric_from_int(0);
     tls->trend_position_open.r1 = Numeric_from_int(0);
     tls->trend_position_open.cd_pc = Numeric_from_int(0);
@@ -118,26 +118,25 @@ static struct trend_tls *trend_tls(void) {
     tls->trend_position_open.cd_cur = Candle_new();
     tls->trend_position_open.cd_first = Candle_new();
     tls->trend_position_open.cd_last = Candle_new();
-    tls->trend_position_open.plot_res = heap_malloc(sizeof(struct db_plot_rec));
-    tls->trend_position_open.plot_res->snanos = Numeric_from_int(0);
-    tls->trend_position_open.plot_res->enanos = Numeric_from_int(0);
-    tls->trend_position_open.st_res =
+    tls->trend_position_open.db_plot = heap_malloc(sizeof(struct db_plot_rec));
+    tls->trend_position_open.db_plot->snanos = Numeric_from_int(0);
+    tls->trend_position_open.db_plot->enanos = Numeric_from_int(0);
+    tls->trend_position_open.db_st =
         heap_malloc(sizeof(struct db_trend_state_rec));
-    tls->trend_position_open.st_res->cd_lnanos = Numeric_new();
-    tls->trend_position_open.st_res->cd_langle = Numeric_new();
-    tls->trend_market_plot.pt_res =
-        heap_malloc(sizeof(struct db_datapoint_rec));
-    tls->trend_market_plot.pt_res->x = Numeric_new();
-    tls->trend_market_plot.pt_res->y = Numeric_new();
-    tls->trend_market_plot.cd_res = heap_malloc(sizeof(struct db_candle_rec));
-    tls->trend_market_plot.cd_res->o = Numeric_new();
-    tls->trend_market_plot.cd_res->h = Numeric_new();
-    tls->trend_market_plot.cd_res->l = Numeric_new();
-    tls->trend_market_plot.cd_res->c = Numeric_new();
-    tls->trend_market_plot.cd_res->onanos = Numeric_new();
-    tls->trend_market_plot.cd_res->hnanos = Numeric_new();
-    tls->trend_market_plot.cd_res->lnanos = Numeric_new();
-    tls->trend_market_plot.cd_res->cnanos = Numeric_new();
+    tls->trend_position_open.db_st->cd_lnanos = Numeric_new();
+    tls->trend_position_open.db_st->cd_langle = Numeric_new();
+    tls->trend_market_plot.db_pt = heap_malloc(sizeof(struct db_datapoint_rec));
+    tls->trend_market_plot.db_pt->x = Numeric_new();
+    tls->trend_market_plot.db_pt->y = Numeric_new();
+    tls->trend_market_plot.db_cd = heap_malloc(sizeof(struct db_candle_rec));
+    tls->trend_market_plot.db_cd->o = Numeric_new();
+    tls->trend_market_plot.db_cd->h = Numeric_new();
+    tls->trend_market_plot.db_cd->l = Numeric_new();
+    tls->trend_market_plot.db_cd->c = Numeric_new();
+    tls->trend_market_plot.db_cd->onanos = Numeric_new();
+    tls->trend_market_plot.db_cd->hnanos = Numeric_new();
+    tls->trend_market_plot.db_cd->lnanos = Numeric_new();
+    tls->trend_market_plot.db_cd->cnanos = Numeric_new();
     tls_set(trend_tls_key, tls);
   }
   return tls;
@@ -145,9 +144,9 @@ static struct trend_tls *trend_tls(void) {
 
 static void trend_tls_dtor(void *e) {
   struct trend_tls *tls = e;
-  Numeric_delete(tls->trend_state.st_res->cd_lnanos);
-  Numeric_delete(tls->trend_state.st_res->cd_langle);
-  heap_free(tls->trend_state.st_res);
+  Numeric_delete(tls->trend_state.db_st->cd_lnanos);
+  Numeric_delete(tls->trend_state.db_st->cd_langle);
+  heap_free(tls->trend_state.db_st);
   Numeric_delete(tls->trend_position_open.r0);
   Numeric_delete(tls->trend_position_open.r1);
   Numeric_delete(tls->trend_position_open.cd_pc);
@@ -160,24 +159,24 @@ static void trend_tls_dtor(void *e) {
   Candle_delete(tls->trend_position_open.cd_cur);
   Candle_delete(tls->trend_position_open.cd_first);
   Candle_delete(tls->trend_position_open.cd_last);
-  Numeric_delete(tls->trend_position_open.plot_res->snanos);
-  Numeric_delete(tls->trend_position_open.plot_res->enanos);
-  heap_free(tls->trend_position_open.plot_res);
-  Numeric_delete(tls->trend_position_open.st_res->cd_lnanos);
-  Numeric_delete(tls->trend_position_open.st_res->cd_langle);
-  heap_free(tls->trend_position_open.st_res);
-  Numeric_delete(tls->trend_market_plot.pt_res->x);
-  Numeric_delete(tls->trend_market_plot.pt_res->y);
-  heap_free(tls->trend_market_plot.pt_res);
-  Numeric_delete(tls->trend_market_plot.cd_res->o);
-  Numeric_delete(tls->trend_market_plot.cd_res->h);
-  Numeric_delete(tls->trend_market_plot.cd_res->l);
-  Numeric_delete(tls->trend_market_plot.cd_res->c);
-  Numeric_delete(tls->trend_market_plot.cd_res->onanos);
-  Numeric_delete(tls->trend_market_plot.cd_res->hnanos);
-  Numeric_delete(tls->trend_market_plot.cd_res->lnanos);
-  Numeric_delete(tls->trend_market_plot.cd_res->cnanos);
-  heap_free(tls->trend_market_plot.cd_res);
+  Numeric_delete(tls->trend_position_open.db_plot->snanos);
+  Numeric_delete(tls->trend_position_open.db_plot->enanos);
+  heap_free(tls->trend_position_open.db_plot);
+  Numeric_delete(tls->trend_position_open.db_st->cd_lnanos);
+  Numeric_delete(tls->trend_position_open.db_st->cd_langle);
+  heap_free(tls->trend_position_open.db_st);
+  Numeric_delete(tls->trend_market_plot.db_pt->x);
+  Numeric_delete(tls->trend_market_plot.db_pt->y);
+  heap_free(tls->trend_market_plot.db_pt);
+  Numeric_delete(tls->trend_market_plot.db_cd->o);
+  Numeric_delete(tls->trend_market_plot.db_cd->h);
+  Numeric_delete(tls->trend_market_plot.db_cd->l);
+  Numeric_delete(tls->trend_market_plot.db_cd->c);
+  Numeric_delete(tls->trend_market_plot.db_cd->onanos);
+  Numeric_delete(tls->trend_market_plot.db_cd->hnanos);
+  Numeric_delete(tls->trend_market_plot.db_cd->lnanos);
+  Numeric_delete(tls->trend_market_plot.db_cd->cnanos);
+  heap_free(tls->trend_market_plot.db_cd);
   heap_free(tls);
   tls_set(trend_tls_key, NULL);
 }
@@ -185,18 +184,18 @@ static void trend_tls_dtor(void *e) {
 static void trend_init(void);
 static void trend_destroy(void);
 static struct Position *trend_position_open(
-    const char *restrict const, const struct Exchange *restrict const,
+    const void *restrict const, const struct Exchange *restrict const,
     const struct Market *restrict const, struct Trade *restrict const,
     const struct Array *restrict const, const struct Sample *restrict const);
-static bool trend_position_close(const char *restrict const,
+static bool trend_position_close(const void *restrict const,
                                  const struct Exchange *restrict const,
                                  const struct Market *restrict const,
                                  const struct Trade *restrict const,
                                  const struct Position *restrict const);
-static bool trend_market_plot(const char *restrict const,
-                              const char *restrict const,
+static bool trend_market_plot(const void *restrict const,
                               const struct Exchange *restrict const,
-                              const struct Market *restrict const);
+                              const struct Market *restrict const,
+                              const char *restrict const);
 
 struct Algorithm algorithm_trend = {
     .nm = NULL,
@@ -216,10 +215,15 @@ static enum candle_trend candle_trend_db(const char *const db) {
   fatal();
 }
 
-static char *db_candle_trend(const enum candle_trend trend) {
+static void db_candle_trend(char *restrict const db_trend,
+                            const enum candle_trend trend) {
   for (size_t i = nitems(candle_trend_map); i > 0; i--)
-    if (candle_trend_map[i - 1].trend == trend)
-      return candle_trend_map[i - 1].db;
+    if (candle_trend_map[i - 1].trend == trend) {
+      memcpy(db_trend, candle_trend_map[i - 1].db,
+             candle_trend_map[i - 1].db_len);
+      db_trend[candle_trend_map[i - 1].db_len] = '\0';
+      return;
+    }
 
   werr("%s: %d: %s: %u\n", __FILE__, __LINE__, __func__, trend);
   fatal();
@@ -239,38 +243,35 @@ static void trend_destroy(void) {
   Map_delete(states, trend_state_delete);
 }
 
-static struct trend_state *trend_state(const char *dbcon,
+static struct trend_state *trend_state(const void *restrict const db,
                                        struct String *restrict const e_id,
                                        struct String *restrict const m_id) {
   const struct trend_tls *restrict const tls = trend_tls();
   struct trend_state *restrict st = NULL;
-  struct db_trend_state_rec *restrict const st_res = tls->trend_state.st_res;
-  char ltrend[DATABASE_CANDLE_VALUE_MAX_LENGTH] = {0};
-  st_res->cd_ltrend = ltrend;
+  struct db_trend_state_rec *restrict const db_st = tls->trend_state.db_st;
 
   Map_lock(states);
 
   st = Map_get(states, m_id);
 
   if (st == NULL) {
-    db_trend_state(st_res, dbcon, String_chars(e_id), String_chars(m_id));
+    db_trend_state(db_st, db, String_chars(e_id), String_chars(m_id));
 
     st = heap_malloc(sizeof(struct trend_state));
-    st->cd_lnanos = Numeric_copy(st_res->cd_lnanos);
-    st->cd_langle = Numeric_copy(st_res->cd_langle);
-    st->cd_ltrend = candle_trend_db(st_res->cd_ltrend);
-    st->mtx = heap_malloc(sizeof(mtx_t));
-    mutex_init(st->mtx);
+    st->cd_lnanos = Numeric_copy(db_st->cd_lnanos);
+    st->cd_langle = Numeric_copy(db_st->cd_langle);
+    st->cd_ltrend = candle_trend_db(db_st->cd_ltrend);
+    mutex_init(&st->mtx);
     Map_put(states, m_id, st);
   }
 
   Map_unlock(states);
-  mutex_lock(st->mtx);
+  mutex_lock(&st->mtx);
   return st;
 }
 
 static struct Position *trend_position_open(
-    const char *restrict const dbcon, const struct Exchange *restrict const e,
+    const void *restrict const db, const struct Exchange *restrict const e,
     const struct Market *restrict const m, struct Trade *restrict const t,
     const struct Array *restrict const samples,
     const struct Sample *restrict const sample) {
@@ -287,12 +288,11 @@ static struct Position *trend_position_open(
   struct Candle *restrict const cd_cur = tls->trend_position_open.cd_cur;
   struct Candle *restrict const cd_first = tls->trend_position_open.cd_first;
   struct Candle *restrict const cd_last = tls->trend_position_open.cd_last;
-  struct db_plot_rec *restrict const plot_res =
-      tls->trend_position_open.plot_res;
-  struct db_trend_state_rec *restrict const st_res =
-      tls->trend_position_open.st_res;
-  struct db_candle_rec candle_res = {0};
-  struct trend_state *restrict const st = trend_state(dbcon, e->id, m->id);
+  struct db_plot_rec *restrict const db_plot = tls->trend_position_open.db_plot;
+  struct db_trend_state_rec *restrict const db_st =
+      tls->trend_position_open.db_st;
+  struct db_candle_rec db_candle = {0};
+  struct trend_state *restrict const st = trend_state(db, e->id, m->id);
   struct Position *restrict p = NULL;
   void **items;
 
@@ -381,7 +381,7 @@ static struct Position *trend_position_open(
   }
 
   if (cd_first->t == CANDLE_NONE || cd_first->t != cd_last->t) {
-    mutex_unlock(st->mtx);
+    mutex_unlock(&st->mtx);
     return NULL;
   }
 
@@ -423,7 +423,7 @@ static struct Position *trend_position_open(
       Numeric_cmp(((struct Sample *)Array_head(samples))->nanos,
                   st->cd_lnanos) <= 0 &&
       Numeric_cmp(st->cd_langle, r1) > 0) {
-    mutex_unlock(st->mtx);
+    mutex_unlock(&st->mtx);
     return NULL;
   }
 
@@ -431,43 +431,43 @@ static struct Position *trend_position_open(
   Numeric_copy_to(st->cd_langle, cd_first->a);
 
   if (cnf->plts_dir) {
-    Numeric_copy_to(cd_last->onanos, plot_res->snanos);
-    Numeric_copy_to(cd_first->cnanos, plot_res->enanos);
+    Numeric_copy_to(cd_last->onanos, db_plot->snanos);
+    Numeric_copy_to(cd_first->cnanos, db_plot->enanos);
 
-    db_tx_begin(dbcon);
-    db_tx_trend_plot(plot_res, dbcon, String_chars(e->id), String_chars(m->id));
+    db_tx_begin(db);
+    db_tx_trend_plot(db_plot, db, String_chars(e->id), String_chars(m->id));
 
     items = Array_items(samples);
     for (size_t i = Array_size(samples);
          i > 0 && Numeric_cmp(((struct Sample *)items[i - 1])->nanos,
-                              plot_res->enanos) > 0;
+                              db_plot->enanos) > 0;
          i--) {
-      db_tx_plot_datapoint(dbcon, plot_res->id,
+      db_tx_plot_datapoint(db, db_plot->id,
                            ((struct Sample *)items[i - 1])->nanos,
                            ((struct Sample *)items[i - 1])->price);
     }
 
-    db_tx_plot_enanos(dbcon, plot_res->id, sample->nanos);
+    db_tx_plot_enanos(db, db_plot->id, sample->nanos);
 
-    candle_res.o = cd_first->o;
-    candle_res.h = cd_first->h;
-    candle_res.l = cd_first->l;
-    candle_res.c = cd_first->c;
-    candle_res.onanos = cd_first->onanos;
-    candle_res.hnanos = cd_first->hnanos;
-    candle_res.lnanos = cd_first->lnanos;
-    candle_res.cnanos = cd_first->cnanos;
+    db_candle.o = cd_first->o;
+    db_candle.h = cd_first->h;
+    db_candle.l = cd_first->l;
+    db_candle.c = cd_first->c;
+    db_candle.onanos = cd_first->onanos;
+    db_candle.hnanos = cd_first->hnanos;
+    db_candle.lnanos = cd_first->lnanos;
+    db_candle.cnanos = cd_first->cnanos;
 
-    db_tx_trend_plot_candle(dbcon, String_chars(e->id), String_chars(m->id),
-                            &candle_res);
+    db_tx_trend_plot_candle(db, String_chars(e->id), String_chars(m->id),
+                            &db_candle);
 
-    db_tx_trend_plot_marker(dbcon, String_chars(e->id), String_chars(m->id),
+    db_tx_trend_plot_marker(db, String_chars(e->id), String_chars(m->id),
                             cd_first->hnanos, cd_first->h);
 
-    db_tx_trend_plot_marker(dbcon, String_chars(e->id), String_chars(m->id),
+    db_tx_trend_plot_marker(db, String_chars(e->id), String_chars(m->id),
                             cd_first->lnanos, cd_first->l);
 
-    db_tx_commit(dbcon);
+    db_tx_commit(db);
   }
 
   Candle_copy_to(cd_first, &t->open_cd);
@@ -491,23 +491,22 @@ static struct Position *trend_position_open(
 
   st->cd_ltrend = t->open_cd.t;
   Numeric_copy_to(sample->nanos, st->cd_lnanos);
-  Numeric_copy_to(st->cd_lnanos, st_res->cd_lnanos);
-  Numeric_copy_to(st->cd_langle, st_res->cd_langle);
-  st_res->cd_ltrend = db_candle_trend(st->cd_ltrend);
 
-  db_trend_state_update(dbcon, String_chars(e->id), String_chars(m->id),
-                        st_res);
+  Numeric_copy_to(st->cd_lnanos, db_st->cd_lnanos);
+  Numeric_copy_to(st->cd_langle, db_st->cd_langle);
+  db_candle_trend(db_st->cd_ltrend, st->cd_ltrend);
+  db_trend_state_update(db, String_chars(e->id), String_chars(m->id), db_st);
 
-  mutex_unlock(st->mtx);
+  mutex_unlock(&st->mtx);
   return p;
 }
 
-static bool trend_position_close(const char *restrict const dbcon,
+static bool trend_position_close(const void *restrict const db,
                                  const struct Exchange *restrict const e,
                                  const struct Market *restrict const m,
                                  const struct Trade *restrict const t,
                                  const struct Position *restrict const p) {
-  struct trend_state *restrict const st = trend_state(dbcon, e->id, m->id);
+  struct trend_state *restrict const st = trend_state(db, e->id, m->id);
   bool close = false;
 
   switch (p->type) {
@@ -527,18 +526,17 @@ static bool trend_position_close(const char *restrict const dbcon,
          String_chars(m->q_id), String_chars(m->b_id), String_chars(t->id));
   }
 
-  mutex_unlock(st->mtx);
+  mutex_unlock(&st->mtx);
   return close;
 }
 
-static bool trend_market_plot(const char *restrict const fn,
-                              const char *restrict const dbcon,
+static bool trend_market_plot(const void *restrict const db,
                               const struct Exchange *restrict const e,
-                              const struct Market *restrict const m) {
+                              const struct Market *restrict const m,
+                              const char *restrict const fn) {
   const struct trend_tls *restrict const tls = trend_tls();
-  struct db_datapoint_rec *restrict const pt_res =
-      tls->trend_market_plot.pt_res;
-  struct db_candle_rec *restrict const cd_res = tls->trend_market_plot.cd_res;
+  struct db_datapoint_rec *restrict const db_pt = tls->trend_market_plot.db_pt;
+  struct db_candle_rec *restrict const db_cd = tls->trend_market_plot.db_cd;
   size_t cd_red_cnt = 0, cd_green_cnt = 0, mk_cnt = 0;
   FILE *restrict const f = fopen(fn, "w");
 
@@ -548,33 +546,31 @@ static bool trend_market_plot(const char *restrict const fn,
     return false;
   }
 
-  db_tx_begin(dbcon);
+  db_tx_begin(db);
 
   fprintf(f, "samples = [\n");
-  db_tx_trend_plot_samples_open(dbcon, String_chars(e->id),
-                                String_chars(m->id));
-  while (!terminated && db_tx_trend_plot_samples_next(pt_res, dbcon)) {
-    char *restrict const x = Numeric_to_char(pt_res->x, 0);
-    char *restrict const y = Numeric_to_char(pt_res->y, m->q_sc);
+  db_tx_trend_plot_samples_open(db, String_chars(e->id), String_chars(m->id));
+  while (!terminated && db_tx_trend_plot_samples_next(db_pt, db)) {
+    char *restrict const x = Numeric_to_char(db_pt->x, 0);
+    char *restrict const y = Numeric_to_char(db_pt->y, m->q_sc);
     fprintf(f, "\t%s, %s;\n", x, y);
     Numeric_char_free(x);
     Numeric_char_free(y);
   }
-  db_tx_trend_plot_samples_close(dbcon);
+  db_tx_trend_plot_samples_close(db);
   fprintf(f, "];\n");
 
-  db_tx_trend_plot_candles_open(dbcon, String_chars(e->id),
-                                String_chars(m->id));
-  while (!terminated && db_tx_trend_plot_candles_next(cd_res, dbcon)) {
-    char *restrict const onanos = Numeric_to_char(cd_res->onanos, 0);
-    char *restrict const o = Numeric_to_char(cd_res->o, m->q_sc);
-    char *restrict const hnanos = Numeric_to_char(cd_res->hnanos, 0);
-    char *restrict const h = Numeric_to_char(cd_res->h, m->q_sc);
-    char *restrict const lnanos = Numeric_to_char(cd_res->lnanos, 0);
-    char *restrict const l = Numeric_to_char(cd_res->l, m->q_sc);
-    char *restrict const cnanos = Numeric_to_char(cd_res->cnanos, 0);
-    char *restrict const c = Numeric_to_char(cd_res->c, m->q_sc);
-    const bool red = Numeric_cmp(cd_res->o, cd_res->c) > 0;
+  db_tx_trend_plot_candles_open(db, String_chars(e->id), String_chars(m->id));
+  while (!terminated && db_tx_trend_plot_candles_next(db_cd, db)) {
+    char *restrict const onanos = Numeric_to_char(db_cd->onanos, 0);
+    char *restrict const o = Numeric_to_char(db_cd->o, m->q_sc);
+    char *restrict const hnanos = Numeric_to_char(db_cd->hnanos, 0);
+    char *restrict const h = Numeric_to_char(db_cd->h, m->q_sc);
+    char *restrict const lnanos = Numeric_to_char(db_cd->lnanos, 0);
+    char *restrict const l = Numeric_to_char(db_cd->l, m->q_sc);
+    char *restrict const cnanos = Numeric_to_char(db_cd->cnanos, 0);
+    char *restrict const c = Numeric_to_char(db_cd->c, m->q_sc);
+    const bool red = Numeric_cmp(db_cd->o, db_cd->c) > 0;
 
     fprintf(f, "%scandle%zu = [\n", red ? "red_" : "green_",
             red ? cd_red_cnt++ : cd_green_cnt++);
@@ -590,23 +586,22 @@ static bool trend_market_plot(const char *restrict const fn,
     Numeric_char_free(lnanos);
     Numeric_char_free(cnanos);
   }
-  db_tx_trend_plot_candles_close(dbcon);
+  db_tx_trend_plot_candles_close(db);
 
-  db_tx_trend_plot_markers_open(dbcon, String_chars(e->id),
-                                String_chars(m->id));
-  while (!terminated && db_tx_trend_plot_markers_next(pt_res, dbcon)) {
+  db_tx_trend_plot_markers_open(db, String_chars(e->id), String_chars(m->id));
+  while (!terminated && db_tx_trend_plot_markers_next(db_pt, db)) {
     fprintf(f, "marker%zu = [", mk_cnt);
-    char *restrict const x = Numeric_to_char(pt_res->x, 0);
-    char *restrict const y = Numeric_to_char(pt_res->y, m->q_sc);
+    char *restrict const x = Numeric_to_char(db_pt->x, 0);
+    char *restrict const y = Numeric_to_char(db_pt->y, m->q_sc);
 
     fprintf(f, "\t%s, %s;\t];\n", x, y);
     mk_cnt++;
     Numeric_char_free(x);
     Numeric_char_free(y);
   }
-  db_tx_trend_plot_markers_close(dbcon);
+  db_tx_trend_plot_markers_close(db);
 
-  db_tx_commit(dbcon);
+  db_tx_commit(db);
 
   fprintf(f, "plot(\n");
   fprintf(f, "\tsamples(:,1), samples(:,2), \"-k;%s;\"", String_chars(m->nm));

@@ -57,7 +57,7 @@
 #endif
 
 struct worker_ctx {
-  char db[DATABASE_CONNECTION_NAME_MAX_LENGTH];
+  void *db;
   const struct Algorithm *restrict a;
   const struct Exchange *restrict e;
   const struct MarketConfig *restrict m_cnf;
@@ -1968,7 +1968,7 @@ static void trade_plot(const struct worker_ctx *restrict const w_ctx,
     fatal();
   }
 
-  t->a->market_plot(plot_fn, w_ctx->db, w_ctx->e, w_ctx->m);
+  t->a->market_plot(w_ctx->db, w_ctx->e, w_ctx->m, plot_fn);
 }
 
 static void trade_bet(const struct worker_ctx *restrict const w_ctx,
@@ -2760,20 +2760,21 @@ int abagnale(int argc, char *argv[]) {
     e->start();
 
     for (int j = 0; j < ABAG_WORKERS && !terminated; j++) {
+      char cname[DATABASE_CONNECTION_NAME_MAX_LENGTH + 1] = {0};
       struct worker_ctx *restrict const w_ctx =
           heap_calloc(1, sizeof(struct worker_ctx));
 
       w_ctx->e = e;
 
-      const int r = snprintf(w_ctx->db, sizeof(w_ctx->db), "%s-worker-%.3d",
+      const int r = snprintf(cname, sizeof(cname), "%s-worker-%.3d",
                              String_chars(e->nm), j);
 
-      if (r < 0 || (size_t)r >= sizeof(w_ctx->db)) {
+      if (r < 0 || (size_t)r >= sizeof(cname)) {
         werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
         fatal();
       }
 
-      db_connect(w_ctx->db);
+      w_ctx->db = db_connect(cname);
 
       switch (j) {
       case 0:
