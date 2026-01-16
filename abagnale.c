@@ -175,11 +175,11 @@ extern const struct Numeric *restrict const hundred;
 extern const struct Numeric *restrict const second_nanos;
 extern const struct Numeric *restrict const minute_nanos;
 
-static thrd_t *workers;
-static struct Map *market_samples;
+static thrd_t *restrict workers;
+static struct Map *restrict market_samples;
 static mtx_t db_mtx;
-static struct Map *market_prices;
-static struct Map *market_trades;
+static struct Map *restrict market_prices;
+static struct Map *restrict market_trades;
 static tss_t abag_tls_key;
 
 static struct Numeric *restrict ninety_percent_factor;
@@ -189,7 +189,7 @@ static struct Numeric *restrict five_minute_nanos;
 int abagnale(int argc, char *argv[]);
 
 static struct abag_tls *abag_tls(void) {
-  struct abag_tls *tls = tls_get(abag_tls_key);
+  struct abag_tls *restrict const tls = tls_get(abag_tls_key);
   if (tls == NULL) {
     tls = heap_malloc(sizeof(struct abag_tls));
     tls->candle_string.s = Numeric_new();
@@ -282,7 +282,7 @@ static struct abag_tls *abag_tls(void) {
 }
 
 static void abag_tls_dtor(void *e) {
-  struct abag_tls *tls = e;
+  struct abag_tls *restrict const tls = e;
   Numeric_delete(tls->candle_string.s);
   Numeric_delete(tls->samples_per_nano.size);
   Numeric_delete(tls->samples_per_nano.duration);

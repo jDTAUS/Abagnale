@@ -55,7 +55,7 @@ static tss_t time_tls_key;
 static mtx_t time_mtx;
 
 static struct time_tls *time_tls(void) {
-  struct time_tls *tls = tls_get(time_tls_key);
+  struct time_tls *restrict const tls = tls_get(time_tls_key);
   if (tls == NULL) {
     tls = heap_malloc(sizeof(struct time_tls));
     tls->nanos_from_iso8601.s_ns = Numeric_new();
