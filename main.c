@@ -44,13 +44,13 @@ struct String *restrict prog_abagnalectl;
 _Atomic bool terminated;
 
 extern struct Exchange exchange_coinbase;
-struct Exchange *all_exchanges[] = {
+struct Exchange *restrict all_exchanges[] = {
     &exchange_coinbase,
 };
 const size_t all_exchanges_nitems = nitems(all_exchanges);
 
 extern struct Algorithm algorithm_trend;
-struct Algorithm *all_algorithms[] = {
+struct Algorithm *restrict all_algorithms[] = {
     &algorithm_trend,
 };
 const size_t all_algorithms_nitems = nitems(all_algorithms);
