@@ -347,27 +347,27 @@ extern const struct Numeric *restrict const milli_nanos;
 extern const struct Config *restrict const cnf;
 extern const bool verbose;
 
-static const struct ExchangeConfig *coinbase_cnf;
-static void *coinbase_db;
+static const struct ExchangeConfig *restrict coinbase_cnf;
+static void *restrict coinbase_db;
 
-static struct Array *products;
-static struct Map *products_by_name;
-static struct Map *products_by_id;
+static struct Array *restrict products;
+static struct Map *restrict products_by_name;
+static struct Map *restrict products_by_id;
 static bool products_reload;
 
-static struct Array *accounts;
-static struct Map *accounts_by_id;
-static struct Map *accounts_by_currency;
+static struct Array *restrict accounts;
+static struct Map *restrict accounts_by_id;
+static struct Map *restrict accounts_by_currency;
 static bool accounts_reload;
 
-static struct Pricing *pricing;
+static struct Pricing *restrict pricing;
 static mtx_t pricing_mutex;
 
 static _Atomic bool running;
-static struct Queue *orders;
-static struct Queue *samples;
+static struct Queue *restrict orders;
+static struct Queue *restrict samples;
 static thrd_t mg_mgr_worker;
-static struct wcjson_document *ws_doc;
+static struct wcjson_document *restrict ws_doc;
 static struct timespec api_request_rate = {
     .tv_sec = 0,
     .tv_nsec = 1000000000L / API_RATE_REQUESTS_PER_SECOND,
