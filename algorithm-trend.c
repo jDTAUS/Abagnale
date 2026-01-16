@@ -100,7 +100,7 @@ static void trend_state_delete(void *restrict const e) {
 }
 
 static struct trend_tls *trend_tls(void) {
-  struct trend_tls *restrict const tls = tls_get(trend_tls_key);
+  struct trend_tls *restrict tls = tls_get(trend_tls_key);
   if (tls == NULL) {
     tls = heap_malloc(sizeof(struct trend_tls));
     tls->trend_state.db_st = heap_malloc(sizeof(struct db_trend_state_rec));

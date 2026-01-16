@@ -189,7 +189,7 @@ static struct Numeric *restrict five_minute_nanos;
 int abagnale(int argc, char *argv[]);
 
 static struct abag_tls *abag_tls(void) {
-  struct abag_tls *restrict const tls = tls_get(abag_tls_key);
+  struct abag_tls *restrict tls = tls_get(abag_tls_key);
   if (tls == NULL) {
     tls = heap_malloc(sizeof(struct abag_tls));
     tls->candle_string.s = Numeric_new();
