@@ -86,7 +86,7 @@ extern const bool verbose;
 extern const size_t all_exchanges_nitems;
 
 static tss_t trend_tls_key;
-static struct Map *states;
+static struct Map *restrict states;
 
 static void trend_state_delete(void *restrict const e) {
   if (e == NULL)
