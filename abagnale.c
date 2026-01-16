@@ -57,7 +57,7 @@
 #endif
 
 struct worker_ctx {
-  void *db;
+  void *restrict db;
   const struct Algorithm *restrict a;
   const struct Exchange *restrict e;
   const struct MarketConfig *restrict m_cnf;
