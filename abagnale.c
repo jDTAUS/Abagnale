@@ -2107,8 +2107,8 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
         char *restrict const c = candle_string(
             &t->open_cd, String_chars(w_ctx->m->q_id), w_ctx->m->p_sc);
 
-        wout("%s: %s->%s: Out of funds betting long: quote required: %s%s, "
-             "quote available: %s%s, candle: %s\n",
+        wout("%s: %s->%s: Cannot bet long: quote required: %s%s, quote "
+             "available: %s%s, candle: %s\n",
              String_chars(w_ctx->e->nm), String_chars(w_ctx->m->q_id),
              String_chars(w_ctx->m->b_id), r, String_chars(w_ctx->m->q_id), a,
              String_chars(w_ctx->m->q_id), c);
@@ -2164,8 +2164,8 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
         char *restrict const c = candle_string(
             &t->open_cd, String_chars(w_ctx->m->q_id), w_ctx->m->p_sc);
 
-        wout("%s: %s->%s: Out of funds betting short: quote required: %s%s, "
-             "quote available: %s%s, base required: %s%s, base available: "
+        wout("%s: %s->%s: Cannot bet short: quote required: %s%s, quote "
+             "available: %s%s, base required: %s%s, base available: "
              "%s%s, candle: %s\n",
              String_chars(w_ctx->e->nm), String_chars(w_ctx->m->q_id),
              String_chars(w_ctx->m->b_id), qr, String_chars(w_ctx->m->q_id), qa,
