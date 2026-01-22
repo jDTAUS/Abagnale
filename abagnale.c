@@ -141,6 +141,7 @@ struct abag_tls {
     struct Numeric *restrict q_delta;
     struct Numeric *restrict q_costs;
     struct Numeric *restrict q_profit;
+    struct Numeric *restrict sr;
   } trade_maintain;
   struct trade_pricing_vars {
     struct Numeric *restrict r0;
@@ -250,6 +251,7 @@ static struct abag_tls *abag_tls(void) {
     tls->trade_maintain.q_delta = Numeric_new();
     tls->trade_maintain.q_costs = Numeric_new();
     tls->trade_maintain.q_profit = Numeric_new();
+    tls->trade_maintain.sr = Numeric_new();
     tls->trade_pricing.r0 = Numeric_new();
     tls->trade_bet.hold = heap_malloc(sizeof(struct db_balance_rec));
     tls->trade_bet.hold->b = Numeric_new();
@@ -341,6 +343,7 @@ static void abag_tls_dtor(void *e) {
   Numeric_delete(tls->trade_maintain.q_delta);
   Numeric_delete(tls->trade_maintain.q_costs);
   Numeric_delete(tls->trade_maintain.q_profit);
+  Numeric_delete(tls->trade_maintain.sr);
   Numeric_delete(tls->trade_pricing.r0);
   Numeric_delete(tls->trade_bet.hold->b);
   Numeric_delete(tls->trade_bet.hold->q);
@@ -2248,6 +2251,7 @@ static void trade_maintain(const struct worker_ctx *restrict const w_ctx,
   struct Numeric *restrict const q_delta = tls->trade_maintain.q_delta;
   struct Numeric *restrict const q_costs = tls->trade_maintain.q_costs;
   struct Numeric *restrict const q_profit = tls->trade_maintain.q_profit;
+  struct Numeric *restrict const sr = tls->trade_maintain.sr;
   const enum trade_status st = t->status;
 
   switch (t->status) {
@@ -2267,9 +2271,11 @@ static void trade_maintain(const struct worker_ctx *restrict const w_ctx,
     trade_bet(w_ctx, t, samples, sample);
     break;
   case TRADE_STATUS_DONE:
+    samples_per_minute(sr, samples);
     Numeric_add_to(t->p_long.q_fees, t->p_short.q_fees, q_costs);
     Numeric_sub_to(t->p_short.q_filled, t->p_long.q_filled, q_delta);
     Numeric_sub_to(q_delta, q_costs, q_profit);
+    char *restrict const sr_info = Numeric_to_char(sr, 2);
     char *restrict const l_p = Numeric_to_char(t->p_long.price, w_ctx->m->p_sc);
     char *restrict const profit = Numeric_to_char(q_profit, w_ctx->m->q_sc);
     char *restrict const costs = Numeric_to_char(q_costs, w_ctx->m->q_sc);
@@ -2285,13 +2291,13 @@ static void trade_maintain(const struct worker_ctx *restrict const w_ctx,
         Numeric_to_char(t->p_short.b_filled, w_ctx->m->b_sc);
 
     wout("%s: %s->%s: %s: Trade done: %s%s@%s%s -> %s%s@%s%s, return: %s%s, "
-         "volatility: %s%%, fees: %s%s, outcome: %s%s\n",
+         "volatility: %s%%, fees: %s%s, outcome: %s%s, rate: %s ticks/minute\n",
          String_chars(w_ctx->e->nm), String_chars(w_ctx->m->q_id),
          String_chars(w_ctx->m->b_id), String_chars(t->id), l_b,
          String_chars(w_ctx->m->b_id), l_p, String_chars(w_ctx->m->q_id), s_b,
          String_chars(w_ctx->m->b_id), s_p, String_chars(w_ctx->m->q_id), tp,
          String_chars(w_ctx->m->q_id), v, costs, String_chars(w_ctx->m->q_id),
-         profit, String_chars(w_ctx->m->q_id));
+         profit, String_chars(w_ctx->m->q_id), sr_info);
 
     wout("%s: %s->%s: %s: %s\n", String_chars(w_ctx->e->nm),
          String_chars(w_ctx->m->q_id), String_chars(w_ctx->m->b_id),
@@ -2309,6 +2315,7 @@ static void trade_maintain(const struct worker_ctx *restrict const w_ctx,
     Numeric_char_free(costs);
     Numeric_char_free(tp);
     Numeric_char_free(v);
+    Numeric_char_free(sr_info);
     heap_free(b_info);
     heap_free(q_info);
     break;
