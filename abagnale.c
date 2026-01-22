@@ -2291,13 +2291,14 @@ static void trade_maintain(const struct worker_ctx *restrict const w_ctx,
         Numeric_to_char(t->p_short.b_filled, w_ctx->m->b_sc);
 
     wout("%s: %s->%s: %s: Trade done: %s%s@%s%s -> %s%s@%s%s, return: %s%s, "
-         "volatility: %s%%, fees: %s%s, outcome: %s%s, rate: %s ticks/minute\n",
+         "volatility: %s%%, tick rate: %s ticks/minute, fees: %s%s, outcome: "
+         "%s%s\n",
          String_chars(w_ctx->e->nm), String_chars(w_ctx->m->q_id),
          String_chars(w_ctx->m->b_id), String_chars(t->id), l_b,
          String_chars(w_ctx->m->b_id), l_p, String_chars(w_ctx->m->q_id), s_b,
          String_chars(w_ctx->m->b_id), s_p, String_chars(w_ctx->m->q_id), tp,
-         String_chars(w_ctx->m->q_id), v, costs, String_chars(w_ctx->m->q_id),
-         profit, String_chars(w_ctx->m->q_id), sr_info);
+         String_chars(w_ctx->m->q_id), v, sr_info, costs,
+         String_chars(w_ctx->m->q_id), profit, String_chars(w_ctx->m->q_id));
 
     wout("%s: %s->%s: %s: %s\n", String_chars(w_ctx->e->nm),
          String_chars(w_ctx->m->q_id), String_chars(w_ctx->m->b_id),
