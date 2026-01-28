@@ -1478,7 +1478,7 @@ static struct Order *coinbase_order_await(void) {
 static struct Market *
 parse_product(const struct wcjson_document *restrict const doc,
               const struct wcjson_value *restrict const prod) {
-  char p_uuid[DATABASE_UUID_MAX_LENGTH] = {0};
+  char p_uuid[DATABASE_UUID_MAX_LENGTH + 1] = {0};
   char errbuf[WCJSON_BODY_MAX + 1] = {0};
   struct Market *restrict m = NULL;
   WCJSON_DECLARE_STRING_ITEM(product_id)
@@ -2109,8 +2109,8 @@ static void order_create_body(char *restrict const mbbody, size_t mbbody_nitems,
                               const char *restrict const base_amount,
                               const char *restrict const price,
                               size_t *restrict mb_len) {
-  char client_id[DATABASE_UUID_MAX_LENGTH] = {0};
-  char ext_id[DATABASE_UUID_MAX_LENGTH] = {0};
+  char client_id[DATABASE_UUID_MAX_LENGTH + 1] = {0};
+  char ext_id[DATABASE_UUID_MAX_LENGTH + 1] = {0};
   struct wcjson_value *restrict const body = wcjson_object(doc);
   struct wcjson_value *restrict const conf = wcjson_object(doc);
   struct wcjson_value *restrict const llgtc = wcjson_object(doc);

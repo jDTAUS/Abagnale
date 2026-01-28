@@ -1371,7 +1371,7 @@ void db_tx_trend_plot_marker(const void *const db, const char *const e_id,
   const char *sql_m_id = m_id;
   const numeric *sql_x = Numeric_db(x);
   const numeric *sql_y = Numeric_db(y);
-  char sql_id[DATABASE_UUID_MAX_LENGTH] = {0};
+  char sql_id[DATABASE_UUID_MAX_LENGTH + 1] = {0};
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
   EXEC SQL WHENEVER SQLERROR CALL db_fatal();

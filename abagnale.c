@@ -1101,7 +1101,7 @@ static void position_pricing(const struct worker_ctx *restrict const w_ctx,
 static void position_create(const struct worker_ctx *restrict const w_ctx,
                             struct Trade *restrict const t,
                             struct Position *restrict const p) {
-  char t_id[DATABASE_UUID_MAX_LENGTH] = {0};
+  char t_id[DATABASE_UUID_MAX_LENGTH + 1] = {0};
 
   switch (p->type) {
   case POSITION_TYPE_LONG:
