@@ -2706,9 +2706,9 @@ static int samples_process(void *restrict const arg) {
     }
 
     if (!(betting || pending)) {
-      struct Trade *t = trade_new();
+      struct Trade *restrict const t = trade_new();
       trade_create(ctx, t, samples, sample);
-      Array_add_tail(trades, t);
+      Array_add_head(trades, t);
     }
 
     Array_unlock(trades);
