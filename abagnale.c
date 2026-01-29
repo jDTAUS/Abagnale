@@ -2110,12 +2110,12 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
         char *restrict const c = candle_string(
             &t->open_cd, String_chars(w_ctx->m->q_id), w_ctx->m->p_sc);
 
-        wout("%s: %s->%s: Cannot bet long: %s required: %s%s, %s available: "
-             "%s%s, candle: %s\n",
+        wout("%s: %s->%s: Cannot open %s long position: %s required: %s%s, %s "
+             "available: %s%s, candle: %s\n",
              String_chars(w_ctx->e->nm), String_chars(w_ctx->m->q_id),
-             String_chars(w_ctx->m->b_id), String_chars(w_ctx->m->q_id), r,
-             String_chars(w_ctx->m->q_id), String_chars(w_ctx->m->q_id), a,
-             String_chars(w_ctx->m->q_id), c);
+             String_chars(w_ctx->m->b_id), String_chars(w_ctx->m->b_id),
+             String_chars(w_ctx->m->q_id), r, String_chars(w_ctx->m->q_id),
+             String_chars(w_ctx->m->q_id), a, String_chars(w_ctx->m->q_id), c);
 
         Numeric_char_free(r);
         Numeric_char_free(a);
@@ -2147,7 +2147,7 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
     struct String *restrict const o_id = w_ctx->e->buy(w_ctx->m->id, b, pr);
 
     if (o_id == NULL) {
-      werr("%s: %s->%s: Failure posting buy order\n",
+      werr("%s: %s->%s: Failure creating buy order\n",
            String_chars(w_ctx->e->nm), String_chars(w_ctx->m->q_id),
            String_chars(w_ctx->m->b_id));
 
@@ -2168,14 +2168,15 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
         char *restrict const c = candle_string(
             &t->open_cd, String_chars(w_ctx->m->q_id), w_ctx->m->p_sc);
 
-        wout("%s: %s->%s: Cannot bet short: %s required: %s%s, %s available: "
+        wout("%s: %s->%s: Cannot open %s short position: %s required: %s%s, %s "
+             "available: "
              "%s%s, %s required: %s%s, %s available: %s%s, candle: %s\n",
              String_chars(w_ctx->e->nm), String_chars(w_ctx->m->q_id),
-             String_chars(w_ctx->m->b_id), String_chars(w_ctx->m->q_id), qr,
-             String_chars(w_ctx->m->q_id), String_chars(w_ctx->m->q_id), qa,
-             String_chars(w_ctx->m->q_id), String_chars(w_ctx->m->b_id), b,
-             String_chars(w_ctx->m->b_id), String_chars(w_ctx->m->b_id), ba,
-             String_chars(w_ctx->m->b_id), c);
+             String_chars(w_ctx->m->b_id), String_chars(w_ctx->m->b_id),
+             String_chars(w_ctx->m->q_id), qr, String_chars(w_ctx->m->q_id),
+             String_chars(w_ctx->m->q_id), qa, String_chars(w_ctx->m->q_id),
+             String_chars(w_ctx->m->b_id), b, String_chars(w_ctx->m->b_id),
+             String_chars(w_ctx->m->b_id), ba, String_chars(w_ctx->m->b_id), c);
 
         Numeric_char_free(qr);
         Numeric_char_free(qa);
@@ -2208,7 +2209,7 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
     struct String *restrict const o_id = w_ctx->e->sell(w_ctx->m->id, b, pr);
 
     if (o_id == NULL) {
-      werr("%s: %s->%s: Failure posting sell order\n",
+      werr("%s: %s->%s: Failure creating sell order\n",
            String_chars(w_ctx->e->nm), String_chars(w_ctx->m->q_id),
            String_chars(w_ctx->m->b_id));
 
