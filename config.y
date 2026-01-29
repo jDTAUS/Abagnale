@@ -653,6 +653,7 @@ tradeconf : conf_trade
 
 trade : TRADE AT STRING {
         m_cnf  = MarketConfig_new();
+        m_cnf->origin = MARKET_CONFIG_ORIGIN_USER;
         m_cnf->e_nm = $3;
 
         bool e_found = false;

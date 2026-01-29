@@ -55,6 +55,11 @@ struct Pattern {
   bool neg;
 };
 
+enum market_config_origin {
+  MARKET_CONFIG_ORIGIN_SYSTEM = 1,
+  MARKET_CONFIG_ORIGIN_USER
+};
+
 struct MarketConfig {
   struct String *restrict e_nm;
   struct String *restrict a_nm;
@@ -72,6 +77,7 @@ struct MarketConfig {
   struct Numeric *restrict so_maxnanos;
   struct Numeric *restrict sl_dlnanos;
   struct Numeric *restrict tl_dlnanos;
+  enum market_config_origin origin;
 };
 
 void config_init(void);

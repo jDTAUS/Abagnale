@@ -60,7 +60,7 @@ struct worker_ctx {
   void *restrict db;
   const struct Algorithm *restrict a;
   const struct Exchange *restrict e;
-  const struct MarketConfig *restrict m_cnf;
+  struct MarketConfig *restrict m_cnf;
   struct Market *restrict m;
   struct Numeric *restrict q_tgt;
 };
@@ -796,7 +796,7 @@ static void worker_config(struct worker_ctx *restrict const w_ctx,
 
   items = Array_items(cnf->m_cnf);
   for (size_t i = Array_size(cnf->m_cnf); i > 0; i--) {
-    const struct MarketConfig *restrict const m_cnf = items[i - 1];
+    struct MarketConfig *restrict const m_cnf = items[i - 1];
 
     if (!String_equals(m_cnf->e_nm, w_ctx->e->nm))
       continue;
@@ -2268,7 +2268,8 @@ static void trade_maintain(const struct worker_ctx *restrict const w_ctx,
     position_trade(w_ctx, t, &t->p_short, samples, sample);
     break;
   case TRADE_STATUS_NEW:
-    trade_bet(w_ctx, t, samples, sample);
+    if (w_ctx->m_cnf->origin == MARKET_CONFIG_ORIGIN_USER)
+      trade_bet(w_ctx, t, samples, sample);
     break;
   case TRADE_STATUS_DONE:
     samples_per_minute(sr, samples);
@@ -2632,9 +2633,8 @@ static int samples_process(void *restrict const arg) {
       qsort(&items[s_size - ABAG_WORKERS], ABAG_WORKERS,
             sizeof(struct Sample *), sample_cmp);
 
-    } else {
+    } else
       qsort(&items[0], s_size, sizeof(struct Sample *), sample_cmp);
-    }
 
     if (Array_size(samples) < 2) {
       Array_unlock(samples);
@@ -2714,6 +2714,9 @@ static int samples_process(void *restrict const arg) {
     Array_unlock(trades);
     Array_unlock(samples);
     Market_delete(ctx->m);
+
+    if (ctx->m_cnf->origin == MARKET_CONFIG_ORIGIN_SYSTEM)
+      MarketConfig_delete(ctx->m_cnf);
   }
 
   db_disconnect(ctx->db);
