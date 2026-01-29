@@ -85,10 +85,10 @@ struct abag_tls {
     struct Numeric *restrict sr;
     struct db_sample_rec *restrict sample;
   } samples_load;
-  struct worker_config_vars {
+  struct worker_configure_vars {
     struct Numeric *restrict sr;
     struct Numeric *restrict r0;
-  } worker_config;
+  } worker_configure;
   struct orders_process_vars {
     struct Numeric *restrict tp;
   } orders_process;
@@ -204,8 +204,8 @@ static struct abag_tls *abag_tls(void) {
     tls->samples_load.now = Numeric_new();
     tls->samples_load.filter = Numeric_new();
     tls->samples_load.sr = Numeric_new();
-    tls->worker_config.sr = Numeric_new();
-    tls->worker_config.r0 = Numeric_new();
+    tls->worker_configure.sr = Numeric_new();
+    tls->worker_configure.r0 = Numeric_new();
     tls->orders_process.tp = Numeric_new();
     tls->samples_process.outdated_ns = Numeric_new();
     tls->samples_process.tp = Numeric_new();
@@ -296,8 +296,8 @@ static void abag_tls_dtor(void *e) {
   Numeric_delete(tls->samples_load.now);
   Numeric_delete(tls->samples_load.filter);
   Numeric_delete(tls->samples_load.sr);
-  Numeric_delete(tls->worker_config.sr);
-  Numeric_delete(tls->worker_config.r0);
+  Numeric_delete(tls->worker_configure.sr);
+  Numeric_delete(tls->worker_configure.r0);
   Numeric_delete(tls->orders_process.tp);
   Numeric_delete(tls->samples_process.outdated_ns);
   Numeric_delete(tls->samples_process.tp);
@@ -786,11 +786,11 @@ samples_load(const struct worker_ctx *restrict const w_ctx) {
   return a;
 }
 
-static void worker_config(struct worker_ctx *restrict const w_ctx,
-                          const struct Array *restrict const samples) {
+static void worker_configure(struct worker_ctx *restrict const w_ctx,
+                             const struct Array *restrict const samples) {
   const struct abag_tls *restrict const tls = abag_tls();
-  struct Numeric *restrict const sr = tls->worker_config.sr;
-  struct Numeric *restrict const r0 = tls->worker_config.r0;
+  struct Numeric *restrict const sr = tls->worker_configure.sr;
+  struct Numeric *restrict const r0 = tls->worker_configure.r0;
   void **items;
   samples_per_minute(sr, samples);
 
@@ -2506,7 +2506,7 @@ static int orders_process(void *restrict const arg) {
     }
 
     Array_lock(samples);
-    worker_config(w_ctx, samples);
+    worker_configure(w_ctx, samples);
 
     if (!(w_ctx->m_cnf != NULL && w_ctx->q_tgt != NULL &&
           w_ctx->m->is_active)) {
@@ -2641,7 +2641,7 @@ static int samples_process(void *restrict const arg) {
       continue;
     }
 
-    worker_config(ctx, samples);
+    worker_configure(ctx, samples);
 
     if (ctx->m_cnf != NULL) {
       struct Sample *restrict const oldest = Array_head(samples);
