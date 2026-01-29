@@ -2268,8 +2268,7 @@ static void trade_maintain(const struct worker_ctx *restrict const w_ctx,
     position_trade(w_ctx, t, &t->p_short, samples, sample);
     break;
   case TRADE_STATUS_NEW:
-    if (w_ctx->m_cnf->origin == MARKET_CONFIG_ORIGIN_USER)
-      trade_bet(w_ctx, t, samples, sample);
+    trade_bet(w_ctx, t, samples, sample);
     break;
   case TRADE_STATUS_DONE:
     samples_per_minute(sr, samples);
