@@ -2110,10 +2110,10 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
         char *restrict const c = candle_string(
             &t->open_cd, String_chars(w_ctx->m->q_id), w_ctx->m->p_sc);
 
-        wout("%s: %s->%s: Cannot open %s long position: %s required: %s%s, %s "
-             "available: %s%s, candle: %s\n",
+        wout("%s: %s->%s: Cannot demand %s%s: %s required: %s%s, %s available: "
+             "%s%s, candle: %s\n",
              String_chars(w_ctx->e->nm), String_chars(w_ctx->m->q_id),
-             String_chars(w_ctx->m->b_id), String_chars(w_ctx->m->b_id),
+             String_chars(w_ctx->m->b_id), b, String_chars(w_ctx->m->b_id),
              String_chars(w_ctx->m->q_id), r, String_chars(w_ctx->m->q_id),
              String_chars(w_ctx->m->q_id), a, String_chars(w_ctx->m->q_id), c);
 
@@ -2168,11 +2168,10 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
         char *restrict const c = candle_string(
             &t->open_cd, String_chars(w_ctx->m->q_id), w_ctx->m->p_sc);
 
-        wout("%s: %s->%s: Cannot open %s short position: %s required: %s%s, %s "
-             "available: "
+        wout("%s: %s->%s: Cannot supply %s%s: %s required: %s%s, %s available: "
              "%s%s, %s required: %s%s, %s available: %s%s, candle: %s\n",
              String_chars(w_ctx->e->nm), String_chars(w_ctx->m->q_id),
-             String_chars(w_ctx->m->b_id), String_chars(w_ctx->m->b_id),
+             String_chars(w_ctx->m->b_id), b, String_chars(w_ctx->m->b_id),
              String_chars(w_ctx->m->q_id), qr, String_chars(w_ctx->m->q_id),
              String_chars(w_ctx->m->q_id), qa, String_chars(w_ctx->m->q_id),
              String_chars(w_ctx->m->b_id), b, String_chars(w_ctx->m->b_id),
