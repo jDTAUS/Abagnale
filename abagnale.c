@@ -1638,7 +1638,7 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
     }
   }
 
-  if (t->a->position_close(w_ctx->db, w_ctx->e, w_ctx->m, t, p))
+  if (t->a != NULL && t->a->position_close(w_ctx->db, w_ctx->e, w_ctx->m, t, p))
     tl = true;
 
   if (sl) {
@@ -2005,7 +2005,9 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
     return;
 
   struct Position *restrict const p =
-      t->a->position_open(w_ctx->db, w_ctx->e, w_ctx->m, t, samples, sample);
+      t->a != NULL ? t->a->position_open(w_ctx->db, w_ctx->e, w_ctx->m, t,
+                                         samples, sample)
+                   : NULL;
 
   if (p != NULL) {
     if (!t->open_trg.set) {
