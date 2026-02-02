@@ -1364,7 +1364,7 @@ static void position_maintain(const struct worker_ctx *restrict const w_ctx,
 
   if (!p->filled && Numeric_cmp(p->cl_samples, zero) <= 0) {
     if (verbose)
-      wout("%s: %s->%s: %s: Position timed out\n", String_chars(w_ctx->e->nm),
+      wout("%s: %s->%s: %s: Order timed out\n", String_chars(w_ctx->e->nm),
            String_chars(w_ctx->m->q_id), String_chars(w_ctx->m->b_id),
            String_chars(t->id));
 
@@ -1379,7 +1379,7 @@ static void position_maintain(const struct worker_ctx *restrict const w_ctx,
       position_timeout(w_ctx, t, p, samples, sample);
       char *restrict const p_info = position_string(w_ctx, t, p);
 
-      werr("%s: %s->%s: %s: Failure loading position\n",
+      werr("%s: %s->%s: %s: Failure syncing order\n",
            String_chars(w_ctx->e->nm), String_chars(w_ctx->m->q_id),
            String_chars(w_ctx->m->b_id), String_chars(t->id));
 
@@ -1399,11 +1399,11 @@ static void position_maintain(const struct worker_ctx *restrict const w_ctx,
         char *restrict const p_info = position_string(w_ctx, t, p);
 
         if (order->settled)
-          wout("%s: %s->%s: %s: Position done\n", String_chars(w_ctx->e->nm),
+          wout("%s: %s->%s: %s: Order done\n", String_chars(w_ctx->e->nm),
                String_chars(w_ctx->m->q_id), String_chars(w_ctx->m->b_id),
                String_chars(t->id));
         else
-          wout("%s: %s->%s: %s: Position filled\n", String_chars(w_ctx->e->nm),
+          wout("%s: %s->%s: %s: Order filled\n", String_chars(w_ctx->e->nm),
                String_chars(w_ctx->m->q_id), String_chars(w_ctx->m->b_id),
                String_chars(t->id));
 
@@ -1430,7 +1430,7 @@ static void position_maintain(const struct worker_ctx *restrict const w_ctx,
         char *restrict const m_asc = Numeric_to_char(m, 2);
         char *restrict const p_info = position_string(w_ctx, t, p);
 
-        wout("%s: %s->%s: %s: Position open: timeout: %s %s %s\n",
+        wout("%s: %s->%s: %s: Order open: timeout: %s %s %s\n",
              String_chars(w_ctx->e->nm), String_chars(w_ctx->m->q_id),
              String_chars(w_ctx->m->b_id), String_chars(t->id), f_asc, s_asc,
              m_asc);
@@ -1455,7 +1455,7 @@ static void position_maintain(const struct worker_ctx *restrict const w_ctx,
                order->status == ORDER_STATUS_EXPIRED) {
       if (verbose) {
         char *restrict const p_info = position_string(w_ctx, t, p);
-        wout("%s: %s->%s: %s: Position failed, cancelled or expired\n",
+        wout("%s: %s->%s: %s: Order failed, cancelled or expired\n",
              String_chars(w_ctx->e->nm), String_chars(w_ctx->m->q_id),
              String_chars(w_ctx->m->b_id), String_chars(t->id));
 
@@ -1481,7 +1481,7 @@ static void position_maintain(const struct worker_ctx *restrict const w_ctx,
 
       if (verbose) {
         char *restrict const p_info = position_string(w_ctx, t, p);
-        wout("%s: %s->%s: %s: Position pending or queued\n",
+        wout("%s: %s->%s: %s: Order pending or queued\n",
              String_chars(w_ctx->e->nm), String_chars(w_ctx->m->q_id),
              String_chars(w_ctx->m->b_id), String_chars(t->id));
 
@@ -1499,7 +1499,7 @@ static void position_maintain(const struct worker_ctx *restrict const w_ctx,
       }
       goto free;
     } else {
-      werr("%s: %s->%s: %s: %u: Position status unknown\n",
+      werr("%s: %s->%s: %s: %u: Order status unknown\n",
            String_chars(w_ctx->e->nm), String_chars(w_ctx->m->q_id),
            String_chars(w_ctx->m->b_id), String_chars(t->id), order->status);
 
@@ -1513,7 +1513,7 @@ static void position_maintain(const struct worker_ctx *restrict const w_ctx,
       char *restrict const p_info = position_string(w_ctx, t, p);
 
       if (!cancelled) {
-        werr("%s: %s->%s: %s: Failure cancelling position\n",
+        werr("%s: %s->%s: %s: Failure cancelling order\n",
              String_chars(w_ctx->e->nm), String_chars(w_ctx->m->q_id),
              String_chars(w_ctx->m->b_id), String_chars(t->id));
 
@@ -1522,7 +1522,7 @@ static void position_maintain(const struct worker_ctx *restrict const w_ctx,
              String_chars(p->id), p_info);
 
       } else if (verbose) {
-        wout("%s: %s->%s: %s: Position cancelled\n", String_chars(w_ctx->e->nm),
+        wout("%s: %s->%s: %s: Order cancelled\n", String_chars(w_ctx->e->nm),
              String_chars(w_ctx->m->q_id), String_chars(w_ctx->m->b_id),
              String_chars(t->id));
 
