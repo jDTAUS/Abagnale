@@ -1644,10 +1644,16 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
       } else
         Numeric_copy_to(zero, p->sl_samples);
 
-      if (verbose)
-        wout("%s: %s->%s: %s: Entering stop loss(%" PRIuMAX ")\n",
+      if (verbose) {
+        char *restrict const delay = Numeric_to_char(p->sl_samples, 0);
+        wout("%s: %s->%s: %s: Entering stop loss(%" PRIuMAX
+             "): stop-loss-delay: %s ticks\n",
              String_chars(w_ctx->e->nm), String_chars(w_ctx->m->q_id),
-             String_chars(w_ctx->m->b_id), String_chars(t->id), p->sl_trg.cnt);
+             String_chars(w_ctx->m->b_id), String_chars(t->id), p->sl_trg.cnt,
+             delay);
+
+        Numeric_char_free(delay);
+      }
     } else if (w_ctx->m_cnf->sl_dlnanos != NULL) {
       Numeric_sub_to(p->sl_samples, one, r0);
       Numeric_copy_to(r0, p->sl_samples);
