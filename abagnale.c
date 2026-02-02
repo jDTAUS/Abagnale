@@ -1846,7 +1846,7 @@ static void position_trade(const struct worker_ctx *restrict const w_ctx,
   case POSITION_TYPE_LONG:
     o_id = w_ctx->e->sell(w_ctx->m->id, b, pr);
     if (o_id == NULL) {
-      werr("%s: %s->%s: %s: Failure posting position\n",
+      werr("%s: %s->%s: %s: Failure creating sell order\n",
            String_chars(w_ctx->e->nm), String_chars(w_ctx->m->q_id),
            String_chars(w_ctx->m->b_id), String_chars(t->id));
 
@@ -1862,7 +1862,7 @@ static void position_trade(const struct worker_ctx *restrict const w_ctx,
   case POSITION_TYPE_SHORT:
     o_id = w_ctx->e->buy(w_ctx->m->id, b, pr);
     if (o_id == NULL) {
-      werr("%s: %s->%s: %s: Failure posting position\n",
+      werr("%s: %s->%s: %s: Failure creating buy order\n",
            String_chars(w_ctx->e->nm), String_chars(w_ctx->m->q_id),
            String_chars(w_ctx->m->b_id), String_chars(t->id));
 
