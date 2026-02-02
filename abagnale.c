@@ -118,7 +118,6 @@ struct abag_tls {
     struct Numeric *restrict stats_to;
     struct Numeric *restrict factor_to;
     struct Numeric *restrict total_to;
-    struct Numeric *restrict sl_to;
     struct Numeric *restrict n;
     struct db_stats_rec *restrict stats;
   } position_timeout;
@@ -222,7 +221,6 @@ static struct abag_tls *abag_tls(void) {
     tls->position_timeout.stats_to = Numeric_new();
     tls->position_timeout.factor_to = Numeric_new();
     tls->position_timeout.total_to = Numeric_new();
-    tls->position_timeout.sl_to = Numeric_new();
     tls->position_timeout.n = Numeric_new();
     tls->position_timeout.stats = heap_malloc(sizeof(struct db_stats_rec));
     tls->position_timeout.stats->bd_min = Numeric_new();
@@ -314,7 +312,6 @@ static void abag_tls_dtor(void *e) {
   Numeric_delete(tls->position_timeout.stats_to);
   Numeric_delete(tls->position_timeout.factor_to);
   Numeric_delete(tls->position_timeout.total_to);
-  Numeric_delete(tls->position_timeout.sl_to);
   Numeric_delete(tls->position_timeout.n);
   Numeric_delete(tls->position_timeout.stats->bd_min);
   Numeric_delete(tls->position_timeout.stats->bd_max);
@@ -1300,7 +1297,6 @@ static void position_timeout(const struct worker_ctx *restrict const w_ctx,
   struct Numeric *restrict const stats_to = tls->position_timeout.stats_to;
   struct Numeric *restrict const factor_to = tls->position_timeout.factor_to;
   struct Numeric *restrict const total_to = tls->position_timeout.total_to;
-  struct Numeric *restrict const sl_to = tls->position_timeout.sl_to;
   struct Numeric *restrict const n = tls->position_timeout.n;
   struct db_stats_rec *restrict const stats = tls->position_timeout.stats;
   const bool db = db_stats(stats, w_ctx->db, String_chars(w_ctx->e->id),
@@ -1348,12 +1344,6 @@ static void position_timeout(const struct worker_ctx *restrict const w_ctx,
   Numeric_sub_to(factor_to, age, total_to);
   samples_per_nano(n, samples);
   Numeric_mul_to(n, total_to, p->cl_samples);
-
-  if (w_ctx->m_cnf->sl_dlnanos != NULL) {
-    Numeric_sub_to(w_ctx->m_cnf->sl_dlnanos, age, sl_to);
-    Numeric_mul_to(n, sl_to, p->sl_samples);
-  } else
-    Numeric_copy_to(zero, p->sl_samples);
 }
 
 static void position_maintain(const struct worker_ctx *restrict const w_ctx,
@@ -1646,6 +1636,12 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
       p->sl_trg.set = true;
       p->sl_trg.cnt++;
       Numeric_copy_to(sample->nanos, p->sl_trg.nanos);
+
+      if (w_ctx->m_cnf->sl_dlnanos != NULL) {
+        samples_per_nano(sr, samples);
+        Numeric_mul_to(sr, w_ctx->m_cnf->sl_dlnanos, p->sl_samples);
+      } else
+        Numeric_copy_to(zero, p->sl_samples);
 
       if (verbose)
         wout("%s: %s->%s: %s: Entering stop loss(%" PRIuMAX ")\n",
