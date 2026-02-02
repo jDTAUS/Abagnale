@@ -128,10 +128,10 @@ struct abag_tls {
   struct position_trigger_vars {
     struct Numeric *restrict sr;
     struct Numeric *restrict age;
+    struct Numeric *restrict r0;
   } position_trigger;
   struct position_trade_vars {
     struct Numeric *restrict o_pr;
-    struct Numeric *restrict r0;
   } position_trade;
   struct trade_create_vars {
     struct db_stats_rec *restrict stats;
@@ -235,8 +235,8 @@ static struct abag_tls *abag_tls(void) {
     tls->position_maintain.r0 = Numeric_new();
     tls->position_trigger.sr = Numeric_new();
     tls->position_trigger.age = Numeric_new();
+    tls->position_trigger.r0 = Numeric_new();
     tls->position_trade.o_pr = Numeric_new();
-    tls->position_trade.r0 = Numeric_new();
     tls->trade_create.stats = heap_malloc(sizeof(struct db_stats_rec));
     tls->trade_create.stats->bd_min = Numeric_new();
     tls->trade_create.stats->bd_max = Numeric_new();
@@ -326,8 +326,8 @@ static void abag_tls_dtor(void *e) {
   Numeric_delete(tls->position_maintain.r0);
   Numeric_delete(tls->position_trigger.sr);
   Numeric_delete(tls->position_trigger.age);
+  Numeric_delete(tls->position_trigger.r0);
   Numeric_delete(tls->position_trade.o_pr);
-  Numeric_delete(tls->position_trade.r0);
   Numeric_delete(tls->trade_create.stats->bd_min);
   Numeric_delete(tls->trade_create.stats->bd_max);
   Numeric_delete(tls->trade_create.stats->bd_avg);
@@ -1548,6 +1548,7 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
   const struct abag_tls *restrict const tls = abag_tls();
   struct Numeric *restrict const sr = tls->position_trigger.sr;
   struct Numeric *restrict const age = tls->position_trigger.age;
+  struct Numeric *restrict const r0 = tls->position_trigger.age;
   bool sl = false;
   bool tp = false;
   bool tl = false;
@@ -1647,8 +1648,10 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
         wout("%s: %s->%s: %s: Entering stop loss(%" PRIuMAX ")\n",
              String_chars(w_ctx->e->nm), String_chars(w_ctx->m->q_id),
              String_chars(w_ctx->m->b_id), String_chars(t->id), p->sl_trg.cnt);
+    } else if (w_ctx->m_cnf->sl_dlnanos != NULL) {
+      Numeric_sub_to(p->sl_samples, one, r0);
+      Numeric_copy_to(r0, p->sl_samples);
     }
-
   } else if (p->sl_trg.set) {
     p->sl_trg.set = false;
     Numeric_copy_to(zero, p->sl_trg.nanos);
@@ -1718,12 +1721,9 @@ static void position_trade(const struct worker_ctx *restrict const w_ctx,
                            const struct Sample *restrict const sample) {
   const struct abag_tls *restrict const tls = abag_tls();
   struct Numeric *restrict const o_pr = tls->position_trade.o_pr;
-  struct Numeric *restrict const r0 = tls->position_trade.r0;
   void **items;
 
   Numeric_copy_to(sample->price, o_pr);
-  Numeric_sub_to(p->sl_samples, one, r0);
-  Numeric_copy_to(r0, p->sl_samples);
 
   position_pricing(w_ctx, t, p, false);
   position_trigger(w_ctx, t, p, samples, sample);
