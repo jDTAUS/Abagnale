@@ -77,6 +77,7 @@ struct MarketConfig {
   struct Numeric *restrict so_maxnanos;
   struct Numeric *restrict sl_dlnanos;
   struct Numeric *restrict tl_dlnanos;
+  struct Numeric *restrict tp_dlnanos;
   enum market_config_origin origin;
 };
 

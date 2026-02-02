@@ -132,8 +132,8 @@ static void sym_delete(void *restrict const v) {
 
 %token AT CDP DATABASE DEMANDDURMAX DEMANDDURMIN DNSTO DNSV4 DNSV6 ERROR
 %token EXCHANGE INCLUDE MARKET NOT PLOTS RATEMAX RATEMIN RETURN STOPLOSSDELAY
-%token SUPPLYDURMAX SUPPLYDURMIN TAKELOSSDELAY TARGET TRADE USER USING
-%token VOLATILITY WINDOW
+%token SUPPLYDURMAX SUPPLYDURMIN TAKELOSSDELAY TAKEPROFITDELAY TARGET TRADE
+%token USER USING VOLATILITY WINDOW
 
 %token <v.string> STRING
 %token <v.number> NUMBER
@@ -554,6 +554,14 @@ opt_trade : TAKELOSSDELAY nanos {
             }
             m_cnf->sl_dlnanos = $2;
           }
+          | TAKEPROFITDELAY nanos {
+            if (m_cnf->tp_dlnanos != NULL) {
+              yyerror("take-profit-delay already specified\n");
+              Numeric_delete($2);
+              YYERROR;
+            }
+            m_cnf->tp_dlnanos = $2;
+          }
           | VOLATILITY NUMBER {
             if (m_cnf->v_pc != NULL) {
               yyerror("volatility already specified\n");
@@ -736,6 +744,7 @@ int lookup(char *s) {
       {"supply-duration-max", SUPPLYDURMAX},
       {"supply-duration-min", SUPPLYDURMIN},
       {"take-loss-delay", TAKELOSSDELAY},
+      {"take-profit-delay", TAKEPROFITDELAY},
       {"target", TARGET},
       {"tick-rate-max", RATEMAX},
       {"tick-rate-min", RATEMIN},
@@ -1294,6 +1303,7 @@ struct MarketConfig *MarketConfig_new(void) {
   c->so_maxnanos = NULL;
   c->sl_dlnanos = NULL;
   c->tl_dlnanos = NULL;
+  c->tp_dlnanos = NULL;
   return c;
 }
 
@@ -1318,6 +1328,7 @@ void MarketConfig_delete(void *restrict const c) {
   Numeric_delete(cfg->so_maxnanos);
   Numeric_delete(cfg->sl_dlnanos);
   Numeric_delete(cfg->tl_dlnanos);
+  Numeric_delete(cfg->tp_dlnanos);
 }
 
 bool MarketConfig_match(const struct MarketConfig *restrict const c,

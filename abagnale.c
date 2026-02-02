@@ -542,6 +542,7 @@ static inline void position_init(struct Position *restrict const p) {
   p->cl_samples = Numeric_copy(zero);
   p->cl_factor = Numeric_copy(one);
   p->sl_samples = Numeric_copy(zero);
+  p->tp_samples = Numeric_copy(zero);
   trigger_init(&p->sl_trg);
   trigger_init(&p->tl_trg);
   trigger_init(&p->tp_trg);
@@ -566,6 +567,7 @@ static inline void position_reset(struct Position *restrict const p) {
   Numeric_copy_to(zero, p->q_filled);
   Numeric_copy_to(zero, p->cl_samples);
   Numeric_copy_to(zero, p->sl_samples);
+  Numeric_copy_to(zero, p->tp_samples);
   trigger_reset(&p->sl_trg);
   trigger_reset(&p->tl_trg);
   trigger_reset(&p->tp_trg);
@@ -586,6 +588,7 @@ static inline void position_delete(const struct Position *restrict const p) {
   Numeric_delete(p->cl_samples);
   Numeric_delete(p->cl_factor);
   Numeric_delete(p->sl_samples);
+  Numeric_delete(p->tp_samples);
   trigger_delete(&p->sl_trg);
   trigger_delete(&p->tl_trg);
   trigger_delete(&p->tp_trg);
@@ -1680,10 +1683,25 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
       p->tp_trg.cnt++;
       Numeric_copy_to(sample->nanos, p->tp_trg.nanos);
 
-      if (verbose)
-        wout("%s: %s->%s: %s: Entering take profit(%" PRIuMAX ")\n",
+      if (w_ctx->m_cnf->tp_dlnanos != NULL) {
+        samples_per_nano(sr, samples);
+        Numeric_mul_to(sr, w_ctx->m_cnf->tp_dlnanos, p->tp_samples);
+      } else
+        Numeric_copy_to(zero, p->tp_samples);
+
+      if (verbose) {
+        char *restrict const delay = Numeric_to_char(p->tp_samples, 0);
+        wout("%s: %s->%s: %s: Entering take profit(%" PRIuMAX
+             "): take-profit-delay: %s ticks\n",
              String_chars(w_ctx->e->nm), String_chars(w_ctx->m->q_id),
-             String_chars(w_ctx->m->b_id), String_chars(t->id), p->tp_trg.cnt);
+             String_chars(w_ctx->m->b_id), String_chars(t->id), p->tp_trg.cnt,
+             delay);
+
+        Numeric_char_free(delay);
+      }
+    } else if (w_ctx->m_cnf->tp_dlnanos != NULL) {
+      Numeric_sub_to(p->tp_samples, one, r0);
+      Numeric_copy_to(r0, p->tp_samples);
     }
   } else if (p->tp_trg.set) {
     p->tp_trg.set = false;
@@ -1692,10 +1710,16 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
     if (p->sl_trg.set)
       Numeric_copy_to(sample->nanos, p->sl_trg.nanos);
 
-    if (verbose)
-      wout("%s: %s->%s: %s: Leaving take profit(%" PRIuMAX ")\n",
+    if (verbose) {
+      char *restrict const delay = Numeric_to_char(p->tp_samples, 0);
+      wout("%s: %s->%s: %s: Leaving take profit(%" PRIuMAX
+           "): take-profit-delay: %s ticks\n",
            String_chars(w_ctx->e->nm), String_chars(w_ctx->m->q_id),
-           String_chars(w_ctx->m->b_id), String_chars(t->id), p->tp_trg.cnt);
+           String_chars(w_ctx->m->b_id), String_chars(t->id), p->tp_trg.cnt,
+           delay);
+
+      Numeric_char_free(delay);
+    }
   }
 
   if (tl) {
@@ -1742,7 +1766,8 @@ static void position_trade(const struct worker_ctx *restrict const w_ctx,
 
   const char *restrict tr_info;
   const struct Numeric *restrict tr_nanos;
-  if (p->tp_trg.set) {
+  if (p->tp_trg.set &&
+      (Numeric_cmp(p->tp_samples, zero) <= 0 || p->tp_trg.cnt > 1)) {
     tr_info = "take profit";
     tr_nanos = p->tp_trg.nanos;
   } else if (p->sl_trg.set &&
