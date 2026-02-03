@@ -32,6 +32,7 @@ struct Trigger {
   bool set;
   uintmax_t cnt;
   struct Numeric *restrict nanos;
+  struct Numeric *restrict price;
 };
 
 enum candle_trend {

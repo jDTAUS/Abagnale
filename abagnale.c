@@ -375,16 +375,19 @@ static inline void trigger_init(struct Trigger *restrict const t) {
   t->cnt = 0;
   t->set = false;
   t->nanos = Numeric_copy(zero);
+  t->price = Numeric_copy(zero);
 }
 
 static inline void trigger_reset(struct Trigger *restrict const tr) {
   tr->cnt = 0;
   tr->set = false;
   Numeric_copy_to(zero, tr->nanos);
+  Numeric_copy_to(zero, tr->price);
 }
 
 static inline void trigger_delete(const struct Trigger *restrict const t) {
   Numeric_delete(t->nanos);
+  Numeric_delete(t->price);
 }
 
 static inline void candle_init(struct Candle *restrict const c) {
@@ -1640,6 +1643,7 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
       p->sl_trg.set = true;
       p->sl_trg.cnt++;
       Numeric_copy_to(sample->nanos, p->sl_trg.nanos);
+      Numeric_copy_to(sample->price, p->sl_trg.price);
 
       if (w_ctx->m_cnf->sl_dlnanos != NULL) {
         samples_per_nano(sr, samples);
@@ -1664,6 +1668,7 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
   } else if (p->sl_trg.set) {
     p->sl_trg.set = false;
     Numeric_copy_to(zero, p->sl_trg.nanos);
+    Numeric_copy_to(zero, p->sl_trg.price);
 
     if (verbose) {
       char *restrict const delay = Numeric_to_char(p->sl_samples, 0);
@@ -1682,6 +1687,7 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
       p->tp_trg.set = true;
       p->tp_trg.cnt++;
       Numeric_copy_to(sample->nanos, p->tp_trg.nanos);
+      Numeric_copy_to(sample->price, p->tp_trg.price);
 
       if (w_ctx->m_cnf->tp_dlnanos != NULL) {
         samples_per_nano(sr, samples);
@@ -1706,9 +1712,12 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
   } else if (p->tp_trg.set) {
     p->tp_trg.set = false;
     Numeric_copy_to(zero, p->tp_trg.nanos);
+    Numeric_copy_to(zero, p->tp_trg.price);
 
-    if (p->sl_trg.set)
+    if (p->sl_trg.set) {
       Numeric_copy_to(sample->nanos, p->sl_trg.nanos);
+      Numeric_copy_to(sample->price, p->sl_trg.price);
+    }
 
     if (verbose) {
       char *restrict const delay = Numeric_to_char(p->tp_samples, 0);
@@ -1727,6 +1736,7 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
       p->tl_trg.set = true;
       p->tl_trg.cnt++;
       Numeric_copy_to(sample->nanos, p->tl_trg.nanos);
+      Numeric_copy_to(sample->price, p->tl_trg.price);
 
       if (verbose)
         wout("%s: %s->%s: %s: Entering take loss(%" PRIuMAX ")\n",
@@ -1736,12 +1746,17 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
   } else if (p->tl_trg.set) {
     p->tl_trg.set = false;
     Numeric_copy_to(zero, p->tl_trg.nanos);
+    Numeric_copy_to(zero, p->tl_trg.price);
 
-    if (p->sl_trg.set)
+    if (p->sl_trg.set) {
       Numeric_copy_to(sample->nanos, p->sl_trg.nanos);
+      Numeric_copy_to(sample->price, p->sl_trg.price);
+    }
 
-    if (p->tp_trg.set)
+    if (p->tp_trg.set) {
       Numeric_copy_to(sample->nanos, p->tp_trg.nanos);
+      Numeric_copy_to(sample->price, p->tp_trg.price);
+    }
 
     if (verbose)
       wout("%s: %s->%s: %s: Leaving take loss (%" PRIuMAX ")\n",
@@ -1768,54 +1783,50 @@ static void position_trade(const struct worker_ctx *restrict const w_ctx,
       (Numeric_cmp(p->tp_samples, zero) <= 0 || p->tp_trg.cnt > 1)) {
     tr_info = "take profit";
     tr_nanos = p->tp_trg.nanos;
+    Numeric_copy_to(p->tp_trg.price, o_pr);
   } else if (p->sl_trg.set &&
              (Numeric_cmp(p->sl_samples, zero) <= 0 || p->tp_trg.cnt > 0)) {
     tr_info = "stop loss";
     tr_nanos = p->sl_trg.nanos;
+    Numeric_copy_to(p->sl_trg.price, o_pr);
   } else if (p->tl_trg.set) {
     tr_info = "take loss";
     tr_nanos = p->tl_trg.nanos;
+    Numeric_copy_to(p->tl_trg.price, o_pr);
   } else
     return;
 
+  if (Numeric_cmp(tr_nanos, sample->nanos) == 0)
+    return;
+
   const char *restrict ac_info;
-  bool pr_found = false;
   switch (p->type) {
   case POSITION_TYPE_LONG:
     ac_info = "Supplying";
     // Long: Sell at highest price since trigger.
-    Numeric_copy_to(zero, o_pr);
     items = Array_items(samples);
     for (size_t i = Array_size(samples); i > 0; i--) {
       const struct Sample *restrict const s = items[i - 1];
       if (Numeric_cmp(s->nanos, tr_nanos) > 0 &&
-          Numeric_cmp(s->price, o_pr) > 0) {
+          Numeric_cmp(s->price, o_pr) > 0)
         Numeric_copy_to(s->price, o_pr);
-        pr_found = true;
-      }
     }
     break;
   case POSITION_TYPE_SHORT:
     ac_info = "Demanding";
     // Short: Buy at lowest price since trigger.
-    Numeric_copy_to(sample->price, o_pr);
     items = Array_items(samples);
     for (size_t i = Array_size(samples); i > 0; i--) {
       const struct Sample *restrict const s = items[i - 1];
       if (Numeric_cmp(s->nanos, tr_nanos) > 0 &&
-          Numeric_cmp(s->price, o_pr) < 0) {
+          Numeric_cmp(s->price, o_pr) < 0)
         Numeric_copy_to(s->price, o_pr);
-        pr_found = true;
-      }
     }
     break;
   default:
     werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
     fatal();
   }
-
-  if (pr_found == false)
-    return;
 
   Numeric_scale(o_pr, w_ctx->m->p_sc);
 
@@ -2052,6 +2063,7 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
       t->open_trg.set = true;
       t->open_trg.cnt++;
       Numeric_copy_to(sample->nanos, t->open_trg.nanos);
+      Numeric_copy_to(sample->price, t->open_trg.price);
 
       if (verbose)
         wout("%s: %s->%s: Entering open(%" PRIuMAX ")\n",
@@ -2061,6 +2073,7 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
   } else if (t->open_trg.set) {
     t->open_trg.set = false;
     Numeric_copy_to(zero, t->open_trg.nanos);
+    Numeric_copy_to(zero, t->open_trg.price);
 
     if (verbose)
       wout("%s: %s->%s: Leaving open(%" PRIuMAX ")\n",
