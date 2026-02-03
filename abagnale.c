@@ -1759,8 +1759,6 @@ static void position_trade(const struct worker_ctx *restrict const w_ctx,
   struct Numeric *restrict const o_pr = tls->position_trade.o_pr;
   void **items;
 
-  Numeric_copy_to(sample->price, o_pr);
-
   position_pricing(w_ctx, t, p, false);
   position_trigger(w_ctx, t, p, samples, sample);
 
@@ -1781,27 +1779,34 @@ static void position_trade(const struct worker_ctx *restrict const w_ctx,
     return;
 
   const char *restrict ac_info;
+  bool pr_found = false;
   switch (p->type) {
   case POSITION_TYPE_LONG:
     ac_info = "Supplying";
     // Long: Sell at highest price since trigger.
+    Numeric_copy_to(zero, o_pr);
     items = Array_items(samples);
     for (size_t i = Array_size(samples); i > 0; i--) {
       const struct Sample *restrict const s = items[i - 1];
       if (Numeric_cmp(s->nanos, tr_nanos) > 0 &&
-          Numeric_cmp(s->price, o_pr) > 0)
+          Numeric_cmp(s->price, o_pr) > 0) {
         Numeric_copy_to(s->price, o_pr);
+        pr_found = true;
+      }
     }
     break;
   case POSITION_TYPE_SHORT:
     ac_info = "Demanding";
     // Short: Buy at lowest price since trigger.
+    Numeric_copy_to(sample->price, o_pr);
     items = Array_items(samples);
     for (size_t i = Array_size(samples); i > 0; i--) {
       const struct Sample *restrict const s = items[i - 1];
       if (Numeric_cmp(s->nanos, tr_nanos) > 0 &&
-          Numeric_cmp(s->price, o_pr) < 0)
+          Numeric_cmp(s->price, o_pr) < 0) {
         Numeric_copy_to(s->price, o_pr);
+        pr_found = true;
+      }
     }
     break;
   default:
@@ -1809,7 +1814,7 @@ static void position_trade(const struct worker_ctx *restrict const w_ctx,
     fatal();
   }
 
-  if (Numeric_cmp(sample->price, o_pr) == 0)
+  if (pr_found == false)
     return;
 
   Numeric_scale(o_pr, w_ctx->m->p_sc);
