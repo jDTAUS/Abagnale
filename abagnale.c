@@ -2021,11 +2021,27 @@ static void trade_pricing(const struct worker_ctx *restrict const w_ctx,
 
     if (w_ctx->m_cnf->v_pc != NULL)
       Numeric_copy_to(w_ctx->m_cnf->v_pc, t->tp_pc);
-    else
+    else {
       db_samples_stddev(t->tp_pc, w_ctx->db, String_chars(w_ctx->e->id),
                         String_chars(w_ctx->m->id),
                         w_ctx->m_cnf->v_wnanos != NULL ? w_ctx->m_cnf->v_wnanos
                                                        : five_minute_nanos);
+
+      if (Numeric_cmp(t->tp_pc, zero) == 0) {
+        Numeric_copy_to(t->fee_pc, t->tp_pc);
+
+        char *restrict const win = Numeric_to_char(
+            w_ctx->m_cnf->v_wnanos != NULL ? w_ctx->m_cnf->v_wnanos
+                                           : five_minute_nanos,
+            0);
+
+        werr("%s: %s->%s: Volatility not available: window: %sns\n",
+             String_chars(w_ctx->e->nm), String_chars(w_ctx->m->q_id),
+             String_chars(w_ctx->m->b_id), win);
+
+        Numeric_char_free(win);
+      }
+    }
 
     if (verbose) {
       char *restrict const pr = Numeric_to_char(pricing->ef_pc, 2);

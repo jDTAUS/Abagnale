@@ -283,6 +283,9 @@ void db_sample_create(const void *const db, const char *const e_id,
 void db_samples_stddev(struct Numeric *const stddev, const void *const db,
                        const char *const e_id, const char *const m_id,
                        const struct Numeric *const wnanos) {
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(1, stdout);
+#endif
   // clang-format off
   EXEC SQL BEGIN DECLARE SECTION;
   const char *con = String_chars(db);
@@ -290,6 +293,7 @@ void db_samples_stddev(struct Numeric *const stddev, const void *const db,
   const char *sql_m_id = m_id;
   const numeric *sql_wnanos = Numeric_db(wnanos);
   const numeric *sql_stddev = Numeric_db(stddev);
+  int sql_stddev_ind[1] = {0};
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
   EXEC SQL WHENEVER SQLERROR CALL db_fatal();
@@ -327,9 +331,14 @@ void db_samples_stddev(struct Numeric *const stddev, const void *const db,
             AS "VOLATILITY_PERCENT"
       FROM returns
     )
-    SELECT max("VOLATILITY_PERCENT") INTO :sql_stddev FROM stddev;
+    SELECT max("VOLATILITY_PERCENT") INTO :sql_stddev :sql_stddev_ind FROM stddev;
   EXEC SQL AT :con COMMIT;
   // clang-format on
+  if (sql_stddev_ind[0] != 0)
+    Numeric_copy_to(zero, stddev);
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(0, stdout);
+#endif
 }
 
 void db_samples_open(const void *const db, const char *const e_id,
