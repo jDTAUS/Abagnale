@@ -1581,57 +1581,17 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
     fatal();
   }
 
-  Numeric_sub_to(sample->nanos, p->cnanos, age);
-  samples_per_minute(sr, samples);
+  if (w_ctx->m_cnf->tl_dlnanos != NULL) {
+    Numeric_sub_to(sample->nanos, p->cnanos, age);
 
-  if ((w_ctx->m_cnf->sr_min != NULL &&
-       Numeric_cmp(sr, w_ctx->m_cnf->sr_min) < 0)) {
-    tl = true;
+    if (Numeric_cmp(age, w_ctx->m_cnf->tl_dlnanos) > 0) {
+      tl = true;
 
-    if (verbose && !p->tl_trg.set) {
-      char *restrict const sr_asc = Numeric_to_char(sr, 2);
-      char *restrict const sr_min_asc =
-          Numeric_to_char(w_ctx->m_cnf->sr_min, 2);
-
-      wout("%s: %s->%s: %s: Tick rate %s ticks/minute lower than tick-rate-min "
-           "%s ticks/minute\n",
-           String_chars(w_ctx->e->nm), String_chars(w_ctx->m->q_id),
-           String_chars(w_ctx->m->b_id), String_chars(t->id), sr_asc,
-           sr_min_asc);
-
-      Numeric_char_free(sr_asc);
-      Numeric_char_free(sr_min_asc);
-    }
-  }
-
-  if ((w_ctx->m_cnf->sr_max != NULL &&
-       Numeric_cmp(sr, w_ctx->m_cnf->sr_max) > 0)) {
-    tl = true;
-
-    if (verbose && !p->tl_trg.set) {
-      char *restrict const sr_asc = Numeric_to_char(sr, 2);
-      char *restrict const sr_max_asc =
-          Numeric_to_char(w_ctx->m_cnf->sr_max, 2);
-
-      wout("%s: %s->%s: %s: Tick rate %s ticks/minute greater than "
-           "tick-rate-max %s ticks/minute\n",
-           String_chars(w_ctx->e->nm), String_chars(w_ctx->m->q_id),
-           String_chars(w_ctx->m->b_id), String_chars(t->id), sr_asc,
-           sr_max_asc);
-
-      Numeric_char_free(sr_asc);
-      Numeric_char_free(sr_max_asc);
-    }
-  }
-
-  if ((w_ctx->m_cnf->tl_dlnanos != NULL &&
-       Numeric_cmp(age, w_ctx->m_cnf->tl_dlnanos) > 0)) {
-    tl = true;
-
-    if (verbose && !p->tl_trg.set) {
-      wout("%s: %s->%s: %s: Age greater than take-loss-delay\n",
-           String_chars(w_ctx->e->nm), String_chars(w_ctx->m->q_id),
-           String_chars(w_ctx->m->b_id), String_chars(t->id));
+      if (verbose && !p->tl_trg.set) {
+        wout("%s: %s->%s: %s: Age greater than take-loss-delay\n",
+             String_chars(w_ctx->e->nm), String_chars(w_ctx->m->q_id),
+             String_chars(w_ctx->m->b_id), String_chars(t->id));
+      }
     }
   }
 
@@ -1732,6 +1692,12 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
     if (p->sl_trg.set) {
       Numeric_copy_to(sample->nanos, p->sl_trg.nanos);
       Numeric_copy_to(sample->price, p->sl_trg.price);
+
+      if (w_ctx->m_cnf->sl_dlnanos != NULL) {
+        samples_per_nano(sr, samples);
+        Numeric_mul_to(sr, w_ctx->m_cnf->sl_dlnanos, p->sl_samples);
+      } else
+        Numeric_copy_to(zero, p->sl_samples);
     }
 
     if (verbose) {
@@ -1778,11 +1744,23 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
     if (p->sl_trg.set) {
       Numeric_copy_to(sample->nanos, p->sl_trg.nanos);
       Numeric_copy_to(sample->price, p->sl_trg.price);
+
+      if (w_ctx->m_cnf->sl_dlnanos != NULL) {
+        samples_per_nano(sr, samples);
+        Numeric_mul_to(sr, w_ctx->m_cnf->sl_dlnanos, p->sl_samples);
+      } else
+        Numeric_copy_to(zero, p->sl_samples);
     }
 
     if (p->tp_trg.set) {
       Numeric_copy_to(sample->nanos, p->tp_trg.nanos);
       Numeric_copy_to(sample->price, p->tp_trg.price);
+
+      if (w_ctx->m_cnf->tp_dlnanos != NULL) {
+        samples_per_nano(sr, samples);
+        Numeric_mul_to(sr, w_ctx->m_cnf->tp_dlnanos, p->tp_samples);
+      } else
+        Numeric_copy_to(zero, p->tp_samples);
     }
 
     if (verbose) {
