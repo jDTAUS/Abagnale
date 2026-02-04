@@ -1074,7 +1074,6 @@ int config_fparse(struct Config *const x_conf,
   errors = file->errors;
   popfile();
 
-
   struct MapIterator *restrict const it = MapIterator_new(symbols);
   while(MapIterator_next(it)) {
     const struct sym *restrict const sym = MapIterator_value(it);

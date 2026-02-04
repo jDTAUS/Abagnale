@@ -127,7 +127,6 @@ struct abag_tls {
   } position_maintain;
   struct position_trigger_vars {
     struct Numeric *restrict sr;
-    struct Numeric *restrict age;
     struct Numeric *restrict r0;
   } position_trigger;
   struct position_trade_vars {
@@ -234,7 +233,6 @@ static struct abag_tls *abag_tls(void) {
     tls->position_maintain.m = Numeric_new();
     tls->position_maintain.r0 = Numeric_new();
     tls->position_trigger.sr = Numeric_new();
-    tls->position_trigger.age = Numeric_new();
     tls->position_trigger.r0 = Numeric_new();
     tls->position_trade.o_pr = Numeric_new();
     tls->trade_create.stats = heap_malloc(sizeof(struct db_stats_rec));
@@ -325,7 +323,6 @@ static void abag_tls_dtor(void *e) {
   Numeric_delete(tls->position_maintain.m);
   Numeric_delete(tls->position_maintain.r0);
   Numeric_delete(tls->position_trigger.sr);
-  Numeric_delete(tls->position_trigger.age);
   Numeric_delete(tls->position_trigger.r0);
   Numeric_delete(tls->position_trade.o_pr);
   Numeric_delete(tls->trade_create.stats->bd_min);
@@ -545,6 +542,7 @@ static inline void position_init(struct Position *restrict const p) {
   p->cl_samples = Numeric_copy(zero);
   p->cl_factor = Numeric_copy(one);
   p->sl_samples = Numeric_copy(zero);
+  p->tl_samples = Numeric_copy(zero);
   p->tp_samples = Numeric_copy(zero);
   trigger_init(&p->sl_trg);
   trigger_init(&p->tl_trg);
@@ -570,6 +568,7 @@ static inline void position_reset(struct Position *restrict const p) {
   Numeric_copy_to(zero, p->q_filled);
   Numeric_copy_to(zero, p->cl_samples);
   Numeric_copy_to(zero, p->sl_samples);
+  Numeric_copy_to(zero, p->tl_samples);
   Numeric_copy_to(zero, p->tp_samples);
   trigger_reset(&p->sl_trg);
   trigger_reset(&p->tl_trg);
@@ -591,6 +590,7 @@ static inline void position_delete(const struct Position *restrict const p) {
   Numeric_delete(p->cl_samples);
   Numeric_delete(p->cl_factor);
   Numeric_delete(p->sl_samples);
+  Numeric_delete(p->tl_samples);
   Numeric_delete(p->tp_samples);
   trigger_delete(&p->sl_trg);
   trigger_delete(&p->tl_trg);
@@ -1553,8 +1553,7 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
                              const struct Sample *restrict const sample) {
   const struct abag_tls *restrict const tls = abag_tls();
   struct Numeric *restrict const sr = tls->position_trigger.sr;
-  struct Numeric *restrict const age = tls->position_trigger.age;
-  struct Numeric *restrict const r0 = tls->position_trigger.age;
+  struct Numeric *restrict const r0 = tls->position_trigger.r0;
   bool sl = false;
   bool tp = false;
   bool tl = false;
@@ -1579,20 +1578,6 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
   default:
     werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
     fatal();
-  }
-
-  if (w_ctx->m_cnf->tl_dlnanos != NULL) {
-    Numeric_sub_to(sample->nanos, p->cnanos, age);
-
-    if (Numeric_cmp(age, w_ctx->m_cnf->tl_dlnanos) > 0) {
-      tl = true;
-
-      if (verbose && !p->tl_trg.set) {
-        wout("%s: %s->%s: %s: Age greater than take-loss-delay\n",
-             String_chars(w_ctx->e->nm), String_chars(w_ctx->m->q_id),
-             String_chars(w_ctx->m->b_id), String_chars(t->id));
-      }
-    }
   }
 
   if (t->a != NULL && t->a->position_close(w_ctx->db, w_ctx->e, w_ctx->m, t, p))
@@ -1724,17 +1709,31 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
       Numeric_copy_to(sample->nanos, p->tl_trg.nanos);
       Numeric_copy_to(sample->price, p->tl_trg.price);
 
+      if (w_ctx->m_cnf->tl_dlnanos != NULL) {
+        samples_per_nano(sr, samples);
+        Numeric_mul_to(sr, w_ctx->m_cnf->tl_dlnanos, p->tl_samples);
+      } else
+        Numeric_copy_to(zero, p->tl_samples);
+
       if (verbose) {
         char *restrict const s_pr =
             Numeric_to_char(sample->price, w_ctx->m->q_sc);
 
-        wout("%s: %s->%s: %s: Entering take loss(%" PRIuMAX "): 1%s@%s%s\n",
+        char *restrict const delay = Numeric_to_char(p->tl_samples, 0);
+
+        wout("%s: %s->%s: %s: Entering take loss(%" PRIuMAX
+             "): 1%s@%s%s: take-loss-delay: %s ticks\n",
              String_chars(w_ctx->e->nm), String_chars(w_ctx->m->q_id),
              String_chars(w_ctx->m->b_id), String_chars(t->id), p->tl_trg.cnt,
-             String_chars(w_ctx->m->b_id), s_pr, String_chars(w_ctx->m->q_id));
+             String_chars(w_ctx->m->b_id), s_pr, String_chars(w_ctx->m->q_id),
+             delay);
 
         Numeric_char_free(s_pr);
+        Numeric_char_free(delay);
       }
+    } else {
+      Numeric_sub_to(p->tl_samples, one, r0);
+      Numeric_copy_to(r0, p->tl_samples);
     }
   } else if (p->tl_trg.set) {
     p->tl_trg.set = false;
@@ -1767,12 +1766,17 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
       char *restrict const s_pr =
           Numeric_to_char(sample->price, w_ctx->m->q_sc);
 
-      wout("%s: %s->%s: %s: Leaving take loss (%" PRIuMAX "): 1%s@%s%s\n",
+      char *restrict const delay = Numeric_to_char(p->tl_samples, 0);
+
+      wout("%s: %s->%s: %s: Leaving take loss (%" PRIuMAX
+           "): 1%s@%s%s: take-loss-delay: %s ticks\n",
            String_chars(w_ctx->e->nm), String_chars(w_ctx->m->q_id),
            String_chars(w_ctx->m->b_id), String_chars(t->id), p->tl_trg.cnt,
-           String_chars(w_ctx->m->b_id), s_pr, String_chars(w_ctx->m->q_id));
+           String_chars(w_ctx->m->b_id), s_pr, String_chars(w_ctx->m->q_id),
+           delay);
 
       Numeric_char_free(s_pr);
+      Numeric_char_free(delay);
     }
   }
 }
@@ -1801,7 +1805,8 @@ static void position_trade(const struct worker_ctx *restrict const w_ctx,
     tr_info = "stop loss";
     tr_nanos = p->sl_trg.nanos;
     Numeric_copy_to(p->sl_trg.price, o_pr);
-  } else if (p->tl_trg.set) {
+  } else if (p->tl_trg.set &&
+             (Numeric_cmp(p->tl_samples, zero) <= 0 || p->tl_trg.cnt > 1)) {
     tr_info = "take loss";
     tr_nanos = p->tl_trg.nanos;
     Numeric_copy_to(p->tl_trg.price, o_pr);

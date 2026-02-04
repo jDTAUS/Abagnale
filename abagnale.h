@@ -78,6 +78,7 @@ struct Position {
   struct Numeric *restrict cl_samples;
   struct Numeric *restrict cl_factor;
   struct Numeric *restrict sl_samples;
+  struct Numeric *restrict tl_samples;
   struct Numeric *restrict tp_samples;
   struct Trigger sl_trg;
   struct Trigger tl_trg;
