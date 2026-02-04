@@ -1801,7 +1801,7 @@ static void position_trade(const struct worker_ctx *restrict const w_ctx,
     tr_nanos = p->tp_trg.nanos;
     Numeric_copy_to(p->tp_trg.price, o_pr);
   } else if (p->sl_trg.set &&
-             (Numeric_cmp(p->sl_samples, zero) <= 0 || p->tp_trg.cnt > 0)) {
+             (Numeric_cmp(p->sl_samples, zero) <= 0 || p->sl_trg.cnt > 1)) {
     tr_info = "stop loss";
     tr_nanos = p->sl_trg.nanos;
     Numeric_copy_to(p->sl_trg.price, o_pr);
