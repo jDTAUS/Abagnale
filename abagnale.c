@@ -1657,10 +1657,11 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
             Numeric_to_char(sample->price, w_ctx->m->q_sc);
 
         wout("%s: %s->%s: %s: Entering stop loss(%" PRIuMAX
-             "): %s%s: stop-loss-delay: %s ticks\n",
+             "): 1%s@%s%s: stop-loss-delay: %s ticks\n",
              String_chars(w_ctx->e->nm), String_chars(w_ctx->m->q_id),
              String_chars(w_ctx->m->b_id), String_chars(t->id), p->sl_trg.cnt,
-             s_pr, String_chars(w_ctx->m->q_id), delay);
+             String_chars(w_ctx->m->b_id), s_pr, String_chars(w_ctx->m->q_id),
+             delay);
 
         Numeric_char_free(delay);
         Numeric_char_free(s_pr);
@@ -1680,10 +1681,11 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
           Numeric_to_char(sample->price, w_ctx->m->q_sc);
 
       wout("%s: %s->%s: %s: Leaving stop loss(%" PRIuMAX
-           "): %s%s: stop-loss-delay: %s ticks\n",
+           "): 1%s@%s%s: stop-loss-delay: %s ticks\n",
            String_chars(w_ctx->e->nm), String_chars(w_ctx->m->q_id),
            String_chars(w_ctx->m->b_id), String_chars(t->id), p->sl_trg.cnt,
-           s_pr, String_chars(w_ctx->m->q_id), delay);
+           String_chars(w_ctx->m->b_id), s_pr, String_chars(w_ctx->m->q_id),
+           delay);
 
       Numeric_char_free(delay);
       Numeric_char_free(s_pr);
@@ -1709,10 +1711,11 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
             Numeric_to_char(sample->price, w_ctx->m->q_sc);
 
         wout("%s: %s->%s: %s: Entering take profit(%" PRIuMAX
-             "): %s%s: take-profit-delay: %s ticks\n",
+             "): 1%s@%s%s: take-profit-delay: %s ticks\n",
              String_chars(w_ctx->e->nm), String_chars(w_ctx->m->q_id),
              String_chars(w_ctx->m->b_id), String_chars(t->id), p->tp_trg.cnt,
-             s_pr, String_chars(w_ctx->m->q_id), delay);
+             String_chars(w_ctx->m->b_id), s_pr, String_chars(w_ctx->m->q_id),
+             delay);
 
         Numeric_char_free(delay);
         Numeric_char_free(s_pr);
@@ -1737,10 +1740,11 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
           Numeric_to_char(sample->price, w_ctx->m->q_sc);
 
       wout("%s: %s->%s: %s: Leaving take profit(%" PRIuMAX
-           "): %s%s: take-profit-delay: %s ticks\n",
+           "): 1%s@%s%s: take-profit-delay: %s ticks\n",
            String_chars(w_ctx->e->nm), String_chars(w_ctx->m->q_id),
            String_chars(w_ctx->m->b_id), String_chars(t->id), p->tp_trg.cnt,
-           s_pr, String_chars(w_ctx->m->q_id), delay);
+           String_chars(w_ctx->m->b_id), s_pr, String_chars(w_ctx->m->q_id),
+           delay);
 
       Numeric_char_free(delay);
       Numeric_char_free(s_pr);
@@ -1758,10 +1762,10 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
         char *restrict const s_pr =
             Numeric_to_char(sample->price, w_ctx->m->q_sc);
 
-        wout("%s: %s->%s: %s: Entering take loss(%" PRIuMAX "): %s%s\n",
+        wout("%s: %s->%s: %s: Entering take loss(%" PRIuMAX "): 1%s@%s%s\n",
              String_chars(w_ctx->e->nm), String_chars(w_ctx->m->q_id),
              String_chars(w_ctx->m->b_id), String_chars(t->id), p->tl_trg.cnt,
-             s_pr, String_chars(w_ctx->m->q_id));
+             String_chars(w_ctx->m->b_id), s_pr, String_chars(w_ctx->m->q_id));
 
         Numeric_char_free(s_pr);
       }
@@ -1785,10 +1789,10 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
       char *restrict const s_pr =
           Numeric_to_char(sample->price, w_ctx->m->q_sc);
 
-      wout("%s: %s->%s: %s: Leaving take loss (%" PRIuMAX "): %s%s\n",
+      wout("%s: %s->%s: %s: Leaving take loss (%" PRIuMAX "): 1%s@%s%s\n",
            String_chars(w_ctx->e->nm), String_chars(w_ctx->m->q_id),
            String_chars(w_ctx->m->b_id), String_chars(t->id), p->tl_trg.cnt,
-           s_pr, String_chars(w_ctx->m->q_id));
+           String_chars(w_ctx->m->b_id), s_pr, String_chars(w_ctx->m->q_id));
 
       Numeric_char_free(s_pr);
     }
@@ -2099,10 +2103,10 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
         char *restrict const s_pr =
             Numeric_to_char(sample->price, w_ctx->m->q_sc);
 
-        wout("%s: %s->%s: Entering open(%" PRIuMAX "): %s%s\n",
+        wout("%s: %s->%s: Entering open(%" PRIuMAX "): 1%s@%s%s\n",
              String_chars(w_ctx->e->nm), String_chars(w_ctx->m->q_id),
-             String_chars(w_ctx->m->b_id), t->open_trg.cnt, s_pr,
-             String_chars(w_ctx->m->q_id));
+             String_chars(w_ctx->m->b_id), t->open_trg.cnt,
+             String_chars(w_ctx->m->b_id), s_pr, String_chars(w_ctx->m->q_id));
 
         Numeric_char_free(s_pr);
       }
@@ -2116,10 +2120,10 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
       char *restrict const s_pr =
           Numeric_to_char(sample->price, w_ctx->m->q_sc);
 
-      wout("%s: %s->%s: Leaving open(%" PRIuMAX "): %s%s\n",
+      wout("%s: %s->%s: Leaving open(%" PRIuMAX "): 1%s@%s%s\n",
            String_chars(w_ctx->e->nm), String_chars(w_ctx->m->q_id),
-           String_chars(w_ctx->m->b_id), t->open_trg.cnt, s_pr,
-           String_chars(w_ctx->m->q_id));
+           String_chars(w_ctx->m->b_id), t->open_trg.cnt,
+           String_chars(w_ctx->m->b_id), s_pr, String_chars(w_ctx->m->q_id));
 
       Numeric_char_free(s_pr);
     }
@@ -2159,10 +2163,10 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
       char *restrict const s_pr =
           Numeric_to_char(sample->price, w_ctx->m->q_sc);
 
-      wout("%s: %s->%s: Leaving open(%" PRIuMAX "): %s%s\n",
+      wout("%s: %s->%s: Leaving open(%" PRIuMAX "): 1%s@%s%s\n",
            String_chars(w_ctx->e->nm), String_chars(w_ctx->m->q_id),
-           String_chars(w_ctx->m->b_id), t->open_trg.cnt, s_pr,
-           String_chars(w_ctx->m->q_id));
+           String_chars(w_ctx->m->b_id), t->open_trg.cnt,
+           String_chars(w_ctx->m->b_id), s_pr, String_chars(w_ctx->m->q_id));
 
       Numeric_char_free(s_pr);
     }
@@ -2224,10 +2228,10 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
              String_chars(w_ctx->m->q_id), r, String_chars(w_ctx->m->q_id), a,
              String_chars(w_ctx->m->q_id), c);
 
-        wout("%s: %s->%s: Leaving open(%" PRIuMAX "): %s%s\n",
+        wout("%s: %s->%s: Leaving open(%" PRIuMAX "): 1%s@%s%s\n",
              String_chars(w_ctx->e->nm), String_chars(w_ctx->m->q_id),
-             String_chars(w_ctx->m->b_id), t->open_trg.cnt, s_pr,
-             String_chars(w_ctx->m->q_id));
+             String_chars(w_ctx->m->b_id), t->open_trg.cnt,
+             String_chars(w_ctx->m->b_id), s_pr, String_chars(w_ctx->m->q_id));
 
         Numeric_char_free(s_pr);
         Numeric_char_free(r);
@@ -2288,10 +2292,10 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
              String_chars(w_ctx->m->q_id), String_chars(w_ctx->m->b_id), b,
              String_chars(w_ctx->m->b_id), ba, String_chars(w_ctx->m->b_id), c);
 
-        wout("%s: %s->%s: Leaving open(%" PRIuMAX "): %s%s\n",
+        wout("%s: %s->%s: Leaving open(%" PRIuMAX "): 1%s@%s%s\n",
              String_chars(w_ctx->e->nm), String_chars(w_ctx->m->q_id),
-             String_chars(w_ctx->m->b_id), t->open_trg.cnt, s_pr,
-             String_chars(w_ctx->m->q_id));
+             String_chars(w_ctx->m->b_id), t->open_trg.cnt,
+             String_chars(w_ctx->m->b_id), s_pr, String_chars(w_ctx->m->q_id));
 
         Numeric_char_free(s_pr);
         Numeric_char_free(qr);
