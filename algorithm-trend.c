@@ -474,15 +474,14 @@ static struct Position *trend_position_open(
 
   switch (t->open_cd.t) {
   case CANDLE_UP:
-    // Trending up. Buy at candle high and expect the price to go up further.
+    // Trending up. Buy at current price expecting increasing price.
     p = &t->p_long;
-    Numeric_copy_to(t->open_cd.h, p->price);
+    Numeric_copy_to(sample->price, p->price);
     break;
   case CANDLE_DOWN:
-    // Trending down. Sell at candle low and expect the price to go down
-    // further.
+    // Trending down. Sell at current price expecting decreasing price.
     p = &t->p_short;
-    Numeric_copy_to(t->open_cd.l, p->price);
+    Numeric_copy_to(sample->price, p->price);
     break;
   default:
     werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
