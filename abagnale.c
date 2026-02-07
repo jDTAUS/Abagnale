@@ -1383,8 +1383,9 @@ static void position_maintain(const struct worker_ctx *restrict const w_ctx,
       fatal();
     }
 
-    if (cancel && t->a != NULL &&
-        !t->a->position_close(w_ctx->db, w_ctx->e, w_ctx->m, t, p))
+    if (cancel && t->a != NULL)
+      cancel = t->a->position_close(w_ctx->db, w_ctx->e, w_ctx->m, t, p);
+    else
       cancel = false;
 
     if (Numeric_cmp(p->cl_samples, zero) <= 0) {
