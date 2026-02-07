@@ -1363,8 +1363,9 @@ static void position_maintain(const struct worker_ctx *restrict const w_ctx,
   struct Numeric *restrict const r0 = tls->position_maintain.r0;
   const bool reload = Numeric_cmp(sample->nanos, p->rnanos) > 0;
   const bool free_order = order == NULL;
-  bool cancel =
-      t->a != NULL && t->a->position_close(w_ctx->db, w_ctx->e, w_ctx->m, t, p);
+  bool cancel = t->a != NULL &&
+                t->a->position_close(w_ctx->db, w_ctx->e, w_ctx->m, t, p) &&
+                !(p->sl_trg.set || p->tp_trg.set || p->tl_trg.set);
 
   Numeric_sub_to(p->cl_samples, one, r0);
   Numeric_copy_to(r0, p->cl_samples);
