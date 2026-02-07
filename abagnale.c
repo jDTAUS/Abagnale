@@ -1363,35 +1363,37 @@ static void position_maintain(const struct worker_ctx *restrict const w_ctx,
   struct Numeric *restrict const r0 = tls->position_maintain.r0;
   const bool reload = Numeric_cmp(sample->nanos, p->rnanos) > 0;
   const bool free_order = order == NULL;
-  bool cancel =
-      t->a != NULL && t->a->position_close(w_ctx->db, w_ctx->e, w_ctx->m, t, p);
+  bool cancel = false;
 
   Numeric_sub_to(p->cl_samples, one, r0);
   Numeric_copy_to(r0, p->cl_samples);
 
-  if (cancel) {
-    switch (p->type) {
-    case POSITION_TYPE_LONG:
-      cancel = !(t->p_short.sl_trg.set || t->p_short.tp_trg.set ||
-                 t->p_short.tl_trg.set);
-      break;
-    case POSITION_TYPE_SHORT:
-      cancel = !(t->p_long.sl_trg.set || t->p_long.tp_trg.set ||
-                 t->p_long.tl_trg.set);
-      break;
-    default:
-      werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-      fatal();
+  if (!p->filled) {
+    if (t->a != NULL &&
+        t->a->position_close(w_ctx->db, w_ctx->e, w_ctx->m, t, p)) {
+      switch (p->type) {
+      case POSITION_TYPE_LONG:
+        cancel = !(t->p_short.sl_trg.set || t->p_short.tp_trg.set ||
+                   t->p_short.tl_trg.set);
+        break;
+      case POSITION_TYPE_SHORT:
+        cancel = !(t->p_long.sl_trg.set || t->p_long.tp_trg.set ||
+                   t->p_long.tl_trg.set);
+        break;
+      default:
+        werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
+        fatal();
+      }
     }
-  }
 
-  if (!p->filled && Numeric_cmp(p->cl_samples, zero) <= 0) {
-    if (verbose)
-      wout("%s: %s->%s: %s: Order timed out\n", String_chars(w_ctx->e->nm),
-           String_chars(w_ctx->m->q_id), String_chars(w_ctx->m->b_id),
-           String_chars(t->id));
+    if (Numeric_cmp(p->cl_samples, zero) <= 0) {
+      if (verbose)
+        wout("%s: %s->%s: %s: Order timed out\n", String_chars(w_ctx->e->nm),
+             String_chars(w_ctx->m->q_id), String_chars(w_ctx->m->b_id),
+             String_chars(t->id));
 
-    cancel = true;
+      cancel = true;
+    }
   }
 
   if (cancel || reload || order != NULL) {
