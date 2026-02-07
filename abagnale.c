@@ -1369,22 +1369,23 @@ static void position_maintain(const struct worker_ctx *restrict const w_ctx,
   Numeric_copy_to(r0, p->cl_samples);
 
   if (!p->filled) {
-    if (t->a != NULL &&
-        t->a->position_close(w_ctx->db, w_ctx->e, w_ctx->m, t, p)) {
-      switch (p->type) {
-      case POSITION_TYPE_LONG:
-        cancel = !(t->p_short.sl_trg.set || t->p_short.tp_trg.set ||
-                   t->p_short.tl_trg.set);
-        break;
-      case POSITION_TYPE_SHORT:
-        cancel = !(t->p_long.sl_trg.set || t->p_long.tp_trg.set ||
-                   t->p_long.tl_trg.set);
-        break;
-      default:
-        werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-        fatal();
-      }
+    switch (p->type) {
+    case POSITION_TYPE_LONG:
+      cancel = !(t->p_short.sl_trg.set || t->p_short.tp_trg.set ||
+                 t->p_short.tl_trg.set);
+      break;
+    case POSITION_TYPE_SHORT:
+      cancel = !(t->p_long.sl_trg.set || t->p_long.tp_trg.set ||
+                 t->p_long.tl_trg.set);
+      break;
+    default:
+      werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
+      fatal();
     }
+
+    if (cancel && t->a != NULL &&
+        !t->a->position_close(w_ctx->db, w_ctx->e, w_ctx->m, t, p))
+      cancel = false;
 
     if (Numeric_cmp(p->cl_samples, zero) <= 0) {
       if (verbose)
