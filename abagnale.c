@@ -1361,9 +1361,10 @@ static void position_maintain(const struct worker_ctx *restrict const w_ctx,
   const struct abag_tls *restrict const tls = abag_tls();
   struct Numeric *restrict const m = tls->position_maintain.m;
   struct Numeric *restrict const r0 = tls->position_maintain.r0;
-  bool cancel = false;
   const bool reload = Numeric_cmp(sample->nanos, p->rnanos) > 0;
   const bool free_order = order == NULL;
+  bool cancel =
+      t->a != NULL && t->a->position_close(w_ctx->db, w_ctx->e, w_ctx->m, t, p);
 
   Numeric_sub_to(p->cl_samples, one, r0);
   Numeric_copy_to(r0, p->cl_samples);
@@ -2799,7 +2800,6 @@ static int samples_process(void *restrict const arg) {
     Map_unlock(market_trades);
     Array_lock(trades);
     bool betting = false;
-    bool pending = false;
   again:
     items = Array_items(trades);
     for (size_t i = Array_size(trades); i > 0; i--) {
@@ -2814,14 +2814,11 @@ static int samples_process(void *restrict const arg) {
         trade_delete(t);
         Array_remove_idx(trades, i - 1);
         goto again;
-      } else if (t->status == TRADE_STATUS_BUYING ||
-                 t->status == TRADE_STATUS_SELLING) {
-        pending = true;
       } else if (t->status == TRADE_STATUS_NEW)
         betting = true;
     }
 
-    if (!(betting || pending)) {
+    if (!betting) {
       struct Trade *restrict const t = trade_new();
       trade_create(ctx, t, samples, sample);
       Array_add_tail(trades, t);
