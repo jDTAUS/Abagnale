@@ -1343,7 +1343,7 @@ void MarketConfig_delete(void *restrict const c) {
 
 bool MarketConfig_match(const struct MarketConfig *restrict const c,
                         const struct String *restrict const m) {
-  bool match = false;
+  bool match = Array_size(c->m_pats) == 0;
   struct str_find sm[MAXCAPTURES] = {0};
   const char *errstr = NULL;
   void **m_items = Array_items(c->m_pats);
