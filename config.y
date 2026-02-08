@@ -100,6 +100,7 @@ static struct Numeric *parse_nanos(const struct String *restrict const);
 static struct Config *conf = NULL;
 static struct ExchangeConfig *e_cnf = NULL;
 static struct MarketConfig *m_cnf = NULL;
+static struct Array *m_pats = NULL;
 
 static int errors = 0;
 
@@ -468,7 +469,7 @@ conf_market : negate STRING {
               struct Pattern *restrict const pat = Pattern_new();
               pat->pat = $2;
               pat->neg = $1;
-              Array_add_tail(m_cnf->m_pats, pat);
+              Array_add_tail(m_pats, pat);
             }
             ;
 
@@ -484,7 +485,11 @@ opt_trade : TAKELOSSDELAY nanos {
             }
             m_cnf->tl_dlnanos = $2;
           }
-          | MARKET marketconf {
+          | MARKET {
+            m_pats = Array_new(4);
+            Array_add_head(m_cnf->m_pats, m_pats);
+          } marketconf {
+            m_pats = NULL;
           }
           | SUPPLYDURMAX nanos {
             if (m_cnf->so_maxnanos != NULL) {
@@ -1279,7 +1284,9 @@ struct Pattern *Pattern_new(void) {
 }
 
 void Pattern_delete(void *restrict const p) {
-  heap_free(p);
+  struct Pattern *restrict const pat = p;
+  String_delete(pat->pat);
+  heap_free(pat);
 }
 
 struct MarketConfig *MarketConfig_new(void) {
@@ -1306,6 +1313,10 @@ struct MarketConfig *MarketConfig_new(void) {
   return c;
 }
 
+static inline void pattern_array_delete(void *restrict const e) {
+  Array_delete(e, Pattern_delete);
+}
+
 void MarketConfig_delete(void *restrict const c) {
   if (c == NULL)
     return;
@@ -1313,7 +1324,7 @@ void MarketConfig_delete(void *restrict const c) {
   struct MarketConfig *restrict const cfg = c;
   String_delete(cfg->e_nm);
   String_delete(cfg->a_nm);
-  Array_delete(cfg->m_pats, Pattern_delete);
+  Array_delete(cfg->m_pats, pattern_array_delete);
   Numeric_delete(cfg->q_tgt);
   String_delete(cfg->q_id);
   Numeric_delete(cfg->v_pc);
@@ -1332,25 +1343,35 @@ void MarketConfig_delete(void *restrict const c) {
 
 bool MarketConfig_match(const struct MarketConfig *restrict const c,
                         const struct String *restrict const m) {
-  bool market = true;
+  bool match = false;
   struct str_find sm[MAXCAPTURES] = {0};
   const char *errstr = NULL;
-  void **items = Array_items(c->m_pats);
+  void **m_items = Array_items(c->m_pats);
   const char *mk = String_chars(m);
 
-  for (size_t i = Array_size(c->m_pats); i > 0 && market; i--) {
-    market = str_find(mk, String_chars(((struct Pattern *)items[i - 1])->pat),
-                      sm, MAXCAPTURES, &errstr)
-             ? !((struct Pattern *)items[i - 1])->neg
-             : ((struct Pattern *)items[i - 1])->neg;
+  for (size_t i = Array_size(c->m_pats); i > 0 && !match; i--) {
+    const struct Array *restrict const pats = m_items[i - 1];
+    void **p_items = Array_items(pats);
+    bool market = true;
 
-    if (errstr != NULL) {
-      werr("%s: %s: %s\n",
-           mk, String_chars(((struct Pattern *)items[i - 1])->pat), errstr);
-      market = false;
+    for (size_t j = Array_size(pats); j > 0 && market; j--) {
+      market = str_find(mk, String_chars(((struct Pattern *)p_items[j - 1])->pat),
+                        sm, MAXCAPTURES, &errstr)
+               ? !((struct Pattern *)p_items[j - 1])->neg
+               : ((struct Pattern *)p_items[j - 1])->neg;
+
+      if (errstr != NULL) {
+        werr("%s: %s: %s\n",
+             mk, String_chars(((struct Pattern *)p_items[j - 1])->pat), errstr);
+        market = false;
+      }
     }
+
+    if (market)
+      match = true;
+
   }
 
-  return market;
+  return match;
 }
 
