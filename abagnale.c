@@ -170,6 +170,7 @@ extern const bool verbose;
 extern const struct Numeric *restrict const zero;
 extern const struct Numeric *restrict const one;
 extern const struct Numeric *restrict const two;
+extern const struct Numeric *restrict const four;
 extern const struct Numeric *restrict const hundred;
 extern const struct Numeric *restrict const second_nanos;
 extern const struct Numeric *restrict const minute_nanos;
@@ -1248,7 +1249,7 @@ static void position_cancel(const struct worker_ctx *restrict const w_ctx,
   const struct abag_tls *restrict const tls = abag_tls();
   struct Numeric *restrict const r0 = tls->position_cancel.r0;
 
-  Numeric_mul_to(p->cl_factor, two, r0);
+  Numeric_mul_to(p->cl_factor, four, r0);
   Numeric_copy_to(r0, p->cl_factor);
 
   switch (p->type) {
