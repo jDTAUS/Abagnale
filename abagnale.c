@@ -1619,6 +1619,7 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
         Numeric_copy_to(zero, p->sl_samples);
 
       if (verbose) {
+        char *restrict const p_info = position_string(w_ctx, t, p);
         char *restrict const delay = Numeric_to_char(p->sl_samples, 0);
         char *restrict const s_pr =
             Numeric_to_char(sample->price, w_ctx->m->q_sc);
@@ -1630,6 +1631,11 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
              String_chars(w_ctx->m->b_id), s_pr, String_chars(w_ctx->m->q_id),
              delay);
 
+        wout("%s: %s->%s: %s\n", String_chars(w_ctx->e->nm),
+             String_chars(w_ctx->m->q_id), String_chars(w_ctx->m->b_id),
+             p_info);
+
+        heap_free(p_info);
         Numeric_char_free(delay);
         Numeric_char_free(s_pr);
       }
@@ -1643,6 +1649,7 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
     Numeric_copy_to(zero, p->sl_trg.price);
 
     if (verbose) {
+      char *restrict const p_info = position_string(w_ctx, t, p);
       char *restrict const delay = Numeric_to_char(p->sl_samples, 0);
       char *restrict const s_pr =
           Numeric_to_char(sample->price, w_ctx->m->q_sc);
@@ -1654,6 +1661,10 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
            String_chars(w_ctx->m->b_id), s_pr, String_chars(w_ctx->m->q_id),
            delay);
 
+      wout("%s: %s->%s: %s\n", String_chars(w_ctx->e->nm),
+           String_chars(w_ctx->m->q_id), String_chars(w_ctx->m->b_id), p_info);
+
+      heap_free(p_info);
       Numeric_char_free(delay);
       Numeric_char_free(s_pr);
     }
@@ -1673,6 +1684,7 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
         Numeric_copy_to(zero, p->tp_samples);
 
       if (verbose) {
+        char *restrict const p_info = position_string(w_ctx, t, p);
         char *restrict const delay = Numeric_to_char(p->tp_samples, 0);
         char *restrict const s_pr =
             Numeric_to_char(sample->price, w_ctx->m->q_sc);
@@ -1684,6 +1696,11 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
              String_chars(w_ctx->m->b_id), s_pr, String_chars(w_ctx->m->q_id),
              delay);
 
+        wout("%s: %s->%s: %s\n", String_chars(w_ctx->e->nm),
+             String_chars(w_ctx->m->q_id), String_chars(w_ctx->m->b_id),
+             p_info);
+
+        heap_free(p_info);
         Numeric_char_free(delay);
         Numeric_char_free(s_pr);
       }
@@ -1708,6 +1725,7 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
     }
 
     if (verbose) {
+      char *restrict const p_info = position_string(w_ctx, t, p);
       char *restrict const delay = Numeric_to_char(p->tp_samples, 0);
       char *restrict const s_pr =
           Numeric_to_char(sample->price, w_ctx->m->q_sc);
@@ -1719,6 +1737,10 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
            String_chars(w_ctx->m->b_id), s_pr, String_chars(w_ctx->m->q_id),
            delay);
 
+      wout("%s: %s->%s: %s\n", String_chars(w_ctx->e->nm),
+           String_chars(w_ctx->m->q_id), String_chars(w_ctx->m->b_id), p_info);
+
+      heap_free(p_info);
       Numeric_char_free(delay);
       Numeric_char_free(s_pr);
     }
@@ -1738,10 +1760,10 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
         Numeric_copy_to(zero, p->tl_samples);
 
       if (verbose) {
+        char *restrict const p_info = position_string(w_ctx, t, p);
+        char *restrict const delay = Numeric_to_char(p->tl_samples, 0);
         char *restrict const s_pr =
             Numeric_to_char(sample->price, w_ctx->m->q_sc);
-
-        char *restrict const delay = Numeric_to_char(p->tl_samples, 0);
 
         wout("%s: %s->%s: %s: Entering take loss(%" PRIuMAX
              "): 1%s@%s%s: take-loss-delay: %s ticks\n",
@@ -1750,6 +1772,11 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
              String_chars(w_ctx->m->b_id), s_pr, String_chars(w_ctx->m->q_id),
              delay);
 
+        wout("%s: %s->%s: %s\n", String_chars(w_ctx->e->nm),
+             String_chars(w_ctx->m->q_id), String_chars(w_ctx->m->b_id),
+             p_info);
+
+        heap_free(p_info);
         Numeric_char_free(s_pr);
         Numeric_char_free(delay);
       }
@@ -1785,10 +1812,10 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
     }
 
     if (verbose) {
+      char *restrict const p_info = position_string(w_ctx, t, p);
+      char *restrict const delay = Numeric_to_char(p->tl_samples, 0);
       char *restrict const s_pr =
           Numeric_to_char(sample->price, w_ctx->m->q_sc);
-
-      char *restrict const delay = Numeric_to_char(p->tl_samples, 0);
 
       wout("%s: %s->%s: %s: Leaving take loss (%" PRIuMAX
            "): 1%s@%s%s: take-loss-delay: %s ticks\n",
@@ -1797,6 +1824,10 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
            String_chars(w_ctx->m->b_id), s_pr, String_chars(w_ctx->m->q_id),
            delay);
 
+      wout("%s: %s->%s: %s\n", String_chars(w_ctx->e->nm),
+           String_chars(w_ctx->m->q_id), String_chars(w_ctx->m->b_id), p_info);
+
+      heap_free(p_info);
       Numeric_char_free(s_pr);
       Numeric_char_free(delay);
     }
