@@ -1631,9 +1631,9 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
              String_chars(w_ctx->m->b_id), s_pr, String_chars(w_ctx->m->q_id),
              delay);
 
-        wout("%s: %s->%s: %s\n", String_chars(w_ctx->e->nm),
+        wout("%s: %s->%s: %s: %s\n", String_chars(w_ctx->e->nm),
              String_chars(w_ctx->m->q_id), String_chars(w_ctx->m->b_id),
-             p_info);
+             String_chars(p->id), p_info);
 
         heap_free(p_info);
         Numeric_char_free(delay);
@@ -1661,8 +1661,9 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
            String_chars(w_ctx->m->b_id), s_pr, String_chars(w_ctx->m->q_id),
            delay);
 
-      wout("%s: %s->%s: %s\n", String_chars(w_ctx->e->nm),
-           String_chars(w_ctx->m->q_id), String_chars(w_ctx->m->b_id), p_info);
+      wout("%s: %s->%s: %s: %s\n", String_chars(w_ctx->e->nm),
+           String_chars(w_ctx->m->q_id), String_chars(w_ctx->m->b_id),
+           String_chars(p->id), p_info);
 
       heap_free(p_info);
       Numeric_char_free(delay);
@@ -1696,9 +1697,9 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
              String_chars(w_ctx->m->b_id), s_pr, String_chars(w_ctx->m->q_id),
              delay);
 
-        wout("%s: %s->%s: %s\n", String_chars(w_ctx->e->nm),
+        wout("%s: %s->%s: %s: %s\n", String_chars(w_ctx->e->nm),
              String_chars(w_ctx->m->q_id), String_chars(w_ctx->m->b_id),
-             p_info);
+             String_chars(p->id), p_info);
 
         heap_free(p_info);
         Numeric_char_free(delay);
@@ -1737,8 +1738,9 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
            String_chars(w_ctx->m->b_id), s_pr, String_chars(w_ctx->m->q_id),
            delay);
 
-      wout("%s: %s->%s: %s\n", String_chars(w_ctx->e->nm),
-           String_chars(w_ctx->m->q_id), String_chars(w_ctx->m->b_id), p_info);
+      wout("%s: %s->%s: %s: %s\n", String_chars(w_ctx->e->nm),
+           String_chars(w_ctx->m->q_id), String_chars(w_ctx->m->b_id),
+           String_chars(p->id), p_info);
 
       heap_free(p_info);
       Numeric_char_free(delay);
@@ -1772,9 +1774,9 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
              String_chars(w_ctx->m->b_id), s_pr, String_chars(w_ctx->m->q_id),
              delay);
 
-        wout("%s: %s->%s: %s\n", String_chars(w_ctx->e->nm),
+        wout("%s: %s->%s: %s: %s\n", String_chars(w_ctx->e->nm),
              String_chars(w_ctx->m->q_id), String_chars(w_ctx->m->b_id),
-             p_info);
+             String_chars(p->id), p_info);
 
         heap_free(p_info);
         Numeric_char_free(s_pr);
@@ -1824,8 +1826,9 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
            String_chars(w_ctx->m->b_id), s_pr, String_chars(w_ctx->m->q_id),
            delay);
 
-      wout("%s: %s->%s: %s\n", String_chars(w_ctx->e->nm),
-           String_chars(w_ctx->m->q_id), String_chars(w_ctx->m->b_id), p_info);
+      wout("%s: %s->%s: %s: %s\n", String_chars(w_ctx->e->nm),
+           String_chars(w_ctx->m->q_id), String_chars(w_ctx->m->b_id),
+           String_chars(p->id), p_info);
 
       heap_free(p_info);
       Numeric_char_free(s_pr);
