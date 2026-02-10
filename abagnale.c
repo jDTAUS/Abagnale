@@ -1390,12 +1390,20 @@ static void position_maintain(const struct worker_ctx *restrict const w_ctx,
       cancel = false;
 
     if (Numeric_cmp(p->cl_samples, zero) <= 0) {
-      if (verbose)
+      cancel = true;
+
+      if (verbose) {
+        char *restrict const p_info = position_string(w_ctx, t, p);
         wout("%s: %s->%s: %s: Order timed out\n", String_chars(w_ctx->e->nm),
              String_chars(w_ctx->m->q_id), String_chars(w_ctx->m->b_id),
              String_chars(t->id));
 
-      cancel = true;
+        wout("%s: %s->%s: %s: %s\n", String_chars(w_ctx->e->nm),
+             String_chars(w_ctx->m->q_id), String_chars(w_ctx->m->b_id),
+             String_chars(p->id), p_info);
+
+        heap_free(p_info);
+      }
     }
   }
 
