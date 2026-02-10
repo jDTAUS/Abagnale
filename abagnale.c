@@ -2284,12 +2284,11 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
         char *restrict const c = candle_string(
             &t->open_cd, String_chars(w_ctx->m->q_id), w_ctx->m->p_sc);
 
-        wout("%s: %s->%s: Cannot demand %s%s@%s%s: %s required/available: "
-             "%s%s/%s%s, candle: %s\n",
+        wout("%s: %s->%s: Cannot demand %s%s@%s%s: %s%s/%s%s r/a, c: %s\n",
              String_chars(w_ctx->e->nm), String_chars(w_ctx->m->q_id),
              String_chars(w_ctx->m->b_id), b, String_chars(w_ctx->m->b_id), pr,
-             String_chars(w_ctx->m->q_id), String_chars(w_ctx->m->q_id), r,
-             String_chars(w_ctx->m->q_id), a, String_chars(w_ctx->m->q_id), c);
+             String_chars(w_ctx->m->q_id), r, String_chars(w_ctx->m->q_id), a,
+             String_chars(w_ctx->m->q_id), c);
 
         wout("%s: %s->%s: Leaving open(%" PRIuMAX "): 1%s@%s%s\n",
              String_chars(w_ctx->e->nm), String_chars(w_ctx->m->q_id),
@@ -2347,13 +2346,12 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
         char *restrict const c = candle_string(
             &t->open_cd, String_chars(w_ctx->m->q_id), w_ctx->m->p_sc);
 
-        wout("%s: %s->%s: Cannot supply %s%s@%s%s: %s required/available: "
-             "%s%s/%s%s, %s required/available: %s%s/%s%s, candle: %s\n",
+        wout("%s: %s->%s: Cannot supply %s%s@%s%s: %s%s/%s%s r/a, %s%s/%s%s "
+             "r/a, c: %s\n",
              String_chars(w_ctx->e->nm), String_chars(w_ctx->m->q_id),
              String_chars(w_ctx->m->b_id), b, String_chars(w_ctx->m->b_id), pr,
-             String_chars(w_ctx->m->q_id), String_chars(w_ctx->m->q_id), qr,
-             String_chars(w_ctx->m->q_id), qa, String_chars(w_ctx->m->q_id),
-             String_chars(w_ctx->m->b_id), b, String_chars(w_ctx->m->b_id), ba,
+             String_chars(w_ctx->m->q_id), qr, String_chars(w_ctx->m->q_id), qa,
+             String_chars(w_ctx->m->q_id), b, String_chars(w_ctx->m->b_id), ba,
              String_chars(w_ctx->m->b_id), c);
 
         wout("%s: %s->%s: Leaving open(%" PRIuMAX "): 1%s@%s%s\n",
