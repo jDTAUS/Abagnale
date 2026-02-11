@@ -485,7 +485,7 @@ static char *candle_string(const struct Candle *restrict const c,
   char *restrict const h = Numeric_to_char(c->h, c_sc);
   char *restrict const l = Numeric_to_char(c->l, c_sc);
   char *restrict const s_info = Numeric_to_char(s, c_sc);
-  char *restrict const pc = Numeric_to_char(c->pc, 2);
+  char *restrict const pc = Numeric_to_char(c->pc, 4);
   char *restrict const a = Numeric_to_char(c->a, 4);
   char *restrict const open = nanos_to_iso8601(c->onanos);
   char *restrict const close = nanos_to_iso8601(c->cnanos);
@@ -2284,7 +2284,7 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
         char *restrict const c = candle_string(
             &t->open_cd, String_chars(w_ctx->m->q_id), w_ctx->m->p_sc);
 
-        wout("%s: %s->%s: Cannot demand %s%s@%s%s: %s%s->%s%s: %s\n",
+        wout("%s: %s->%s: Cannot demand %s%s@%s%s: %s%s/%s%s: %s\n",
              String_chars(w_ctx->e->nm), String_chars(w_ctx->m->q_id),
              String_chars(w_ctx->m->b_id), b, String_chars(w_ctx->m->b_id), pr,
              String_chars(w_ctx->m->q_id), r, String_chars(w_ctx->m->q_id), a,
@@ -2346,13 +2346,12 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
         char *restrict const c = candle_string(
             &t->open_cd, String_chars(w_ctx->m->q_id), w_ctx->m->p_sc);
 
-        wout(
-            "%s: %s->%s: Cannot supply %s%s@%s%s: %s%s->%s%s: %s%s->%s%s: %s\n",
-            String_chars(w_ctx->e->nm), String_chars(w_ctx->m->q_id),
-            String_chars(w_ctx->m->b_id), b, String_chars(w_ctx->m->b_id), pr,
-            String_chars(w_ctx->m->q_id), qr, String_chars(w_ctx->m->q_id), qa,
-            String_chars(w_ctx->m->q_id), b, String_chars(w_ctx->m->b_id), ba,
-            String_chars(w_ctx->m->b_id), c);
+        wout("%s: %s->%s: Cannot supply %s%s@%s%s: %s%s/%s%s: %s%s/%s%s: %s\n",
+             String_chars(w_ctx->e->nm), String_chars(w_ctx->m->q_id),
+             String_chars(w_ctx->m->b_id), b, String_chars(w_ctx->m->b_id), pr,
+             String_chars(w_ctx->m->q_id), qr, String_chars(w_ctx->m->q_id), qa,
+             String_chars(w_ctx->m->q_id), b, String_chars(w_ctx->m->b_id), ba,
+             String_chars(w_ctx->m->b_id), c);
 
         wout("%s: %s->%s: Leaving open(%" PRIuMAX "): 1%s@%s%s\n",
              String_chars(w_ctx->e->nm), String_chars(w_ctx->m->q_id),
