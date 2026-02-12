@@ -132,8 +132,8 @@ static void sym_delete(void *restrict const v) {
 %}
 
 %token AT CDP DATABASE DEMANDDURMAX DEMANDDURMIN DNSTO DNSV4 DNSV6 ERROR
-%token EXCHANGE INCLUDE MARKET NOT PLOTS RATEMAX RATEMIN RETURN STOPLOSSDELAY
-%token SUPPLYDURMAX SUPPLYDURMIN TAKELOSSDELAY TAKEPROFITDELAY TARGET TRADE
+%token EXCHANGE INCLUDE MARKET NOT PLOTS RETURN STOPLOSSDELAY SUPPLYDURMAX
+%token SUPPLYDURMIN TAKELOSSDELAY TAKEPROFITDELAY TARGET TRADE
 %token USER USING VOLATILITY WINDOW
 
 %token <v.string> STRING
@@ -507,34 +507,6 @@ opt_trade : TAKELOSSDELAY nanos {
             }
             m_cnf->so_minnanos = $2;
           }
-          | RATEMAX NUMBER {
-            if (m_cnf->sr_max != NULL) {
-              yyerror("rate-max already specified\n");
-              Numeric_delete($2);
-              YYERROR;
-            }
-            m_cnf->sr_max = $2;
-
-            if (Numeric_cmp(m_cnf->sr_max, zero) <= 0) {
-              Numeric_delete(m_cnf->sr_max);
-              yyerror("rate-max must be positive\n");
-              YYERROR;
-            }
-          }
-          | RATEMIN NUMBER {
-            if (m_cnf->sr_min != NULL) {
-              yyerror("rate-min alrady specified\n");
-              Numeric_delete($2);
-              YYERROR;
-            }
-            m_cnf->sr_min = $2;
-
-            if (Numeric_cmp(m_cnf->sr_min, zero) <= 0) {
-              Numeric_delete(m_cnf->sr_min);
-              yyerror("rate-min must be positive\n");
-              YYERROR;
-            }
-          }
           | DEMANDDURMAX nanos {
             if (m_cnf->bo_maxnanos != NULL) {
               yyerror("demand-duration-max already specified\n");
@@ -750,8 +722,6 @@ int lookup(char *s) {
       {"take-loss-delay", TAKELOSSDELAY},
       {"take-profit-delay", TAKEPROFITDELAY},
       {"target", TARGET},
-      {"tick-rate-max", RATEMAX},
-      {"tick-rate-min", RATEMIN},
       {"trade", TRADE},
       {"user", USER},
       {"using", USING},
@@ -1300,8 +1270,6 @@ struct MarketConfig *MarketConfig_new(void) {
   c->v_pc = NULL;
   c->v_wnanos = NULL;
   c->wnanos = NULL;
-  c->sr_min = NULL;
-  c->sr_max = NULL;
   c->bo_minnanos = NULL;
   c->bo_maxnanos = NULL;
   c->so_minnanos = NULL;
@@ -1329,8 +1297,6 @@ void MarketConfig_delete(void *restrict const c) {
   Numeric_delete(cfg->v_pc);
   Numeric_delete(cfg->v_wnanos);
   Numeric_delete(cfg->wnanos);
-  Numeric_delete(cfg->sr_min);
-  Numeric_delete(cfg->sr_max);
   Numeric_delete(cfg->bo_minnanos);
   Numeric_delete(cfg->bo_maxnanos);
   Numeric_delete(cfg->so_minnanos);

@@ -64,8 +64,6 @@ struct MarketConfig {
   struct Numeric *restrict v_pc;
   struct Numeric *restrict v_wnanos;
   struct Numeric *restrict wnanos;
-  struct Numeric *restrict sr_min;
-  struct Numeric *restrict sr_max;
   struct Numeric *restrict bo_minnanos;
   struct Numeric *restrict bo_maxnanos;
   struct Numeric *restrict so_minnanos;

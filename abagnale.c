@@ -805,12 +805,6 @@ static void worker_configure(struct worker_ctx *restrict const w_ctx,
     if (!String_equals(m_cnf->e_nm, w_ctx->e->nm))
       continue;
 
-    if (m_cnf->sr_min != NULL && Numeric_cmp(sr, m_cnf->sr_min) < 0)
-      continue;
-
-    if (m_cnf->sr_max != NULL && Numeric_cmp(sr, m_cnf->sr_max) >= 0)
-      continue;
-
     if (!MarketConfig_match(m_cnf, w_ctx->m->nm))
       continue;
 
@@ -2845,7 +2839,7 @@ static int samples_process(void *restrict const arg) {
 
     Array_shrink(samples);
 
-    if (!(ctx->m_cnf != NULL && ctx->q_tgt != NULL && ctx->m->is_active)) {
+    if (!ctx->m->is_active) {
       Array_unlock(samples);
       Market_delete(ctx->m);
       continue;
@@ -2860,25 +2854,32 @@ static int samples_process(void *restrict const arg) {
     Map_unlock(market_trades);
     Array_lock(trades);
     bool betting = false;
+    const bool has_config = ctx->m_cnf != NULL && ctx->q_tgt != NULL;
   again:
     items = Array_items(trades);
     for (size_t i = Array_size(trades); i > 0; i--) {
       struct Trade *restrict const t = items[i - 1];
-      t->a = ctx->a;
-      Numeric_copy_to(ctx->q_tgt, t->tp);
-      trade_pricing(ctx, t);
-      trade_maintain(ctx, t, samples, Array_tail(samples));
 
-      if (t->status == TRADE_STATUS_CANCELLED ||
-          t->status == TRADE_STATUS_DONE) {
-        trade_delete(t);
-        Array_remove_idx(trades, i - 1);
-        goto again;
-      } else if (t->status == TRADE_STATUS_NEW)
-        betting = true;
+      if (has_config) {
+        t->a = ctx->a;
+        Numeric_copy_to(ctx->q_tgt, t->tp);
+        trade_pricing(ctx, t);
+        trade_maintain(ctx, t, samples, Array_tail(samples));
+
+        if (t->status == TRADE_STATUS_CANCELLED ||
+            t->status == TRADE_STATUS_DONE) {
+          trade_delete(t);
+          Array_remove_idx(trades, i - 1);
+          goto again;
+        } else if (t->status == TRADE_STATUS_NEW)
+          betting = true;
+      } else
+        werr("%s: %s->%s: %s: Configuration not available\n",
+             String_chars(ctx->e->nm), String_chars(ctx->m->q_id),
+             String_chars(ctx->m->b_id), String_chars(t->id));
     }
 
-    if (!betting) {
+    if (!betting && has_config) {
       struct Trade *restrict const t = trade_new();
       trade_create(ctx, t, samples, sample);
       Array_add_tail(trades, t);
