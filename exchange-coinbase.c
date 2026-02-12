@@ -2254,7 +2254,7 @@ static struct Pricing *coinbase_pricing(void) {
     pricing = parse_pricing(&doc, doc.values);
 
 ret:
-  mutex_unlock(&pricing_mutex);
+  pricing->mtx = &pricing_mutex;
   heap_free(doc.values);
   heap_free(doc.strings);
   heap_free(doc.mbstrings);

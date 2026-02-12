@@ -2098,6 +2098,8 @@ static void trade_pricing(const struct worker_ctx *restrict const w_ctx,
     Numeric_div_to(t->tp_pc, hundred, r0);
     Numeric_add_to(r0, one, t->tp_pf);
   }
+
+  mutex_unlock(pricing->mtx);
 }
 
 static void trade_plot(const struct worker_ctx *restrict const w_ctx,

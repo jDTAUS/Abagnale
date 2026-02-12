@@ -116,6 +116,7 @@ struct Pricing {
   struct Numeric *restrict tf_pc;
   struct Numeric *restrict mf_pc;
   struct Numeric *restrict ef_pc;
+  mtx_t *restrict mtx;
 };
 
 struct ExchangeConfig {
