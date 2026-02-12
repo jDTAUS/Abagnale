@@ -2887,9 +2887,6 @@ static int samples_process(void *restrict const arg) {
     Array_unlock(trades);
     Array_unlock(samples);
     Market_delete(ctx->m);
-
-    if (ctx->m_cnf->origin == MARKET_CONFIG_ORIGIN_SYSTEM)
-      MarketConfig_delete(ctx->m_cnf);
   }
 
   db_disconnect(ctx->db);
