@@ -42,16 +42,6 @@
 #define ABAG_MAX_PRODUCTS 1200
 #endif
 
-#ifndef ABAG_ORDER_RELOAD_INTERVAL_NANOS
-// 15min
-#define ABAG_ORDER_RELOAD_INTERVAL_NANOS 900000000000L
-#endif
-
-#ifndef ABAG_BOOT_DELAY_NANOS
-// 6min
-#define ABAG_BOOT_DELAY_NANOS 360000000000L
-#endif
-
 #ifndef nitems
 #define nitems(_a) (sizeof((_a)) / sizeof((_a)[0]))
 #endif
@@ -180,7 +170,6 @@ static struct Map *restrict market_trades;
 static tss_t abag_tls_key;
 
 static struct Numeric *restrict ninety_percent_factor;
-static struct Numeric *restrict order_reload_interval_nanos;
 static struct Numeric *restrict five_minute_nanos;
 
 int abagnale(int argc, char *argv[]);
@@ -1324,7 +1313,7 @@ static void position_timeout(const struct worker_ctx *restrict const w_ctx,
     fatal();
   }
 
-  Numeric_add_to(sample->nanos, order_reload_interval_nanos, p->rnanos);
+  Numeric_add_to(sample->nanos, stats_to, p->rnanos);
   Numeric_sub_to(sample->nanos, p->cnanos, age);
   Numeric_mul_to(stats_to, p->cl_factor, factor_to);
   Numeric_sub_to(factor_to, age, total_to);
@@ -2894,11 +2883,8 @@ static int exchange_stop(void *restrict const arg) {
 int abagnale(int argc, char *argv[]) {
   void **items;
   ninety_percent_factor = Numeric_from_char("0.9");
-
-  order_reload_interval_nanos =
-      Numeric_from_long(ABAG_ORDER_RELOAD_INTERVAL_NANOS);
-
   five_minute_nanos = Numeric_from_long(300000000000L);
+
   market_samples = Map_new(ABAG_MAX_PRODUCTS);
   market_prices = Map_new(ABAG_MAX_PRODUCTS);
   market_trades = Map_new(ABAG_MAX_PRODUCTS);
@@ -2963,7 +2949,6 @@ int abagnale(int argc, char *argv[]) {
       thread_join(workers[i - 1], NULL);
 
   Numeric_delete(ninety_percent_factor);
-  Numeric_delete(order_reload_interval_nanos);
   Numeric_delete(five_minute_nanos);
 
   heap_free(workers);
