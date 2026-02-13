@@ -2050,7 +2050,7 @@ static void trade_pricing(const struct worker_ctx *restrict const w_ctx,
                                            : five_minute_nanos,
             0);
 
-        werr("%s: %s@%s: Volatility not available: window: %sns\n",
+        werr("%s: %s@%s: Volatility not available: %sns\n",
              String_chars(w_ctx->e->nm), String_chars(w_ctx->m->b_id),
              String_chars(w_ctx->m->q_id), win);
 
