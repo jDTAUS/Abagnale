@@ -43,11 +43,12 @@ inline struct Market *Market_new(void) {
 inline struct Market *Market_copy(const struct Market *restrict const m) {
   struct Market *restrict mc = Market_new();
   mc->id = String_copy(m->id);
-  mc->nm = String_copy(m->nm);
+  mc->x_id = String_copy(m->x_id);
   mc->b_id = String_copy(m->b_id);
   mc->ba_id = String_copy(m->ba_id);
   mc->q_id = String_copy(m->q_id);
   mc->qa_id = String_copy(m->qa_id);
+  mc->nm = String_copy(m->nm);
   mc->mtx = NULL;
   mc->type = m->type;
   mc->status = m->status;
@@ -68,11 +69,12 @@ inline void Market_delete(void *restrict const m) {
 
   struct Market *restrict const market = m;
   String_delete(market->id);
-  String_delete(market->nm);
+  String_delete(market->x_id);
   String_delete(market->b_id);
   String_delete(market->ba_id);
   String_delete(market->q_id);
   String_delete(market->qa_id);
+  String_delete(market->nm);
   Numeric_delete(market->b_inc);
   Numeric_delete(market->p_inc);
   Numeric_delete(market->q_inc);
