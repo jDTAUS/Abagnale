@@ -1525,6 +1525,7 @@ parse_product(const struct wcjson_document *restrict const doc,
   const char *restrict const q_dot = strchr(j_quote_increment->mbstring, '.');
   struct String *restrict const b_id =
       String_cnew(j_base_currency_id->mbstring);
+
   struct String *restrict const q_id =
       String_cnew(j_quote_currency_id->mbstring);
 
@@ -1553,9 +1554,18 @@ parse_product(const struct wcjson_document *restrict const doc,
   const enum market_status status_value = market_status(j_status->mbstring);
   const enum market_type type_value = market_type(j_product_type->mbstring);
 
+  char nm_buf[4096] = {0};
+  int r = snprintf(nm_buf, sizeof(nm_buf), "%s@%s",
+                   j_base_currency_id->mbstring, j_quote_currency_id->mbstring);
+
+  if (r < 0 || (size_t)r >= sizeof(nm_buf)) {
+    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
+    fatal();
+  }
+
   m = Market_new();
   m->id = String_cnew(p_uuid);
-  m->nm = String_cnew(j_product_id->mbstring);
+  m->nm = String_cnew(nm_buf);
   m->type = type_value;
   m->status = status_value;
   m->b_id = b_id;
