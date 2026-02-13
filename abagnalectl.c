@@ -182,11 +182,11 @@ static void print_market(const struct Market *restrict const m) {
   char *restrict const p_inc = Numeric_to_char(m->p_inc, m->p_sc);
   char *restrict const q_inc = Numeric_to_char(m->q_inc, m->q_sc);
 
-  printf("%s\t%s\t%s\t%s\t%s\t%s\t%zu\t%s\t%zu\t%s\t%zu\t%s\t%d\t%d\n",
-         String_chars(m->id), String_chars(m->nm), market_type_name(m->type),
-         market_status_name(m->status), String_chars(m->b_id),
-         String_chars(m->q_id), m->b_sc, b_inc, m->p_sc, p_inc, m->q_sc, q_inc,
-         m->is_tradeable ? 1 : 0, m->is_active ? 1 : 0);
+  printf("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%zu\t%s\t%zu\t%s\t%zu\t%s\t%d\t%d\n",
+         String_chars(m->id), String_chars(m->x_id), String_chars(m->nm),
+         market_type_name(m->type), market_status_name(m->status),
+         String_chars(m->b_id), String_chars(m->q_id), m->b_sc, b_inc, m->p_sc,
+         p_inc, m->q_sc, q_inc, m->is_tradeable ? 1 : 0, m->is_active ? 1 : 0);
 
   Numeric_char_free(b_inc);
   Numeric_char_free(p_inc);
