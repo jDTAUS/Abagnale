@@ -67,7 +67,7 @@ struct Position {
   struct String *restrict id;
   struct Numeric *restrict cnanos;
   struct Numeric *restrict dnanos;
-  struct Numeric *restrict rnanos;
+  struct Numeric *restrict pnanos;
   struct Numeric *restrict price;
   struct Numeric *restrict sl_price;
   struct Numeric *restrict tp_price;

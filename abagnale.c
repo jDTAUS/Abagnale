@@ -512,7 +512,7 @@ static inline void position_init(struct Position *restrict const p) {
   p->id = NULL;
   p->cnanos = Numeric_copy(zero);
   p->dnanos = Numeric_copy(zero);
-  p->rnanos = Numeric_copy(zero);
+  p->pnanos = Numeric_copy(zero);
   p->price = Numeric_copy(zero);
   p->sl_price = Numeric_copy(zero);
   p->tp_price = Numeric_copy(zero);
@@ -539,7 +539,7 @@ static inline void position_reset(struct Position *restrict const p) {
 
   Numeric_copy_to(zero, p->cnanos);
   Numeric_copy_to(zero, p->dnanos);
-  Numeric_copy_to(zero, p->rnanos);
+  Numeric_copy_to(zero, p->pnanos);
   Numeric_copy_to(zero, p->price);
   Numeric_copy_to(zero, p->sl_price);
   Numeric_copy_to(zero, p->tp_price);
@@ -560,7 +560,7 @@ static inline void position_delete(const struct Position *restrict const p) {
   String_delete(p->id);
   Numeric_delete(p->cnanos);
   Numeric_delete(p->dnanos);
-  Numeric_delete(p->rnanos);
+  Numeric_delete(p->pnanos);
   Numeric_delete(p->price);
   Numeric_delete(p->sl_price);
   Numeric_delete(p->tp_price);
@@ -1313,7 +1313,7 @@ static void position_timeout(const struct worker_ctx *restrict const w_ctx,
     fatal();
   }
 
-  Numeric_add_to(sample->nanos, stats_to, p->rnanos);
+  Numeric_add_to(sample->nanos, stats_to, p->pnanos);
   Numeric_sub_to(sample->nanos, p->cnanos, age);
   Numeric_mul_to(stats_to, p->cl_factor, factor_to);
   Numeric_sub_to(factor_to, age, total_to);
@@ -1330,7 +1330,7 @@ static void position_maintain(const struct worker_ctx *restrict const w_ctx,
   const struct abag_tls *restrict const tls = abag_tls();
   struct Numeric *restrict const m = tls->position_maintain.m;
   struct Numeric *restrict const r0 = tls->position_maintain.r0;
-  const bool reload = Numeric_cmp(sample->nanos, p->rnanos) > 0;
+  const bool poll = Numeric_cmp(sample->nanos, p->pnanos) > 0;
   const bool free_order = order == NULL;
   bool cancel = false;
 
@@ -1375,7 +1375,7 @@ static void position_maintain(const struct worker_ctx *restrict const w_ctx,
     }
   }
 
-  if (cancel || reload || order != NULL) {
+  if (cancel || poll || order != NULL) {
     if (order == NULL)
       order = w_ctx->e->order(p->id);
 
@@ -2599,8 +2599,8 @@ static struct Array *trades_load(const struct worker_ctx *w_ctx,
     struct Trade *restrict const t = items[i - 1];
     trade_pricing(w_ctx, t);
     trade_create(w_ctx, t, samples, sample);
-    Numeric_copy_to(zero, t->p_long.rnanos);
-    Numeric_copy_to(zero, t->p_short.rnanos);
+    Numeric_copy_to(zero, t->p_long.pnanos);
+    Numeric_copy_to(zero, t->p_short.pnanos);
   }
 
   return trades;
