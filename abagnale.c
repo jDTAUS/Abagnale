@@ -82,7 +82,6 @@ struct abag_tls {
   struct samples_load_vars {
     struct Numeric *restrict now;
     struct Numeric *restrict filter;
-    struct Numeric *restrict sr;
     struct db_sample_rec *restrict sample;
   } samples_load;
   struct worker_configure_vars {
@@ -200,7 +199,6 @@ static struct abag_tls *abag_tls(void) {
     tls->samples_load.sample->price = Numeric_new();
     tls->samples_load.now = Numeric_new();
     tls->samples_load.filter = Numeric_new();
-    tls->samples_load.sr = Numeric_new();
     tls->worker_configure.r0 = Numeric_new();
     tls->orders_process.tp = Numeric_new();
     tls->samples_process.outdated_ns = Numeric_new();
@@ -288,7 +286,6 @@ static void abag_tls_dtor(void *e) {
   heap_free(tls->samples_load.sample);
   Numeric_delete(tls->samples_load.now);
   Numeric_delete(tls->samples_load.filter);
-  Numeric_delete(tls->samples_load.sr);
   Numeric_delete(tls->worker_configure.r0);
   Numeric_delete(tls->orders_process.tp);
   Numeric_delete(tls->samples_process.outdated_ns);
@@ -742,7 +739,6 @@ samples_load(const struct worker_ctx *restrict const w_ctx) {
   const struct abag_tls *restrict const tls = abag_tls();
   struct Numeric *restrict const now = tls->samples_load.now;
   struct Numeric *restrict const filter = tls->samples_load.filter;
-  struct Numeric *restrict const sr = tls->samples_load.sr;
   struct db_sample_rec *restrict const sample = tls->samples_load.sample;
 
   nanos_now(now);
@@ -765,20 +761,17 @@ samples_load(const struct worker_ctx *restrict const w_ctx) {
   Array_shrink(a);
 
   if (verbose && Array_size(a) > 1) {
-    samples_per_minute(sr, a);
     const struct Sample *restrict const s_head = Array_head(a);
     const struct Sample *restrict const s_tail = Array_tail(a);
     char *restrict const b = nanos_to_iso8601(s_head->nanos);
     char *restrict const e = nanos_to_iso8601(s_tail->nanos);
-    char *restrict const sr_asc = Numeric_to_char(sr, 2);
 
-    wout("%s: %s->%s: Loaded %zu samples: %s samples/min, %s->%s\n",
-         String_chars(w_ctx->e->nm), String_chars(w_ctx->m->q_id),
-         String_chars(w_ctx->m->b_id), Array_size(a), sr_asc, b, e);
+    wout("%s: %s->%s: Loaded %zu tickers: %s->%s\n", String_chars(w_ctx->e->nm),
+         String_chars(w_ctx->m->q_id), String_chars(w_ctx->m->b_id),
+         Array_size(a), b, e);
 
     heap_free(b);
     heap_free(e);
-    Numeric_char_free(sr_asc);
   }
 
   return a;
@@ -2511,7 +2504,7 @@ static struct Array *trades_load(const struct worker_ctx *w_ctx,
     t->id = String_cnew(trade->id);
 
     if (verbose)
-      wout("%s: %s->%s: %s: Resuming trade\n", String_chars(w_ctx->e->nm),
+      wout("%s: %s->%s: %s: Loaded trade\n", String_chars(w_ctx->e->nm),
            String_chars(w_ctx->m->q_id), String_chars(w_ctx->m->b_id),
            String_chars(t->id));
 
