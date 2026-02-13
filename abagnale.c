@@ -2061,6 +2061,7 @@ static void trade_pricing(const struct worker_ctx *restrict const w_ctx,
     if (verbose) {
       char *restrict const pr = Numeric_to_char(pricing->ef_pc, 2);
       char *restrict const v = Numeric_to_char(t->tp_pc, 4);
+
       wout("%s: %s@%s: Pricing: fee: %s%%, volatility: %s%%\n",
            String_chars(w_ctx->e->nm), String_chars(w_ctx->m->b_id),
            String_chars(w_ctx->m->q_id), pr, v);
