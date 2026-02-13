@@ -1667,6 +1667,7 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
     if (p->sl_trg.set) {
       Numeric_copy_to(sample->nanos, p->sl_trg.nanos);
       Numeric_copy_to(sample->price, p->sl_trg.price);
+      p->sl_trg.cnt++;
 
       if (w_ctx->m_cnf->sl_dlnanos != NULL) {
         samples_per_nano(sr, samples);
@@ -1740,6 +1741,7 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
     if (p->sl_trg.set) {
       Numeric_copy_to(sample->nanos, p->sl_trg.nanos);
       Numeric_copy_to(sample->price, p->sl_trg.price);
+      p->sl_trg.cnt++;
 
       if (w_ctx->m_cnf->sl_dlnanos != NULL) {
         samples_per_nano(sr, samples);
@@ -1751,6 +1753,7 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
     if (p->tp_trg.set) {
       Numeric_copy_to(sample->nanos, p->tp_trg.nanos);
       Numeric_copy_to(sample->price, p->tp_trg.price);
+      p->tp_trg.cnt++;
 
       if (w_ctx->m_cnf->tp_dlnanos != NULL) {
         samples_per_nano(sr, samples);
