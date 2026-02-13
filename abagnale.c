@@ -1674,6 +1674,26 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
         Numeric_mul_to(sr, w_ctx->m_cnf->sl_dlnanos, p->sl_samples);
       } else
         Numeric_copy_to(zero, p->sl_samples);
+
+      if (verbose) {
+        char *restrict const p_info = position_string(w_ctx, t, p);
+        char *restrict const delay = Numeric_to_char(p->sl_samples, 0);
+        char *restrict const s_pr =
+            Numeric_to_char(sample->price, w_ctx->m->q_sc);
+
+        wout("%s: %s: %s: Reentering stop loss(%" PRIuMAX
+             "): 1%s@%s%s: stop-loss-delay: %s tickers\n",
+             String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
+             String_chars(t->id), p->sl_trg.cnt, String_chars(w_ctx->m->b_id),
+             s_pr, String_chars(w_ctx->m->q_id), delay);
+
+        wout("%s: %s: %s: %s\n", String_chars(w_ctx->e->nm),
+             String_chars(w_ctx->m->nm), String_chars(p->id), p_info);
+
+        heap_free(p_info);
+        Numeric_char_free(delay);
+        Numeric_char_free(s_pr);
+      }
     }
 
     if (verbose) {
@@ -1748,6 +1768,26 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
         Numeric_mul_to(sr, w_ctx->m_cnf->sl_dlnanos, p->sl_samples);
       } else
         Numeric_copy_to(zero, p->sl_samples);
+
+      if (verbose) {
+        char *restrict const p_info = position_string(w_ctx, t, p);
+        char *restrict const delay = Numeric_to_char(p->sl_samples, 0);
+        char *restrict const s_pr =
+            Numeric_to_char(sample->price, w_ctx->m->q_sc);
+
+        wout("%s: %s: %s: Reentering stop loss(%" PRIuMAX
+             "): 1%s@%s%s: stop-loss-delay: %s tickers\n",
+             String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
+             String_chars(t->id), p->sl_trg.cnt, String_chars(w_ctx->m->b_id),
+             s_pr, String_chars(w_ctx->m->q_id), delay);
+
+        wout("%s: %s: %s: %s\n", String_chars(w_ctx->e->nm),
+             String_chars(w_ctx->m->nm), String_chars(p->id), p_info);
+
+        heap_free(p_info);
+        Numeric_char_free(delay);
+        Numeric_char_free(s_pr);
+      }
     }
 
     if (p->tp_trg.set) {
@@ -1760,6 +1800,26 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
         Numeric_mul_to(sr, w_ctx->m_cnf->tp_dlnanos, p->tp_samples);
       } else
         Numeric_copy_to(zero, p->tp_samples);
+
+      if (verbose) {
+        char *restrict const p_info = position_string(w_ctx, t, p);
+        char *restrict const delay = Numeric_to_char(p->tp_samples, 0);
+        char *restrict const s_pr =
+            Numeric_to_char(sample->price, w_ctx->m->q_sc);
+
+        wout("%s: %s: %s: Reentering take profit(%" PRIuMAX
+             "): 1%s@%s%s: take-profit-delay: %s tickers\n",
+             String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
+             String_chars(t->id), p->tp_trg.cnt, String_chars(w_ctx->m->b_id),
+             s_pr, String_chars(w_ctx->m->q_id), delay);
+
+        wout("%s: %s: %s: %s\n", String_chars(w_ctx->e->nm),
+             String_chars(w_ctx->m->nm), String_chars(p->id), p_info);
+
+        heap_free(p_info);
+        Numeric_char_free(delay);
+        Numeric_char_free(s_pr);
+      }
     }
 
     if (verbose) {
