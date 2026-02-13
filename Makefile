@@ -2,7 +2,7 @@
 # $JDTAUS$
 
 #
-# Copyright (c) 2018 - 2025 Christian Schulte <cs@schulte.it>
+# Copyright (c) 2018 - 2026 Christian Schulte <cs@schulte.it>
 #
 # Permission to use, copy, modify, and distribute this software for any
 # purpose with or without fee is hereby granted, provided that the above
@@ -19,7 +19,7 @@
 
 .SUFFIXES: .c .pgc .o .y
 
-CC=clang-19
+CC=cc
 
 # ECPG - Embedded SQL in C
 #   https://www.postgresql.org/docs/18/ecpg.html
@@ -33,14 +33,16 @@ YACC=yacc
 #   https://clang.llvm.org/docs/ClangFormat.html
 FORMAT=clang-format
 
-INCLUDES=-I/usr/include/postgresql
+INCLUDES=-I/usr/include
+INCLUDES+=-I/usr/include/postgresql
+INCLUDES+=-I/usr/include/wcjson
 INCLUDES+=-I/usr/local/include
-INCLUDES+=-I/home/schulte/wcjson/include/wcjson
+INCLUDES+=-I/usr/local/include/postgresql
+INCLUDES+=-I/usr/local/include/wcjson
 
 DEBUG=
-#DEBUG+=-g
-#DEBUG+=-O0
-#DEBUG+=-DABAG_DEBUG
+DEBUG+=-g
+#DEBUG+=-O0 -DABAG_DEBUG
 #DEBUG+=-DABAG_MATH_DEBUG
 #DEBUG+=-DABAG_SQL_DEBUG
 #DEBUG+=-DABAG_COINBASE_DEBUG
@@ -50,7 +52,7 @@ CONFIG+=-DMG_TLS=MG_TLS_OPENSSL
 CONFIG+=-DMG_MAX_RECV_SIZE="(1024UL * 1024UL * 1024UL)"
 
 PROFILE=
-#PROFILE+=-pg
+PROFILE+=-pg
 
 LTO=
 LTO+=-flto=auto
@@ -74,44 +76,9 @@ WARNINGS+=-Wshadow
 CFLAGS=$(INCLUDES) $(DEBUG) $(PROFILE) $(LTO) $(CONFIG) $(WARNINGS)
 CFLAGS+=-pedantic
 CFLAGS+=-O3
-CFLAGS+=-march=native
-CFLAGS+=-mtune=native
-CFLAGS+=-fverbose-asm
-CFLAGS+=-mmmx
-CFLAGS+=-msse
-CFLAGS+=-msse2
-CFLAGS+=-msse3
-CFLAGS+=-msse4
-CFLAGS+=-msse4a
-CFLAGS+=-msse4.1
-CFLAGS+=-msse4.2
-CFLAGS+=-mavx
-#CFLAGS+=-mavxvnni
-#CFLAGS+=-mavx2
-#CFLAGS+=-mavx512f
-#CFLAGS+=-mavx512cd
-#CFLAGS+=-mavx512vl
-#CFLAGS+=-mavx512bw
-#CFLAGS+=-mavx512dq
-#CFLAGS+=-mavx512ifma
-#CFLAGS+=-mavx512vbmi
-#CFLAGS+=-mavx512vbmi2
-#CFLAGS+=-mavx512bf16
-#CFLAGS+=-mavx512fp16
-#CFLAGS+=-mavx512bitalg
-#CFLAGS+=-mavx512vpopcntdq
-#CFLAGS+=-mavx512vp2intersect
-#CFLAGS+=-mavx512vnni
-#CFLAGS+=-mavx10.1
-#CFLAGS+=-mavx10.1-256
-#CFLAGS+=-mavx10.1-512
-CFLAGS+=-msha
-#CFLAGS+=-msha512
-CFLAGS+=-maes
 
 LDFLAGS=$(DEBUG) $(PROFILE) $(LTO)
 LDFLAGS+=-L/usr/local/lib
-LDFLAGS+=-L/home/schulte/wcjson/lib
 
 # ECPG - Embedded SQL in C
 #   https://www.postgresql.org/docs/18/ecpg.html
@@ -127,7 +94,8 @@ LDFLAGS+=-lpgtypes
 LDFLAGS+=-ljwt
 
 # Wide Character JSON for C
-#   https://wcjson.de
+#   http://wcjson.de
+#   https://github.com/wcjson/wcjson/releases/download/v0.31/wcjson-0.31.tar.gz
 LDFLAGS+=-lwcjson
 
 LDFLAGS+=-lm
