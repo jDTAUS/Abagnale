@@ -1577,15 +1577,15 @@ parse_product(const struct wcjson_document *restrict const doc,
                  status_value == MARKET_STATUS_ONLINE;
 
   if (m->type == MARKET_TYPE_UNKNOWN) {
-    werr("coinbase: %s->%s: %s: Unsupported market type: %s\n",
-         j_quote_currency_id->mbstring, j_base_currency_id->mbstring,
+    werr("coinbase: %s@%s: %s: Unsupported market type: %s\n",
+         j_base_currency_id->mbstring, j_quote_currency_id->mbstring,
          j_product_type->mbstring,
          wcjsondoc_string(errbuf, sizeof(errbuf), doc, prod, NULL));
   }
 
   if (m->status == MARKET_STATUS_UNKNOWN) {
-    werr("coinbase: %s->%s: %s: Unsupported market status: %s\n",
-         j_quote_currency_id->mbstring, j_base_currency_id->mbstring,
+    werr("coinbase: %s@%s: %s: Unsupported market status: %s\n",
+         j_base_currency_id->mbstring, j_quote_currency_id->mbstring,
          j_status->mbstring,
          wcjsondoc_string(errbuf, sizeof(errbuf), doc, prod, NULL));
   }
@@ -1602,8 +1602,8 @@ parse_product(const struct wcjson_document *restrict const doc,
 
 #ifdef ABAG_COINBASE_DEBUG
   if (!m->is_active) {
-    wout("coinbase: %s->%s: Market not active: %s\n",
-         j_quote_currency_id->mbstring, j_base_currency_id->mbstring,
+    wout("coinbase: %s@%s: Market not active: %s\n",
+         j_base_currency_id->mbstring, j_quote_currency_id->mbstring,
          wcjsondoc_string(errbuf, sizeof(errbuf), doc, prod, NULL));
   }
 #endif

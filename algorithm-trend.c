@@ -521,8 +521,8 @@ static bool trend_position_close(const void *restrict const db,
   }
 
   if (close && verbose && !p->tl_trg.set) {
-    wout("%s: %s->%s: %s: Trend not confirmed\n", String_chars(e->nm),
-         String_chars(m->q_id), String_chars(m->b_id), String_chars(t->id));
+    wout("%s: %s@%s: %s: Trend not confirmed\n", String_chars(e->nm),
+         String_chars(m->b_id), String_chars(m->q_id), String_chars(t->id));
   }
 
   mutex_unlock(&st->mtx);
