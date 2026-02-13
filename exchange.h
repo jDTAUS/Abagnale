@@ -41,11 +41,12 @@ enum market_status {
 
 struct Market {
   struct String *restrict id;
-  struct String *restrict nm;
+  struct String *restrict m_id;
   struct String *restrict b_id;
   struct String *restrict ba_id;
   struct String *restrict q_id;
   struct String *restrict qa_id;
+  struct String *restrict nm;
   struct Numeric *restrict b_inc;
   struct Numeric *restrict p_inc;
   struct Numeric *restrict q_inc;
