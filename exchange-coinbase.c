@@ -1035,10 +1035,10 @@ static void ws_subscribe(struct mg_connection *restrict const c,
 
   items = Array_items(p_array);
   for (size_t i = Array_size(p_array); i > 0; i--) {
-    struct wcjson_value *restrict const j_nm =
+    struct wcjson_value *restrict const j_id =
         wcjson_string(doc, String_chars(((struct Market *)items[i - 1])->m_id));
 
-    wcjson_array_add(doc, j_arr, j_nm);
+    wcjson_array_add(doc, j_arr, j_id);
   }
   Array_unlock(p_array);
 
