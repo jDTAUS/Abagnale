@@ -272,7 +272,7 @@
 #define WCJSON_PRODUCT_ITEM(_doc, _val, _item, _len, _errbuf, _ret)            \
   WCJSON_STRING_ITEM(_doc, _val, _item, _len, _errbuf, _ret)                   \
   j_##_item##_str = String_cnew(j_##_item->mbstring);                          \
-  j_##_item##_m = coinbase_product_internal(j_##_item##_str);                  \
+  j_##_item##_m = coinbase_product_external(j_##_item##_str);                  \
   String_delete(j_##_item##_str);                                              \
   j_##_item##_str = NULL;                                                      \
   if (j_##_item##_m == NULL) {                                                 \
@@ -351,7 +351,7 @@ static const struct ExchangeConfig *restrict coinbase_cnf;
 static void *restrict coinbase_db;
 
 static struct Array *restrict products;
-static struct Map *restrict products_by_internal;
+static struct Map *restrict products_by_external;
 static struct Map *restrict products_by_id;
 static bool products_reload;
 
@@ -387,7 +387,7 @@ static struct Pricing *coinbase_pricing(void);
 static struct Array *coinbase_products(void);
 static struct Market *coinbase_product(const struct String *restrict const);
 static struct Market *
-coinbase_product_internal(const struct String *restrict const);
+coinbase_product_external(const struct String *restrict const);
 static struct Array *coinbase_accounts(void);
 static struct Account *
 coinbase_account_currency(const struct String *restrict const);
@@ -1395,7 +1395,7 @@ static void coinbase_init(void) {
                       (time_t)(WEBSOCKET_STALL_MILLIS / 1000));
   mg_log_set(MG_LL_NONE); // NONE, ERROR, INFO, DEBUG, VERBOSE
   products = Array_new(1024);
-  products_by_internal = Map_new(1024);
+  products_by_external = Map_new(1024);
   products_by_id = Map_new(1024);
   products_reload = true;
   accounts = Array_new(256);
@@ -1422,7 +1422,7 @@ static void coinbase_destroy(void) {
   Queue_delete(orders, Order_delete);
   Queue_delete(samples, Sample_delete);
   Array_delete(products, Market_delete);
-  Map_delete(products_by_internal, NULL);
+  Map_delete(products_by_external, NULL);
   Map_delete(products_by_id, NULL);
   Array_delete(accounts, Account_delete);
   Map_delete(accounts_by_id, NULL);
@@ -1663,14 +1663,14 @@ static struct Array *coinbase_products(void) {
       Array_clear(products, Market_delete);
       parse_products(products, &doc);
       Array_shrink(products);
-      Map_delete(products_by_internal, NULL);
+      Map_delete(products_by_external, NULL);
       Map_delete(products_by_id, NULL);
-      products_by_internal = Map_new(Array_size(products));
+      products_by_external = Map_new(Array_size(products));
       products_by_id = Map_new(Array_size(products));
 
       items = Array_items(products);
       for (size_t i = Array_size(products); i > 0; i--) {
-        if (Map_put(products_by_internal, ((struct Market *)items[i - 1])->m_id,
+        if (Map_put(products_by_external, ((struct Market *)items[i - 1])->m_id,
                     items[i - 1])) {
           werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__,
                String_chars(((struct Market *)items[i - 1])->m_id));
@@ -1707,9 +1707,9 @@ static struct Market *coinbase_product(const struct String *restrict const id) {
 }
 
 static struct Market *
-coinbase_product_internal(const struct String *restrict const name) {
+coinbase_product_external(const struct String *restrict const name) {
   struct Array *restrict const p_array = coinbase_products();
-  struct Market *restrict const m = Map_get(products_by_internal, name);
+  struct Market *restrict const m = Map_get(products_by_external, name);
 
   if (m != NULL) {
     m->mtx = Array_mutex(p_array);
