@@ -1036,7 +1036,7 @@ static void ws_subscribe(struct mg_connection *restrict const c,
   items = Array_items(m_array);
   for (size_t i = Array_size(m_array); i > 0; i--) {
     struct wcjson_value *restrict const j_id =
-        wcjson_string(doc, String_chars(((struct Market *)items[i - 1])->s_id));
+        wcjson_string(doc, String_chars(((struct Market *)items[i - 1])->sym));
 
     wcjson_array_add(doc, j_arr, j_id);
   }
@@ -1565,14 +1565,14 @@ parse_product(const struct wcjson_document *restrict const doc,
 
   m = Market_new();
   m->id = String_cnew(m_id);
-  m->s_id = String_cnew(j_product_id->mbstring);
-  m->nm = String_cnew(nm);
-  m->type = type_value;
-  m->status = status_value;
   m->b_id = b_id;
   m->ba_id = ba_id;
   m->q_id = q_id;
   m->qa_id = qa_id;
+  m->nm = String_cnew(nm);
+  m->sym = String_cnew(j_product_id->mbstring);
+  m->type = type_value;
+  m->status = status_value;
   m->p_sc = p_dot ? strlen(p_dot + 1) : 0;
   m->p_inc = j_price_increment_num;
   m->b_sc = b_dot ? strlen(b_dot + 1) : 0;
@@ -1671,10 +1671,10 @@ static struct Array *coinbase_markets(void) {
 
       items = Array_items(markets);
       for (size_t i = Array_size(markets); i > 0; i--) {
-        if (Map_put(markets_by_symbol, ((struct Market *)items[i - 1])->s_id,
+        if (Map_put(markets_by_symbol, ((struct Market *)items[i - 1])->sym,
                     items[i - 1])) {
           werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__,
-               String_chars(((struct Market *)items[i - 1])->s_id));
+               String_chars(((struct Market *)items[i - 1])->sym));
           fatal();
         }
         if (Map_put(markets_by_id, ((struct Market *)items[i - 1])->id,
