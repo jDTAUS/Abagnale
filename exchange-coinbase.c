@@ -1478,7 +1478,7 @@ static struct Order *coinbase_order_await(void) {
 static struct Market *
 parse_product(const struct wcjson_document *restrict const doc,
               const struct wcjson_value *restrict const prod) {
-  char p_uuid[DATABASE_UUID_MAX_LENGTH + 1] = {0};
+  char m_id[DATABASE_UUID_MAX_LENGTH + 1] = {0};
   char errbuf[WCJSON_BODY_MAX + 1] = {0};
   struct Market *restrict m = NULL;
   WCJSON_DECLARE_STRING_ITEM(product_id)
@@ -1517,7 +1517,7 @@ parse_product(const struct wcjson_document *restrict const doc,
   WCJSON_STRING_ITEM(doc, prod, status, 6, errbuf, ret)
   WCJSON_STRING_ITEM(doc, prod, product_type, 12, errbuf, ret)
 
-  db_id_to_internal(p_uuid, coinbase_db, COINBASE_UUID, j_product_id->mbstring);
+  db_symbol_to_id(m_id, coinbase_db, COINBASE_UUID, j_product_id->mbstring);
 
   // Extract scale from price increment.
   const char *restrict const p_dot = strchr(j_price_increment->mbstring, '.');
@@ -1525,6 +1525,7 @@ parse_product(const struct wcjson_document *restrict const doc,
   const char *restrict const q_dot = strchr(j_quote_increment->mbstring, '.');
   struct String *restrict const b_id =
       String_cnew(j_base_currency_id->mbstring);
+
   struct String *restrict const q_id =
       String_cnew(j_quote_currency_id->mbstring);
 
@@ -1563,7 +1564,7 @@ parse_product(const struct wcjson_document *restrict const doc,
   }
 
   m = Market_new();
-  m->id = String_cnew(p_uuid);
+  m->id = String_cnew(m_id);
   m->s_id = String_cnew(j_product_id->mbstring);
   m->nm = String_cnew(nm);
   m->type = type_value;
@@ -2120,18 +2121,18 @@ static void order_create_body(char *restrict const mbbody, size_t mbbody_nitems,
                               const char *restrict const price,
                               size_t *restrict mb_len) {
   char client_id[DATABASE_UUID_MAX_LENGTH + 1] = {0};
-  char ext_id[DATABASE_UUID_MAX_LENGTH + 1] = {0};
+  char s_id[DATABASE_UUID_MAX_LENGTH + 1] = {0};
   struct wcjson_value *restrict const body = wcjson_object(doc);
   struct wcjson_value *restrict const conf = wcjson_object(doc);
   struct wcjson_value *restrict const llgtc = wcjson_object(doc);
 
   db_uuid(client_id, coinbase_db);
-  db_id_to_external(ext_id, coinbase_db, COINBASE_UUID, String_chars(m_id));
+  db_id_to_symbol(s_id, coinbase_db, COINBASE_UUID, String_chars(m_id));
 
   struct wcjson_value *restrict const j_client_id =
       wcjson_string(doc, client_id);
 
-  struct wcjson_value *restrict const j_p_id = wcjson_string(doc, ext_id);
+  struct wcjson_value *restrict const j_p_id = wcjson_string(doc, s_id);
   struct wcjson_value *restrict const j_side = wcjson_string(doc, side);
   struct wcjson_value *restrict const j_base = wcjson_string(doc, base_amount);
   struct wcjson_value *restrict const j_price = wcjson_string(doc, price);

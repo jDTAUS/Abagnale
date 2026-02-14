@@ -75,12 +75,12 @@ void *db_connect(const char *const cname) {
       $1, $2, $3, $4
     );
 
-  EXEC SQL AT :con PREPARE internal_id AS
+  EXEC SQL AT :con PREPARE id AS
     SELECT "INTERNAL_ID" FROM "IDENTIFIERS"
     WHERE "EXCHANGE_ID" = $1
       AND "EXTERNAL_ID" = $2;
 
-  EXEC SQL AT :con PREPARE internal_id_create AS
+  EXEC SQL AT :con PREPARE id_create AS
     INSERT INTO "IDENTIFIERS" (
       "EXCHANGE_ID",
       "EXTERNAL_ID",
@@ -196,8 +196,8 @@ void db_uuid(char *const uuid, const void *const db) {
 #endif
 }
 
-void db_id_to_internal(char *const internal, const void *const db,
-                       const char *const e_id, const char *const external) {
+void db_symbol_to_id(char *const id, const void *const db,
+                     const char *const e_id, const char *const symbol) {
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(1, stdout);
 #endif
@@ -205,15 +205,15 @@ void db_id_to_internal(char *const internal, const void *const db,
   EXEC SQL BEGIN DECLARE SECTION;
   const char *con = String_chars(db);
   const char *sql_e_id = e_id;
-  const char *sql_external = external;
-  char *sql_internal = internal;
+  const char *sql_symbol = symbol;
+  char *sql_id = id;
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
   EXEC SQL WHENEVER SQLERROR CALL db_fatal();
   EXEC SQL WHENEVER NOT FOUND GOTO not_found;
   EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
   EXEC SQL AT :con
-    EXECUTE internal_id USING :sql_e_id, :sql_external INTO :sql_internal;
+    EXECUTE id USING :sql_e_id, :sql_symbol INTO :sql_id;
   EXEC SQL AT :con COMMIT;
   // clang-format on
 #ifdef ABAG_SQL_DEBUG
@@ -226,7 +226,7 @@ not_found:
   EXEC SQL WHENEVER SQLERROR CALL db_fatal();
   EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
   EXEC SQL AT :con
-    EXECUTE internal_id_create USING :sql_e_id, :sql_external INTO :sql_internal;
+    EXECUTE id_create USING :sql_e_id, :sql_symbol INTO :sql_id;
   EXEC SQL AT :con COMMIT;
   // clang-format on
 #ifdef ABAG_SQL_DEBUG
@@ -234,8 +234,8 @@ not_found:
 #endif
 }
 
-void db_id_to_external(char *const external, const void *const db,
-                       const char *const e_id, const char *const internal) {
+void db_id_to_symbol(char *const symbol, const void *const db,
+                     const char *const e_id, const char *const id) {
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(1, stdout);
 #endif
@@ -243,16 +243,16 @@ void db_id_to_external(char *const external, const void *const db,
   EXEC SQL BEGIN DECLARE SECTION;
   const char *con = String_chars(db);
   const char *sql_e_id = e_id;
-  const char *sql_internal = internal; 
-  const char *sql_external = external;
+  const char *sql_id = id; 
+  const char *sql_symbol = symbol;
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
   EXEC SQL WHENEVER SQLERROR CALL db_fatal();
   EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
   EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
   EXEC SQL AT :con
-    SELECT "EXTERNAL_ID" INTO :sql_external FROM "IDENTIFIERS"
-    WHERE "EXCHANGE_ID" = :sql_e_id AND "INTERNAL_ID" = :sql_internal;
+    SELECT "EXTERNAL_ID" INTO :sql_symbol FROM "IDENTIFIERS"
+    WHERE "EXCHANGE_ID" = :sql_e_id AND "INTERNAL_ID" = :sql_id;
   EXEC SQL AT :con COMMIT;
   // clang-format on
 #ifdef ABAG_SQL_DEBUG

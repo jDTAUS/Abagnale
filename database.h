@@ -138,10 +138,10 @@ bool db_vacuum(const void *const, const char *const);
 
 void db_uuid(char *const, const void *const);
 
-void db_id_to_internal(char *const, const void *const, const char *const,
-                       const char *const);
-void db_id_to_external(char *const, const void *const, const char *const,
-                       const char *const);
+void db_symbol_to_id(char *const, const void *const, const char *const,
+                     const char *const);
+void db_id_to_symbol(char *const, const void *const, const char *const,
+                     const char *const);
 
 void db_sample_create(const void *const, const char *const, const char *const,
                       const struct Numeric *const, const struct Numeric *const);
