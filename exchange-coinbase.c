@@ -264,15 +264,15 @@
     goto _ret;                                                                 \
   }
 
-#define WCJSON_DECLARE_PRODUCT_ITEM(_item)                                     \
+#define WCJSON_DECLARE_MARKET_ITEM(_item)                                      \
   WCJSON_DECLARE_STRING_ITEM(_item)                                            \
   struct String *restrict j_##_item##_str = NULL;                              \
   struct Market *restrict j_##_item##_m = NULL;
 
-#define WCJSON_PRODUCT_ITEM(_doc, _val, _item, _len, _errbuf, _ret)            \
+#define WCJSON_MARKET_ITEM(_doc, _val, _item, _len, _errbuf, _ret)             \
   WCJSON_STRING_ITEM(_doc, _val, _item, _len, _errbuf, _ret)                   \
   j_##_item##_str = String_cnew(j_##_item->mbstring);                          \
-  j_##_item##_m = coinbase_product_external(j_##_item##_str);                  \
+  j_##_item##_m = coinbase_market_by_symbol(j_##_item##_str);                  \
   String_delete(j_##_item##_str);                                              \
   j_##_item##_str = NULL;                                                      \
   if (j_##_item##_m == NULL) {                                                 \
@@ -350,10 +350,10 @@ extern const bool verbose;
 static const struct ExchangeConfig *restrict coinbase_cnf;
 static void *restrict coinbase_db;
 
-static struct Array *restrict products;
-static struct Map *restrict products_by_external;
-static struct Map *restrict products_by_id;
-static bool products_reload;
+static struct Array *restrict markets;
+static struct Map *restrict markets_by_symbol;
+static struct Map *restrict markets_by_id;
+static bool markets_reload;
 
 static struct Array *restrict accounts;
 static struct Map *restrict accounts_by_id;
@@ -384,10 +384,10 @@ static void coinbase_stop(void);
 static struct Order *coinbase_order_await(void);
 static struct Sample *coinbase_sample_await(void);
 static struct Pricing *coinbase_pricing(void);
-static struct Array *coinbase_products(void);
-static struct Market *coinbase_product(const struct String *restrict const);
+static struct Array *coinbase_markets(void);
+static struct Market *coinbase_market(const struct String *restrict const);
 static struct Market *
-coinbase_product_external(const struct String *restrict const);
+coinbase_market_by_symbol(const struct String *restrict const);
 static struct Array *coinbase_accounts(void);
 static struct Account *
 coinbase_account_currency(const struct String *restrict const);
@@ -422,8 +422,8 @@ struct Exchange exchange_coinbase = {
     .order_await = coinbase_order_await,
     .sample_await = coinbase_sample_await,
     .pricing = coinbase_pricing,
-    .markets = coinbase_products,
-    .market = coinbase_product,
+    .markets = coinbase_markets,
+    .market = coinbase_market,
     .accounts = coinbase_accounts,
     .account = coinbase_account,
     .order = coinbase_order,
@@ -793,10 +793,10 @@ static void ws_ticker_update(const struct wcjson_document *restrict const doc,
                              const struct wcjson_value *restrict const ticker,
                              const struct Numeric *restrict const nanos) {
   char errbuf[WCJSON_BODY_MAX + 1] = {0};
-  WCJSON_DECLARE_PRODUCT_ITEM(product_id)
+  WCJSON_DECLARE_MARKET_ITEM(product_id)
   WCJSON_DECLARE_NUMERIC_ITEM(price)
 
-  WCJSON_PRODUCT_ITEM(doc, ticker, product_id, 10, errbuf, ret)
+  WCJSON_MARKET_ITEM(doc, ticker, product_id, 10, errbuf, ret)
   WCJSON_NUMERIC_ITEM(doc, ticker, price, 5, errbuf, ret)
 
   if (Numeric_cmp(j_price_num, zero) > 0) {
@@ -829,7 +829,7 @@ static void ws_user_update(const struct wcjson_document *restrict const doc,
   struct Order *restrict o = NULL;
   char errbuf[WCJSON_BODY_MAX + 1] = {0};
   WCJSON_DECLARE_STRING_ITEM(order_id)
-  WCJSON_DECLARE_PRODUCT_ITEM(product_id)
+  WCJSON_DECLARE_MARKET_ITEM(product_id)
   WCJSON_DECLARE_NUMERIC_ITEM(cumulative_quantity)
   WCJSON_DECLARE_NUMERIC_ITEM(leaves_quantity)
   WCJSON_DECLARE_NUMERIC_ITEM(filled_value)
@@ -842,7 +842,7 @@ static void ws_user_update(const struct wcjson_document *restrict const doc,
   WCJSON_DECLARE_STRING_ITEM_OPT(cancel_reason)
 
   WCJSON_STRING_ITEM(doc, order, order_id, 8, errbuf, ret)
-  WCJSON_PRODUCT_ITEM(doc, order, product_id, 10, errbuf, ret)
+  WCJSON_MARKET_ITEM(doc, order, product_id, 10, errbuf, ret)
   WCJSON_NUMERIC_ITEM(doc, order, cumulative_quantity, 19, errbuf, ret)
   WCJSON_NUMERIC_ITEM(doc, order, leaves_quantity, 15, errbuf, ret)
   WCJSON_NUMERIC_ITEM(doc, order, filled_value, 12, errbuf, ret)
@@ -1029,18 +1029,18 @@ static void ws_subscribe(struct mg_connection *restrict const c,
   struct wcjson_document *restrict const doc = wcjsondoc_new();
   void **items;
 
-  struct Array *restrict const p_array = coinbase_products();
+  struct Array *restrict const m_array = coinbase_markets();
   struct wcjson_value *restrict const j_msg = wcjson_object(doc);
   struct wcjson_value *restrict const j_arr = wcjson_array(doc);
 
-  items = Array_items(p_array);
-  for (size_t i = Array_size(p_array); i > 0; i--) {
+  items = Array_items(m_array);
+  for (size_t i = Array_size(m_array); i > 0; i--) {
     struct wcjson_value *restrict const j_id =
-        wcjson_string(doc, String_chars(((struct Market *)items[i - 1])->x_id));
+        wcjson_string(doc, String_chars(((struct Market *)items[i - 1])->s_id));
 
     wcjson_array_add(doc, j_arr, j_id);
   }
-  Array_unlock(p_array);
+  Array_unlock(m_array);
 
   struct wcjson_value *restrict const j_subscribe =
       wcjson_string(doc, "subscribe");
@@ -1105,7 +1105,7 @@ static void ws_listener(struct mg_connection *restrict c, int ev,
     wout("coinbase: %s: %lu: MG_EV_WS_OPEN\n", channel->name, c->id);
 #endif
     if (running) {
-      products_reload = true;
+      markets_reload = true;
       accounts_reload = true;
       ws_subscribe(c, channel);
     } else
@@ -1394,10 +1394,10 @@ static void coinbase_init(void) {
   samples = Queue_new((MG_MAX_RECV_SIZE) / sizeof(struct Sample *),
                       (time_t)(WEBSOCKET_STALL_MILLIS / 1000));
   mg_log_set(MG_LL_NONE); // NONE, ERROR, INFO, DEBUG, VERBOSE
-  products = Array_new(1024);
-  products_by_external = Map_new(1024);
-  products_by_id = Map_new(1024);
-  products_reload = true;
+  markets = Array_new(1024);
+  markets_by_symbol = Map_new(1024);
+  markets_by_id = Map_new(1024);
+  markets_reload = true;
   accounts = Array_new(256);
   accounts_by_id = Map_new(256);
   accounts_by_currency = Map_new(256);
@@ -1421,9 +1421,9 @@ static void coinbase_destroy(void) {
   String_delete(exchange_coinbase.nm);
   Queue_delete(orders, Order_delete);
   Queue_delete(samples, Sample_delete);
-  Array_delete(products, Market_delete);
-  Map_delete(products_by_external, NULL);
-  Map_delete(products_by_id, NULL);
+  Array_delete(markets, Market_delete);
+  Map_delete(markets_by_symbol, NULL);
+  Map_delete(markets_by_id, NULL);
   Array_delete(accounts, Account_delete);
   Map_delete(accounts_by_id, NULL);
   Map_delete(accounts_by_currency, NULL);
@@ -1564,7 +1564,7 @@ parse_product(const struct wcjson_document *restrict const doc,
 
   m = Market_new();
   m->id = String_cnew(p_uuid);
-  m->x_id = String_cnew(j_product_id->mbstring);
+  m->s_id = String_cnew(j_product_id->mbstring);
   m->nm = String_cnew(nm);
   m->type = type_value;
   m->status = status_value;
@@ -1641,15 +1641,15 @@ ret:
   return p;
 }
 
-static struct Array *coinbase_products(void) {
+static struct Array *coinbase_markets(void) {
   struct wcjson_document doc = WCJSON_DOCUMENT_INITIALIZER;
   char url[URL_MAX_LENGTH + 1] = {0};
   void **items;
 
-  Array_lock(products);
+  Array_lock(markets);
 
-  if (products_reload) {
-    products_reload = false;
+  if (markets_reload) {
+    markets_reload = false;
     accounts_reload = true;
     int r =
         snprintf(url, sizeof(url), "%s", ABAG_COINBASE_PRODUCTS_RESOURCE_URL);
@@ -1660,23 +1660,23 @@ static struct Array *coinbase_products(void) {
     }
 
     if (http_req(&doc, url, ABAG_COINBASE_PRODUCTS_PATH, NULL, 0) == 0) {
-      Array_clear(products, Market_delete);
-      parse_products(products, &doc);
-      Array_shrink(products);
-      Map_delete(products_by_external, NULL);
-      Map_delete(products_by_id, NULL);
-      products_by_external = Map_new(Array_size(products));
-      products_by_id = Map_new(Array_size(products));
+      Array_clear(markets, Market_delete);
+      parse_products(markets, &doc);
+      Array_shrink(markets);
+      Map_delete(markets_by_symbol, NULL);
+      Map_delete(markets_by_id, NULL);
+      markets_by_symbol = Map_new(Array_size(markets));
+      markets_by_id = Map_new(Array_size(markets));
 
-      items = Array_items(products);
-      for (size_t i = Array_size(products); i > 0; i--) {
-        if (Map_put(products_by_external, ((struct Market *)items[i - 1])->x_id,
+      items = Array_items(markets);
+      for (size_t i = Array_size(markets); i > 0; i--) {
+        if (Map_put(markets_by_symbol, ((struct Market *)items[i - 1])->s_id,
                     items[i - 1])) {
           werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__,
-               String_chars(((struct Market *)items[i - 1])->x_id));
+               String_chars(((struct Market *)items[i - 1])->s_id));
           fatal();
         }
-        if (Map_put(products_by_id, ((struct Market *)items[i - 1])->id,
+        if (Map_put(markets_by_id, ((struct Market *)items[i - 1])->id,
                     items[i - 1])) {
           werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__,
                String_chars(((struct Market *)items[i - 1])->id));
@@ -1690,33 +1690,33 @@ static struct Array *coinbase_products(void) {
   heap_free(doc.strings);
   heap_free(doc.mbstrings);
   heap_free(doc.esc);
-  return products;
+  return markets;
 }
 
-static struct Market *coinbase_product(const struct String *restrict const id) {
-  struct Array *restrict const p_array = coinbase_products();
-  struct Market *restrict m = Map_get(products_by_id, id);
+static struct Market *coinbase_market(const struct String *restrict const id) {
+  struct Array *restrict const m_array = coinbase_markets();
+  struct Market *restrict m = Map_get(markets_by_id, id);
 
   if (m != NULL) {
-    m->mtx = Array_mutex(p_array);
+    m->mtx = Array_mutex(m_array);
     return m;
   }
 
-  Array_unlock(p_array);
+  Array_unlock(m_array);
   return NULL;
 }
 
 static struct Market *
-coinbase_product_external(const struct String *restrict const name) {
-  struct Array *restrict const p_array = coinbase_products();
-  struct Market *restrict const m = Map_get(products_by_external, name);
+coinbase_market_by_symbol(const struct String *restrict const name) {
+  struct Array *restrict const m_array = coinbase_markets();
+  struct Market *restrict const m = Map_get(markets_by_symbol, name);
 
   if (m != NULL) {
-    m->mtx = Array_mutex(p_array);
+    m->mtx = Array_mutex(m_array);
     return m;
   }
 
-  Array_unlock(p_array);
+  Array_unlock(m_array);
   return NULL;
 }
 
@@ -1924,7 +1924,7 @@ parse_order(const struct wcjson_document *restrict const doc,
   struct Order *restrict o = NULL;
   char errbuf[WCJSON_BODY_MAX + 1] = {0};
   WCJSON_DECLARE_STRING_ITEM(order_id)
-  WCJSON_DECLARE_PRODUCT_ITEM(product_id)
+  WCJSON_DECLARE_MARKET_ITEM(product_id)
   WCJSON_DECLARE_NUMERIC_ITEM(filled_size)
   WCJSON_DECLARE_NUMERIC_ITEM(filled_value)
   WCJSON_DECLARE_NUMERIC_ITEM(total_fees)
@@ -1945,7 +1945,7 @@ parse_order(const struct wcjson_document *restrict const doc,
   WCJSON_DECLARE_BOOL_ITEM_OPT(size_in_quote)
 
   WCJSON_STRING_ITEM(doc, order, order_id, 8, errbuf, ret)
-  WCJSON_PRODUCT_ITEM(doc, order, product_id, 10, errbuf, ret)
+  WCJSON_MARKET_ITEM(doc, order, product_id, 10, errbuf, ret)
   WCJSON_NUMERIC_ITEM(doc, order, filled_size, 11, errbuf, ret)
   WCJSON_NUMERIC_ITEM(doc, order, filled_value, 12, errbuf, ret)
   WCJSON_NUMERIC_ITEM(doc, order, total_fees, 10, errbuf, ret)
