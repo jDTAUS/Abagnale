@@ -2106,8 +2106,9 @@ static void trade_pricing(const struct worker_ctx *restrict const w_ctx,
 static void trade_plot(const struct worker_ctx *restrict const w_ctx,
                        struct Trade *restrict const t) {
   char plot_fn[4096] = {0};
-  int r = snprintf(plot_fn, sizeof(plot_fn), "%s/%s.m",
-                   String_chars(cnf->plts_dir), String_chars(w_ctx->m->nm));
+  int r = snprintf(plot_fn, sizeof(plot_fn), "%s/%s-%s.m",
+                   String_chars(cnf->plts_dir), String_chars(w_ctx->e->nm),
+                   String_chars(w_ctx->m->nm));
 
   if (r < 0 || (size_t)r >= sizeof(plot_fn)) {
     werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
