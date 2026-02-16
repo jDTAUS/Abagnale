@@ -544,7 +544,7 @@ void db_stats_bcl_factor(const void *const db, const char *const e_id,
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
   EXEC SQL WHENEVER SQLERROR CALL db_fatal();
-  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL WHENEVER NOT FOUND GOTO not_found;
   EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
   EXEC SQL AT :con
     UPDATE "STATISTICS"
@@ -555,6 +555,8 @@ void db_stats_bcl_factor(const void *const db, const char *const e_id,
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(0, stdout);
 #endif
+not_found:
+  return;
 }
 
 void db_stats_scl_factor(const void *const db, const char *const e_id,
@@ -571,7 +573,7 @@ void db_stats_scl_factor(const void *const db, const char *const e_id,
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
   EXEC SQL WHENEVER SQLERROR CALL db_fatal();
-  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL WHENEVER NOT FOUND GOTO not_found;
   EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
   EXEC SQL AT :con
     UPDATE "STATISTICS"
@@ -582,6 +584,8 @@ void db_stats_scl_factor(const void *const db, const char *const e_id,
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(0, stdout);
 #endif
+not_found:
+  return;
 }
 
 void db_trade_bfill(const void *const db, const char *const o_id,
