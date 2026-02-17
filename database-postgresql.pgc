@@ -551,7 +551,13 @@ void db_stats_bcl_factor(const void *const db, const char *const e_id,
     SET "BUY_ORDER_CANCEL_FACTOR" = :sql_factor
     WHERE "EXCHANGE_ID" = :sql_e_id AND "PRODUCT_ID" = :sql_m_id;
   EXEC SQL AT :con COMMIT;
+  // clang-format on
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(0, stdout);
+#endif
+  return;
 not_found:
+  // clang-format off
   EXEC SQL AT :con ROLLBACK;
   // clang-format on
 #ifdef ABAG_SQL_DEBUG
@@ -580,7 +586,13 @@ void db_stats_scl_factor(const void *const db, const char *const e_id,
     SET "SELL_ORDER_CANCEL_FACTOR" = :sql_factor
     WHERE "EXCHANGE_ID" = :sql_e_id AND "PRODUCT_ID" = :sql_m_id;
   EXEC SQL AT :con COMMIT;
+  // clang-format on
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(0, stdout);
+#endif
+  return;
 not_found:
+  // clang-format off
   EXEC SQL AT :con ROLLBACK;
   // clang-format on
 #ifdef ABAG_SQL_DEBUG
