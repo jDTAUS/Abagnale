@@ -2083,8 +2083,6 @@ static void trade_pricing(const struct worker_ctx *restrict const w_ctx,
 
         Numeric_char_free(win);
       } else if (Numeric_cmp(t->tp_pc, t->fee_pc) < 0) {
-        Numeric_copy_to(t->fee_pc, t->tp_pc);
-
         char *restrict const stddev = Numeric_to_char(t->tp_pc, 4);
         char *restrict const fee = Numeric_to_char(t->fee_pc, 2);
 
@@ -2094,6 +2092,8 @@ static void trade_pricing(const struct worker_ctx *restrict const w_ctx,
 
         Numeric_char_free(stddev);
         Numeric_char_free(fee);
+
+        Numeric_copy_to(t->fee_pc, t->tp_pc);
       }
     }
 
