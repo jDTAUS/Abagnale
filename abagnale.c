@@ -2269,8 +2269,8 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
 
   /*
    * Quote accounts are debited with fees charged for orders.
-   * This makes it impossible to predict exact costs for open positions,
-   * because the price the position will get closed at is not known. Reserve
+   * This makes it impossible to reserve exact costs for open positions,
+   * because the prices the positions will get closed at are not known. Reserve
    * two times the current fee + 10% of the currently available balance
    * to try to ensure fees can always get paid - that is - positions can always
    * get closed without running out of funds.
