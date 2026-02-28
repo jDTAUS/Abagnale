@@ -2,10 +2,10 @@
 -- PostgreSQL database dump
 --
 
-\restrict g07K0I1tplD3lZCabbnLvpaRBHtsjyLpcaSSp85ZDSzNktcaKb3tBxf9FpYePV4
+\restrict jdIMhS09hNcm9iPNZG8nfnZhN5zfcgAaYmaclcfL7bJ8acrTqP7miVCW8sbuWaR
 
--- Dumped from database version 15.14 (Debian 15.14-0+deb12u1)
--- Dumped by pg_dump version 15.14 (Debian 15.14-0+deb12u1)
+-- Dumped from database version 15.16 (Debian 15.16-0+deb12u1)
+-- Dumped by pg_dump version 15.16 (Debian 15.16-0+deb12u1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -27,9 +27,9 @@ CREATE DATABASE "ABAGNALE" WITH TEMPLATE = template0 ENCODING = 'UTF8' LOCALE_PR
 
 ALTER DATABASE "ABAGNALE" OWNER TO abagnale;
 
-\unrestrict g07K0I1tplD3lZCabbnLvpaRBHtsjyLpcaSSp85ZDSzNktcaKb3tBxf9FpYePV4
+\unrestrict jdIMhS09hNcm9iPNZG8nfnZhN5zfcgAaYmaclcfL7bJ8acrTqP7miVCW8sbuWaR
 \connect "ABAGNALE"
-\restrict g07K0I1tplD3lZCabbnLvpaRBHtsjyLpcaSSp85ZDSzNktcaKb3tBxf9FpYePV4
+\restrict jdIMhS09hNcm9iPNZG8nfnZhN5zfcgAaYmaclcfL7bJ8acrTqP7miVCW8sbuWaR
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -72,7 +72,7 @@ CREATE TYPE public.trade_status AS ENUM (
     'SELLING',
     'SOLD',
     'DONE',
-    'KILLED'
+    'SUSPENDED'
 );
 
 
@@ -638,5 +638,5 @@ ALTER TABLE ONLY public."TREND_PLOTS"
 -- PostgreSQL database dump complete
 --
 
-\unrestrict g07K0I1tplD3lZCabbnLvpaRBHtsjyLpcaSSp85ZDSzNktcaKb3tBxf9FpYePV4
+\unrestrict jdIMhS09hNcm9iPNZG8nfnZhN5zfcgAaYmaclcfL7bJ8acrTqP7miVCW8sbuWaR
 

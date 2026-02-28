@@ -2290,7 +2290,7 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
    *
    * Current work around is to simply add the missing funds, if closing such a
    * position yields an error response like "INSUFFICIENT_FUND" or to set the
-   * status to 'KILLED' of the corresponding trade in the "TRADES" table.
+   * status to "SUSPENDED" of the corresponding trade in the "TRADES" table.
    */
   Numeric_mul_to(two, q_fees, q_costs);
   Numeric_sub_to(q_avail, q_costs, r0);
