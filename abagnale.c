@@ -2272,8 +2272,25 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
    * This makes it impossible to predict exact costs for open positions,
    * because the price the position will get closed at is not known. Reserve
    * two times the current fee + 10% of the currently available balance
-   * to ensure fees can always get paid - that is - positions can always get
-   * closed without running out of funds.
+   * to try to ensure fees can always get paid - that is - positions can always
+   * get closed without running out of funds.
+   *
+   * XXX: Move exchange behaviour to exchange API and add support for different
+   * XXX: pricing models there.
+   *
+   * The fees relative in quote model has various issues we cannot solve here in
+   * any way. For example:
+   *
+   * Bought 1BTC using EUR. Position never enters stop loss, take loss or take
+   * profit. Meanwhile something else gets traded a lot using BTC with those
+   * positions entering take loss. If the number of such positions exceeds a
+   * certain sum of fees, it may no longer be possible to close the former 1BTC
+   * position, because there is not enough BTC left in the account as that has
+   * been used to pay fees when taking loss.
+   *
+   * Current work around is to simply add the missing funds, if closing such a
+   * position yields an error response like "INSUFFICIENT_FUND" or to set the
+   * status to 'KILLED' of the corresponding trade in the "TRADES" table.
    */
   Numeric_mul_to(two, q_fees, q_costs);
   Numeric_sub_to(q_avail, q_costs, r0);
