@@ -2278,8 +2278,8 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
    * XXX: Move exchange behaviour to exchange API and add support for different
    * XXX: pricing models there.
    *
-   * The fees relative in quote model has various issues we cannot solve here in
-   * any way. For example:
+   * The fees relatively added to quote model has various issues we cannot solve
+   * here in any way. For example:
    *
    * Bought 1BTC using EUR. Position never enters stop loss, take loss or take
    * profit. Meanwhile something else gets traded a lot using BTC with those
