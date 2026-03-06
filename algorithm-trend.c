@@ -663,8 +663,9 @@ static bool trend_market_plot(const void *restrict const db,
 
   fprintf(f, "\n);\n");
   fprintf(f,
-          "legend(\"off\")\ntitle(\"%s Trends\")\nxlabel(\"Time "
-          "(ns)\")\nylabel(\"Price (%s)\")\n",
+          "legend(\"off\")\ntitle(\"%s Trends\", \"interpreter\", "
+          "\"none\")\nxlabel(\"Time (ns)\", \"interpreter\", "
+          "\"none\")\nylabel(\"Price (%s)\", \"interpreter\", \"none\")\n",
           String_chars(m->nm), String_chars(m->q_id));
 
   if (fclose(f) == EOF) {
