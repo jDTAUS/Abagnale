@@ -815,7 +815,7 @@ void db_trades_open(const void *const db, const char *const e_id,
            "SELL_ORDER_QUOTE_FEES"
     FROM "TRADES"
     WHERE "EXCHANGE_ID" = :sql_e_id AND "PRODUCT_ID" = :sql_m_id
-      AND NOT ("STATUS" = 'DONE' OR "STATUS" = 'KILLED');
+      AND NOT ("STATUS" = 'DONE' OR "STATUS" = 'SUSPENDED');
   EXEC SQL AT :con OPEN trades_cursor;
   // clang-format on
 #ifdef ABAG_SQL_DEBUG
