@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict jdIMhS09hNcm9iPNZG8nfnZhN5zfcgAaYmaclcfL7bJ8acrTqP7miVCW8sbuWaR
+\restrict IaFX7j2bR01pzMIZE7pDfDIZgABEDFlrQTCYoXRqJcRoLwJk0PZcbVyWEXrbilI
 
 -- Dumped from database version 15.16 (Debian 15.16-0+deb12u1)
 -- Dumped by pg_dump version 15.16 (Debian 15.16-0+deb12u1)
@@ -27,9 +27,9 @@ CREATE DATABASE "ABAGNALE" WITH TEMPLATE = template0 ENCODING = 'UTF8' LOCALE_PR
 
 ALTER DATABASE "ABAGNALE" OWNER TO abagnale;
 
-\unrestrict jdIMhS09hNcm9iPNZG8nfnZhN5zfcgAaYmaclcfL7bJ8acrTqP7miVCW8sbuWaR
+\unrestrict IaFX7j2bR01pzMIZE7pDfDIZgABEDFlrQTCYoXRqJcRoLwJk0PZcbVyWEXrbilI
 \connect "ABAGNALE"
-\restrict jdIMhS09hNcm9iPNZG8nfnZhN5zfcgAaYmaclcfL7bJ8acrTqP7miVCW8sbuWaR
+\restrict IaFX7j2bR01pzMIZE7pDfDIZgABEDFlrQTCYoXRqJcRoLwJk0PZcbVyWEXrbilI
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -77,6 +77,20 @@ CREATE TYPE public.trade_status AS ENUM (
 
 
 ALTER TYPE public.trade_status OWNER TO abagnale;
+
+--
+-- Name: trend_marker_type; Type: TYPE; Schema: public; Owner: abagnale
+--
+
+CREATE TYPE public.trend_marker_type AS ENUM (
+    'UP',
+    'DOWN',
+    'LEFT',
+    'RIGHT'
+);
+
+
+ALTER TYPE public.trend_marker_type OWNER TO abagnale;
 
 --
 -- Name: trg_trades_update_statistics(); Type: FUNCTION; Schema: public; Owner: abagnale
@@ -376,7 +390,8 @@ COMMENT ON TABLE public."TREND_CANDLES" IS 'Candles of trend algorithm plots.';
 CREATE TABLE public."TREND_MARKERS" (
     "EXCHANGE_ID" uuid NOT NULL,
     "PRODUCT_ID" uuid NOT NULL,
-    "PLOT_ID" uuid NOT NULL
+    "PLOT_ID" uuid NOT NULL,
+    "TYPE" public.trend_marker_type NOT NULL
 );
 
 
@@ -638,5 +653,5 @@ ALTER TABLE ONLY public."TREND_PLOTS"
 -- PostgreSQL database dump complete
 --
 
-\unrestrict jdIMhS09hNcm9iPNZG8nfnZhN5zfcgAaYmaclcfL7bJ8acrTqP7miVCW8sbuWaR
+\unrestrict IaFX7j2bR01pzMIZE7pDfDIZgABEDFlrQTCYoXRqJcRoLwJk0PZcbVyWEXrbilI
 

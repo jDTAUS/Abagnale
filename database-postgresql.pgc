@@ -1385,7 +1385,8 @@ void db_tx_trend_plot_candle(const void *const db, const char *const e_id,
 void db_tx_trend_plot_marker(const void *const db, const char *const e_id,
                              const char *const m_id,
                              const struct Numeric *const x,
-                             const struct Numeric *const y) {
+                             const struct Numeric *const y,
+                             const char *const type) {
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(1, stdout);
 #endif
@@ -1396,6 +1397,7 @@ void db_tx_trend_plot_marker(const void *const db, const char *const e_id,
   const char *sql_m_id = m_id;
   const numeric *sql_x = Numeric_db(x);
   const numeric *sql_y = Numeric_db(y);
+  const char *sql_type = type;
   char sql_id[DATABASE_UUID_MAX_LENGTH + 1] = {0};
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
@@ -1414,9 +1416,9 @@ void db_tx_trend_plot_marker(const void *const db, const char *const e_id,
       (:sql_id, :sql_x, :sql_y);
   EXEC SQL AT :con
     INSERT INTO "TREND_MARKERS"
-      ("EXCHANGE_ID", "PRODUCT_ID", "PLOT_ID")
+      ("EXCHANGE_ID", "PRODUCT_ID", "PLOT_ID", "TYPE")
     VALUES
-      ( :sql_e_id, :sql_m_id, :sql_id);
+      (:sql_e_id, :sql_m_id, :sql_id, :sql_type);
   // clang-format on
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(0, stdout);
@@ -1576,7 +1578,7 @@ void db_tx_trend_plot_markers_open(const void *const db, const char *const e_id,
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
   EXEC SQL WHENEVER SQLERROR CALL db_fatal();
 	EXEC SQL AT :con DECLARE trend_plot_markers_cursor CURSOR FOR
-		SELECT d."X", d."Y"
+		SELECT d."X", d."Y", m."TYPE"
     FROM "TREND_PLOTS" t
       JOIN "TREND_MARKERS" m ON t."EXCHANGE_ID" = m."EXCHANGE_ID"
                             AND t."PRODUCT_ID" = m."PRODUCT_ID"
@@ -1593,19 +1595,20 @@ void db_tx_trend_plot_markers_open(const void *const db, const char *const e_id,
 #endif
 }
 
-bool db_tx_trend_plot_markers_next(
-    struct db_datapoint_rec *restrict const point, const void *const db) {
+bool db_tx_trend_plot_markers_next(struct db_marker_rec *restrict const marker,
+                                   const void *const db) {
   // clang-format off
   EXEC SQL BEGIN DECLARE SECTION;
   const char *con = String_chars(db);
-  numeric *x = Numeric_db(point->x);
-  numeric *y = Numeric_db(point->y);
+  numeric *x = Numeric_db(marker->dp.x);
+  numeric *y = Numeric_db(marker->dp.y);
+  char *type = marker->type;
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
   EXEC SQL WHENEVER SQLERROR CALL db_fatal();
   EXEC SQL WHENEVER NOT FOUND GOTO not_found;
 	EXEC SQL AT :con
-    FETCH FROM trend_plot_markers_cursor INTO :x, :y;
+    FETCH FROM trend_plot_markers_cursor INTO :x, :y, :type;
   // clang-format on
   return true;
 not_found:

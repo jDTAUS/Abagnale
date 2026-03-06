@@ -30,6 +30,7 @@
 #define DATABASE_CID_MAX_LENGTH (size_t)255
 #define DATABASE_TRADE_STATUS_MAX_LENGTH (size_t)7
 #define DATABASE_CANDLE_TREND_MAX_LENGTH (size_t)4
+#define DATABASE_TREND_MARKER_TYPE_MAX_LENGTH (size_t)5
 
 struct db_sample_rec {
   struct Numeric *nanos;
@@ -108,6 +109,11 @@ struct db_plot_rec {
 struct db_datapoint_rec {
   struct Numeric *x;
   struct Numeric *y;
+};
+
+struct db_marker_rec {
+  struct db_datapoint_rec dp;
+  char type[DATABASE_TREND_MARKER_TYPE_MAX_LENGTH + 1];
 };
 
 struct db_candle_rec {
@@ -215,7 +221,7 @@ void db_tx_trend_plot_candle(const void *const, const char *const,
 
 void db_tx_trend_plot_marker(const void *const, const char *const,
                              const char *const, const struct Numeric *const,
-                             const struct Numeric *const);
+                             const struct Numeric *const, const char *const);
 
 void db_tx_trend_plot_samples_open(const void *const, const char *const,
                                    const char *const);
@@ -231,7 +237,7 @@ void db_tx_trend_plot_candles_close(const void *const);
 
 void db_tx_trend_plot_markers_open(const void *const, const char *const,
                                    const char *const);
-bool db_tx_trend_plot_markers_next(struct db_datapoint_rec *const,
+bool db_tx_trend_plot_markers_next(struct db_marker_rec *const,
                                    const void *const);
 void db_tx_trend_plot_markers_close(const void *const);
 

@@ -62,6 +62,7 @@ struct trend_tls {
   } trend_position_open;
   struct trend_market_plot_vars {
     struct db_datapoint_rec *restrict db_pt;
+    struct db_marker_rec *restrict db_mk;
     struct db_candle_rec *restrict db_cd;
   } trend_market_plot;
 };
@@ -128,6 +129,9 @@ static struct trend_tls *trend_tls(void) {
     tls->trend_market_plot.db_pt = heap_malloc(sizeof(struct db_datapoint_rec));
     tls->trend_market_plot.db_pt->x = Numeric_new();
     tls->trend_market_plot.db_pt->y = Numeric_new();
+    tls->trend_market_plot.db_mk = heap_malloc(sizeof(struct db_marker_rec));
+    tls->trend_market_plot.db_mk->dp.x = Numeric_new();
+    tls->trend_market_plot.db_mk->dp.y = Numeric_new();
     tls->trend_market_plot.db_cd = heap_malloc(sizeof(struct db_candle_rec));
     tls->trend_market_plot.db_cd->o = Numeric_new();
     tls->trend_market_plot.db_cd->h = Numeric_new();
@@ -168,6 +172,9 @@ static void trend_tls_dtor(void *e) {
   Numeric_delete(tls->trend_market_plot.db_pt->x);
   Numeric_delete(tls->trend_market_plot.db_pt->y);
   heap_free(tls->trend_market_plot.db_pt);
+  Numeric_delete(tls->trend_market_plot.db_mk->dp.x);
+  Numeric_delete(tls->trend_market_plot.db_mk->dp.y);
+  heap_free(tls->trend_market_plot.db_mk);
   Numeric_delete(tls->trend_market_plot.db_cd->o);
   Numeric_delete(tls->trend_market_plot.db_cd->h);
   Numeric_delete(tls->trend_market_plot.db_cd->l);
@@ -462,10 +469,19 @@ static struct Position *trend_position_open(
                             &db_candle);
 
     db_tx_trend_plot_marker(db, String_chars(e->id), String_chars(m->id),
-                            cd_first->hnanos, cd_first->h);
+                            cd_first->hnanos, cd_first->h, "UP");
 
     db_tx_trend_plot_marker(db, String_chars(e->id), String_chars(m->id),
-                            cd_first->lnanos, cd_first->l);
+                            cd_first->lnanos, cd_first->l, "DOWN");
+
+    db_tx_trend_plot_marker(db, String_chars(e->id), String_chars(m->id),
+                            ((struct Sample *)Array_head(samples))->nanos,
+                            ((struct Sample *)Array_head(samples))->price,
+                            "RIGHT");
+
+    db_tx_trend_plot_marker(
+        db, String_chars(e->id), String_chars(m->id), sample->nanos,
+        ((struct Sample *)Array_head(samples))->price, "LEFT");
 
     db_tx_commit(db);
   }
@@ -535,8 +551,11 @@ static bool trend_market_plot(const void *restrict const db,
                               const char *restrict const fn) {
   const struct trend_tls *restrict const tls = trend_tls();
   struct db_datapoint_rec *restrict const db_pt = tls->trend_market_plot.db_pt;
+  struct db_marker_rec *restrict const db_mk = tls->trend_market_plot.db_mk;
   struct db_candle_rec *restrict const db_cd = tls->trend_market_plot.db_cd;
-  size_t cd_red_cnt = 0, cd_green_cnt = 0, mk_cnt = 0;
+  size_t cd_red_cnt = 0, cd_green_cnt = 0, up_cnt = 0, down_cnt = 0,
+         left_cnt = 0, right_cnt = 0;
+
   FILE *restrict const f = fopen(fn, "w");
 
   if (f == NULL) {
@@ -588,13 +607,23 @@ static bool trend_market_plot(const void *restrict const db,
   db_tx_trend_plot_candles_close(db);
 
   db_tx_trend_plot_markers_open(db, String_chars(e->id), String_chars(m->id));
-  while (!terminated && db_tx_trend_plot_markers_next(db_pt, db)) {
-    fprintf(f, "marker%zu = [", mk_cnt);
-    char *restrict const x = Numeric_to_char(db_pt->x, 0);
-    char *restrict const y = Numeric_to_char(db_pt->y, m->q_sc);
+  while (!terminated && db_tx_trend_plot_markers_next(db_mk, db)) {
+    char *restrict const x = Numeric_to_char(db_mk->dp.x, 0);
+    char *restrict const y = Numeric_to_char(db_mk->dp.y, m->q_sc);
 
-    fprintf(f, "\t%s, %s;\t];\n", x, y);
-    mk_cnt++;
+    if (!strcmp("UP", db_mk->type))
+      fprintf(f, "up_mk%zu = [\t%s, %s;\t];\n", up_cnt++, x, y);
+    else if (!strcmp("DOWN", db_mk->type))
+      fprintf(f, "down_mk%zu = [\t%s, %s;\t];\n", down_cnt++, x, y);
+    else if (!strcmp("LEFT", db_mk->type))
+      fprintf(f, "left_mk%zu = [\t%s, %s;\t];\n", left_cnt++, x, y);
+    else if (!strcmp("RIGHT", db_mk->type))
+      fprintf(f, "right_mk%zu = [\t%s, %s;\t];\n", right_cnt++, x, y);
+    else {
+      werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
+      fatal();
+    }
+
     Numeric_char_free(x);
     Numeric_char_free(y);
   }
@@ -613,9 +642,24 @@ static bool trend_market_plot(const void *restrict const db,
     fprintf(f, ",\n\tgreen_candle%zu(:,1), green_candle%zu(:,2), \"-g\"", i - 1,
             i - 1);
 
-  for (size_t i = mk_cnt; i > 0; i--)
-    fprintf(f, ",\n\tmarker%zu(:,1), marker%zu(:,2), \"bo\", \"markersize\", 2",
+  for (size_t i = up_cnt; i > 0; i--)
+    fprintf(f, ",\n\tup_mk%zu(:,1), up_mk%zu(:,2), \"b^\", \"markersize\", 2",
             i - 1, i - 1);
+
+  for (size_t i = down_cnt; i > 0; i--)
+    fprintf(f,
+            ",\n\tdown_mk%zu(:,1), down_mk%zu(:,2), \"bv\", \"markersize\", 2",
+            i - 1, i - 1);
+
+  for (size_t i = left_cnt; i > 0; i--)
+    fprintf(f,
+            ",\n\tleft_mk%zu(:,1), left_mk%zu(:,2), \"y<\", \"markersize\", 2",
+            i - 1, i - 1);
+
+  for (size_t i = right_cnt; i > 0; i--)
+    fprintf(
+        f, ",\n\tright_mk%zu(:,1), right_mk%zu(:,2), \"y>\", \"markersize\", 2",
+        i - 1, i - 1);
 
   fprintf(f, "\n);\n");
   fprintf(f,
