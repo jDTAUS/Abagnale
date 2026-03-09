@@ -560,7 +560,7 @@ static int cmd_plot(int argc, char *argv[]) {
 
   optparse_init(&options, argv);
 
-  while ((ch = optparse(&options, "e:p:a:f:")) != -1) {
+  while ((ch = optparse(&options, "e:m:a:f:")) != -1) {
     switch (ch) {
     case 'e':
       e_nm = String_cnew(options.optarg);
