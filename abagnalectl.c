@@ -555,7 +555,6 @@ static int cmd_plot(int argc, char *argv[]) {
   struct String *restrict a_nm = NULL;
   char *restrict f_nm = NULL;
   struct Market *restrict m = NULL;
-  const struct Algorithm *restrict a = NULL;
   struct optparse options = {0};
   void **items;
 
@@ -592,6 +591,14 @@ static int cmd_plot(int argc, char *argv[]) {
     goto ret;
   }
 
+  const struct Algorithm *restrict a = algorithm(a_nm);
+
+  if (a == NULL) {
+    werr("%s: %s: Algorithm not available\n", String_chars(progname),
+         String_chars(a_nm));
+    goto ret;
+  }
+
   struct Array *restrict const markets = e->markets();
 
   items = Array_items(markets);
@@ -604,24 +611,16 @@ static int cmd_plot(int argc, char *argv[]) {
   }
 
   if (m == NULL) {
-    werr("%s: %s: Market not available\n", String_chars(progname),
-         String_chars(m_nm));
-    goto unlock;
-  }
-
-  a = algorithm(a_nm);
-
-  if (a == NULL) {
-    werr("%s: %s: Algorithm not available\n", String_chars(progname),
-         String_chars(a_nm));
+    werr("%s: %s: %s: Market not available\n", String_chars(progname),
+         String_chars(e_nm), String_chars(m_nm));
     goto unlock;
   }
 
   void *restrict const db = db_connect(String_chars(progname));
 
   if (!a->market_plot(db, e, m, f_nm)) {
-    werr("%s: %s: Algortihm does not provide plots\n", String_chars(progname),
-         String_chars(a_nm));
+    werr("%s: %s: %s: %s: Plot not available\n", String_chars(progname),
+         String_chars(e_nm), String_chars(m->nm), String_chars(a_nm));
     goto disconnect;
   }
 
