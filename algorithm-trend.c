@@ -650,7 +650,7 @@ static bool trend_market_plot(const void *restrict const db,
 
   for (size_t i = down_cnt; i > 0; i--)
     fprintf(f,
-            ",\n\tcandle%zu_down(:,1), candle%zu_down(:,2), \"bv\", "
+            ",\n\tcandle%zu_low(:,1), candle%zu_low(:,2), \"bv\", "
             "\"markersize\", 2",
             i - 1, i - 1);
 
@@ -662,7 +662,7 @@ static bool trend_market_plot(const void *restrict const db,
 
   for (size_t i = right_cnt; i > 0; i--)
     fprintf(f,
-            ",\n\twindow%zu_close(:,1), window%zu_close(:,2), \"y>\", "
+            ",\n\twindow%zu_open(:,1), window%zu_open(:,2), \"y>\", "
             "\"markersize\", 2",
             i - 1, i - 1);
 
