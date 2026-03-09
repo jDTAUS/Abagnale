@@ -612,13 +612,13 @@ static bool trend_market_plot(const void *restrict const db,
     char *restrict const y = Numeric_to_char(db_mk->dp.y, m->q_sc);
 
     if (!strcmp("UP", db_mk->type))
-      fprintf(f, "up_mk%zu = [\t%s, %s;\t];\n", up_cnt++, x, y);
+      fprintf(f, "candle%zu_high = [\t%s, %s;\t];\n", up_cnt++, x, y);
     else if (!strcmp("DOWN", db_mk->type))
-      fprintf(f, "down_mk%zu = [\t%s, %s;\t];\n", down_cnt++, x, y);
+      fprintf(f, "candle%zu_low = [\t%s, %s;\t];\n", down_cnt++, x, y);
     else if (!strcmp("LEFT", db_mk->type))
-      fprintf(f, "left_mk%zu = [\t%s, %s;\t];\n", left_cnt++, x, y);
+      fprintf(f, "window%zu_close = [\t%s, %s;\t];\n", left_cnt++, x, y);
     else if (!strcmp("RIGHT", db_mk->type))
-      fprintf(f, "right_mk%zu = [\t%s, %s;\t];\n", right_cnt++, x, y);
+      fprintf(f, "window%zu_open = [\t%s, %s;\t];\n", right_cnt++, x, y);
     else {
       werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
       fatal();
@@ -643,23 +643,28 @@ static bool trend_market_plot(const void *restrict const db,
             i - 1);
 
   for (size_t i = up_cnt; i > 0; i--)
-    fprintf(f, ",\n\tup_mk%zu(:,1), up_mk%zu(:,2), \"b^\", \"markersize\", 2",
+    fprintf(f,
+            ",\n\tcandle%zu_high(:,1), candle%zu_high(:,2), \"b^\", "
+            "\"markersize\", 2",
             i - 1, i - 1);
 
   for (size_t i = down_cnt; i > 0; i--)
     fprintf(f,
-            ",\n\tdown_mk%zu(:,1), down_mk%zu(:,2), \"bv\", \"markersize\", 2",
+            ",\n\tcandle%zu_down(:,1), candle%zu_down(:,2), \"bv\", "
+            "\"markersize\", 2",
             i - 1, i - 1);
 
   for (size_t i = left_cnt; i > 0; i--)
     fprintf(f,
-            ",\n\tleft_mk%zu(:,1), left_mk%zu(:,2), \"y<\", \"markersize\", 2",
+            ",\n\twindow%zu_close(:,1), window%zu_close(:,2), \"y<\", "
+            "\"markersize\", 2",
             i - 1, i - 1);
 
   for (size_t i = right_cnt; i > 0; i--)
-    fprintf(
-        f, ",\n\tright_mk%zu(:,1), right_mk%zu(:,2), \"y>\", \"markersize\", 2",
-        i - 1, i - 1);
+    fprintf(f,
+            ",\n\twindow%zu_close(:,1), window%zu_close(:,2), \"y>\", "
+            "\"markersize\", 2",
+            i - 1, i - 1);
 
   fprintf(f, "\n);\n");
   fprintf(f,
