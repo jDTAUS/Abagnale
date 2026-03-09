@@ -1828,7 +1828,7 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
       char *restrict const s_pr =
           Numeric_to_char(sample->price, w_ctx->m->q_sc);
 
-      wout("%s: %s: %s: Leaving take loss (%" PRIuMAX
+      wout("%s: %s: %s: Leaving take loss(%" PRIuMAX
            "): 1%s@%s%s: take-loss-delay: %s tickers\n",
            String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
            String_chars(t->id), p->tl_trg.cnt, String_chars(w_ctx->m->b_id),
