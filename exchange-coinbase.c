@@ -278,6 +278,8 @@
   if (j_##_item##_m == NULL) {                                                 \
     werr("coinbase: Market '%s' not available: %s\n", j_##_item->mbstring,     \
          wcjsondoc_string(_errbuf, sizeof(_errbuf), _doc, _val, NULL));        \
+    for (size_t i = nitems(ws_channels); i > 0; i--)                           \
+      ws_channels[i - 1].reconnect = true;                                     \
     goto _ret;                                                                 \
   }
 
@@ -1656,7 +1658,6 @@ static struct Array *coinbase_markets(void) {
   Array_lock(markets);
 
   if (markets_reload) {
-    markets_reload = false;
     accounts_reload = true;
     int r =
         snprintf(url, sizeof(url), "%s", ABAG_COINBASE_PRODUCTS_RESOURCE_URL);
@@ -1690,6 +1691,8 @@ static struct Array *coinbase_markets(void) {
           fatal();
         }
       }
+
+      markets_reload = false;
     }
   }
 
@@ -1766,10 +1769,10 @@ ret:
   return a;
 }
 
-static struct Array *
-parse_accounts(struct Array *restrict const a,
-               const struct wcjson_document *restrict const doc) {
+static int parse_accounts(struct Array *restrict const a,
+                          const struct wcjson_document *restrict const doc) {
   char errbuf[WCJSON_BODY_MAX + 1] = {0};
+  int r = -1;
   WCJSON_DECLARE_ARRAY_ITEM(accounts)
 
   WCJSON_ARRAY_ITEM(doc, doc->values, accounts, 8, errbuf, ret)
@@ -1786,12 +1789,14 @@ parse_accounts(struct Array *restrict const a,
         Account_delete(parsed);
     }
   }
+
+  r = 0;
 ret:
-  return a;
+  return r;
 }
 
-static struct Array *accounts_with_cursor(struct Array *restrict result,
-                                          const char *restrict const cursor) {
+static int accounts_with_cursor(struct Array *restrict result,
+                                const char *restrict const cursor) {
   char url[URL_MAX_LENGTH + 1] = {0};
   struct wcjson_document doc = WCJSON_DOCUMENT_INITIALIZER;
   char errbuf[WCJSON_BODY_MAX + 1] = {0};
@@ -1819,14 +1824,25 @@ static struct Array *accounts_with_cursor(struct Array *restrict result,
     }
   }
 
+  r = -1;
   if (http_req(&doc, url, ABAG_COINBASE_ACCOUNTS_PATH, NULL, 0) == 0) {
-    result = parse_accounts(result, &doc);
+    r = parse_accounts(result, &doc);
+
+    if (r != 0)
+      goto ret;
+
+    r = -1;
     WCJSON_BOOL_ITEM(&doc, doc.values, has_next, 8, errbuf, ret)
 
     if (j_has_next->is_true) {
       WCJSON_STRING_ITEM(&doc, doc.values, cursor, 6, errbuf, ret)
-      result = accounts_with_cursor(result, j_cursor->mbstring);
+      r = accounts_with_cursor(result, j_cursor->mbstring);
+
+      if (r != 0)
+        goto ret;
     }
+
+    r = 0;
   }
 
 ret:
@@ -1834,7 +1850,7 @@ ret:
   heap_free(doc.strings);
   heap_free(doc.mbstrings);
   heap_free(doc.esc);
-  return result;
+  return r;
 }
 
 static struct Array *coinbase_accounts(void) {
@@ -1843,11 +1859,13 @@ static struct Array *coinbase_accounts(void) {
   Array_lock(accounts);
 
   if (accounts_reload) {
-    accounts_reload = false;
     Array_clear(accounts, Account_delete);
     Map_delete(accounts_by_id, NULL);
     Map_delete(accounts_by_currency, NULL);
-    accounts_with_cursor(accounts, NULL);
+
+    if (accounts_with_cursor(accounts, NULL) == 0)
+      accounts_reload = false;
+
     Array_shrink(accounts);
 
     accounts_by_id = Map_new(Array_size(accounts));
