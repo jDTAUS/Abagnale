@@ -356,12 +356,12 @@ static mtx_t coinbase_db_mutex;
 static struct Array *restrict markets;
 static struct Map *restrict markets_by_symbol;
 static struct Map *restrict markets_by_id;
-static bool markets_reload;
+static _Atomic bool markets_reload;
 
 static struct Array *restrict accounts;
 static struct Map *restrict accounts_by_id;
 static struct Map *restrict accounts_by_currency;
-static bool accounts_reload;
+static _Atomic bool accounts_reload;
 
 static struct Pricing *restrict pricing;
 static mtx_t pricing_mutex;
@@ -442,7 +442,7 @@ static struct ws_channel {
   const size_t items_len;
   uint64_t last_message;
   bool debug;
-  bool reconnect;
+  bool _Atomic reconnect;
   void (*update)(const struct wcjson_document *restrict const,
                  const struct wcjson_value *restrict const,
                  const struct Numeric *restrict const);
