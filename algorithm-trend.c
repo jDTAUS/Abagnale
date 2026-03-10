@@ -314,7 +314,7 @@ static struct Position *trend_position_open(
   Numeric_copy_to(sample->nanos, cd_cur->lnanos);
   Candle_copy_to(cd_cur, cd_first);
   Candle_copy_to(cd_cur, cd_last);
-  Numeric_copy_to(sample->price, pr_cur);
+  Numeric_copy_to(zero, pr_cur);
 
   items = Array_items(samples);
   for (size_t i = Array_size(samples);
