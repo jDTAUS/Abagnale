@@ -132,7 +132,7 @@ static void sym_delete(void *restrict const v) {
 %}
 
 %token AT CDP DATABASE DEMANDDURMAX DEMANDDURMIN DNSTO DNSV4 DNSV6 ERROR
-%token EXCHANGE INCLUDE MARKET NOT PLOTS RETURN STOPLOSSDELAY SUPPLYDURMAX
+%token EXCHANGE INCLUDE MARKET MATCH NOT PLOTS RETURN STOPLOSSDELAY SUPPLYDURMAX
 %token SUPPLYDURMIN TAKELOSSDELAY TAKEPROFITDELAY TARGET TRADE
 %token USER USING VOLATILITY WINDOW
 
@@ -458,17 +458,25 @@ exchange  : EXCHANGE STRING {
           ;
 
 conf_market : negate STRING {
-              const char *errstr = NULL;
-              struct str_find sm[MAXCAPTURES] = {0};
-              str_find("", String_chars($2), sm, MAXCAPTURES, &errstr);
-              if (errstr != NULL) {
-                yyerror("%s", errstr);
-                String_delete($2);
-                YYERROR;
-              }
               struct Pattern *restrict const pat = Pattern_new();
               pat->pat = $2;
               pat->neg = $1;
+              pat->match = false;
+              Array_add_tail(m_pats, pat);
+            }
+            | negate MATCH STRING {
+              const char *errstr = NULL;
+              struct str_find sm[MAXCAPTURES] = {0};
+              str_find("", String_chars($3), sm, MAXCAPTURES, &errstr);
+              if (errstr != NULL) {
+                yyerror("%s", errstr);
+                String_delete($3);
+                YYERROR;
+              }
+              struct Pattern *restrict const pat = Pattern_new();
+              pat->pat = $3;
+              pat->neg = $1;
+              pat->match = true;
               Array_add_tail(m_pats, pat);
             }
             ;
@@ -713,6 +721,7 @@ int lookup(char *s) {
       {"exchange", EXCHANGE},
       {"include", INCLUDE},
       {"market", MARKET},
+      {"match", MATCH},
       {"not", NOT}, 
       {"plots", PLOTS},
       {"return", RETURN},
@@ -1320,16 +1329,20 @@ bool MarketConfig_match(const struct MarketConfig *restrict const c,
     bool market = true;
 
     for (size_t j = Array_size(pats); j > 0 && market; j--) {
-      market = str_find(mk, String_chars(((struct Pattern *)p_items[j - 1])->pat),
-                        sm, MAXCAPTURES, &errstr)
-               ? !((struct Pattern *)p_items[j - 1])->neg
-               : ((struct Pattern *)p_items[j - 1])->neg;
+      struct Pattern *restrict const p = p_items[j - 1];
 
-      if (errstr != NULL) {
-        werr("%s: %s: %s\n",
-             mk, String_chars(((struct Pattern *)p_items[j - 1])->pat), errstr);
-        market = false;
-      }
+      if (p->match) {
+        market = str_find(mk, String_chars(p->pat), sm, MAXCAPTURES, &errstr)
+                 ? !p->neg
+                 : p->neg;
+
+        if (errstr != NULL) {
+          werr("%s: %s: %s\n", mk, String_chars(p->pat), errstr);
+          market = false;
+        }
+      } else
+        market = String_equals(m, p->pat) ? !p->neg : p->neg;
+
     }
 
     if (market)

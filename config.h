@@ -52,6 +52,7 @@ struct Config {
 
 struct Pattern {
   struct String *restrict pat;
+  bool match;
   bool neg;
 };
 
