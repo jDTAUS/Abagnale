@@ -2781,9 +2781,11 @@ static int samples_process(void *restrict const arg) {
     struct Market *restrict const m = ctx->e->market(sample->m_id);
 
     if (m == NULL) {
-      werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__,
+      werr("%s: %s: Market not available\n", String_chars(ctx->e->nm),
            String_chars(sample->m_id));
-      fatal();
+
+      Sample_delete(sample);
+      continue;
     }
 
     ctx->a = NULL;
