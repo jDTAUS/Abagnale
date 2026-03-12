@@ -1693,7 +1693,9 @@ static struct Array *coinbase_markets(void) {
       }
 
       markets_reload = false;
-    }
+    } else
+      for (size_t i = nitems(ws_channels); i > 0; i--)
+        ws_channels[i - 1].reconnect = true;
   }
 
   heap_free(doc.values);
@@ -1865,6 +1867,9 @@ static struct Array *coinbase_accounts(void) {
 
     if (accounts_with_cursor(accounts, NULL) == 0)
       accounts_reload = false;
+    else
+      for (size_t i = nitems(ws_channels); i > 0; i--)
+        ws_channels[i - 1].reconnect = true;
 
     Array_shrink(accounts);
 
