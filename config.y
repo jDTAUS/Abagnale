@@ -95,8 +95,6 @@ struct sym {
 int symset(struct String *restrict const, struct String *restrict const, int);
 struct String *symget(const struct String *);
 
-static struct Numeric *parse_nanos(const struct String *restrict const);
-
 static struct Config *conf = NULL;
 static struct ExchangeConfig *e_cnf = NULL;
 static struct MarketConfig *m_cnf = NULL;
@@ -253,7 +251,7 @@ dbconf  : conf_db
 database  : DATABASE dbconf;
  
 nanos : STRING {
-        $$ = parse_nanos($1);
+        $$ = config_nsparse($1);
         if ($$ == NULL) {
           yyerror("%s\n", String_chars($1));
           String_delete($1);
@@ -1147,7 +1145,7 @@ struct String *symget(const struct String *restrict const nam) {
   return (NULL);
 }
 
-static struct Numeric *parse_nanos(const struct String *restrict const str) {
+struct Numeric *config_nsparse(const struct String *restrict const str) {
   struct Numeric *restrict r = NULL;
   const struct Numeric *restrict f = one;
   struct Numeric *restrict r0 = NULL;

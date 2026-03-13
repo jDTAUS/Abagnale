@@ -19,6 +19,7 @@
 
 #include "abagnale.h"
 #include "array.h"
+#include "config.h"
 #include "database.h"
 #include "heap.h"
 #include "math.h"
@@ -93,6 +94,7 @@ static int cmd_accounts(int, char *[]);
 static int cmd_account(int, char *[]);
 static int cmd_order(int, char *[]);
 static int cmd_plot(int, char *[]);
+static int cmd_volatility(int, char *[]);
 
 static const struct {
   const char *restrict name;
@@ -111,6 +113,7 @@ static const struct {
     {"account", "-e exchange -i id", cmd_account},
     {"order", "-e exchange -i id", cmd_order},
     {"plot", "-e exchange -m market -a algorithm [-f file]", cmd_plot},
+    {"volatility", "-e exchange -m market [-w window]", cmd_volatility},
 };
 
 static const char *market_type_name(const enum market_type type) {
@@ -633,6 +636,84 @@ ret:
   String_delete(e_nm);
   String_delete(m_nm);
   String_delete(a_nm);
+  return r;
+}
+
+static int cmd_volatility(int argc, char *argv[]) {
+  int ch, r = EXIT_FAILURE;
+  struct String *restrict e_nm = NULL;
+  struct String *restrict m_nm = NULL;
+  struct String *restrict w_ns = NULL;
+  struct Numeric *restrict w = NULL;
+  struct Market *restrict m = NULL;
+  struct optparse options = {0};
+  void **items;
+
+  optparse_init(&options, argv);
+
+  while ((ch = optparse(&options, "e:m:w:")) != -1) {
+    switch (ch) {
+    case 'e':
+      e_nm = String_cnew(options.optarg);
+      break;
+    case 'm':
+      m_nm = String_cnew(options.optarg);
+      break;
+    case 'w':
+      w_ns = String_cnew(options.optarg);
+      w = config_nsparse(w_ns);
+      String_delete(w_ns);
+      w_ns = NULL;
+      break;
+    default:
+      usage();
+    }
+  }
+  argc -= options.optind;
+
+  if (argc > 0 || e_nm == NULL || m_nm == NULL || w == NULL)
+    usage();
+
+  const struct Exchange *restrict const e = exchange(e_nm);
+
+  if (e == NULL) {
+    werr("%s: %s: Exchange not available\n", String_chars(progname),
+         String_chars(e_nm));
+    goto ret;
+  }
+
+  struct Array *restrict const markets = e->markets();
+
+  items = Array_items(markets);
+  for (size_t i = Array_size(markets); i > 0; i--) {
+    struct Market *restrict const needle = items[i - 1];
+    if (String_equals(needle->nm, m_nm)) {
+      m = needle;
+      break;
+    }
+  }
+
+  if (m == NULL) {
+    werr("%s: %s: %s: Market not available\n", String_chars(progname),
+         String_chars(e_nm), String_chars(m_nm));
+    goto unlock;
+  }
+
+  void *restrict const db = db_connect(String_chars(progname));
+  struct Numeric *restrict const v = Numeric_new();
+  db_samples_stddev(v, db, String_chars(e->id), String_chars(m->id), w);
+  char *restrict const v_info = Numeric_to_char(v, 4);
+  printf("%s\n", v_info);
+  Numeric_char_free(v_info);
+  Numeric_delete(v);
+  db_disconnect(db);
+
+  r = EXIT_SUCCESS;
+unlock:
+  Array_unlock(markets);
+ret:
+  String_delete(e_nm);
+  String_delete(m_nm);
   return r;
 }
 

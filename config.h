@@ -90,4 +90,5 @@ bool MarketConfig_match(const struct MarketConfig *restrict const,
 
 int config_symset(char *restrict const);
 int config_fparse(struct Config *const restrict, const char *restrict const);
+struct Numeric *config_nsparse(const struct String *restrict const);
 #endif
