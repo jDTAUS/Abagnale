@@ -804,7 +804,7 @@ static void worker_configure(struct worker_ctx *restrict const w_ctx,
     }
 
     if (q_m == NULL) {
-      wout("%s: %s: Price not available: %s@%s\n", String_chars(w_ctx->e->nm),
+      werr("%s: %s: Market not available: %s@%s\n", String_chars(w_ctx->e->nm),
            String_chars(w_ctx->m->nm), String_chars(w_ctx->m->q_id),
            String_chars(w_ctx->m_cnf->q_id));
 
@@ -823,7 +823,7 @@ static void worker_configure(struct worker_ctx *restrict const w_ctx,
     q_m_id = NULL;
 
     if (q_samples == NULL) {
-      wout("%s: %s: Price not available: %s@%s\n", String_chars(w_ctx->e->nm),
+      werr("%s: %s: Tickers not available: %s@%s\n", String_chars(w_ctx->e->nm),
            String_chars(w_ctx->m->nm), String_chars(w_ctx->m->q_id),
            String_chars(w_ctx->m_cnf->q_id));
 
@@ -837,7 +837,7 @@ static void worker_configure(struct worker_ctx *restrict const w_ctx,
     const struct Sample *restrict const q_sample = Array_tail(q_samples);
 
     if (q_sample == NULL) {
-      wout("%s: %s: Price not available: %s@%s\n", String_chars(w_ctx->e->nm),
+      werr("%s: %s: Tickers not available: %s@%s\n", String_chars(w_ctx->e->nm),
            String_chars(w_ctx->m->nm), String_chars(w_ctx->m->q_id),
            String_chars(w_ctx->m_cnf->q_id));
 
