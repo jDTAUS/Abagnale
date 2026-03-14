@@ -113,7 +113,7 @@ static const struct {
     {"account", "-e exchange -i id", cmd_account},
     {"order", "-e exchange -i id", cmd_order},
     {"plot", "-e exchange -m market -a algorithm [-f file]", cmd_plot},
-    {"volatility", "-e exchange -m market [-w window]", cmd_volatility},
+    {"volatility", "-e exchange -m market [-w nanos]", cmd_volatility},
 };
 
 static const char *market_type_name(const enum market_type type) {
