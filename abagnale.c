@@ -1581,10 +1581,11 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
             Numeric_to_char(sample->price, w_ctx->m->q_sc);
 
         wout("%s: %s: %s: Entering stop loss(%" PRIuMAX
-             "): 1%s@%s%s: stop-loss-delay: %s tickers\n",
+             "): 1%s@%s%s: stop-loss-delay: %s tickers, stop-loss-delays: "
+             "%" PRIuMAX "\n",
              String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
              String_chars(t->id), p->sl_trg.cnt, String_chars(w_ctx->m->b_id),
-             s_pr, String_chars(w_ctx->m->q_id), delay);
+             s_pr, String_chars(w_ctx->m->q_id), delay, w_ctx->m_cnf->sl_dlcnt);
 
         wout("%s: %s: %s: %s\n", String_chars(w_ctx->e->nm),
              String_chars(w_ctx->m->nm), String_chars(p->id), p_info);
@@ -1609,10 +1610,11 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
           Numeric_to_char(sample->price, w_ctx->m->q_sc);
 
       wout("%s: %s: %s: Leaving stop loss(%" PRIuMAX
-           "): 1%s@%s%s: stop-loss-delay: %s tickers\n",
+           "): 1%s@%s%s: stop-loss-delay: %s tickers, stop-loss-delays: "
+           "%" PRIuMAX "\n",
            String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
            String_chars(t->id), p->sl_trg.cnt, String_chars(w_ctx->m->b_id),
-           s_pr, String_chars(w_ctx->m->q_id), delay);
+           s_pr, String_chars(w_ctx->m->q_id), delay, w_ctx->m_cnf->sl_dlcnt);
 
       wout("%s: %s: %s: %s\n", String_chars(w_ctx->e->nm),
            String_chars(w_ctx->m->nm), String_chars(p->id), p_info);
@@ -1643,10 +1645,11 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
             Numeric_to_char(sample->price, w_ctx->m->q_sc);
 
         wout("%s: %s: %s: Entering take profit(%" PRIuMAX
-             "): 1%s@%s%s: take-profit-delay: %s tickers\n",
+             "): 1%s@%s%s: take-profit-delay: %s tickers, take-profit-delays: "
+             "%" PRIuMAX "\n",
              String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
              String_chars(t->id), p->tp_trg.cnt, String_chars(w_ctx->m->b_id),
-             s_pr, String_chars(w_ctx->m->q_id), delay);
+             s_pr, String_chars(w_ctx->m->q_id), delay, w_ctx->m_cnf->tp_dlcnt);
 
         wout("%s: %s: %s: %s\n", String_chars(w_ctx->e->nm),
              String_chars(w_ctx->m->nm), String_chars(p->id), p_info);
@@ -1682,10 +1685,11 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
             Numeric_to_char(sample->price, w_ctx->m->q_sc);
 
         wout("%s: %s: %s: Reentering stop loss(%" PRIuMAX
-             "): 1%s@%s%s: stop-loss-delay: %s tickers\n",
+             "): 1%s@%s%s: stop-loss-delay: %s tickers, stop-loss-delays: "
+             "%" PRIuMAX "\n",
              String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
              String_chars(t->id), p->sl_trg.cnt, String_chars(w_ctx->m->b_id),
-             s_pr, String_chars(w_ctx->m->q_id), delay);
+             s_pr, String_chars(w_ctx->m->q_id), delay, w_ctx->m_cnf->sl_dlcnt);
 
         wout("%s: %s: %s: %s\n", String_chars(w_ctx->e->nm),
              String_chars(w_ctx->m->nm), String_chars(p->id), p_info);
@@ -1703,10 +1707,11 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
           Numeric_to_char(sample->price, w_ctx->m->q_sc);
 
       wout("%s: %s: %s: Leaving take profit(%" PRIuMAX
-           "): 1%s@%s%s: take-profit-delay: %s tickers\n",
+           "): 1%s@%s%s: take-profit-delay: %s tickers, take-profit-delays: "
+           "%" PRIuMAX "\n",
            String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
            String_chars(t->id), p->tp_trg.cnt, String_chars(w_ctx->m->b_id),
-           s_pr, String_chars(w_ctx->m->q_id), delay);
+           s_pr, String_chars(w_ctx->m->q_id), delay, w_ctx->m_cnf->tp_dlcnt);
 
       wout("%s: %s: %s: %s\n", String_chars(w_ctx->e->nm),
            String_chars(w_ctx->m->nm), String_chars(p->id), p_info);
@@ -1737,10 +1742,11 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
             Numeric_to_char(sample->price, w_ctx->m->q_sc);
 
         wout("%s: %s: %s: Entering take loss(%" PRIuMAX
-             "): 1%s@%s%s: take-loss-delay: %s tickers\n",
+             "): 1%s@%s%s: take-loss-delay: %s tickers, take-loss-delays: "
+             "%" PRIuMAX "\n",
              String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
              String_chars(t->id), p->tl_trg.cnt, String_chars(w_ctx->m->b_id),
-             s_pr, String_chars(w_ctx->m->q_id), delay);
+             s_pr, String_chars(w_ctx->m->q_id), delay, w_ctx->m_cnf->tl_dlcnt);
 
         wout("%s: %s: %s: %s\n", String_chars(w_ctx->e->nm),
              String_chars(w_ctx->m->nm), String_chars(p->id), p_info);
@@ -1776,10 +1782,11 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
             Numeric_to_char(sample->price, w_ctx->m->q_sc);
 
         wout("%s: %s: %s: Reentering stop loss(%" PRIuMAX
-             "): 1%s@%s%s: stop-loss-delay: %s tickers\n",
+             "): 1%s@%s%s: stop-loss-delay: %s tickers, stop-loss-delays: "
+             "%" PRIuMAX "\n",
              String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
              String_chars(t->id), p->sl_trg.cnt, String_chars(w_ctx->m->b_id),
-             s_pr, String_chars(w_ctx->m->q_id), delay);
+             s_pr, String_chars(w_ctx->m->q_id), delay, w_ctx->m_cnf->sl_dlcnt);
 
         wout("%s: %s: %s: %s\n", String_chars(w_ctx->e->nm),
              String_chars(w_ctx->m->nm), String_chars(p->id), p_info);
@@ -1808,10 +1815,11 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
             Numeric_to_char(sample->price, w_ctx->m->q_sc);
 
         wout("%s: %s: %s: Reentering take profit(%" PRIuMAX
-             "): 1%s@%s%s: take-profit-delay: %s tickers\n",
+             "): 1%s@%s%s: take-profit-delay: %s tickers, take-profit-delays: "
+             "%" PRIuMAX "\n",
              String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
              String_chars(t->id), p->tp_trg.cnt, String_chars(w_ctx->m->b_id),
-             s_pr, String_chars(w_ctx->m->q_id), delay);
+             s_pr, String_chars(w_ctx->m->q_id), delay, w_ctx->m_cnf->tp_dlcnt);
 
         wout("%s: %s: %s: %s\n", String_chars(w_ctx->e->nm),
              String_chars(w_ctx->m->nm), String_chars(p->id), p_info);
@@ -1829,10 +1837,11 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
           Numeric_to_char(sample->price, w_ctx->m->q_sc);
 
       wout("%s: %s: %s: Leaving take loss(%" PRIuMAX
-           "): 1%s@%s%s: take-loss-delay: %s tickers\n",
+           "): 1%s@%s%s: take-loss-delay: %s tickers, take-loss-delays: "
+           "%" PRIuMAX "\n",
            String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
            String_chars(t->id), p->tl_trg.cnt, String_chars(w_ctx->m->b_id),
-           s_pr, String_chars(w_ctx->m->q_id), delay);
+           s_pr, String_chars(w_ctx->m->q_id), delay, w_ctx->m_cnf->tl_dlcnt);
 
       wout("%s: %s: %s: %s\n", String_chars(w_ctx->e->nm),
            String_chars(w_ctx->m->nm), String_chars(p->id), p_info);
@@ -1858,18 +1867,18 @@ static void position_trade(const struct worker_ctx *restrict const w_ctx,
 
   const char *restrict tr_info;
   const struct Numeric *restrict tr_nanos;
-  if (p->tp_trg.set &&
-      (Numeric_cmp(p->tp_samples, zero) <= 0 || p->tp_trg.cnt > 1)) {
+  if (p->tp_trg.set && (Numeric_cmp(p->tp_samples, zero) <= 0 ||
+                        p->tp_trg.cnt > w_ctx->m_cnf->tp_dlcnt)) {
     tr_info = "take profit";
     tr_nanos = p->tp_trg.nanos;
     Numeric_copy_to(p->tp_trg.price, o_pr);
-  } else if (p->sl_trg.set &&
-             (Numeric_cmp(p->sl_samples, zero) <= 0 || p->sl_trg.cnt > 1)) {
+  } else if (p->sl_trg.set && (Numeric_cmp(p->sl_samples, zero) <= 0 ||
+                               p->sl_trg.cnt > w_ctx->m_cnf->sl_dlcnt)) {
     tr_info = "stop loss";
     tr_nanos = p->sl_trg.nanos;
     Numeric_copy_to(p->sl_trg.price, o_pr);
-  } else if (p->tl_trg.set &&
-             (Numeric_cmp(p->tl_samples, zero) <= 0 || p->tl_trg.cnt > 1)) {
+  } else if (p->tl_trg.set && (Numeric_cmp(p->tl_samples, zero) <= 0 ||
+                               p->tl_trg.cnt > w_ctx->m_cnf->tl_dlcnt)) {
     tr_info = "take loss";
     tr_nanos = p->tl_trg.nanos;
     Numeric_copy_to(p->tl_trg.price, o_pr);

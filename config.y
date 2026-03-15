@@ -130,9 +130,9 @@ static void sym_delete(void *restrict const v) {
 %}
 
 %token AT CDP DATABASE DEMANDDURMAX DEMANDDURMIN DNSTO DNSV4 DNSV6 ERROR
-%token EXCHANGE INCLUDE MARKET MATCH NOT PLOTS RETURN STOPLOSSDELAY SUPPLYDURMAX
-%token SUPPLYDURMIN TAKELOSSDELAY TAKEPROFITDELAY TARGET TRADE
-%token USER USING VOLATILITY WINDOW
+%token EXCHANGE INCLUDE MARKET MATCH NOT PLOTS RETURN STOPLOSSDELAY STOPLOSSDELAYS
+%token SUPPLYDURMAX SUPPLYDURMIN TAKELOSSDELAY TAKELOSSDELAYS TAKEPROFITDELAY
+%token TAKEPROFITDELAYS TARGET TRADE USER USING VOLATILITY WINDOW
 
 %token <v.string> STRING
 %token <v.number> NUMBER
@@ -491,6 +491,15 @@ opt_trade : TAKELOSSDELAY nanos {
             }
             m_cnf->tl_dlnanos = $2;
           }
+          | TAKELOSSDELAYS NUMBER {
+            if (m_cnf->tl_dlcnt > 0) {
+              yyerror("take-loss-delays already specified");
+              Numeric_delete($2);
+              YYERROR;
+            }
+            m_cnf->tl_dlcnt = Numeric_to_long($2);
+            Numeric_delete($2);
+          }
           | MARKET {
             m_pats = Array_new(4);
             Array_add_head(m_cnf->m_pats, m_pats);
@@ -537,6 +546,15 @@ opt_trade : TAKELOSSDELAY nanos {
             }
             m_cnf->sl_dlnanos = $2;
           }
+          | STOPLOSSDELAYS NUMBER {
+            if (m_cnf->sl_dlcnt > 0) {
+              yyerror("stop-loss-delays already specified\n");
+              Numeric_delete($2);
+              YYERROR;
+            }
+            m_cnf->sl_dlcnt = Numeric_to_long($2);
+            Numeric_delete($2);
+          }
           | TAKEPROFITDELAY nanos {
             if (m_cnf->tp_dlnanos != NULL) {
               yyerror("take-profit-delay already specified\n");
@@ -544,6 +562,15 @@ opt_trade : TAKELOSSDELAY nanos {
               YYERROR;
             }
             m_cnf->tp_dlnanos = $2;
+          }
+          | TAKEPROFITDELAYS NUMBER {
+            if (m_cnf->tp_dlcnt > 0) {
+              yyerror("take-profit-delays already specified\n");
+              Numeric_delete($2);
+              YYERROR;
+            }
+            m_cnf->tp_dlcnt = Numeric_to_long($2);
+            Numeric_delete($2);
           }
           | VOLATILITY NUMBER {
             if (m_cnf->v_pc != NULL) {
@@ -724,10 +751,13 @@ int lookup(char *s) {
       {"plots", PLOTS},
       {"return", RETURN},
       {"stop-loss-delay", STOPLOSSDELAY},
+      {"stop-loss-delays", STOPLOSSDELAYS},
       {"supply-timeout-max", SUPPLYDURMAX},
       {"supply-timeout-min", SUPPLYDURMIN},
       {"take-loss-delay", TAKELOSSDELAY},
+      {"take-loss-delays", TAKELOSSDELAYS},
       {"take-profit-delay", TAKEPROFITDELAY},
+      {"take-profit-delays", TAKEPROFITDELAYS},
       {"target", TARGET},
       {"trade", TRADE},
       {"user", USER},
@@ -1284,6 +1314,9 @@ struct MarketConfig *MarketConfig_new(void) {
   c->sl_dlnanos = NULL;
   c->tl_dlnanos = NULL;
   c->tp_dlnanos = NULL;
+  c->sl_dlcnt= 0;
+  c->tl_dlcnt = 0;
+  c->tp_dlcnt = 0;
   return c;
 }
 
