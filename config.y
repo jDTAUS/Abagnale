@@ -1314,7 +1314,7 @@ struct MarketConfig *MarketConfig_new(void) {
   c->sl_dlnanos = NULL;
   c->tl_dlnanos = NULL;
   c->tp_dlnanos = NULL;
-  c->sl_dlcnt= 0;
+  c->sl_dlcnt = 0;
   c->tl_dlcnt = 0;
   c->tp_dlcnt = 0;
   return c;
