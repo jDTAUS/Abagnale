@@ -590,6 +590,7 @@ static char *position_string(const struct worker_ctx *restrict const w_ctx,
   char *restrict const q_f = Numeric_to_char(p->q_filled, w_ctx->m->q_sc);
   char *restrict const b_f = Numeric_to_char(p->b_filled, w_ctx->m->b_sc);
   char *restrict const c = nanos_to_iso8601(p->cnanos);
+  char *restrict const d = nanos_to_iso8601(p->dnanos);
   char *restrict const res = heap_malloc(POSITION_STRING_MAX_LENGTH);
   const char *restrict side;
 
@@ -607,13 +608,13 @@ static char *position_string(const struct worker_ctx *restrict const w_ctx,
 
   const int r = snprintf(
       res, POSITION_STRING_MAX_LENGTH,
-      "%s %s%s@%s%s, t: %s, b: %s%s, q: %s%s, f: %s%s, sl: %s%s@%s%s, tp: "
+      "%s %s%s@%s%s %s->%s, b: %s%s, q: %s%s, f: %s%s, sl: %s%s@%s%s, tp:  "
       "%s%s@%s%s",
       side, b_o, String_chars(w_ctx->m->b_id), pr, String_chars(w_ctx->m->q_id),
-      c, b_f, String_chars(w_ctx->m->b_id), q_f, String_chars(w_ctx->m->q_id),
-      q_fee, String_chars(w_ctx->m->q_id), b_o, String_chars(w_ctx->m->b_id),
-      sl_pr, String_chars(w_ctx->m->q_id), b_o, String_chars(w_ctx->m->b_id),
-      tp_pr, String_chars(w_ctx->m->q_id));
+      c, d, b_f, String_chars(w_ctx->m->b_id), q_f,
+      String_chars(w_ctx->m->q_id), q_fee, String_chars(w_ctx->m->q_id), b_o,
+      String_chars(w_ctx->m->b_id), sl_pr, String_chars(w_ctx->m->q_id), b_o,
+      String_chars(w_ctx->m->b_id), tp_pr, String_chars(w_ctx->m->q_id));
 
   if (r < 0 || (size_t)r >= POSITION_STRING_MAX_LENGTH) {
     werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
@@ -628,6 +629,7 @@ static char *position_string(const struct worker_ctx *restrict const w_ctx,
   Numeric_char_free(q_f);
   Numeric_char_free(b_f);
   heap_free(c);
+  heap_free(d);
   return res;
 }
 
