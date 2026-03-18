@@ -1519,6 +1519,9 @@ static void position_maintain(const struct worker_ctx *restrict const w_ctx,
 
       heap_free(p_info);
       position_timeout(w_ctx, t, p, samples, sample);
+      p->tp_trg.set = false;
+      p->sl_trg.set = false;
+      p->tl_trg.set = false;
     }
   free:
     if (free_order)
@@ -1570,7 +1573,7 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
       Numeric_copy_to(sample->nanos, p->sl_trg.nanos);
       Numeric_copy_to(sample->price, p->sl_trg.price);
 
-      if (w_ctx->m_cnf->sl_dlnanos != NULL) {
+      if (w_ctx->m_cnf->sl_dlnanos != NULL && w_ctx->m_cnf->sl_dlcnt > 0) {
         samples_per_nano(sr, samples);
         Numeric_mul_to(sr, w_ctx->m_cnf->sl_dlnanos, p->sl_samples);
       } else
@@ -1596,7 +1599,7 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
         Numeric_char_free(delay);
         Numeric_char_free(s_pr);
       }
-    } else if (w_ctx->m_cnf->sl_dlnanos != NULL) {
+    } else if (w_ctx->m_cnf->sl_dlnanos != NULL && w_ctx->m_cnf->sl_dlcnt > 0) {
       Numeric_sub_to(p->sl_samples, one, r0);
       Numeric_copy_to(r0, p->sl_samples);
     }
@@ -1634,7 +1637,7 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
       Numeric_copy_to(sample->nanos, p->tp_trg.nanos);
       Numeric_copy_to(sample->price, p->tp_trg.price);
 
-      if (w_ctx->m_cnf->tp_dlnanos != NULL) {
+      if (w_ctx->m_cnf->tp_dlnanos != NULL && w_ctx->m_cnf->tp_dlcnt > 0) {
         samples_per_nano(sr, samples);
         Numeric_mul_to(sr, w_ctx->m_cnf->tp_dlnanos, p->tp_samples);
       } else
@@ -1660,7 +1663,7 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
         Numeric_char_free(delay);
         Numeric_char_free(s_pr);
       }
-    } else if (w_ctx->m_cnf->tp_dlnanos != NULL) {
+    } else if (w_ctx->m_cnf->tp_dlnanos != NULL && w_ctx->m_cnf->tp_dlcnt > 0) {
       Numeric_sub_to(p->tp_samples, one, r0);
       Numeric_copy_to(r0, p->tp_samples);
     }
@@ -1674,7 +1677,7 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
       Numeric_copy_to(sample->price, p->sl_trg.price);
       p->sl_trg.cnt++;
 
-      if (w_ctx->m_cnf->sl_dlnanos != NULL) {
+      if (w_ctx->m_cnf->sl_dlnanos != NULL && w_ctx->m_cnf->sl_dlcnt > 0) {
         samples_per_nano(sr, samples);
         Numeric_mul_to(sr, w_ctx->m_cnf->sl_dlnanos, p->sl_samples);
       } else
@@ -1731,7 +1734,7 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
       Numeric_copy_to(sample->nanos, p->tl_trg.nanos);
       Numeric_copy_to(sample->price, p->tl_trg.price);
 
-      if (w_ctx->m_cnf->tl_dlnanos != NULL) {
+      if (w_ctx->m_cnf->tl_dlnanos != NULL && w_ctx->m_cnf->tl_dlcnt > 0) {
         samples_per_nano(sr, samples);
         Numeric_mul_to(sr, w_ctx->m_cnf->tl_dlnanos, p->tl_samples);
       } else
@@ -1771,7 +1774,7 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
       Numeric_copy_to(sample->price, p->sl_trg.price);
       p->sl_trg.cnt++;
 
-      if (w_ctx->m_cnf->sl_dlnanos != NULL) {
+      if (w_ctx->m_cnf->sl_dlnanos != NULL && w_ctx->m_cnf->tl_dlcnt > 0) {
         samples_per_nano(sr, samples);
         Numeric_mul_to(sr, w_ctx->m_cnf->sl_dlnanos, p->sl_samples);
       } else
@@ -1804,7 +1807,7 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
       Numeric_copy_to(sample->price, p->tp_trg.price);
       p->tp_trg.cnt++;
 
-      if (w_ctx->m_cnf->tp_dlnanos != NULL) {
+      if (w_ctx->m_cnf->tp_dlnanos != NULL && w_ctx->m_cnf->tp_dlcnt > 0) {
         samples_per_nano(sr, samples);
         Numeric_mul_to(sr, w_ctx->m_cnf->tp_dlnanos, p->tp_samples);
       } else
@@ -1869,24 +1872,43 @@ static void position_trade(const struct worker_ctx *restrict const w_ctx,
 
   const char *restrict tr_info;
   const struct Numeric *restrict tr_nanos;
-  if (p->tp_trg.set && (Numeric_cmp(p->tp_samples, zero) <= 0 ||
-                        p->tp_trg.cnt > w_ctx->m_cnf->tp_dlcnt)) {
-    tr_info = "take profit";
-    tr_nanos = p->tp_trg.nanos;
-    Numeric_copy_to(p->tp_trg.price, o_pr);
-  } else if (p->sl_trg.set && (Numeric_cmp(p->sl_samples, zero) <= 0 ||
-                               p->sl_trg.cnt > w_ctx->m_cnf->sl_dlcnt)) {
-    tr_info = "stop loss";
-    tr_nanos = p->sl_trg.nanos;
-    Numeric_copy_to(p->sl_trg.price, o_pr);
-  } else if (p->tl_trg.set && (Numeric_cmp(p->tl_samples, zero) <= 0 ||
-                               p->tl_trg.cnt > w_ctx->m_cnf->tl_dlcnt)) {
-    tr_info = "take loss";
-    tr_nanos = p->tl_trg.nanos;
-    Numeric_copy_to(p->tl_trg.price, o_pr);
-  } else
-    return;
 
+  if (p->tp_trg.set) {
+    if (Numeric_cmp(p->tp_samples, zero) <= 0 ||
+        p->tp_trg.cnt > w_ctx->m_cnf->tp_dlcnt) {
+      tr_info = "take profit";
+      tr_nanos = p->tp_trg.nanos;
+      Numeric_copy_to(p->tp_trg.price, o_pr);
+      goto trade;
+    } else
+      return;
+  }
+
+  if (p->sl_trg.set) {
+    if (Numeric_cmp(p->sl_samples, zero) <= 0 ||
+        p->sl_trg.cnt > w_ctx->m_cnf->sl_dlcnt) {
+      tr_info = "stop loss";
+      tr_nanos = p->sl_trg.nanos;
+      Numeric_copy_to(p->sl_trg.price, o_pr);
+      goto trade;
+    } else
+      return;
+  }
+
+  if (p->tl_trg.set) {
+    if (Numeric_cmp(p->tl_samples, zero) <= 0 ||
+        p->tl_trg.cnt > w_ctx->m_cnf->tl_dlcnt) {
+      tr_info = "take loss";
+      tr_nanos = p->tl_trg.nanos;
+      Numeric_copy_to(p->tl_trg.price, o_pr);
+      goto trade;
+    } else
+      return;
+  }
+
+  return;
+
+trade:
   if (Numeric_cmp(tr_nanos, sample->nanos) == 0)
     return;
 
