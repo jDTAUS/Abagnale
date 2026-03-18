@@ -1519,9 +1519,6 @@ static void position_maintain(const struct worker_ctx *restrict const w_ctx,
 
       heap_free(p_info);
       position_timeout(w_ctx, t, p, samples, sample);
-      p->tp_trg.set = false;
-      p->sl_trg.set = false;
-      p->tl_trg.set = false;
     }
   free:
     if (free_order)
