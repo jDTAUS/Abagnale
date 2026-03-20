@@ -438,7 +438,8 @@ static struct Position *trend_position_open(
   Numeric_copy_to(st->cd_langle, cd_first->a);
 
   if (cnf->plts_dir) {
-    Numeric_copy_to(cd_last->onanos, db_plot->snanos);
+    Numeric_copy_to(((struct Sample *)Array_head(samples))->nanos,
+                    db_plot->snanos);
     Numeric_copy_to(cd_first->cnanos, db_plot->enanos);
 
     db_tx_begin(db);
