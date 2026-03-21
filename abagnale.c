@@ -608,7 +608,7 @@ static char *position_string(const struct worker_ctx *restrict const w_ctx,
 
   const int r = snprintf(
       res, POSITION_STRING_MAX_LENGTH,
-      "%s %s%s@%s%s %s->%s, b: %s%s, q: %s%s, f: %s%s, sl: %s%s@%s%s, tp:  "
+      "%s %s%s@%s%s %s->%s, b: %s%s, q: %s%s, f: %s%s, sl: %s%s@%s%s, tp: "
       "%s%s@%s%s",
       side, b_o, String_chars(w_ctx->m->b_id), pr, String_chars(w_ctx->m->q_id),
       c, d, b_f, String_chars(w_ctx->m->b_id), q_f,
