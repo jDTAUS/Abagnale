@@ -644,28 +644,20 @@ static bool trend_market_plot(const void *restrict const db,
             i - 1);
 
   for (size_t i = up_cnt; i > 0; i--)
-    fprintf(f,
-            ",\n\tcandle%zu_high(:,1), candle%zu_high(:,2), \"b^\", "
-            "\"markersize\", 2",
-            i - 1, i - 1);
+    fprintf(f, ",\n\tcandle%zu_high(:,1), candle%zu_high(:,2), \"b^\"", i - 1,
+            i - 1);
 
   for (size_t i = down_cnt; i > 0; i--)
-    fprintf(f,
-            ",\n\tcandle%zu_low(:,1), candle%zu_low(:,2), \"bv\", "
-            "\"markersize\", 2",
-            i - 1, i - 1);
+    fprintf(f, ",\n\tcandle%zu_low(:,1), candle%zu_low(:,2), \"bv\"", i - 1,
+            i - 1);
 
   for (size_t i = left_cnt; i > 0; i--)
-    fprintf(f,
-            ",\n\twindow%zu_close(:,1), window%zu_close(:,2), \"y<\", "
-            "\"markersize\", 2",
-            i - 1, i - 1);
+    fprintf(f, ",\n\twindow%zu_close(:,1), window%zu_close(:,2), \"m<\"", i - 1,
+            i - 1);
 
   for (size_t i = right_cnt; i > 0; i--)
-    fprintf(f,
-            ",\n\twindow%zu_open(:,1), window%zu_open(:,2), \"y>\", "
-            "\"markersize\", 2",
-            i - 1, i - 1);
+    fprintf(f, ",\n\twindow%zu_open(:,1), window%zu_open(:,2), \"m>\"", i - 1,
+            i - 1);
 
   fprintf(f, "\n);\n");
   fprintf(f,
