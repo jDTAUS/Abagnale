@@ -405,7 +405,8 @@ conf_exchange : CDP STRING {
                   wcjson_object_get(&doc, doc.values, L"privateKey", 10);
 
                 if (nm == NULL || key == NULL) {
-                  yyerror("%s: name or privateKey not found\n", String_chars($2));
+                  yyerror("%s: No 'name' or 'privateKey' item available\n",
+                          String_chars($2));
                   String_delete($2);
                   heap_free(mb_buf);
                   heap_free(w_buf);
