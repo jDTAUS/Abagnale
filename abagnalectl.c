@@ -27,6 +27,7 @@
 #include "thread.h"
 #include "time.h"
 
+#include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -185,7 +186,8 @@ static void print_market(const struct Market *restrict const m) {
   char *restrict const p_inc = Numeric_to_char(m->p_inc, m->p_sc);
   char *restrict const q_inc = Numeric_to_char(m->q_inc, m->q_sc);
 
-  printf("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%zu\t%s\t%zu\t%s\t%zu\t%s\t%d\t%d\n",
+  printf("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%" PRIuMAX "\t%s\t%" PRIuMAX
+         "\t%s\t%" PRIuMAX "\t%s\t%d\t%d\n",
          String_chars(m->id), String_chars(m->nm), String_chars(m->sym),
          market_type_name(m->type), market_status_name(m->status),
          String_chars(m->b_id), String_chars(m->q_id), m->b_sc, b_inc, m->p_sc,
