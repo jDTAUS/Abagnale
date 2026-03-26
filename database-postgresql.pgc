@@ -419,7 +419,7 @@ bool db_vacuum(const void *const db, const char *const fname) {
   const char *con = String_chars(db);
   const char *sql_tgt = String_chars(cnf->db_tgt);
   const char *sql_usr = String_chars(cnf->db_usr);
-  char stmt[DB_STATEMENT_MAX_LENGTH] = {0};
+  char stmt[DB_STATEMENT_MAX_LENGTH + 1] = {0};
   numeric *sql_before = Numeric_db(before);
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();

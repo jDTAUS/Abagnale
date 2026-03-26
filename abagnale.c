@@ -469,7 +469,7 @@ static char *candle_string(const struct Candle *restrict const c,
   char *restrict const a = Numeric_to_char(c->a, 4);
   char *restrict const open = nanos_to_iso8601(c->onanos);
   char *restrict const close = nanos_to_iso8601(c->cnanos);
-  char *restrict const res = heap_malloc(CANDLE_STRING_MAX_LENGTH);
+  char *restrict const res = heap_malloc(CANDLE_STRING_MAX_LENGTH + 1);
   char i = ' ';
 
   switch (c->t) {
@@ -485,11 +485,11 @@ static char *candle_string(const struct Candle *restrict const c,
   }
 
   const int r = snprintf(
-      res, CANDLE_STRING_MAX_LENGTH,
+      res, CANDLE_STRING_MAX_LENGTH + 1,
       "[%c: O%s%s: H%s%s: L%s%s: C%s%s: S%s%s: %s%%: %srad: %s->%s]", i, o,
       c_id, h, c_id, l, c_id, cl, c_id, s_info, c_id, pc, a, open, close);
 
-  if (r < 0 || (size_t)r >= CANDLE_STRING_MAX_LENGTH) {
+  if (r < 0 || (size_t)r >= CANDLE_STRING_MAX_LENGTH + 1) {
     werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
     fatal();
   }
@@ -591,7 +591,7 @@ static char *position_string(const struct worker_ctx *restrict const w_ctx,
   char *restrict const b_f = Numeric_to_char(p->b_filled, w_ctx->m->b_sc);
   char *restrict const c = nanos_to_iso8601(p->cnanos);
   char *restrict const d = nanos_to_iso8601(p->dnanos);
-  char *restrict const res = heap_malloc(POSITION_STRING_MAX_LENGTH);
+  char *restrict const res = heap_malloc(POSITION_STRING_MAX_LENGTH + 1);
   const char *restrict side;
 
   switch (p->type) {
@@ -607,7 +607,7 @@ static char *position_string(const struct worker_ctx *restrict const w_ctx,
   }
 
   const int r = snprintf(
-      res, POSITION_STRING_MAX_LENGTH,
+      res, POSITION_STRING_MAX_LENGTH + 1,
       "%s %s%s@%s%s %s->%s, b: %s%s, q: %s%s, f: %s%s, sl: %s%s@%s%s, tp: "
       "%s%s@%s%s",
       side, b_o, String_chars(w_ctx->m->b_id), pr, String_chars(w_ctx->m->q_id),
@@ -616,7 +616,7 @@ static char *position_string(const struct worker_ctx *restrict const w_ctx,
       String_chars(w_ctx->m->b_id), sl_pr, String_chars(w_ctx->m->q_id), b_o,
       String_chars(w_ctx->m->b_id), tp_pr, String_chars(w_ctx->m->q_id));
 
-  if (r < 0 || (size_t)r >= POSITION_STRING_MAX_LENGTH) {
+  if (r < 0 || (size_t)r >= POSITION_STRING_MAX_LENGTH + 1) {
     werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
     fatal();
   }

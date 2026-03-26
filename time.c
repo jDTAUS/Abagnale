@@ -345,10 +345,11 @@ char *nanos_to_iso8601(const struct Numeric *restrict const nanos) {
   Numeric_div_to(nanos, second_nanos, s);
   time_t time = Numeric_to_long(s);
 
-  char *restrict const res = heap_malloc(TIME_ISO8601_MAX_LENGTH);
+  char *restrict const res = heap_malloc(TIME_ISO8601_MAX_LENGTH + 1);
   mutex_lock(&time_mtx);
   struct tm *tm = localtime(&time);
-  if (strftime(res, TIME_ISO8601_MAX_LENGTH, "%Y-%m-%dT%H:%M:%S%Z", tm) == 0) {
+  if (strftime(res, TIME_ISO8601_MAX_LENGTH + 1, "%Y-%m-%dT%H:%M:%S%Z", tm) ==
+      0) {
     werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
     fatal();
   }
