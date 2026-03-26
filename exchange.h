@@ -53,9 +53,9 @@ struct Market {
   mtx_t *restrict mtx;
   enum market_type type;
   enum market_status status;
-  size_t p_sc;
-  size_t b_sc;
-  size_t q_sc;
+  uintmax_t p_sc;
+  uintmax_t b_sc;
+  uintmax_t q_sc;
   bool is_tradeable;
   bool is_active;
 };
