@@ -2703,9 +2703,11 @@ static int orders_process(void *restrict const arg) {
     struct Market *restrict const market = w_ctx->e->market(order->m_id);
 
     if (market == NULL) {
-      werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__,
+      werr("%s: %s: Market not available\n", String_chars(w_ctx->e->nm),
            String_chars(order->m_id));
-      fatal();
+
+      Order_delete(order);
+      continue;
     }
 
     w_ctx->a = NULL;
