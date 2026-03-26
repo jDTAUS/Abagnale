@@ -72,9 +72,9 @@ struct MarketConfig {
   struct Numeric *restrict sl_dlnanos;
   struct Numeric *restrict tl_dlnanos;
   struct Numeric *restrict tp_dlnanos;
-  size_t sl_dlcnt;
-  size_t tl_dlcnt;
-  size_t tp_dlcnt;
+  uintmax_t sl_dlcnt;
+  uintmax_t tl_dlcnt;
+  uintmax_t tp_dlcnt;
 };
 
 void config_init(void);
