@@ -1669,6 +1669,27 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
     Numeric_copy_to(zero, p->tp_trg.nanos);
     Numeric_copy_to(zero, p->tp_trg.price);
 
+    if (verbose) {
+      char *restrict const p_info = position_string(w_ctx, t, p);
+      char *restrict const delay = Numeric_to_char(p->tp_samples, 0);
+      char *restrict const s_pr =
+          Numeric_to_char(sample->price, w_ctx->m->q_sc);
+
+      wout("%s: %s: %s: Leaving take profit(%" PRIuMAX
+           "): 1%s@%s%s: take-profit-delay: %s tickers, take-profit-delays: "
+           "%" PRIuMAX "\n",
+           String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
+           String_chars(t->id), p->tp_trg.cnt, String_chars(w_ctx->m->b_id),
+           s_pr, String_chars(w_ctx->m->q_id), delay, w_ctx->m_cnf->tp_dlcnt);
+
+      wout("%s: %s: %s: %s\n", String_chars(w_ctx->e->nm),
+           String_chars(w_ctx->m->nm), String_chars(p->id), p_info);
+
+      heap_free(p_info);
+      Numeric_char_free(delay);
+      Numeric_char_free(s_pr);
+    }
+
     if (p->sl_trg.set) {
       Numeric_copy_to(sample->nanos, p->sl_trg.nanos);
       Numeric_copy_to(sample->price, p->sl_trg.price);
@@ -1700,27 +1721,6 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
         Numeric_char_free(delay);
         Numeric_char_free(s_pr);
       }
-    }
-
-    if (verbose) {
-      char *restrict const p_info = position_string(w_ctx, t, p);
-      char *restrict const delay = Numeric_to_char(p->tp_samples, 0);
-      char *restrict const s_pr =
-          Numeric_to_char(sample->price, w_ctx->m->q_sc);
-
-      wout("%s: %s: %s: Leaving take profit(%" PRIuMAX
-           "): 1%s@%s%s: take-profit-delay: %s tickers, take-profit-delays: "
-           "%" PRIuMAX "\n",
-           String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
-           String_chars(t->id), p->tp_trg.cnt, String_chars(w_ctx->m->b_id),
-           s_pr, String_chars(w_ctx->m->q_id), delay, w_ctx->m_cnf->tp_dlcnt);
-
-      wout("%s: %s: %s: %s\n", String_chars(w_ctx->e->nm),
-           String_chars(w_ctx->m->nm), String_chars(p->id), p_info);
-
-      heap_free(p_info);
-      Numeric_char_free(delay);
-      Numeric_char_free(s_pr);
     }
   }
 
@@ -1765,6 +1765,27 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
     p->tl_trg.set = false;
     Numeric_copy_to(zero, p->tl_trg.nanos);
     Numeric_copy_to(zero, p->tl_trg.price);
+
+    if (verbose) {
+      char *restrict const p_info = position_string(w_ctx, t, p);
+      char *restrict const delay = Numeric_to_char(p->tl_samples, 0);
+      char *restrict const s_pr =
+          Numeric_to_char(sample->price, w_ctx->m->q_sc);
+
+      wout("%s: %s: %s: Leaving take loss(%" PRIuMAX
+           "): 1%s@%s%s: take-loss-delay: %s tickers, take-loss-delays: "
+           "%" PRIuMAX "\n",
+           String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
+           String_chars(t->id), p->tl_trg.cnt, String_chars(w_ctx->m->b_id),
+           s_pr, String_chars(w_ctx->m->q_id), delay, w_ctx->m_cnf->tl_dlcnt);
+
+      wout("%s: %s: %s: %s\n", String_chars(w_ctx->e->nm),
+           String_chars(w_ctx->m->nm), String_chars(p->id), p_info);
+
+      heap_free(p_info);
+      Numeric_char_free(s_pr);
+      Numeric_char_free(delay);
+    }
 
     if (p->sl_trg.set) {
       Numeric_copy_to(sample->nanos, p->sl_trg.nanos);
@@ -1830,27 +1851,6 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
         Numeric_char_free(delay);
         Numeric_char_free(s_pr);
       }
-    }
-
-    if (verbose) {
-      char *restrict const p_info = position_string(w_ctx, t, p);
-      char *restrict const delay = Numeric_to_char(p->tl_samples, 0);
-      char *restrict const s_pr =
-          Numeric_to_char(sample->price, w_ctx->m->q_sc);
-
-      wout("%s: %s: %s: Leaving take loss(%" PRIuMAX
-           "): 1%s@%s%s: take-loss-delay: %s tickers, take-loss-delays: "
-           "%" PRIuMAX "\n",
-           String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
-           String_chars(t->id), p->tl_trg.cnt, String_chars(w_ctx->m->b_id),
-           s_pr, String_chars(w_ctx->m->q_id), delay, w_ctx->m_cnf->tl_dlcnt);
-
-      wout("%s: %s: %s: %s\n", String_chars(w_ctx->e->nm),
-           String_chars(w_ctx->m->nm), String_chars(p->id), p_info);
-
-      heap_free(p_info);
-      Numeric_char_free(s_pr);
-      Numeric_char_free(delay);
     }
   }
 }
