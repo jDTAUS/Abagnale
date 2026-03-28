@@ -1402,14 +1402,18 @@ static void coinbase_init(void) {
   markets = Array_new(1024);
   markets_by_symbol =
       Map_new(String_copy, String_delete, String_hash, String_equals, 1024);
+
   markets_by_id =
       Map_new(String_copy, String_delete, String_hash, String_equals, 1024);
+
   markets_reload = true;
   accounts = Array_new(256);
   accounts_by_id =
       Map_new(String_copy, String_delete, String_hash, String_equals, 256);
+
   accounts_by_currency =
       Map_new(String_copy, String_delete, String_hash, String_equals, 256);
+
   accounts_reload = true;
   pricing = NULL;
   mutex_init(&pricing_mutex);
@@ -1679,6 +1683,7 @@ static struct Array *coinbase_markets(void) {
       Map_delete(markets_by_id, NULL);
       markets_by_symbol = Map_new(String_copy, String_delete, String_hash,
                                   String_equals, Array_size(markets));
+
       markets_by_id = Map_new(String_copy, String_delete, String_hash,
                               String_equals, Array_size(markets));
 
@@ -1881,6 +1886,7 @@ static struct Array *coinbase_accounts(void) {
 
     accounts_by_id = Map_new(String_copy, String_delete, String_hash,
                              String_equals, Array_size(accounts));
+
     accounts_by_currency = Map_new(String_copy, String_delete, String_hash,
                                    String_equals, Array_size(accounts));
 
