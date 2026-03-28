@@ -117,8 +117,8 @@ inline const size_t String_length(const struct String *restrict const s) {
   return s->len;
 }
 
-inline const size_t String_hash(const struct String *restrict const s) {
-  return s->hc;
+inline size_t String_hash(const void *restrict const s) {
+  return ((const struct String *)s)->hc;
 }
 
 inline void String_delete(void *restrict const s) {
@@ -145,26 +145,27 @@ inline void String_delete(void *restrict const s) {
   heap_free(s);
 }
 
-inline struct String *String_copy(struct String *restrict const str) {
-  if (str == NULL)
+inline void *String_copy(void *restrict const o) {
+  if (o == NULL)
     return NULL;
 
-  mutex_lock(&str->mtx);
+  mutex_lock(&((struct String *)o)->mtx);
 
   // str->r_cnt + 1 <= SIZE_MAX
   // => str->r_cnt <= SIZE_MAX - 1
-  if (str->r_cnt > SIZE_MAX - 1) {
+  if (((struct String *)o)->r_cnt > SIZE_MAX - 1) {
     werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
     fatal();
   }
 
-  str->r_cnt++;
+  ((struct String *)o)->r_cnt++;
 
-  mutex_unlock(&str->mtx);
-  return str;
+  mutex_unlock(&((struct String *)o)->mtx);
+  return o;
 }
 
-inline bool String_equals(const struct String *restrict const s1,
-                          const struct String *restrict const s2) {
-  return s1->hc == s2->hc && strcmp(s1->s, s2->s) == 0;
+inline bool String_equals(const void *restrict const o1,
+                          const void *restrict const o2) {
+  return ((struct String *)o1)->hc == ((struct String *)o2)->hc &&
+         strcmp(((struct String *)o1)->s, ((struct String *)o2)->s) == 0;
 }

@@ -240,7 +240,8 @@ static void trend_init(void) {
   algorithm_trend.id = String_cnew(TREND_UUID);
   algorithm_trend.nm = String_cnew("trend");
   tls_create(&trend_tls_key, trend_tls_dtor);
-  states = Map_new(all_exchanges_nitems * 2048);
+  states = Map_new(String_copy, String_delete, String_hash, String_equals,
+                   all_exchanges_nitems * 2048);
 }
 
 static void trend_destroy(void) {

@@ -1244,7 +1244,7 @@ struct Numeric *config_nsparse(const struct String *restrict const str) {
 }
 
 void config_init(void) {
-  symbols = Map_new(64);
+  symbols = Map_new(String_copy, String_delete, String_hash, String_equals, 64);
   files = Array_new(64);
   thirty_six_hours = Numeric_from_long(36 * 60 * 60 * 1000000000L);
 }
@@ -1264,7 +1264,7 @@ struct Config *Config_new(void) {
   c->dns_to = NULL;
   c->plts_dir = NULL;
   c->wnanos_max = NULL;
-  c->e_cnf = Map_new(4);
+  c->e_cnf = Map_new(String_copy, String_delete, String_hash, String_equals, 4);
   c->m_cnf = Array_new(16);
   return c;
 }

@@ -20,21 +20,28 @@
 #ifndef ABAG_MAP_H
 #define ABAG_MAP_H
 
-#include "string.h"
+#include <stdbool.h>
+#include <stddef.h>
 
 struct Map;
 struct MapIterator;
 
-struct Map *Map_new(const size_t);
-void Map_delete(struct Map *restrict const, void (*cb)(void *restrict const));
+struct Map *Map_new(void *(*k_copy)(void *restrict const),
+                    void (*k_delete)(void *restrict const),
+                    size_t (*k_hash)(const void *restrict const),
+                    bool (*k_equals)(const void *restrict const,
+                                     const void *restrict const),
+                    const size_t);
+
+void Map_delete(struct Map *restrict const,
+                void (*v_delete)(void *restrict const));
 
 void Map_lock(struct Map *restrict const);
 void Map_unlock(struct Map *restrict const);
 
-void *Map_put(struct Map *restrict const, struct String *restrict const,
+void *Map_put(struct Map *restrict const, void *restrict const,
               void *restrict const);
-void *Map_get(const struct Map *restrict const,
-              const struct String *restrict const);
+void *Map_get(const struct Map *restrict const, const void *restrict const);
 
 struct MapIterator *MapIterator_new(const struct Map *restrict const);
 void MapIterator_delete(struct MapIterator *restrict const);
@@ -42,7 +49,7 @@ void MapIterator_delete(struct MapIterator *restrict const);
 bool MapIterator_next(struct MapIterator *restrict const);
 void *MapIterator_remove(struct MapIterator *restrict const);
 
-const struct String *MapIterator_key(const struct MapIterator *restrict const);
+const void *MapIterator_key(const struct MapIterator *restrict const);
 const void *MapIterator_value(const struct MapIterator *restrict const);
 
 #endif

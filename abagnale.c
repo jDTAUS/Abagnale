@@ -2966,9 +2966,12 @@ int abagnale(int argc, char *argv[]) {
   ninety_percent_factor = Numeric_from_char("0.9");
   five_minute_nanos = Numeric_from_long(300000000000L);
 
-  market_samples = Map_new(ABAG_MAX_PRODUCTS);
-  market_prices = Map_new(ABAG_MAX_PRODUCTS);
-  market_trades = Map_new(ABAG_MAX_PRODUCTS);
+  market_samples = Map_new(String_copy, String_delete, String_hash,
+                           String_equals, ABAG_MAX_PRODUCTS);
+  market_prices = Map_new(String_copy, String_delete, String_hash,
+                          String_equals, ABAG_MAX_PRODUCTS);
+  market_trades = Map_new(String_copy, String_delete, String_hash,
+                          String_equals, ABAG_MAX_PRODUCTS);
 
   mutex_init(&db_mtx);
   tls_create(&abag_tls_key, abag_tls_dtor);
