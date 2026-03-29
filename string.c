@@ -176,24 +176,27 @@ inline void String_delete(void *restrict const s) {
 
   struct String *restrict const str = s;
 
-  if (str->heap) {
-    mutex_lock(&str->mtx);
-
-    if (str->r_cnt-- == 0) {
-      werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-      fatal();
-    }
-
-    if (str->r_cnt > 0) {
-      mutex_unlock(&str->mtx);
-      return;
-    }
-
-    mutex_unlock(&str->mtx);
-    mutex_destroy(&str->mtx);
-    heap_free(str->s);
-    heap_free(s);
+  if (!str->heap) {
+    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
+    fatal();
   }
+
+  mutex_lock(&str->mtx);
+
+  if (str->r_cnt-- == 0) {
+    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
+    fatal();
+  }
+
+  if (str->r_cnt > 0) {
+    mutex_unlock(&str->mtx);
+    return;
+  }
+
+  mutex_unlock(&str->mtx);
+  mutex_destroy(&str->mtx);
+  heap_free(str->s);
+  heap_free(s);
 }
 
 inline void *String_copy(void *restrict const o) {
