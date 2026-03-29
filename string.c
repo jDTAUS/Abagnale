@@ -32,7 +32,6 @@ struct String {
   size_t hc;
   size_t r_cnt;
   mtx_t mtx;
-  bool heap;
 };
 
 struct Map *restrict strings;
@@ -57,7 +56,6 @@ inline struct String *String_cnew(const char *restrict s) {
       .len = s_p - s,
       .hc = hc,
       .r_cnt = 0,
-      .heap = false,
   };
 
   Map_lock(strings);
@@ -67,7 +65,6 @@ inline struct String *String_cnew(const char *restrict s) {
     str = heap_malloc(sizeof(struct String));
     str->len = k.len;
     str->hc = k.hc;
-    str->heap = true;
 
     // str->len + 1 <= SIZE_MAX
     // => str->len <= SIZE_MAX - 1
@@ -81,7 +78,7 @@ inline struct String *String_cnew(const char *restrict s) {
     mutex_init(&str->mtx);
     str->r_cnt = 1;
 
-    Map_put(strings, &k, str);
+    Map_put(strings, str, str);
   }
   Map_unlock(strings);
 
@@ -101,7 +98,6 @@ inline struct String *String_cnnew(const char *restrict s, size_t maxlen) {
       .len = s_p - s,
       .hc = hc,
       .r_cnt = 0,
-      .heap = false,
   };
 
   Map_lock(strings);
@@ -111,7 +107,6 @@ inline struct String *String_cnnew(const char *restrict s, size_t maxlen) {
     str = heap_malloc(sizeof(struct String));
     str->len = k.len;
     str->hc = k.hc;
-    str->heap = true;
 
     // str->len + 1 <= SIZE_MAX
     // => str->len <= SIZE_MAX - 1
@@ -125,7 +120,7 @@ inline struct String *String_cnnew(const char *restrict s, size_t maxlen) {
     mutex_init(&str->mtx);
     str->r_cnt = 1;
 
-    Map_put(strings, &k, str);
+    Map_put(strings, str, str);
   }
   Map_unlock(strings);
 
@@ -176,11 +171,6 @@ inline void String_delete(void *restrict const s) {
 
   struct String *restrict const str = s;
 
-  if (!str->heap) {
-    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-    fatal();
-  }
-
   mutex_lock(&str->mtx);
 
   if (str->r_cnt-- == 0) {
@@ -205,30 +195,19 @@ inline void *String_copy(void *restrict const o) {
 
   struct String *restrict const str = o;
 
-  if (str->heap) {
-    mutex_lock(&str->mtx);
+  mutex_lock(&str->mtx);
 
-    // str->r_cnt + 1 <= SIZE_MAX
-    // => str->r_cnt <= SIZE_MAX - 1
-    if (str->r_cnt > SIZE_MAX - 1) {
-      werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-      fatal();
-    }
-
-    str->r_cnt++;
-
-    mutex_unlock(&str->mtx);
-    return str;
-  } else {
-    struct String *restrict const copy = heap_malloc(sizeof(struct String));
-    copy->len = str->len;
-    copy->hc = str->hc;
-    copy->heap = true;
-    copy->s = heap_calloc(str->len + 1, sizeof(char));
-    memcpy(copy->s, str->s, str->len);
-    copy->r_cnt = 1;
-    return copy;
+  // str->r_cnt + 1 <= SIZE_MAX
+  // => str->r_cnt <= SIZE_MAX - 1
+  if (str->r_cnt > SIZE_MAX - 1) {
+    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
+    fatal();
   }
+
+  str->r_cnt++;
+
+  mutex_unlock(&str->mtx);
+  return str;
 }
 
 inline bool String_equals(const void *restrict const o1,
