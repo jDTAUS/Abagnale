@@ -25,6 +25,9 @@
 
 struct String;
 
+void string_init(void);
+void string_destroy(void);
+
 struct String *String_new(const struct String *restrict const, const size_t,
                           const size_t);
 struct String *String_cnew(const char *restrict);

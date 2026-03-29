@@ -94,6 +94,7 @@ int main(int argc, char *argv[]) {
   void **items;
 
   proc_init();
+  string_init();
   time_init();
   config_init();
 
@@ -246,8 +247,9 @@ int main(int argc, char *argv[]) {
   String_delete(progname);
   String_delete(prog_abagnale);
   String_delete(prog_abagnalectl);
-  time_destroy();
-  proc_destroy();
   config_destroy();
+  time_destroy();
+  string_destroy();
+  proc_destroy();
   return r;
 }
