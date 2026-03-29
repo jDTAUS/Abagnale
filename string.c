@@ -212,8 +212,8 @@ inline void *String_copy(void *restrict const o) {
 
 inline bool String_equals(const void *restrict const o1,
                           const void *restrict const o2) {
-  return ((struct String *)o1)->hc == ((struct String *)o2)->hc &&
-         ((struct String *)o1)->len == ((struct String *)o2)->len &&
-         strncmp(((struct String *)o1)->s, ((struct String *)o2)->s,
-                 ((struct String *)o1)->len) == 0;
+  return ((const struct String *)o1)->hc == ((const struct String *)o2)->hc &&
+         ((const struct String *)o1)->len == ((const struct String *)o2)->len &&
+         strncmp(((const struct String *)o1)->s, ((const struct String *)o2)->s,
+                 ((const struct String *)o1)->len) == 0;
 }
