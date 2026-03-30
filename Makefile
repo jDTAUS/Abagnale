@@ -96,7 +96,7 @@ LDFLAGS+=-ljwt
 
 # Wide Character JSON for C
 #   http://wcjson.de
-#   https://github.com/wcjson/wcjson/releases/download/v0.32/wcjson-0.32.tar.gz
+#   https://github.com/wcjson/wcjson/releases/download/v0.33/wcjson-0.33.tar.gz
 LDFLAGS+=-lwcjson
 
 LDFLAGS+=-lm
