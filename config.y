@@ -130,7 +130,7 @@ static void sym_delete(void *restrict const v) {
 %}
 
 %token AT CDP DATABASE DEMANDDURMAX DEMANDDURMIN DNSTO DNSV4 DNSV6 ERROR
-%token EXCHANGE INCLUDE MARKET MATCH NOT PLOTS RETURN STOPLOSSDELAY STOPLOSSDELAYS
+%token EXCHANGE INCLUDE MARKET MATCH NOT RETURN STOPLOSSDELAY STOPLOSSDELAYS
 %token SUPPLYDURMAX SUPPLYDURMIN TAKELOSSDELAY TAKELOSSDELAYS TAKEPROFITDELAY
 %token TAKEPROFITDELAYS TARGET TRADE USER USING VOLATILITY WINDOW
 
@@ -192,15 +192,7 @@ negate  : NOT {
         }
         ;
 
-main  : PLOTS STRING {
-        if (conf->plts_dir != NULL) {
-          yyerror("plots already specified\n");
-          String_delete($2);
-          YYERROR;
-        }
-        conf->plts_dir = $2;
-      }
-      | DNSV4 STRING {
+main  : DNSV4 STRING {
         if (conf->dns_v4 != NULL) {
           yyerror("dns-v4 already specified\n");
           String_delete($2);
@@ -749,7 +741,6 @@ int lookup(char *s) {
       {"market", MARKET},
       {"match", MATCH},
       {"not", NOT}, 
-      {"plots", PLOTS},
       {"return", RETURN},
       {"stop-loss-delay", STOPLOSSDELAY},
       {"stop-loss-delays", STOPLOSSDELAYS},

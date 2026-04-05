@@ -89,6 +89,7 @@ static void terminate(int signum) { terminated = true; }
 int main(int argc, char *argv[]) {
   int c, r = EXIT_FAILURE;
   const char *conffile = ABAG_CONFIG_FILE;
+  char *plotsdir = NULL;
   verbose = false;
   struct optparse options = {0};
   void **items;
@@ -145,7 +146,7 @@ int main(int argc, char *argv[]) {
   optparse_init(&options, argv);
   options.permute = 0;
 
-  while ((c = optparse(&options, "D:f:v")) != -1) {
+  while ((c = optparse(&options, "D:f:p:v")) != -1) {
     switch (c) {
     case 'D':
       if (config_symset(options.optarg) < 0) {
@@ -155,6 +156,9 @@ int main(int argc, char *argv[]) {
       break;
     case 'f':
       conffile = options.optarg;
+      break;
+    case 'p':
+      plotsdir = options.optarg;
       break;
     case 'v':
       verbose = true;
@@ -174,6 +178,8 @@ int main(int argc, char *argv[]) {
     all_exchanges[i - 1]->init();
 
   cnf = Config_new();
+  if (plotsdir != NULL)
+    cnf->plts_dir = String_cnew(plotsdir);
 
   if (config_fparse(cnf, conffile))
     fatal();
