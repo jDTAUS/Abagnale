@@ -302,7 +302,7 @@ static struct Position *trend_position_open(
   struct db_candle_rec db_candle = {0};
   struct trend_state *restrict const st = trend_state(db, e->id, m->id);
   struct Position *restrict p = NULL;
-  void **items;
+  void *const *items;
 
   Numeric_copy_to(t->tp_pc, cd_pc);
   Numeric_mul_to(t->tp_pc, n_one, r0);

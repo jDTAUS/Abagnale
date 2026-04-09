@@ -261,7 +261,7 @@ static int cmd_markets(int argc, char *argv[]) {
   enum market_status status = 0;
   enum market_type type = 0;
   struct optparse options = {0};
-  void **items;
+  void *const *items;
 
   optparse_init(&options, argv);
 
@@ -368,7 +368,7 @@ static int cmd_accounts(int argc, char *argv[]) {
   struct String *restrict e_nm = NULL;
   enum account_type type = 0;
   struct optparse options = {0};
-  void **items;
+  void *const *items;
 
   optparse_init(&options, argv);
 
@@ -561,7 +561,7 @@ static int cmd_plot(int argc, char *argv[]) {
   char *restrict f_nm = NULL;
   struct Market *restrict m = NULL;
   struct optparse options = {0};
-  void **items;
+  void *const *items;
 
   optparse_init(&options, argv);
 
@@ -649,7 +649,7 @@ static int cmd_volatility(int argc, char *argv[]) {
   struct Numeric *restrict w = NULL;
   struct Market *restrict m = NULL;
   struct optparse options = {0};
-  void **items;
+  void *const *items;
 
   optparse_init(&options, argv);
 

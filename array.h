@@ -49,5 +49,5 @@ void *Array_remove_head(struct Array *restrict const);
 void *Array_remove_idx(struct Array *restrict const, const size_t);
 
 const size_t Array_size(const struct Array *restrict const);
-void **Array_items(const struct Array *restrict const);
+void *const *Array_items(const struct Array *restrict const);
 #endif

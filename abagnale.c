@@ -435,7 +435,7 @@ void Candle_copy_to(const struct Candle *restrict const src,
 }
 
 const struct Algorithm *algorithm(const struct String *restrict const nm) {
-  void **items = Array_items(algorithms);
+  void *const *items = Array_items(algorithms);
   for (size_t i = Array_size(algorithms); i > 0; i--)
     if (String_equals(nm, ((struct Algorithm *)items[i - 1])->nm))
       return items[i - 1];
@@ -444,7 +444,7 @@ const struct Algorithm *algorithm(const struct String *restrict const nm) {
 }
 
 const struct Exchange *exchange(const struct String *restrict const nm) {
-  void **items = Array_items(exchanges);
+  void *const *items = Array_items(exchanges);
   for (size_t i = Array_size(exchanges); i > 0; i--)
     if (String_equals(nm, ((struct Exchange *)items[i - 1])->nm))
       return items[i - 1];
@@ -771,7 +771,7 @@ static void worker_configure(struct worker_ctx *restrict const w_ctx,
                              const struct Array *restrict const samples) {
   const struct abag_tls *restrict const tls = abag_tls();
   struct Numeric *restrict const r0 = tls->worker_configure.r0;
-  void **items;
+  void *const *items;
 
   items = Array_items(cnf->m_cnf);
   for (size_t i = Array_size(cnf->m_cnf); i > 0; i--) {
@@ -1862,7 +1862,7 @@ static void position_trade(const struct worker_ctx *restrict const w_ctx,
                            const struct Sample *restrict const sample) {
   const struct abag_tls *restrict const tls = abag_tls();
   struct Numeric *restrict const o_pr = tls->position_trade.o_pr;
-  void **items;
+  void *const *items;
 
   position_pricing(w_ctx, t, p, false);
   position_trigger(w_ctx, t, p, samples, sample);
@@ -2560,7 +2560,7 @@ static struct Array *trades_load(const struct worker_ctx *w_ctx,
                                  const struct Sample *restrict const sample) {
   const struct abag_tls *restrict const tls = abag_tls();
   struct db_trade_rec *restrict const trade = tls->trades_load.trade;
-  void **items;
+  void *const *items;
 
   db_trades_open(w_ctx->db, String_chars(w_ctx->e->id),
                  String_chars(w_ctx->m->id));
@@ -2694,7 +2694,7 @@ static int orders_process(void *restrict const arg) {
     struct Array *restrict trades = NULL;
     struct Array *restrict samples = NULL;
     size_t i;
-    void **items;
+    void *const *items;
     struct Order *restrict const order = w_ctx->e->order_await();
 
     if (order == NULL)
@@ -2802,7 +2802,7 @@ static int samples_process(void *restrict const arg) {
   struct Numeric *restrict const tp = tls->samples_process.tp;
   struct Numeric *restrict const nanos = tls->samples_process.nanos;
   struct worker_ctx *restrict const ctx = arg;
-  void **items;
+  void *const *items;
 
   while (!terminated) {
     struct Sample *restrict sample = ctx->e->sample_await();
@@ -2852,12 +2852,13 @@ static int samples_process(void *restrict const arg) {
 
     const size_t s_size = Array_size(samples);
     items = Array_items(samples);
+    // XXX: (void *)
     if (s_size >= ABAG_WORKERS) {
-      qsort(&items[s_size - ABAG_WORKERS], ABAG_WORKERS,
+      qsort((void *)&items[s_size - ABAG_WORKERS], ABAG_WORKERS,
             sizeof(struct Sample *), sample_cmp);
 
     } else
-      qsort(&items[0], s_size, sizeof(struct Sample *), sample_cmp);
+      qsort((void *)&items[0], s_size, sizeof(struct Sample *), sample_cmp);
 
     if (Array_size(samples) < 2) {
       Array_unlock(samples);
@@ -2962,7 +2963,7 @@ static int exchange_stop(void *restrict const arg) {
 }
 
 int abagnale(int argc, char *argv[]) {
-  void **items;
+  void *const *items;
   ninety_percent_factor = Numeric_from_char("0.9");
   five_minute_nanos = Numeric_from_long(300000000000L);
 

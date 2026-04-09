@@ -1031,7 +1031,7 @@ ret:
 static void ws_subscribe(struct mg_connection *restrict const c,
                          const struct ws_channel *restrict const channel) {
   struct wcjson_document *restrict const doc = wcjsondoc_new();
-  void **items;
+  void *const *items;
 
   struct Array *restrict const m_array = coinbase_markets();
   struct wcjson_value *restrict const j_msg = wcjson_object(doc);
@@ -1661,7 +1661,7 @@ ret:
 static struct Array *coinbase_markets(void) {
   struct wcjson_document doc = WCJSON_DOCUMENT_INITIALIZER;
   char url[URL_MAX_LENGTH + 1] = {0};
-  void **items;
+  void *const *items;
 
   Array_lock(markets);
 
@@ -1867,7 +1867,7 @@ ret:
 }
 
 static struct Array *coinbase_accounts(void) {
-  void **items;
+  void *const *items;
 
   Array_lock(accounts);
 
@@ -1914,7 +1914,7 @@ static struct Account *
 coinbase_account_currency(const struct String *restrict const currency) {
   struct Array *restrict const haystack = coinbase_accounts();
   struct Account *restrict needle = NULL;
-  void **items = Array_items(haystack);
+  void *const *items = Array_items(haystack);
 
   for (size_t i = Array_size(haystack); i > 0; i--)
     if (String_equals(((struct Account *)items[i - 1])->c_id, currency)) {

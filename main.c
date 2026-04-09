@@ -92,7 +92,7 @@ int main(int argc, char *argv[]) {
   char *plotsdir = NULL;
   verbose = false;
   struct optparse options = {0};
-  void **items;
+  void *const *items;
 
   proc_init();
   string_init();

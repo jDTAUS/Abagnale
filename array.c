@@ -151,6 +151,6 @@ inline const size_t Array_size(const struct Array *restrict const a) {
   return a->size;
 }
 
-inline void **Array_items(const struct Array *restrict const a) {
+inline void *const *Array_items(const struct Array *restrict const a) {
   return a->items;
 }

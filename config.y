@@ -1066,7 +1066,7 @@ int config_fparse(struct Config *const x_conf,
   conf = x_conf;
   errors = 0;
   struct String *restrict const f_nm = String_cnew(filename);
-  void **items;
+  void *const *items;
 
   if ((file = pushfile(f_nm)) == NULL) {
     String_delete(f_nm);
@@ -1343,12 +1343,12 @@ bool MarketConfig_match(const struct MarketConfig *restrict const c,
   bool match = Array_size(c->m_pats) == 0;
   struct str_find sm[MAXCAPTURES] = {0};
   const char *errstr = NULL;
-  void **m_items = Array_items(c->m_pats);
+  void *const *m_items = Array_items(c->m_pats);
   const char *mk = String_chars(m);
 
   for (size_t i = Array_size(c->m_pats); i > 0 && !match; i--) {
     const struct Array *restrict const pats = m_items[i - 1];
-    void **p_items = Array_items(pats);
+    void *const *p_items = Array_items(pats);
     bool market = true;
 
     for (size_t j = Array_size(pats); j > 0 && market; j--) {
