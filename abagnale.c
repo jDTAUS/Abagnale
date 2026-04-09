@@ -28,7 +28,6 @@
 #include "thread.h"
 #include "time.h"
 
-#include <errno.h>
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
