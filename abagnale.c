@@ -678,12 +678,6 @@ static inline void trade_array_delete(void *restrict const entry) {
   Array_delete(entry, trade_delete);
 }
 
-static inline int sample_cmp(const void *restrict const e1,
-                             const void *restrict const e2) {
-  return Numeric_cmp(((const struct Sample *const *)e1)[0]->nanos,
-                     ((const struct Sample *const *)e2)[0]->nanos);
-}
-
 void samples_per_nano(struct Numeric *restrict const ret,
                       const struct Array *restrict const samples) {
   const struct abag_tls *restrict const tls = abag_tls();
@@ -2849,16 +2843,6 @@ static int samples_process(void *restrict const arg) {
 
     Array_lock(samples);
     Array_add_tail(samples, sample);
-
-    const size_t s_size = Array_size(samples);
-    items = Array_items(samples);
-    // XXX: (void *)
-    if (s_size >= ABAG_WORKERS) {
-      qsort((void *)&items[s_size - ABAG_WORKERS], ABAG_WORKERS,
-            sizeof(struct Sample *), sample_cmp);
-
-    } else
-      qsort((void *)&items[0], s_size, sizeof(struct Sample *), sample_cmp);
 
     if (Array_size(samples) < 2) {
       Array_unlock(samples);
