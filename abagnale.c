@@ -2103,15 +2103,14 @@ static void trade_pricing(const struct worker_ctx *restrict const w_ctx,
       if (Numeric_cmp(t->tp_pc, zero) == 0) {
         Numeric_copy_to(t->fee_pc, t->tp_pc);
 
-        char *restrict const win = Numeric_to_char(
-            w_ctx->m_cnf->v_wnanos != NULL ? w_ctx->m_cnf->v_wnanos
-                                           : five_minute_nanos,
-            0);
+        char *restrict const win = nanos_to_chars(w_ctx->m_cnf->v_wnanos != NULL
+                                                      ? w_ctx->m_cnf->v_wnanos
+                                                      : five_minute_nanos);
 
-        werr("%s: %s: Volatility not available: %sns\n",
+        werr("%s: %s: Volatility not available: %s\n",
              String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm), win);
 
-        Numeric_char_free(win);
+        heap_free(win);
       } else if (Numeric_cmp(t->tp_pc, t->fee_pc) < 0) {
         char *restrict const stddev = Numeric_to_char(t->tp_pc, 4);
         char *restrict const fee = Numeric_to_char(t->fee_pc, 2);

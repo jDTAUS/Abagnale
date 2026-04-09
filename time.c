@@ -24,9 +24,11 @@
 #include "thread.h"
 
 #include <errno.h>
+#include <stdio.h>
 #include <string.h>
 
 #define TIME_ISO8601_MAX_LENGTH (size_t)128
+#define TIME_NANOS_CHARS_MAX_LENGTH (size_t)128
 
 #define IS_DIGIT(a) (a >= '0' && a <= '9')
 #define IS_ALPHA(a) (a >= 'A' && a <= 'Z')
@@ -46,10 +48,24 @@ struct time_tls {
   struct nanos_to_iso8601_vars {
     struct Numeric *restrict s;
   } nanos_to_iso8601;
+  struct nanos_to_chars_vars {
+    struct Numeric *restrict s;
+    struct Numeric *restrict m;
+    struct Numeric *restrict h;
+    struct Numeric *restrict d;
+    struct Numeric *restrict w;
+    struct Numeric *restrict r0;
+    struct Numeric *restrict r1;
+    struct Numeric *restrict r2;
+  } nanos_to_chars;
 };
 
 extern const struct Numeric *restrict const zero;
 extern const struct Numeric *restrict const second_nanos;
+extern const struct Numeric *restrict const minute_nanos;
+extern const struct Numeric *restrict const hour_nanos;
+extern const struct Numeric *restrict const day_nanos;
+extern const struct Numeric *restrict const week_nanos;
 
 static tss_t time_tls_key;
 static mtx_t time_mtx;
@@ -65,6 +81,14 @@ static struct time_tls *time_tls(void) {
     tls->nanos_from_ts.s_ns = Numeric_new();
     tls->nanos_from_ts.ns = Numeric_new();
     tls->nanos_to_iso8601.s = Numeric_new();
+    tls->nanos_to_chars.s = Numeric_new();
+    tls->nanos_to_chars.m = Numeric_new();
+    tls->nanos_to_chars.h = Numeric_new();
+    tls->nanos_to_chars.d = Numeric_new();
+    tls->nanos_to_chars.w = Numeric_new();
+    tls->nanos_to_chars.r0 = Numeric_new();
+    tls->nanos_to_chars.r1 = Numeric_new();
+    tls->nanos_to_chars.r2 = Numeric_new();
     tls_set(time_tls_key, tls);
   }
   return tls;
@@ -79,6 +103,14 @@ static void time_tls_dtor(void *restrict e) {
   Numeric_delete(tls->nanos_from_ts.s_ns);
   Numeric_delete(tls->nanos_from_ts.ns);
   Numeric_delete(tls->nanos_to_iso8601.s);
+  Numeric_delete(tls->nanos_to_chars.s);
+  Numeric_delete(tls->nanos_to_chars.m);
+  Numeric_delete(tls->nanos_to_chars.h);
+  Numeric_delete(tls->nanos_to_chars.d);
+  Numeric_delete(tls->nanos_to_chars.w);
+  Numeric_delete(tls->nanos_to_chars.r0);
+  Numeric_delete(tls->nanos_to_chars.r1);
+  Numeric_delete(tls->nanos_to_chars.r2);
   heap_free(tls);
   tls_set(time_tls_key, NULL);
 }
@@ -355,4 +387,66 @@ char *nanos_to_iso8601(const struct Numeric *restrict const nanos) {
   }
   mutex_unlock(&time_mtx);
   return res;
+}
+
+char *nanos_to_chars(const struct Numeric *restrict const nanos) {
+  const struct time_tls *tls = time_tls();
+  struct Numeric *restrict const s = tls->nanos_to_chars.s;
+  struct Numeric *restrict const m = tls->nanos_to_chars.m;
+  struct Numeric *restrict const h = tls->nanos_to_chars.h;
+  struct Numeric *restrict const d = tls->nanos_to_chars.d;
+  struct Numeric *restrict const w = tls->nanos_to_chars.w;
+  struct Numeric *restrict const r0 = tls->nanos_to_chars.r0;
+  struct Numeric *restrict const r1 = tls->nanos_to_chars.r1;
+  struct Numeric *restrict const r2 = tls->nanos_to_chars.r2;
+
+  Numeric_div_to(nanos, week_nanos, w);
+  Numeric_scale(w, 0);
+  char *restrict const weeks = Numeric_to_char(w, 0);
+  Numeric_mul_to(w, week_nanos, r0);
+  Numeric_sub_to(nanos, r0, r1);
+
+  Numeric_div_to(r1, day_nanos, d);
+  Numeric_scale(d, 0);
+  char *restrict const days = Numeric_to_char(d, 0);
+  Numeric_mul_to(d, day_nanos, r0);
+  Numeric_sub_to(r1, r0, r2);
+
+  Numeric_div_to(r2, hour_nanos, h);
+  Numeric_scale(h, 0);
+  char *restrict const hours = Numeric_to_char(h, 0);
+  Numeric_mul_to(h, hour_nanos, r0);
+  Numeric_sub_to(r2, r0, r1);
+
+  Numeric_div_to(r1, minute_nanos, m);
+  Numeric_scale(m, 0);
+  char *restrict const minutes = Numeric_to_char(m, 0);
+  Numeric_mul_to(m, minute_nanos, r0);
+  Numeric_sub_to(r1, r0, r2);
+
+  Numeric_div_to(r2, second_nanos, s);
+  Numeric_scale(s, 0);
+  char *restrict const seconds = Numeric_to_char(s, 0);
+  Numeric_mul_to(s, second_nanos, r0);
+  Numeric_sub_to(r2, r0, r1);
+
+  char *restrict const ns = Numeric_to_char(r1, 0);
+  char *restrict const chars = heap_malloc(TIME_NANOS_CHARS_MAX_LENGTH + 1);
+  const int r =
+      snprintf(chars, TIME_NANOS_CHARS_MAX_LENGTH + 1, "%sw%sd%sh%sm%ss%s",
+               weeks, days, hours, minutes, seconds, ns);
+
+  if (r < 0 || (size_t)r >= TIME_NANOS_CHARS_MAX_LENGTH + 1) {
+    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
+    fatal();
+  }
+
+  Numeric_char_free(weeks);
+  Numeric_char_free(days);
+  Numeric_char_free(hours);
+  Numeric_char_free(minutes);
+  Numeric_char_free(seconds);
+  Numeric_char_free(ns);
+
+  return chars;
 }

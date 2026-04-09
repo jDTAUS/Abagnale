@@ -35,4 +35,5 @@ void nanos_now(struct Numeric *restrict const);
 bool nanos_from_iso8601(const char *restrict const, const size_t,
                         struct Numeric *restrict const);
 char *nanos_to_iso8601(const struct Numeric *restrict const);
+char *nanos_to_chars(const struct Numeric *restrict const);
 #endif
