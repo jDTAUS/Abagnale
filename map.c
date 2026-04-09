@@ -159,12 +159,12 @@ inline void *MapIterator_remove(struct MapIterator *restrict const it) {
   return value;
 }
 
-inline const void *
+inline const void *const
 MapIterator_key(const struct MapIterator *restrict const it) {
   return it->e != NULL ? it->e->key : NULL;
 }
 
-inline const void *
+inline const void *const
 MapIterator_value(const struct MapIterator *restrict const it) {
   return it->e != NULL ? it->e->value : NULL;
 }
