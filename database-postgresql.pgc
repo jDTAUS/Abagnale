@@ -61,6 +61,7 @@ void *db_connect(const char *const cname) {
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
   EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
   EXEC SQL CONNECT TO :sql_tgt AS :con USER :sql_usr;
   EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
   EXEC SQL AT :con SET AUTOCOMMIT TO OFF;
@@ -116,6 +117,7 @@ void db_disconnect(void *const db) {
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
   EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
   EXEC SQL DISCONNECT :con;
   // clang-format on
   String_delete(db);
@@ -134,6 +136,7 @@ void db_tx_begin(const void *const db) {
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
   EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
   EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ;
   // clang-format on
 #ifdef ABAG_SQL_DEBUG
@@ -151,6 +154,7 @@ void db_tx_commit(const void *const db) {
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
   EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
   EXEC SQL AT :con COMMIT;
   // clang-format on
 #ifdef ABAG_SQL_DEBUG
@@ -168,7 +172,8 @@ void db_tx_rollback(const void *const db) {
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
   EXEC SQL WHENEVER SQLERROR CALL db_fatal();
-  EXEC SQL AT :con ROLLBACK;;
+  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL AT :con ROLLBACK;
   // clang-format on
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(0, stdout);
@@ -273,72 +278,12 @@ void db_sample_create(const void *const db, const char *const e_id,
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
   EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
   EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
   EXEC SQL AT :con
     EXECUTE sample_create USING :sql_e_id, :sql_m_id, :sql_nanos, :sql_price;
   EXEC SQL AT :con COMMIT;
   // clang-format on
-}
-
-void db_samples_stddev(struct Numeric *const stddev, const void *const db,
-                       const char *const e_id, const char *const m_id,
-                       const struct Numeric *const wnanos) {
-#ifdef ABAG_SQL_DEBUG
-  ECPGdebug(1, stdout);
-#endif
-  // clang-format off
-  EXEC SQL BEGIN DECLARE SECTION;
-  const char *con = String_chars(db);
-  const char *sql_e_id = e_id;
-  const char *sql_m_id = m_id;
-  const numeric *sql_wnanos = Numeric_db(wnanos);
-  const numeric *sql_stddev = Numeric_db(stddev);
-  int sql_stddev_ind[1] = {0};
-  EXEC SQL END DECLARE SECTION;
-  EXEC SQL WHENEVER SQLWARNING CALL db_warn();
-  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
-  EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
-  EXEC SQL AT :con
-    WITH price_changes AS (
-      SELECT
-        "NANOS",
-        "PRICE"
-      FROM (
-        SELECT
-          "NANOS",
-          "PRICE",
-          lag("PRICE", 1) OVER (ORDER BY "NANOS") AS "PREVIOUS"
-        FROM "SAMPLES"
-        WHERE "EXCHANGE_ID" = :sql_e_id
-          AND "PRODUCT_ID" = :sql_m_id
-      ) sub
-      WHERE "PRICE" <> "PREVIOUS" OR "PREVIOUS" IS NULL
-    ),
-    returns AS (
-      SELECT
-        "NANOS",
-        "PRICE",
-        ln("PRICE" / lag("PRICE", 1) OVER (ORDER BY "NANOS")) AS "RETURN"
-      FROM price_changes
-    ),
-    stddev AS (
-      SELECT
-        "NANOS",
-        "PRICE",
-        stddev_samp("RETURN") OVER
-          (ORDER BY "NANOS"
-            RANGE BETWEEN :sql_wnanos PRECEDING AND CURRENT ROW) * 100
-            AS "VOLATILITY_PERCENT"
-      FROM returns
-    )
-    SELECT max("VOLATILITY_PERCENT") INTO :sql_stddev :sql_stddev_ind FROM stddev;
-  EXEC SQL AT :con COMMIT;
-  // clang-format on
-  if (sql_stddev_ind[0] != 0)
-    Numeric_copy_to(zero, stddev);
-#ifdef ABAG_SQL_DEBUG
-  ECPGdebug(0, stdout);
-#endif
 }
 
 void db_samples_open(const void *const db, const char *const e_id,
@@ -356,6 +301,7 @@ void db_samples_open(const void *const db, const char *const e_id,
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
   EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
 	EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ;
 	EXEC SQL AT :con DECLARE samples_cursor CURSOR FOR
 		SELECT "NANOS", "PRICE" 
@@ -398,9 +344,72 @@ void db_samples_close(const void *const db) {
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
   EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
   EXEC SQL AT :con CLOSE samples_cursor;
   EXEC SQL AT :con COMMIT;
   // clang-format on
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(0, stdout);
+#endif
+}
+
+void db_volatility(struct Numeric *const stddev, const void *const db,
+                   const char *const e_id, const char *const m_id,
+                   const struct Numeric *const wnanos) {
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(1, stdout);
+#endif
+  // clang-format off
+  EXEC SQL BEGIN DECLARE SECTION;
+  const char *con = String_chars(db);
+  const char *sql_e_id = e_id;
+  const char *sql_m_id = m_id;
+  const numeric *sql_wnanos = Numeric_db(wnanos);
+  const numeric *sql_stddev = Numeric_db(stddev);
+  int sql_stddev_ind[1] = {0};
+  EXEC SQL END DECLARE SECTION;
+  EXEC SQL WHENEVER SQLWARNING CALL db_warn();
+  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
+  EXEC SQL AT :con
+    WITH price_changes AS (
+      SELECT
+        "NANOS",
+        "PRICE"
+      FROM (
+        SELECT
+          "NANOS",
+          "PRICE",
+          lag("PRICE", 1) OVER (ORDER BY "NANOS") AS "PREVIOUS"
+        FROM "SAMPLES"
+        WHERE "EXCHANGE_ID" = :sql_e_id
+          AND "PRODUCT_ID" = :sql_m_id
+      ) sub
+      WHERE "PRICE" <> "PREVIOUS" OR "PREVIOUS" IS NULL
+    ),
+    returns AS (
+      SELECT
+        "NANOS",
+        "PRICE",
+        ln("PRICE" / lag("PRICE", 1) OVER (ORDER BY "NANOS")) AS "RETURN"
+      FROM price_changes
+    ),
+    stddev AS (
+      SELECT
+        "NANOS",
+        "PRICE",
+        stddev_samp("RETURN") OVER
+          (ORDER BY "NANOS"
+            RANGE BETWEEN :sql_wnanos PRECEDING AND CURRENT ROW) * 100
+            AS "VOLATILITY_PERCENT"
+      FROM returns
+    )
+    SELECT max("VOLATILITY_PERCENT") INTO :sql_stddev :sql_stddev_ind FROM stddev;
+  EXEC SQL AT :con COMMIT;
+  // clang-format on
+  if (sql_stddev_ind[0] != 0)
+    Numeric_copy_to(zero, stddev);
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(0, stdout);
 #endif
@@ -789,6 +798,7 @@ void db_trades_open(const void *const db, const char *const e_id,
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
   EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
 	EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ;
   EXEC SQL AT :con DECLARE trades_cursor CURSOR FOR
     SELECT "TRADE_ID",
@@ -928,6 +938,7 @@ void db_trades_close(const void *const db) {
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
   EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
   EXEC SQL AT :con CLOSE trades_cursor;
   EXEC SQL AT :con COMMIT;
   // clang-format on
@@ -1438,6 +1449,7 @@ void db_tx_trend_plot_samples_open(const void *const db, const char *const e_id,
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
   EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
 	EXEC SQL AT :con DECLARE trend_plot_cursor CURSOR FOR
 		SELECT "X", "Y" 
     FROM "TREND_PLOTS" t
@@ -1503,6 +1515,7 @@ void db_tx_trend_plot_candles_open(const void *const db, const char *const e_id,
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
   EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
 	EXEC SQL AT :con DECLARE trend_plot_candles_cursor CURSOR FOR
 		SELECT c."OPEN", c."HIGH", c."LOW", c."CLOSE",
       c."ONANOS", c."HNANOS", c."LNANOS", c."CNANOS"
@@ -1577,6 +1590,7 @@ void db_tx_trend_plot_markers_open(const void *const db, const char *const e_id,
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
   EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
 	EXEC SQL AT :con DECLARE trend_plot_markers_cursor CURSOR FOR
 		SELECT d."X", d."Y", m."TYPE"
     FROM "TREND_PLOTS" t

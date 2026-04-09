@@ -703,7 +703,7 @@ static int cmd_volatility(int argc, char *argv[]) {
 
   void *restrict const db = db_connect(String_chars(progname));
   struct Numeric *restrict const v = Numeric_new();
-  db_samples_stddev(v, db, String_chars(e->id), String_chars(m->id), w);
+  db_volatility(v, db, String_chars(e->id), String_chars(m->id), w);
   char *restrict const v_info = Numeric_to_char(v, 4);
   printf("%s\n", v_info);
   Numeric_char_free(v_info);

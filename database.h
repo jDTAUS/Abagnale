@@ -151,14 +151,14 @@ void db_id_to_symbol(char *const, const void *const, const char *const,
 
 void db_sample_create(const void *const, const char *const, const char *const,
                       const struct Numeric *const, const struct Numeric *const);
-void db_samples_stddev(struct Numeric *const, const void *const,
-                       const char *const, const char *const,
-                       const struct Numeric *const);
 
 void db_samples_open(const void *const, const char *const, const char *const,
                      const struct Numeric *const);
 bool db_samples_next(struct db_sample_rec *, const void *const);
 void db_samples_close(const void *const);
+
+void db_volatility(struct Numeric *const, const void *const, const char *const,
+                   const char *const, const struct Numeric *const);
 
 bool db_stats(struct db_stats_rec *, const void *const, const char *const,
               const char *const);
