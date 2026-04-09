@@ -48,11 +48,11 @@ struct time_tls {
   struct nanos_to_iso8601_vars {
     struct Numeric *restrict s;
   } nanos_to_iso8601;
-  struct nanos_to_chars_vars {
+  struct nanos_string_vars {
     struct Numeric *restrict r0;
     struct Numeric *restrict r1;
     struct Numeric *restrict r2;
-  } nanos_to_chars;
+  } nanos_string;
 };
 
 extern const struct Numeric *restrict const zero;
@@ -76,9 +76,9 @@ static struct time_tls *time_tls(void) {
     tls->nanos_from_ts.s_ns = Numeric_new();
     tls->nanos_from_ts.ns = Numeric_new();
     tls->nanos_to_iso8601.s = Numeric_new();
-    tls->nanos_to_chars.r0 = Numeric_new();
-    tls->nanos_to_chars.r1 = Numeric_new();
-    tls->nanos_to_chars.r2 = Numeric_new();
+    tls->nanos_string.r0 = Numeric_new();
+    tls->nanos_string.r1 = Numeric_new();
+    tls->nanos_string.r2 = Numeric_new();
     tls_set(time_tls_key, tls);
   }
   return tls;
@@ -93,9 +93,9 @@ static void time_tls_dtor(void *restrict e) {
   Numeric_delete(tls->nanos_from_ts.s_ns);
   Numeric_delete(tls->nanos_from_ts.ns);
   Numeric_delete(tls->nanos_to_iso8601.s);
-  Numeric_delete(tls->nanos_to_chars.r0);
-  Numeric_delete(tls->nanos_to_chars.r1);
-  Numeric_delete(tls->nanos_to_chars.r2);
+  Numeric_delete(tls->nanos_string.r0);
+  Numeric_delete(tls->nanos_string.r1);
+  Numeric_delete(tls->nanos_string.r2);
   heap_free(tls);
   tls_set(time_tls_key, NULL);
 }
@@ -374,11 +374,11 @@ char *nanos_to_iso8601(const struct Numeric *restrict const nanos) {
   return res;
 }
 
-char *nanos_to_chars(const struct Numeric *restrict const nanos) {
+char *nanos_string(const struct Numeric *restrict const nanos) {
   const struct time_tls *tls = time_tls();
-  struct Numeric *restrict const r0 = tls->nanos_to_chars.r0;
-  struct Numeric *restrict const r1 = tls->nanos_to_chars.r1;
-  struct Numeric *restrict const r2 = tls->nanos_to_chars.r2;
+  struct Numeric *restrict const r0 = tls->nanos_string.r0;
+  struct Numeric *restrict const r1 = tls->nanos_string.r1;
+  struct Numeric *restrict const r2 = tls->nanos_string.r2;
 
   Numeric_div_to(nanos, week_nanos, r0);
   Numeric_scale(r0, 0);
