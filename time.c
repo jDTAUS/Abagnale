@@ -65,7 +65,7 @@ extern const struct Numeric *restrict const week_nanos;
 static tss_t time_tls_key;
 static mtx_t time_mtx;
 
-static struct time_tls *time_tls(void) {
+static struct time_tls *const time_tls(void) {
   struct time_tls *restrict tls = tls_get(time_tls_key);
   if (tls == NULL) {
     tls = heap_malloc(sizeof(struct time_tls));
@@ -356,7 +356,7 @@ void nanos_now(struct Numeric *restrict const res) {
 }
 
 char *nanos_to_iso8601(const struct Numeric *restrict const nanos) {
-  const struct time_tls *tls = time_tls();
+  const struct time_tls *restrict const tls = time_tls();
   struct Numeric *restrict const s = tls->nanos_to_iso8601.s;
 
   Numeric_div_to(nanos, second_nanos, s);
@@ -375,7 +375,7 @@ char *nanos_to_iso8601(const struct Numeric *restrict const nanos) {
 }
 
 char *nanos_string(const struct Numeric *restrict const nanos) {
-  const struct time_tls *tls = time_tls();
+  const struct time_tls *restrict const tls = time_tls();
   struct Numeric *restrict const r0 = tls->nanos_string.r0;
   struct Numeric *restrict const r1 = tls->nanos_string.r1;
   struct Numeric *restrict const r2 = tls->nanos_string.r2;
