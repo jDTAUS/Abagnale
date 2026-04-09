@@ -2798,7 +2798,7 @@ static int samples_process(void *restrict const arg) {
   void *const *items;
 
   while (!terminated) {
-    struct Sample *restrict sample = ctx->e->sample_await();
+    struct Sample *restrict const sample = ctx->e->sample_await();
 
     if (sample == NULL)
       continue;
@@ -2863,7 +2863,6 @@ static int samples_process(void *restrict const arg) {
       }
     }
 
-    sample = Array_tail(samples);
     Numeric_sub_to(sample->nanos,
                    ctx->m_cnf != NULL ? ctx->m_cnf->wnanos : cnf->wnanos_max,
                    outdated_ns);
