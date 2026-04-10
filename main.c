@@ -80,6 +80,7 @@ bool verbose;
 
 struct Array *restrict exchanges;
 struct Array *restrict algorithms;
+struct Array *restrict volatility_windows;
 
 int abagnale(int argc, char *argv[]);
 int abagnalectl(int argc, char *argv[]);
@@ -142,6 +143,27 @@ int main(int argc, char *argv[]) {
   week_nanos = Numeric_mul(day_nanos, seven);
   boot_nanos = Numeric_new();
   nanos_now(boot_nanos);
+
+  volatility_windows = Array_new(64);
+  Array_add_tail(volatility_windows, Numeric_from_long(1));
+  Array_add_tail(volatility_windows, Numeric_from_long(500));
+  Array_add_tail(volatility_windows, Numeric_from_long(1e3));
+  Array_add_tail(volatility_windows, Numeric_from_long(5e3));
+  Array_add_tail(volatility_windows, Numeric_from_long(1e6));
+  Array_add_tail(volatility_windows, Numeric_from_long(5e6));
+
+  for (size_t i = 0; i < 60; i += 5)
+    Array_add_tail(volatility_windows,
+                   Numeric_from_long(i == 0 ? 1e9 : i * 1e9));
+
+  for (size_t i = 0; i < 60; i += 5)
+    Array_add_tail(volatility_windows,
+                   Numeric_from_long(i == 0 ? 60e9 : i * 60e9));
+
+  for (size_t i = 1; i < 24; i++)
+    Array_add_tail(volatility_windows, Numeric_from_long(i * 36e11));
+
+  Array_add_tail(volatility_windows, Numeric_from_long(24 * 36e11));
 
   optparse_init(&options, argv);
   options.permute = 0;
@@ -230,6 +252,7 @@ int main(int argc, char *argv[]) {
 
   Array_delete(algorithms, NULL);
   Array_delete(exchanges, NULL);
+  Array_delete(volatility_windows, Numeric_delete);
   Config_delete(cnf);
   Numeric_delete(zero);
   Numeric_delete(one);

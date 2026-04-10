@@ -154,13 +154,16 @@ void db_sample_create(const void *const, const char *const, const char *const,
 
 void db_samples_open(const void *const, const char *const, const char *const,
                      const struct Numeric *const);
-bool db_samples_next(struct db_sample_rec *, const void *const);
+bool db_samples_next(struct db_sample_rec *const, const void *const);
 void db_samples_close(const void *const);
 
-void db_volatility(struct Numeric *const, const void *const, const char *const,
-                   const char *const, const struct Numeric *const);
+void db_volatility_open(const void *const, const char *const,
+                        const char *const);
+void db_volatility(struct Numeric *const, const void *const,
+                   const struct Numeric *const);
+void db_volatility_close(const void *const);
 
-bool db_stats(struct db_stats_rec *, const void *const, const char *const,
+bool db_stats(struct db_stats_rec *const, const void *const, const char *const,
               const char *const);
 void db_stats_bcl_factor(const void *const, const char *const,
                          const char *const, struct Numeric *const);
@@ -171,7 +174,7 @@ void db_trades_open(const void *const, const char *const, const char *const);
 bool db_trades_next(struct db_trade_rec *const, const void *const);
 void db_trades_close(const void *const);
 
-void db_trades_hold(struct db_balance_rec *, const void *const,
+void db_trades_hold(struct db_balance_rec *const, const void *const,
                     const char *const, const char *const, const char *const);
 
 void db_trade_bcreate(char *const, const void *const, const char *const,

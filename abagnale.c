@@ -149,6 +149,7 @@ extern _Atomic bool terminated;
 
 extern const struct Array *restrict const algorithms;
 extern const struct Array *restrict const exchanges;
+extern const struct Array *restrict const volatility_windows;
 
 extern const struct Config *restrict const cnf;
 extern const bool verbose;
@@ -169,7 +170,6 @@ static struct Map *restrict market_trades;
 static tss_t abag_tls_key;
 
 static struct Numeric *restrict ninety_percent_factor;
-static struct Numeric *restrict five_minute_nanos;
 
 int abagnale(int argc, char *argv[]);
 
@@ -2079,26 +2079,38 @@ static void trade_pricing(const struct worker_ctx *restrict const w_ctx,
   const struct abag_tls *restrict const tls = abag_tls();
   struct Numeric *restrict const r0 = tls->trade_pricing.r0;
   const struct Pricing *restrict const pricing = w_ctx->e->pricing();
+  void *const *items;
 
-  if (Numeric_cmp(t->fee_pc, pricing->ef_pc) < 0) {
-    Numeric_copy_to(pricing->ef_pc, t->fee_pc);
-    Numeric_div_to(t->fee_pc, hundred, r0);
-    Numeric_add_to(r0, one, t->fee_pf);
+  if (Numeric_cmp(t->fee_pc, pricing->ef_pc) >= 0) {
+    mutex_unlock(pricing->mtx);
+    return;
+  }
 
-    if (w_ctx->m_cnf->v_pc != NULL)
-      Numeric_copy_to(w_ctx->m_cnf->v_pc, t->tp_pc);
-    else {
-      db_volatility(t->tp_pc, w_ctx->db, String_chars(w_ctx->e->id),
-                    String_chars(w_ctx->m->id),
-                    w_ctx->m_cnf->v_wnanos != NULL ? w_ctx->m_cnf->v_wnanos
-                                                   : five_minute_nanos);
+  Numeric_copy_to(pricing->ef_pc, t->fee_pc);
+  Numeric_div_to(t->fee_pc, hundred, r0);
+  Numeric_add_to(r0, one, t->fee_pf);
+
+  if (w_ctx->m_cnf->v_pc == NULL) {
+    db_volatility_open(w_ctx->db, String_chars(w_ctx->e->id),
+                       String_chars(w_ctx->m->id));
+
+    if (w_ctx->m_cnf->v_wnanos == NULL) {
+      Numeric_copy_to(zero, t->tp_pc);
+
+      items = Array_items(volatility_windows);
+      for (size_t i = Array_size(volatility_windows); i > 0; i--) {
+        db_volatility(r0, w_ctx->db, items[i - 1]);
+
+        if (Numeric_cmp(r0, t->tp_pc) > 0)
+          Numeric_copy_to(r0, t->tp_pc);
+      }
+    } else {
+      db_volatility(t->tp_pc, w_ctx->db, w_ctx->m_cnf->v_wnanos);
 
       if (Numeric_cmp(t->tp_pc, zero) == 0) {
         Numeric_copy_to(t->fee_pc, t->tp_pc);
 
-        char *restrict const win =
-            nanos_string(w_ctx->m_cnf->v_wnanos != NULL ? w_ctx->m_cnf->v_wnanos
-                                                        : five_minute_nanos);
+        char *restrict const win = nanos_string(w_ctx->m_cnf->v_wnanos);
 
         werr("%s: %s: Volatility not available: %s\n",
              String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm), win);
@@ -2107,33 +2119,36 @@ static void trade_pricing(const struct worker_ctx *restrict const w_ctx,
       }
     }
 
-    if (Numeric_cmp(t->tp_pc, t->fee_pc) < 0) {
-      Numeric_copy_to(t->fee_pc, t->tp_pc);
+    db_volatility_close(w_ctx->db);
+  } else
+    Numeric_copy_to(w_ctx->m_cnf->v_pc, t->tp_pc);
 
-      char *restrict const stddev = Numeric_to_char(t->tp_pc, 4);
-      char *restrict const fee = Numeric_to_char(t->fee_pc, 2);
+  if (Numeric_cmp(t->tp_pc, t->fee_pc) < 0) {
+    Numeric_copy_to(t->fee_pc, t->tp_pc);
 
-      werr("%s: %s: Volatility fee constraint: %s%%<%s%%\n",
-           String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm), stddev, fee);
+    char *restrict const stddev = Numeric_to_char(t->tp_pc, 4);
+    char *restrict const fee = Numeric_to_char(t->fee_pc, 2);
 
-      Numeric_char_free(stddev);
-      Numeric_char_free(fee);
-    }
+    werr("%s: %s: Volatility fee constraint: %s%%<%s%%\n",
+         String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm), stddev, fee);
 
-    if (verbose) {
-      char *restrict const fee = Numeric_to_char(t->fee_pc, 2);
-      char *restrict const v = Numeric_to_char(t->tp_pc, 4);
-
-      wout("%s: %s: Pricing: fee: %s%%, volatility: %s%%\n",
-           String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm), fee, v);
-
-      Numeric_char_free(fee);
-      Numeric_char_free(v);
-    }
-
-    Numeric_div_to(t->tp_pc, hundred, r0);
-    Numeric_add_to(r0, one, t->tp_pf);
+    Numeric_char_free(stddev);
+    Numeric_char_free(fee);
   }
+
+  if (verbose) {
+    char *restrict const fee = Numeric_to_char(t->fee_pc, 2);
+    char *restrict const v = Numeric_to_char(t->tp_pc, 4);
+
+    wout("%s: %s: Pricing: fee: %s%%, volatility: %s%%\n",
+         String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm), fee, v);
+
+    Numeric_char_free(fee);
+    Numeric_char_free(v);
+  }
+
+  Numeric_div_to(t->tp_pc, hundred, r0);
+  Numeric_add_to(r0, one, t->tp_pf);
 
   mutex_unlock(pricing->mtx);
 }
@@ -2947,7 +2962,6 @@ static int exchange_stop(void *restrict const arg) {
 int abagnale(int argc, char *argv[]) {
   void *const *items;
   ninety_percent_factor = Numeric_from_char("0.9");
-  five_minute_nanos = Numeric_from_long(300000000000L);
 
   market_samples = Map_new(String_copy, String_delete, String_hash,
                            String_equals, ABAG_MAX_PRODUCTS);
@@ -3016,7 +3030,6 @@ int abagnale(int argc, char *argv[]) {
       thread_join(workers[i - 1], NULL);
 
   Numeric_delete(ninety_percent_factor);
-  Numeric_delete(five_minute_nanos);
 
   heap_free(workers);
   Map_delete(market_samples, sample_array_delete);

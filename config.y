@@ -40,7 +40,7 @@
 
 #include <wcjson-document.h>
 
-extern struct String *restrict const progname;
+extern const struct String *restrict const progname;
 
 extern const struct Exchange *restrict const all_exchanges;
 extern const size_t all_exchanges_nitems;

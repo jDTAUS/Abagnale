@@ -38,8 +38,8 @@
 #define nitems(_a) (sizeof((_a)) / sizeof((_a)[0]))
 #endif
 
-extern struct String *restrict const progname;
-extern bool terminated;
+extern const struct String *restrict const progname;
+extern const bool terminated;
 
 extern const struct Algorithm *restrict const all_algorithms;
 extern const size_t all_algorithms_nitems;
@@ -48,6 +48,10 @@ extern const struct Array *restrict const algorithms;
 extern const struct Exchange *restrict const all_exchanges;
 extern const size_t all_exchanges_nitems;
 extern const struct Array *restrict const exchanges;
+
+extern const struct Array *restrict const volatility_windows;
+
+extern const struct Numeric *restrict const zero;
 
 static const struct {
   const enum market_type type;
@@ -673,7 +677,7 @@ static int cmd_volatility(int argc, char *argv[]) {
   }
   argc -= options.optind;
 
-  if (argc > 0 || e_nm == NULL || m_nm == NULL || w == NULL)
+  if (argc > 0 || e_nm == NULL || m_nm == NULL)
     usage();
 
   const struct Exchange *restrict const e = exchange(e_nm);
@@ -702,12 +706,31 @@ static int cmd_volatility(int argc, char *argv[]) {
   }
 
   void *restrict const db = db_connect(String_chars(progname));
+
+  db_volatility_open(db, String_chars(e->id), String_chars(m->id));
+
   struct Numeric *restrict const v = Numeric_new();
-  db_volatility(v, db, String_chars(e->id), String_chars(m->id), w);
-  char *restrict const v_info = Numeric_to_char(v, 4);
-  printf("%s\n", v_info);
-  Numeric_char_free(v_info);
-  Numeric_delete(v);
+
+  if (w == NULL) {
+    items = Array_items(volatility_windows);
+    for (size_t i = Array_size(volatility_windows); i > 0; i--) {
+      db_volatility(v, db, items[i - 1]);
+      char *restrict const w_info = nanos_string(items[i - 1]);
+      char *restrict const v_info = Numeric_to_char(v, 4);
+      printf("%s\t%s\n", w_info, v_info);
+      Numeric_char_free(v_info);
+      heap_free(w_info);
+    }
+  } else {
+    db_volatility(v, db, w);
+    char *restrict const w_info = nanos_string(w);
+    char *restrict const v_info = Numeric_to_char(v, 4);
+    printf("%s\t%s\n", w_info, v_info);
+    Numeric_char_free(v_info);
+    heap_free(w_info);
+  }
+
+  db_volatility_close(db);
   db_disconnect(db);
 
   r = EXIT_SUCCESS;
