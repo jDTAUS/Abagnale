@@ -391,7 +391,7 @@ void db_volatility_open(const void *const db, const char *const e_id,
         ln("PRICE" / lag("PRICE", 1) OVER (ORDER BY "NANOS")) AS "RETURN"
       FROM price_changes;
 
-  EXEC SQL AT :con CREATE INDEX ON returns("NANOS");
+  EXEC SQL AT :con CREATE INDEX ON returns USING btree("NANOS");
   // clang-format on
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(0, stdout);
