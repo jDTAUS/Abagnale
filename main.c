@@ -152,7 +152,10 @@ int main(int argc, char *argv[]) {
   Array_add_tail(volatility_windows, Numeric_from_long(1e6));
   Array_add_tail(volatility_windows, Numeric_from_long(5e6));
 
-  for (size_t i = 1; i < 120; i++)
+  for (size_t i = 1; i < 10; i++)
+    Array_add_tail(volatility_windows, Numeric_from_long(i * 1e8));
+
+  for (size_t i = 2; i < 120; i++)
     Array_add_tail(volatility_windows, Numeric_from_long(i * .5e9));
 
   for (size_t i = 1; i < 120; i++)
