@@ -648,7 +648,6 @@ static inline struct Trade *trade_new(void) {
   t->p_long.type = POSITION_TYPE_LONG;
   position_init(&t->p_short);
   t->p_short.type = POSITION_TYPE_SHORT;
-  t->busy = false;
   return t;
 }
 
@@ -2910,11 +2909,6 @@ static int samples_process(void *restrict const arg) {
     items = Array_items(trades);
     for (size_t i = Array_size(trades); i > 0; i--) {
       struct Trade *restrict const t = items[i - 1];
-
-      if (t->busy) {
-        betting = betting || t->status == TRADE_STATUS_NEW;
-        continue;
-      }
 
       if (has_config) {
         t->a = ctx->a;
