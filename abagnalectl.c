@@ -733,6 +733,7 @@ static int cmd_volatility(int argc, char *argv[]) {
   db_volatility_close(db);
   db_disconnect(db);
 
+  Numeric_delete(v);
   r = EXIT_SUCCESS;
 unlock:
   Array_unlock(markets);
