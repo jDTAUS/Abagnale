@@ -2911,8 +2911,10 @@ static int samples_process(void *restrict const arg) {
     for (size_t i = Array_size(trades); i > 0; i--) {
       struct Trade *restrict const t = items[i - 1];
 
-      if (t->busy)
+      if (t->busy) {
+        betting = t->status == TRADE_STATUS_NEW;
         continue;
+      }
 
       if (has_config) {
         t->a = ctx->a;
