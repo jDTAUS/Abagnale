@@ -108,6 +108,7 @@ struct Trade {
   struct Position p_short;
   struct Candle open_cd;
   struct Trigger open_trg;
+  _Atomic bool busy;
 };
 
 struct Algorithm {
