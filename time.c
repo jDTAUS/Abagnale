@@ -413,7 +413,7 @@ char *nanos_string(const struct Numeric *restrict const nanos) {
   char *restrict const ns = Numeric_to_char(r0, 0);
   char *restrict const chars = heap_malloc(TIME_NANOS_CHARS_MAX_LENGTH + 1);
   const int r =
-      snprintf(chars, TIME_NANOS_CHARS_MAX_LENGTH + 1, "%sw%sd%sh%sm%ss%s",
+      snprintf(chars, TIME_NANOS_CHARS_MAX_LENGTH + 1, "%sw%sd%sh%sm%ss%sns",
                weeks, days, hours, minutes, seconds, ns);
 
   if (r < 0 || (size_t)r >= TIME_NANOS_CHARS_MAX_LENGTH + 1) {
