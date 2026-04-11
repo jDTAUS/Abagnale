@@ -2912,7 +2912,7 @@ static int samples_process(void *restrict const arg) {
       struct Trade *restrict const t = items[i - 1];
 
       if (t->busy) {
-        betting = t->status == TRADE_STATUS_NEW;
+        betting = betting || t->status == TRADE_STATUS_NEW;
         continue;
       }
 
