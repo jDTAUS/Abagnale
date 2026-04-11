@@ -152,16 +152,14 @@ int main(int argc, char *argv[]) {
   Array_add_tail(volatility_windows, Numeric_from_long(1e6));
   Array_add_tail(volatility_windows, Numeric_from_long(5e6));
 
-  for (size_t i = 0; i < 60; i += 5)
-    Array_add_tail(volatility_windows,
-                   Numeric_from_long(i == 0 ? 1e9 : i * 1e9));
+  for (size_t i = 1; i < 120; i++)
+    Array_add_tail(volatility_windows, Numeric_from_long(i * .5e9));
 
-  for (size_t i = 0; i < 60; i += 5)
-    Array_add_tail(volatility_windows,
-                   Numeric_from_long(i == 0 ? 60e9 : i * 60e9));
+  for (size_t i = 1; i < 120; i++)
+    Array_add_tail(volatility_windows, Numeric_from_long(i * 30e9));
 
-  for (size_t i = 1; i < 24; i++)
-    Array_add_tail(volatility_windows, Numeric_from_long(i * 36e11));
+  for (size_t i = 1; i < 48; i++)
+    Array_add_tail(volatility_windows, Numeric_from_long(i * 18e11));
 
   Array_add_tail(volatility_windows, Numeric_from_long(24 * 36e11));
 
