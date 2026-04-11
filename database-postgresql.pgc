@@ -387,7 +387,6 @@ void db_volatility_open(const void *const db, const char *const e_id,
       )
       SELECT
         "NANOS",
-        "PRICE",
         ln("PRICE" / lag("PRICE", 1) OVER (ORDER BY "NANOS")) AS "RETURN"
       FROM price_changes;
 
@@ -415,8 +414,6 @@ void db_volatility(struct Numeric *const stddev, const void *const db,
   EXEC SQL AT :con
     WITH stddev AS (
       SELECT
-        "NANOS",
-        "PRICE",
         stddev_samp("RETURN") OVER
           (ORDER BY "NANOS"
             RANGE BETWEEN :sql_wnanos PRECEDING AND CURRENT ROW) * 100
