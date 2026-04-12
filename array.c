@@ -82,7 +82,7 @@ inline void Array_cut(struct Array *restrict const a, const size_t i,
   memcpy(items, a->items[i], cnt);
 
   if (cb)
-    for (size_t j = i; j < cnt; j++)
+    for (size_t j = i; j < i + cnt; j++)
       cb(a->items[j]);
 
   heap_free(a->items);
