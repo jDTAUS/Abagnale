@@ -86,6 +86,7 @@ inline void Array_cut(struct Array *restrict const a, const size_t i,
       cb(a->items[j]);
 
   heap_free(a->items);
+  heap_trim(0);
   a->items = items;
   a->capacity = cnt;
   a->size = cnt;
