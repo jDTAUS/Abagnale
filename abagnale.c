@@ -128,6 +128,7 @@ struct abag_tls {
     struct Numeric *restrict q_profit;
   } trade_maintain;
   struct trade_pricing_vars {
+    struct Numeric *restrict ef_pc;
     struct Numeric *restrict r0;
   } trade_pricing;
   struct trade_bet_vars {
@@ -231,6 +232,7 @@ static struct abag_tls *const abag_tls(void) {
     tls->trade_maintain.q_delta = Numeric_new();
     tls->trade_maintain.q_costs = Numeric_new();
     tls->trade_maintain.q_profit = Numeric_new();
+    tls->trade_pricing.ef_pc = Numeric_new();
     tls->trade_pricing.r0 = Numeric_new();
     tls->trade_bet.hold = heap_malloc(sizeof(struct db_balance_rec));
     tls->trade_bet.hold->b = Numeric_new();
@@ -318,6 +320,7 @@ static void abag_tls_dtor(void *e) {
   Numeric_delete(tls->trade_maintain.q_delta);
   Numeric_delete(tls->trade_maintain.q_costs);
   Numeric_delete(tls->trade_maintain.q_profit);
+  Numeric_delete(tls->trade_pricing.ef_pc);
   Numeric_delete(tls->trade_pricing.r0);
   Numeric_delete(tls->trade_bet.hold->b);
   Numeric_delete(tls->trade_bet.hold->q);
@@ -2077,16 +2080,18 @@ static void trade_create(const struct worker_ctx *restrict const w_ctx,
 static void trade_pricing(const struct worker_ctx *restrict const w_ctx,
                           struct Trade *restrict const t) {
   const struct abag_tls *restrict const tls = abag_tls();
+  struct Numeric *restrict const ef_pc = tls->trade_pricing.ef_pc;
   struct Numeric *restrict const r0 = tls->trade_pricing.r0;
   const struct Pricing *restrict const pricing = w_ctx->e->pricing();
   void *const *items;
 
-  if (Numeric_cmp(t->fee_pc, pricing->ef_pc) >= 0) {
-    mutex_unlock(pricing->mtx);
-    return;
-  }
+  Numeric_copy_to(pricing->ef_pc, ef_pc);
+  mutex_unlock(pricing->mtx);
 
-  Numeric_copy_to(pricing->ef_pc, t->fee_pc);
+  if (Numeric_cmp(t->fee_pc, ef_pc) >= 0)
+    return;
+
+  Numeric_copy_to(ef_pc, t->fee_pc);
   Numeric_div_to(t->fee_pc, hundred, r0);
   Numeric_add_to(r0, one, t->fee_pf);
 
@@ -2149,8 +2154,6 @@ static void trade_pricing(const struct worker_ctx *restrict const w_ctx,
 
   Numeric_div_to(t->tp_pc, hundred, r0);
   Numeric_add_to(r0, one, t->tp_pf);
-
-  mutex_unlock(pricing->mtx);
 }
 
 static void trade_plot(const struct worker_ctx *restrict const w_ctx,
