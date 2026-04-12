@@ -103,6 +103,7 @@ inline void Array_clear(struct Array *restrict const a,
       a->items[i - 1] = NULL;
 
   a->size = 0;
+  Array_shrink(a);
 }
 
 inline void Array_shrink(struct Array *restrict const a) {
