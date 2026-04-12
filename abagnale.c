@@ -2886,12 +2886,14 @@ static int samples_process(void *restrict const arg) {
                    ctx->m_cnf != NULL ? ctx->m_cnf->wnanos : cnf->wnanos_max,
                    outdated_ns);
 
-    while (Array_size(samples) > 0 &&
-           Numeric_cmp(((struct Sample *)Array_head(samples))->nanos,
-                       outdated_ns) < 0)
-      Sample_delete(Array_remove_head(samples));
-
-    Array_shrink(samples);
+    items = Array_items(samples);
+    for (size_t i = Array_size(samples); i > 0; i--) {
+      if (Numeric_cmp(((struct Sample *)items[i - 1])->nanos, outdated_ns) <
+          0) {
+        Array_cut(samples, i, Array_size(samples) - i, Sample_delete);
+        break;
+      }
+    }
 
     if (!ctx->m->is_active) {
       Array_unlock(samples);

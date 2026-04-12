@@ -76,6 +76,21 @@ inline struct Array *Array_copy(const struct Array *restrict const a,
   return copy;
 }
 
+inline void Array_cut(struct Array *restrict const a, const size_t i,
+                      const size_t cnt, void (*cb)(void *restrict const)) {
+  void *restrict const items = heap_calloc(cnt, sizeof(void *));
+  memcpy(items, a->items[i], cnt);
+
+  if (cb)
+    for (size_t j = i; j < cnt; j++)
+      cb(a->items[j]);
+
+  heap_free(a->items);
+  a->items = items;
+  a->capacity = cnt;
+  a->size = cnt;
+}
+
 inline void Array_clear(struct Array *restrict const a,
                         void (*cb)(void *restrict const)) {
   if (cb)

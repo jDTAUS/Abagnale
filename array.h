@@ -27,8 +27,7 @@
 struct Array;
 
 struct Array *Array_new(const size_t);
-void Array_delete(struct Array *restrict const,
-                  void (*cb)(void *restrict const));
+void Array_delete(struct Array *restrict const, void (*)(void *restrict const));
 
 mtx_t *Array_mutex(struct Array *restrict const);
 void Array_lock(struct Array *restrict const);
@@ -36,9 +35,10 @@ bool Array_trylock(struct Array *restrict const);
 void Array_unlock(struct Array *restrict const);
 
 struct Array *Array_copy(const struct Array *restrict const,
-                         void *(*cb)(void *restrict const));
-void Array_clear(struct Array *restrict const,
-                 void (*cb)(void *restrict const));
+                         void *(*)(void *restrict const));
+void Array_cut(struct Array *restrict const, const size_t, const size_t,
+               void (*)(void *restrict const));
+void Array_clear(struct Array *restrict const, void (*)(void *restrict const));
 void Array_shrink(struct Array *restrict const);
 
 void Array_add_tail(struct Array *restrict const, void *restrict const);
