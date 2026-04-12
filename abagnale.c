@@ -2103,7 +2103,8 @@ static void trade_pricing(const struct worker_ctx *restrict const w_ctx,
       Numeric_copy_to(zero, t->tp_pc);
 
       items = Array_items(volatility_windows);
-      for (size_t i = Array_size(volatility_windows); i > 0; i--) {
+      for (size_t i = Array_size(volatility_windows); !terminated && i > 0;
+           i--) {
         db_volatility(r0, w_ctx->db, items[i - 1]);
 
         if (Numeric_cmp(r0, t->tp_pc) > 0)
