@@ -2907,8 +2907,9 @@ static int samples_process(void *restrict const arg) {
     }
     Map_unlock(market_trades);
 
+    Array_unlock(samples);
+
     if (!Array_trylock(trades)) {
-      Array_unlock(samples);
       Market_delete(ctx->m);
       continue;
     }
@@ -2924,7 +2925,10 @@ static int samples_process(void *restrict const arg) {
         t->a = ctx->a;
         Numeric_copy_to(ctx->q_tgt, t->tp);
         trade_pricing(ctx, t);
+
+        Array_lock(samples);
         trade_maintain(ctx, t, samples, Array_tail(samples));
+        Array_unlock(samples);
 
         if (t->status == TRADE_STATUS_CANCELLED ||
             t->status == TRADE_STATUS_DONE) {
@@ -2946,7 +2950,6 @@ static int samples_process(void *restrict const arg) {
     }
 
     Array_unlock(trades);
-    Array_unlock(samples);
     Market_delete(ctx->m);
   }
 
