@@ -2944,8 +2944,8 @@ static int samples_process(void *restrict const arg) {
     }
 
     if (!betting && has_config) {
-      Array_lock(samples);
       struct Trade *restrict const t = trade_new();
+      Array_lock(samples);
       trade_create(ctx, t, samples, Array_tail(samples));
       Array_unlock(samples);
       Array_add_tail(trades, t);
