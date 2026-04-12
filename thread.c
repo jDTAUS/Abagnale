@@ -85,6 +85,20 @@ inline void mutex_lock(mtx_t *restrict const m) {
   }
 }
 
+inline bool mutex_trylock(mtx_t *restrict const m) {
+  int r = mtx_trylock(m);
+
+  if (r == thrd_busy)
+    return false;
+
+  if (r != thrd_success) {
+    werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__, strthrd(r));
+    fatal();
+  }
+
+  return true;
+}
+
 inline void mutex_unlock(mtx_t *restrict const m) {
   int r = mtx_unlock(m);
   if (r != thrd_success) {

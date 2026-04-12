@@ -20,6 +20,7 @@
 #ifndef ABAG_THREAD_H
 #define ABAG_THREAD_H
 
+#include <stdbool.h>
 #include <threads.h>
 #include <time.h>
 
@@ -31,6 +32,7 @@ _Noreturn void thread_exit(const int);
 void mutex_init(mtx_t *restrict const);
 void mutex_destroy(mtx_t *restrict const);
 void mutex_lock(mtx_t *restrict const);
+bool mutex_trylock(mtx_t *restrict const);
 void mutex_unlock(mtx_t *restrict const);
 
 void tls_create(tss_t *restrict const, tss_dtor_t);

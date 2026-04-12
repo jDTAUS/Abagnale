@@ -20,6 +20,7 @@
 #ifndef ABAG_ARRAY_H
 #define ABAG_ARRAY_H
 
+#include <stdbool.h>
 #include <stddef.h>
 #include <threads.h>
 
@@ -31,6 +32,7 @@ void Array_delete(struct Array *restrict const,
 
 mtx_t *Array_mutex(struct Array *restrict const);
 void Array_lock(struct Array *restrict const);
+bool Array_trylock(struct Array *restrict const);
 void Array_unlock(struct Array *restrict const);
 
 struct Array *Array_copy(const struct Array *restrict const,

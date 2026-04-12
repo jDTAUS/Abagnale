@@ -83,6 +83,9 @@ inline void Map_delete(struct Map *restrict const m,
 }
 
 inline void Map_lock(struct Map *restrict const m) { mutex_lock(&m->mtx); }
+inline bool Map_trylock(struct Map *restrict const m) {
+  return mutex_trylock(&m->mtx);
+}
 inline void Map_unlock(struct Map *restrict const m) { mutex_unlock(&m->mtx); }
 
 inline void *Map_put(struct Map *restrict const m, void *restrict const k,

@@ -54,6 +54,9 @@ inline void Array_delete(struct Array *restrict const a,
 
 inline mtx_t *Array_mutex(struct Array *restrict const a) { return &a->mtx; }
 inline void Array_lock(struct Array *restrict const a) { mutex_lock(&a->mtx); }
+inline bool Array_trylock(struct Array *restrict const a) {
+  return mutex_trylock(&a->mtx);
+}
 inline void Array_unlock(struct Array *restrict const a) {
   mutex_unlock(&a->mtx);
 }

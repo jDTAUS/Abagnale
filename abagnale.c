@@ -2906,7 +2906,13 @@ static int samples_process(void *restrict const arg) {
       Map_put(market_trades, ctx->m->id, trades);
     }
     Map_unlock(market_trades);
-    Array_lock(trades);
+
+    if (!Array_trylock(trades)) {
+      Array_unlock(samples);
+      Market_delete(ctx->m);
+      continue;
+    }
+
     bool betting = false;
     const bool has_config = ctx->m_cnf != NULL && ctx->q_tgt != NULL;
   again:
