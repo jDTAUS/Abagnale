@@ -2890,7 +2890,10 @@ static int samples_process(void *restrict const arg) {
     for (size_t i = Array_size(samples); i > 0; i--) {
       if (Numeric_cmp(((struct Sample *)items[i - 1])->nanos, outdated_ns) <
           0) {
-        Array_cut(samples, i, Array_size(samples) - i, Sample_delete);
+        if (i == Array_size(samples))
+          Array_clear(samples, Sample_delete);
+        else
+          Array_cut(samples, i, Array_size(samples) - i, Sample_delete);
         break;
       }
     }
