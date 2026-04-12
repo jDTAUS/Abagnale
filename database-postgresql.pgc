@@ -27,6 +27,7 @@
 
 #define DB_STATEMENT_MAX_LENGTH (size_t)2048
 
+extern const struct String *restrict const progname;
 extern const struct Numeric *restrict const zero;
 extern const struct Config *restrict const cnf;
 
@@ -58,6 +59,7 @@ void *db_connect(const char *const cname) {
   const char *con = cname;
   const char *sql_tgt = String_chars(cnf->db_tgt);
   const char *sql_usr = String_chars(cnf->db_usr);
+  const char *sql_progname = String_chars(progname);
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
   EXEC SQL WHENEVER SQLERROR CALL db_fatal();
@@ -66,6 +68,7 @@ void *db_connect(const char *const cname) {
   EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
   EXEC SQL AT :con SET AUTOCOMMIT TO OFF;
   EXEC SQL AT :con SET TIMEZONE TO 'UTC';
+  EXEC SQL AT :con SET application_name TO :sql_progname;
   EXEC SQL AT :con PREPARE sample_create AS 
     INSERT INTO "SAMPLES" (
       "EXCHANGE_ID",
