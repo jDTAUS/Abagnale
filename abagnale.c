@@ -2932,7 +2932,8 @@ static int samples_process(void *restrict const arg) {
         trade_pricing(ctx, t);
 
         Array_lock(samples);
-        trade_maintain(ctx, t, samples, Array_tail(samples));
+        if (Array_size(samples) > 1)
+          trade_maintain(ctx, t, samples, Array_tail(samples));
         Array_unlock(samples);
 
         if (t->status == TRADE_STATUS_CANCELLED ||
@@ -2949,11 +2950,13 @@ static int samples_process(void *restrict const arg) {
     }
 
     if (!betting && has_config) {
-      struct Trade *restrict const t = trade_new();
       Array_lock(samples);
-      trade_create(ctx, t, samples, Array_tail(samples));
+      if (Array_size(samples) > 1) {
+        struct Trade *restrict const t = trade_new();
+        trade_create(ctx, t, samples, Array_tail(samples));
+        Array_add_tail(trades, t);
+      }
       Array_unlock(samples);
-      Array_add_tail(trades, t);
     }
 
     Array_unlock(trades);
