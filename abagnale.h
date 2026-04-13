@@ -22,7 +22,6 @@
 
 #include "exchange.h"
 
-#include <stdbool.h>
 #include <stdint.h>
 
 struct Algorithm;

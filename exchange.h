@@ -24,7 +24,6 @@
 #include "math.h"
 #include "string.h"
 
-#include <stdbool.h>
 #include <stdint.h>
 
 enum market_type {
