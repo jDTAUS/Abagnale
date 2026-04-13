@@ -2761,6 +2761,8 @@ static int orders_process(void *restrict const arg) {
       continue;
     }
 
+    Array_unlock(samples);
+
     Array_lock(trades);
     items = Array_items(trades);
     for (i = Array_size(trades); i > 0; i--) {
@@ -2786,8 +2788,12 @@ static int orders_process(void *restrict const arg) {
         t->a = w_ctx->a;
         Numeric_copy_to(w_ctx->q_tgt, t->tp);
         trade_pricing(w_ctx, t);
-        position_maintain(w_ctx, t, p, samples, Array_tail(samples), order);
-        trade_maintain(w_ctx, t, samples, Array_tail(samples));
+        Array_lock(samples);
+        if (Array_size(samples) > 1) {
+          position_maintain(w_ctx, t, p, samples, Array_tail(samples), order);
+          trade_maintain(w_ctx, t, samples, Array_tail(samples));
+        }
+        Array_unlock(samples);
       }
 
       if (t->status == TRADE_STATUS_CANCELLED ||
@@ -2798,7 +2804,6 @@ static int orders_process(void *restrict const arg) {
     }
 
     Array_unlock(trades);
-    Array_unlock(samples);
     Order_delete(order);
     Market_delete(w_ctx->m);
   }
