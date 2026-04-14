@@ -38,7 +38,7 @@ struct Map *restrict strings;
 
 void string_init(void) {
   strings =
-      Map_new(String_copy, String_delete, String_hash, String_equals, 16384);
+      Map_new(String_copy, String_delete, String_hash, String_equals, 524288);
 }
 
 void string_destroy(void) { Map_delete(strings, String_delete); }
