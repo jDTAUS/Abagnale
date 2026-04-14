@@ -718,7 +718,7 @@ void samples_per_minute(struct Numeric *restrict const ret,
   Numeric_mul_to(s, minute_nanos, ret);
 }
 
-static void samples_load(struct Array *const a,
+static void samples_load(struct Array *restrict const a,
                          const struct worker_ctx *restrict const w_ctx) {
   const struct abag_tls *restrict const tls = abag_tls();
   struct Numeric *restrict const now = tls->samples_load.now;
@@ -2555,7 +2555,7 @@ static void trade_maintain(const struct worker_ctx *restrict const w_ctx,
     trade_maintain(w_ctx, t, samples, sample);
 }
 
-static struct Array *trades_load(const struct worker_ctx *w_ctx,
+static struct Array *trades_load(const struct worker_ctx *restrict const w_ctx,
                                  const struct Array *restrict const samples,
                                  const struct Sample *restrict const sample) {
   const struct abag_tls *restrict const tls = abag_tls();
