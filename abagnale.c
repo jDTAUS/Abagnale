@@ -718,8 +718,8 @@ void samples_per_minute(struct Numeric *restrict const ret,
   Numeric_mul_to(s, minute_nanos, ret);
 }
 
-static struct Array *
-samples_load(const struct worker_ctx *restrict const w_ctx) {
+static void samples_load(struct Array *const a,
+                         const struct worker_ctx *restrict const w_ctx) {
   const struct abag_tls *restrict const tls = abag_tls();
   struct Numeric *restrict const now = tls->samples_load.now;
   struct Numeric *restrict const filter = tls->samples_load.filter;
@@ -729,8 +729,6 @@ samples_load(const struct worker_ctx *restrict const w_ctx) {
   Numeric_sub_to(now, cnf->wnanos_max, filter);
   db_samples_open(w_ctx->db, String_chars(w_ctx->e->id),
                   String_chars(w_ctx->m->id), filter);
-
-  struct Array *restrict const a = Array_new(100000);
 
   while (!terminated && db_samples_next(sample, w_ctx->db)) {
     struct Sample *restrict const s = Sample_new();
@@ -756,8 +754,6 @@ samples_load(const struct worker_ctx *restrict const w_ctx) {
     heap_free(b);
     heap_free(e);
   }
-
-  return a;
 }
 
 static void worker_configure(struct worker_ctx *restrict const w_ctx,
@@ -2848,15 +2844,21 @@ static int samples_process(void *restrict const arg) {
     }
     mutex_unlock(&db_mtx);
 
+    bool samples_init = false;
     Map_lock(market_samples);
     struct Array *restrict samples = Map_get(market_samples, ctx->m->id);
     if (samples == NULL) {
-      samples = samples_load(ctx);
+      samples = Array_new(524288);
+      samples_init = true;
       Map_put(market_samples, ctx->m->id, samples);
     }
     Map_unlock(market_samples);
 
     Array_lock(samples);
+
+    if (samples_init)
+      samples_load(samples, ctx);
+
     Array_add_tail(samples, sample);
 
     if (Array_size(samples) < 2) {
