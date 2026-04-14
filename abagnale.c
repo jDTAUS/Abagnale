@@ -2721,13 +2721,21 @@ static int orders_process(void *restrict const arg) {
     samples = Map_get(market_samples, order->m_id);
     Map_unlock(market_samples);
 
-    if (samples == NULL || Array_size(samples) < 2) {
+    if (samples == NULL) {
       Order_delete(order);
       Market_delete(w_ctx->m);
       continue;
     }
 
     Array_lock(samples);
+
+    if (Array_size(samples) < 2) {
+      Array_unlock(samples);
+      Market_delete(w_ctx->m);
+      Order_delete(order);
+      continue;
+    }
+
     worker_configure(w_ctx, samples);
 
     if (!(w_ctx->m_cnf != NULL && w_ctx->q_tgt != NULL &&
@@ -2744,8 +2752,8 @@ static int orders_process(void *restrict const arg) {
 
     if (trades == NULL) {
       Array_unlock(samples);
-      Order_delete(order);
       Market_delete(w_ctx->m);
+      Order_delete(order);
       continue;
     }
 
@@ -2792,8 +2800,8 @@ static int orders_process(void *restrict const arg) {
     }
 
     Array_unlock(trades);
-    Order_delete(order);
     Market_delete(w_ctx->m);
+    Order_delete(order);
   }
 
   db_disconnect(w_ctx->db);
