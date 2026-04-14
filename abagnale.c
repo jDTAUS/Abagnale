@@ -1303,6 +1303,31 @@ static void position_timeout(const struct worker_ctx *restrict const w_ctx,
   Numeric_sub_to(sample->nanos, p->cnanos, age);
   Numeric_mul_to(stats_to, p->cl_factor, factor_to);
   Numeric_sub_to(factor_to, age, total_to);
+
+  switch (p->type) {
+  case POSITION_TYPE_LONG:
+    if (w_ctx->m_cnf->bo_minnanos != NULL &&
+        Numeric_cmp(w_ctx->m_cnf->bo_minnanos, total_to) > 0)
+      Numeric_copy_to(w_ctx->m_cnf->bo_minnanos, total_to);
+
+    if (w_ctx->m_cnf->bo_maxnanos != NULL &&
+        Numeric_cmp(w_ctx->m_cnf->bo_maxnanos, total_to) < 0)
+      Numeric_copy_to(w_ctx->m_cnf->bo_maxnanos, total_to);
+    break;
+  case POSITION_TYPE_SHORT:
+    if (w_ctx->m_cnf->so_minnanos != NULL &&
+        Numeric_cmp(w_ctx->m_cnf->so_minnanos, total_to) > 0)
+      Numeric_copy_to(w_ctx->m_cnf->so_minnanos, total_to);
+
+    if (w_ctx->m_cnf->so_maxnanos != NULL &&
+        Numeric_cmp(w_ctx->m_cnf->so_maxnanos, total_to) < 0)
+      Numeric_copy_to(w_ctx->m_cnf->so_maxnanos, total_to);
+    break;
+  default:
+    werr("%s: %d : %s\n", __FILE__, __LINE__, __func__);
+    fatal();
+  }
+
   samples_per_nano(n, samples);
   Numeric_mul_to(n, total_to, p->cl_samples);
 }
