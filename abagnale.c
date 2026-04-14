@@ -1324,7 +1324,7 @@ static void position_timeout(const struct worker_ctx *restrict const w_ctx,
       Numeric_copy_to(w_ctx->m_cnf->so_maxnanos, total_to);
     break;
   default:
-    werr("%s: %d : %s\n", __FILE__, __LINE__, __func__);
+    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
     fatal();
   }
 
