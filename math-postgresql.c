@@ -326,18 +326,3 @@ inline void Numeric_atan_to(const struct Numeric *restrict const n,
   res->s = Numeric_to_char(res, 20);
 #endif
 }
-
-inline struct Numeric *Numeric_cos(const struct Numeric *restrict const n) {
-  struct Numeric *restrict const res = Numeric_new();
-  Numeric_cos_to(n, res);
-  return res;
-}
-
-inline void Numeric_cos_to(const struct Numeric *restrict const n,
-                           struct Numeric *restrict const res) {
-  Numeric_from_double_to(cos(Numeric_to_double(n)), res);
-#ifdef ABAG_MATH_DEBUG
-  Numeric_char_free(res->s);
-  res->s = Numeric_to_char(res, 20);
-#endif
-}

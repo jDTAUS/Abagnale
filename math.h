@@ -79,8 +79,4 @@ struct Numeric *Numeric_atan(const struct Numeric *restrict const);
 void Numeric_atan_to(const struct Numeric *restrict const,
                      struct Numeric *restrict const);
 
-struct Numeric *Numeric_cos(const struct Numeric *restrict const);
-void Numeric_cos_to(const struct Numeric *restrict const,
-                    struct Numeric *restrict const);
-
 #endif
