@@ -105,7 +105,7 @@ struct abag_tls {
     struct Numeric *restrict stats_to;
     struct Numeric *restrict factor_to;
     struct Numeric *restrict total_to;
-    struct Numeric *restrict n;
+    struct Numeric *restrict r0;
     struct db_stats_rec *restrict stats;
   } position_timeout;
   struct position_maintain_vars {
@@ -204,7 +204,7 @@ static struct abag_tls *const abag_tls(void) {
     tls->position_timeout.stats_to = Numeric_new();
     tls->position_timeout.factor_to = Numeric_new();
     tls->position_timeout.total_to = Numeric_new();
-    tls->position_timeout.n = Numeric_new();
+    tls->position_timeout.r0 = Numeric_new();
     tls->position_timeout.stats = heap_malloc(sizeof(struct db_stats_rec));
     tls->position_timeout.stats->bd_min = Numeric_new();
     tls->position_timeout.stats->bd_max = Numeric_new();
@@ -291,7 +291,7 @@ static void abag_tls_dtor(void *e) {
   Numeric_delete(tls->position_timeout.stats_to);
   Numeric_delete(tls->position_timeout.factor_to);
   Numeric_delete(tls->position_timeout.total_to);
-  Numeric_delete(tls->position_timeout.n);
+  Numeric_delete(tls->position_timeout.r0);
   Numeric_delete(tls->position_timeout.stats->bd_min);
   Numeric_delete(tls->position_timeout.stats->bd_max);
   Numeric_delete(tls->position_timeout.stats->bd_avg);
@@ -1258,7 +1258,7 @@ static void position_timeout(const struct worker_ctx *restrict const w_ctx,
   struct Numeric *restrict const stats_to = tls->position_timeout.stats_to;
   struct Numeric *restrict const factor_to = tls->position_timeout.factor_to;
   struct Numeric *restrict const total_to = tls->position_timeout.total_to;
-  struct Numeric *restrict const n = tls->position_timeout.n;
+  struct Numeric *restrict const r0 = tls->position_timeout.r0;
   struct db_stats_rec *restrict const stats = tls->position_timeout.stats;
   const bool db = db_stats(stats, w_ctx->db, String_chars(w_ctx->e->id),
                            String_chars(w_ctx->m->id));
@@ -1307,29 +1307,44 @@ static void position_timeout(const struct worker_ctx *restrict const w_ctx,
   switch (p->type) {
   case POSITION_TYPE_LONG:
     if (w_ctx->m_cnf->bo_minnanos != NULL &&
-        Numeric_cmp(w_ctx->m_cnf->bo_minnanos, total_to) > 0)
+        Numeric_cmp(w_ctx->m_cnf->bo_minnanos, total_to) > 0) {
       Numeric_copy_to(w_ctx->m_cnf->bo_minnanos, total_to);
+      Numeric_sub_to(total_to, age, r0);
+      Numeric_copy_to(r0, total_to);
+    }
 
     if (w_ctx->m_cnf->bo_maxnanos != NULL &&
-        Numeric_cmp(w_ctx->m_cnf->bo_maxnanos, total_to) < 0)
+        Numeric_cmp(w_ctx->m_cnf->bo_maxnanos, total_to) < 0) {
       Numeric_copy_to(w_ctx->m_cnf->bo_maxnanos, total_to);
+      Numeric_sub_to(total_to, age, r0);
+      Numeric_copy_to(r0, total_to);
+    }
     break;
   case POSITION_TYPE_SHORT:
     if (w_ctx->m_cnf->so_minnanos != NULL &&
-        Numeric_cmp(w_ctx->m_cnf->so_minnanos, total_to) > 0)
+        Numeric_cmp(w_ctx->m_cnf->so_minnanos, total_to) > 0) {
       Numeric_copy_to(w_ctx->m_cnf->so_minnanos, total_to);
+      Numeric_sub_to(total_to, age, r0);
+      Numeric_copy_to(r0, total_to);
+    }
 
     if (w_ctx->m_cnf->so_maxnanos != NULL &&
-        Numeric_cmp(w_ctx->m_cnf->so_maxnanos, total_to) < 0)
+        Numeric_cmp(w_ctx->m_cnf->so_maxnanos, total_to) < 0) {
       Numeric_copy_to(w_ctx->m_cnf->so_maxnanos, total_to);
+      Numeric_sub_to(total_to, age, r0);
+      Numeric_copy_to(r0, total_to);
+    }
     break;
   default:
     werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
     fatal();
   }
 
-  samples_per_nano(n, samples);
-  Numeric_mul_to(n, total_to, p->cl_samples);
+  if (Numeric_cmp(total_to, zero) > 0) {
+    samples_per_nano(r0, samples);
+    Numeric_mul_to(r0, total_to, p->cl_samples);
+  } else
+    Numeric_copy_to(zero, p->cl_samples);
 }
 
 static void position_maintain(const struct worker_ctx *restrict const w_ctx,
