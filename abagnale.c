@@ -1300,7 +1300,6 @@ static void position_timeout(const struct worker_ctx *restrict const w_ctx,
   }
 
   Numeric_add_to(sample->nanos, stats_to, p->pnanos);
-  Numeric_sub_to(sample->nanos, p->cnanos, age);
   Numeric_mul_to(stats_to, p->cl_factor, factor_to);
 
   switch (p->type) {
@@ -1327,6 +1326,7 @@ static void position_timeout(const struct worker_ctx *restrict const w_ctx,
     fatal();
   }
 
+  Numeric_sub_to(sample->nanos, p->cnanos, age);
   Numeric_sub_to(factor_to, age, total_to);
 
   if (Numeric_cmp(total_to, zero) > 0) {
