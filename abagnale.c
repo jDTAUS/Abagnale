@@ -1302,43 +1302,32 @@ static void position_timeout(const struct worker_ctx *restrict const w_ctx,
   Numeric_add_to(sample->nanos, stats_to, p->pnanos);
   Numeric_sub_to(sample->nanos, p->cnanos, age);
   Numeric_mul_to(stats_to, p->cl_factor, factor_to);
-  Numeric_sub_to(factor_to, age, total_to);
 
   switch (p->type) {
   case POSITION_TYPE_LONG:
     if (w_ctx->m_cnf->bo_minnanos != NULL &&
-        Numeric_cmp(w_ctx->m_cnf->bo_minnanos, total_to) > 0) {
-      Numeric_copy_to(w_ctx->m_cnf->bo_minnanos, total_to);
-      Numeric_sub_to(total_to, age, r0);
-      Numeric_copy_to(r0, total_to);
-    }
+        Numeric_cmp(w_ctx->m_cnf->bo_minnanos, factor_to) > 0)
+      Numeric_copy_to(w_ctx->m_cnf->bo_minnanos, factor_to);
 
     if (w_ctx->m_cnf->bo_maxnanos != NULL &&
-        Numeric_cmp(w_ctx->m_cnf->bo_maxnanos, total_to) < 0) {
-      Numeric_copy_to(w_ctx->m_cnf->bo_maxnanos, total_to);
-      Numeric_sub_to(total_to, age, r0);
-      Numeric_copy_to(r0, total_to);
-    }
+        Numeric_cmp(w_ctx->m_cnf->bo_maxnanos, factor_to) < 0)
+      Numeric_copy_to(w_ctx->m_cnf->bo_maxnanos, factor_to);
     break;
   case POSITION_TYPE_SHORT:
     if (w_ctx->m_cnf->so_minnanos != NULL &&
-        Numeric_cmp(w_ctx->m_cnf->so_minnanos, total_to) > 0) {
-      Numeric_copy_to(w_ctx->m_cnf->so_minnanos, total_to);
-      Numeric_sub_to(total_to, age, r0);
-      Numeric_copy_to(r0, total_to);
-    }
+        Numeric_cmp(w_ctx->m_cnf->so_minnanos, factor_to) > 0)
+      Numeric_copy_to(w_ctx->m_cnf->so_minnanos, factor_to);
 
     if (w_ctx->m_cnf->so_maxnanos != NULL &&
-        Numeric_cmp(w_ctx->m_cnf->so_maxnanos, total_to) < 0) {
-      Numeric_copy_to(w_ctx->m_cnf->so_maxnanos, total_to);
-      Numeric_sub_to(total_to, age, r0);
-      Numeric_copy_to(r0, total_to);
-    }
+        Numeric_cmp(w_ctx->m_cnf->so_maxnanos, factor_to) < 0)
+      Numeric_copy_to(w_ctx->m_cnf->so_maxnanos, factor_to);
     break;
   default:
     werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
     fatal();
   }
+
+  Numeric_sub_to(factor_to, age, total_to);
 
   if (Numeric_cmp(total_to, zero) > 0) {
     samples_per_nano(r0, samples);
