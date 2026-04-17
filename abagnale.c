@@ -1269,30 +1269,12 @@ static void position_timeout(const struct worker_ctx *restrict const w_ctx,
       Numeric_copy_to(stats->bd_avg, stats_to);
     else
       Numeric_copy_to(w_ctx->m_cnf->wnanos, stats_to);
-
-    if (w_ctx->m_cnf->bo_minnanos != NULL &&
-        Numeric_cmp(w_ctx->m_cnf->bo_minnanos, stats_to) > 0)
-      Numeric_copy_to(w_ctx->m_cnf->bo_minnanos, stats_to);
-
-    if (w_ctx->m_cnf->bo_maxnanos != NULL &&
-        Numeric_cmp(w_ctx->m_cnf->bo_maxnanos, stats_to) < 0)
-      Numeric_copy_to(w_ctx->m_cnf->bo_maxnanos, stats_to);
-
     break;
   case POSITION_TYPE_SHORT:
     if (db && !stats->sd_avg_null)
       Numeric_copy_to(stats->sd_avg, stats_to);
     else
       Numeric_copy_to(w_ctx->m_cnf->wnanos, stats_to);
-
-    if (w_ctx->m_cnf->so_minnanos != NULL &&
-        Numeric_cmp(w_ctx->m_cnf->so_minnanos, stats_to) > 0)
-      Numeric_copy_to(w_ctx->m_cnf->so_minnanos, stats_to);
-
-    if (w_ctx->m_cnf->so_maxnanos != NULL &&
-        Numeric_cmp(w_ctx->m_cnf->so_maxnanos, stats_to) < 0)
-      Numeric_copy_to(w_ctx->m_cnf->so_maxnanos, stats_to);
-
     break;
   default:
     werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
