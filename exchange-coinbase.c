@@ -1983,8 +1983,8 @@ parse_order(const struct wcjson_document *restrict const doc,
   WCJSON_DECLARE_STRING_ITEM_OPT(cancel_message)
   WCJSON_DECLARE_ISO8601_NANOS_ITEM_OPT(last_fill_time)
   // XXX: size_inclusive_of_fees boolean
-  //      size_in_quote boolean
-  //      Not available at product level and via user channel events.
+  // XXX: size_in_quote boolean
+  // XXX:   Not available at product level and via user channel events.
   WCJSON_DECLARE_BOOL_ITEM_OPT(size_inclusive_of_fees);
   WCJSON_DECLARE_BOOL_ITEM_OPT(size_in_quote)
 
