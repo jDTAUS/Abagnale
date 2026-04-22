@@ -2,14 +2,15 @@
 -- PostgreSQL database dump
 --
 
-\restrict bfwLAfXg5bptqEJQOW4aAPFLrbbwUqdwdSOq2DkeT5WtRO5eOa4KbOyPeyTSg0Z
+\restrict BYuW88gcCNyzGfg6Ed2Br3Aer5AT1HX4WzRAXvc5SgZomNh2dxuJS0GUo1qHIZz
 
--- Dumped from database version 15.16 (Debian 15.16-0+deb12u1)
--- Dumped by pg_dump version 15.16 (Debian 15.16-0+deb12u1)
+-- Dumped from database version 17.9 (Debian 17.9-0+deb13u1)
+-- Dumped by pg_dump version 17.9 (Debian 17.9-0+deb13u1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
+SET transaction_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SELECT pg_catalog.set_config('search_path', '', false);
@@ -27,13 +28,14 @@ CREATE DATABASE "ABAGNALE" WITH TEMPLATE = template0 ENCODING = 'UTF8' LOCALE_PR
 
 ALTER DATABASE "ABAGNALE" OWNER TO abagnale;
 
-\unrestrict bfwLAfXg5bptqEJQOW4aAPFLrbbwUqdwdSOq2DkeT5WtRO5eOa4KbOyPeyTSg0Z
+\unrestrict BYuW88gcCNyzGfg6Ed2Br3Aer5AT1HX4WzRAXvc5SgZomNh2dxuJS0GUo1qHIZz
 \connect "ABAGNALE"
-\restrict bfwLAfXg5bptqEJQOW4aAPFLrbbwUqdwdSOq2DkeT5WtRO5eOa4KbOyPeyTSg0Z
+\restrict BYuW88gcCNyzGfg6Ed2Br3Aer5AT1HX4WzRAXvc5SgZomNh2dxuJS0GUo1qHIZz
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
 SET idle_in_transaction_session_timeout = 0;
+SET transaction_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SELECT pg_catalog.set_config('search_path', '', false);
@@ -653,5 +655,5 @@ ALTER TABLE ONLY public."TREND_PLOTS"
 -- PostgreSQL database dump complete
 --
 
-\unrestrict bfwLAfXg5bptqEJQOW4aAPFLrbbwUqdwdSOq2DkeT5WtRO5eOa4KbOyPeyTSg0Z
+\unrestrict BYuW88gcCNyzGfg6Ed2Br3Aer5AT1HX4WzRAXvc5SgZomNh2dxuJS0GUo1qHIZz
 
