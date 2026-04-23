@@ -153,7 +153,7 @@
 
 #define WCJSON_STRING_ITEM(_doc, _val, _item, _len, _errbuf, _ret)             \
   j_##_item = wcjson_object_get(_doc, _val, L## #_item, _len);                 \
-  if (j_##_item == NULL || !j_##_item->is_string) {                            \
+  if (j_##_item == NULL || !(j_##_item->is_string && j_##_item->mb_len)) {     \
     werr("coinbase: No '" #_item "' string item: %s\n",                        \
          wcjsondoc_string(_errbuf, sizeof(_errbuf), _doc, _val, NULL));        \
     goto _ret;                                                                 \
