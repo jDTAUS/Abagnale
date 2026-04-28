@@ -851,8 +851,7 @@ static void ws_ticker_update(const struct wcjson_document *restrict const doc,
   }
 
 ret:
-  if (j_price_num != NULL)
-    Numeric_delete(j_price_num);
+  Numeric_delete(j_price_num);
 
   if (j_product_id_m != NULL)
     mutex_unlock(j_product_id_m->mtx);
