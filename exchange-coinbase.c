@@ -845,12 +845,15 @@ static void ws_ticker_update(const struct wcjson_document *restrict const doc,
     s->m_id = String_copy(j_product_id_m->id);
     s->nanos = Numeric_copy(nanos);
     s->price = j_price_num;
+    j_price_num = NULL;
 
     Queue_enqueue_await(samples, s);
-  } else
-    Numeric_delete(j_price_num);
+  }
 
 ret:
+  if (j_price_num != NULL)
+    Numeric_delete(j_price_num);
+
   if (j_product_id_m != NULL)
     mutex_unlock(j_product_id_m->mtx);
 
