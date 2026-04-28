@@ -231,6 +231,21 @@
     goto _ret;                                                                 \
   }
 
+#define WCJSON_DECLARE_NUMERIC_ITEM_OPT(_item)                                 \
+  WCJSON_DECLARE_STRING_ITEM_OPT(_item)                                        \
+  struct Numeric *restrict j_##_item##_num = NULL;
+
+#define WCJSON_NUMERIC_ITEM_OPT(_doc, _val, _item, _len, _errbuf, _ret)        \
+  WCJSON_STRING_ITEM_OPT(_doc, _val, _item, _len, _errbuf, _ret)               \
+  if (j_##_item##_exists && j_##_item->s_len) {                                \
+    j_##_item##_num = Numeric_from_char(j_##_item->mbstring);                  \
+    if (j_##_item##_num == NULL) {                                             \
+      werr("coinbase: No '" #_item "' numeric item: %s\n",                     \
+           wcjsondoc_string(_errbuf, sizeof(_errbuf), _doc, _val, NULL));      \
+      goto _ret;                                                               \
+    }                                                                          \
+  }
+
 #define WCJSON_DECLARE_ISO8601_NANOS_ITEM(_item)                               \
   WCJSON_DECLARE_STRING_ITEM(_item)                                            \
   struct Numeric *restrict j_##_item##_nanos = Numeric_new();
@@ -281,6 +296,27 @@
     for (size_t i = nitems(ws_channels); i > 0; i--)                           \
       ws_channels[i - 1].reconnect = true;                                     \
     goto _ret;                                                                 \
+  }
+
+#define WCJSON_DECLARE_MARKET_ITEM_OPT(_item)                                  \
+  WCJSON_DECLARE_STRING_ITEM_OPT(_item)                                        \
+  struct String *restrict j_##_item##_str = NULL;                              \
+  struct Market *restrict j_##_item##_m = NULL;
+
+#define WCJSON_MARKET_ITEM_OPT(_doc, _val, _item, _len, _errbuf, _ret)         \
+  WCJSON_STRING_ITEM_OPT(_doc, _val, _item, _len, _errbuf, _ret)               \
+  if (j_##_item##_exists && j_##_item->s_len) {                                \
+    j_##_item##_str = String_cnew(j_##_item->mbstring);                        \
+    j_##_item##_m = coinbase_market_by_symbol(j_##_item##_str);                \
+    String_delete(j_##_item##_str);                                            \
+    j_##_item##_str = NULL;                                                    \
+    if (j_##_item##_m == NULL) {                                               \
+      werr("coinbase: Market '%s' not available: %s\n", j_##_item->mbstring,   \
+           wcjsondoc_string(_errbuf, sizeof(_errbuf), _doc, _val, NULL));      \
+      for (size_t i = nitems(ws_channels); i > 0; i--)                         \
+        ws_channels[i - 1].reconnect = true;                                   \
+      goto _ret;                                                               \
+    }                                                                          \
   }
 
 #ifndef nitems
@@ -797,13 +833,14 @@ static void ws_ticker_update(const struct wcjson_document *restrict const doc,
                              const struct wcjson_value *restrict const ticker,
                              const struct Numeric *restrict const nanos) {
   char errbuf[WCJSON_BODY_MAX + 1] = {0};
-  WCJSON_DECLARE_MARKET_ITEM(product_id)
-  WCJSON_DECLARE_NUMERIC_ITEM(price)
+  WCJSON_DECLARE_MARKET_ITEM_OPT(product_id)
+  WCJSON_DECLARE_NUMERIC_ITEM_OPT(price)
 
-  WCJSON_MARKET_ITEM(doc, ticker, product_id, 10, errbuf, ret)
-  WCJSON_NUMERIC_ITEM(doc, ticker, price, 5, errbuf, ret)
+  WCJSON_MARKET_ITEM_OPT(doc, ticker, product_id, 10, errbuf, ret)
+  WCJSON_NUMERIC_ITEM_OPT(doc, ticker, price, 5, errbuf, ret)
 
-  if (Numeric_cmp(j_price_num, zero) > 0) {
+  if (j_product_id_m != NULL && j_price_num != NULL &&
+      Numeric_cmp(j_price_num, zero) > 0) {
     struct Sample *restrict const s = Sample_new();
     s->m_id = String_copy(j_product_id_m->id);
     s->nanos = Numeric_copy(nanos);
