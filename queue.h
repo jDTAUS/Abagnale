@@ -29,8 +29,8 @@ struct Queue *Queue_new(const size_t, const time_t);
 void Queue_delete(struct Queue *restrict const,
                   void (*cb)(void *restrict const));
 
-void Queue_enqueue(struct Queue *restrict const, void *restrict const);
-void *Queue_dequeue(struct Queue *restrict const);
+void Queue_enqueue_await(struct Queue *restrict const, void *restrict const);
+void *Queue_dequeue_await(struct Queue *restrict const);
 
 void Queue_start(struct Queue *restrict const);
 void Queue_stop(struct Queue *restrict const);

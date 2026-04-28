@@ -809,7 +809,7 @@ static void ws_ticker_update(const struct wcjson_document *restrict const doc,
     s->nanos = Numeric_copy(nanos);
     s->price = j_price_num;
 
-    Queue_enqueue(samples, s);
+    Queue_enqueue_await(samples, s);
   } else
     Numeric_delete(j_price_num);
 
@@ -902,7 +902,7 @@ static void ws_user_update(const struct wcjson_document *restrict const doc,
     goto ret;
   }
 
-  Queue_enqueue(orders, o);
+  Queue_enqueue_await(orders, o);
 ret:
   if (j_product_id_m != NULL)
     mutex_unlock(j_product_id_m->mtx);
@@ -1482,11 +1482,11 @@ static void coinbase_stop(void) {
 }
 
 static struct Sample *coinbase_sample_await(void) {
-  return Queue_dequeue(samples);
+  return Queue_dequeue_await(samples);
 }
 
 static struct Order *coinbase_order_await(void) {
-  return Queue_dequeue(orders);
+  return Queue_dequeue_await(orders);
 }
 
 static struct Market *

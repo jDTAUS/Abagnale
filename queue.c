@@ -72,8 +72,8 @@ inline void Queue_stop(struct Queue *restrict const q) {
   condition_broadcast(&q->not_full);
 }
 
-inline void Queue_enqueue(struct Queue *restrict const q,
-                          void *restrict const item) {
+inline void Queue_enqueue_await(struct Queue *restrict const q,
+                                void *restrict const item) {
   struct timespec to;
 
   mutex_lock(&q->mutex);
@@ -100,7 +100,7 @@ inline void Queue_enqueue(struct Queue *restrict const q,
   mutex_unlock(&q->mutex);
 }
 
-inline void *Queue_dequeue(struct Queue *restrict const q) {
+inline void *Queue_dequeue_await(struct Queue *restrict const q) {
   void *restrict item = NULL;
   struct timespec to;
 
