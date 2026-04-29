@@ -36,7 +36,9 @@
 #define ABAGNALE "abagnale"
 #define ABAGNALECTL "abagnalectl"
 
+#ifndef nitems
 #define nitems(a) (sizeof((a)) / sizeof((a)[0]))
+#endif
 
 struct String *restrict progname;
 struct String *restrict prog_abagnale;

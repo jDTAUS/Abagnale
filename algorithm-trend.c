@@ -29,7 +29,9 @@
 #include <stdio.h>
 #include <string.h>
 
+#ifndef nitems
 #define nitems(a) (sizeof((a)) / sizeof((a)[0]))
+#endif
 
 #define TREND_UUID "bfd87009-ea0f-4664-a03a-f9b6e91274dd"
 
