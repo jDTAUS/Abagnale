@@ -58,6 +58,12 @@ struct abag_tls {
   struct candle_string_vars {
     struct Numeric *restrict s;
   } candle_string;
+  struct position_state_load_vars {
+    struct db_position_state_rec *restrict p_state;
+  } position_state_load;
+  struct position_state_save_vars {
+    struct db_position_state_rec *restrict p_state;
+  } position_state_save;
   struct samples_per_nano_vars {
     struct Numeric *restrict size;
     struct Numeric *restrict duration;
@@ -145,6 +151,7 @@ struct abag_tls {
   } trades_load;
 };
 
+extern const struct String *restrict const progname;
 extern _Atomic bool terminated;
 
 extern const struct Array *restrict const algorithms;
@@ -177,6 +184,34 @@ static struct abag_tls *const abag_tls(void) {
   if (tls == NULL) {
     tls = heap_malloc(sizeof(struct abag_tls));
     tls->candle_string.s = Numeric_new();
+    tls->position_state_load.p_state =
+        heap_malloc(sizeof(struct db_position_state_rec));
+    tls->position_state_load.p_state->sl_cnt = Numeric_new();
+    tls->position_state_load.p_state->sl_price = Numeric_new();
+    tls->position_state_load.p_state->sl_nanos = Numeric_new();
+    tls->position_state_load.p_state->sl_samples = Numeric_new();
+    tls->position_state_load.p_state->tl_cnt = Numeric_new();
+    tls->position_state_load.p_state->tl_price = Numeric_new();
+    tls->position_state_load.p_state->tl_nanos = Numeric_new();
+    tls->position_state_load.p_state->tl_samples = Numeric_new();
+    tls->position_state_load.p_state->tp_cnt = Numeric_new();
+    tls->position_state_load.p_state->tp_price = Numeric_new();
+    tls->position_state_load.p_state->tp_nanos = Numeric_new();
+    tls->position_state_load.p_state->tp_samples = Numeric_new();
+    tls->position_state_save.p_state =
+        heap_malloc(sizeof(struct db_position_state_rec));
+    tls->position_state_save.p_state->sl_cnt = Numeric_new();
+    tls->position_state_save.p_state->sl_price = Numeric_new();
+    tls->position_state_save.p_state->sl_nanos = Numeric_new();
+    tls->position_state_save.p_state->sl_samples = Numeric_new();
+    tls->position_state_save.p_state->tl_cnt = Numeric_new();
+    tls->position_state_save.p_state->tl_price = Numeric_new();
+    tls->position_state_save.p_state->tl_nanos = Numeric_new();
+    tls->position_state_save.p_state->tl_samples = Numeric_new();
+    tls->position_state_save.p_state->tp_cnt = Numeric_new();
+    tls->position_state_save.p_state->tp_price = Numeric_new();
+    tls->position_state_save.p_state->tp_nanos = Numeric_new();
+    tls->position_state_save.p_state->tp_samples = Numeric_new();
     tls->samples_per_nano.size = Numeric_new();
     tls->samples_per_nano.duration = Numeric_new();
     tls->samples_per_second.n = Numeric_new();
@@ -264,6 +299,32 @@ static struct abag_tls *const abag_tls(void) {
 static void abag_tls_dtor(void *e) {
   struct abag_tls *restrict const tls = e;
   Numeric_delete(tls->candle_string.s);
+  Numeric_delete(tls->position_state_load.p_state->sl_cnt);
+  Numeric_delete(tls->position_state_load.p_state->sl_price);
+  Numeric_delete(tls->position_state_load.p_state->sl_nanos);
+  Numeric_delete(tls->position_state_load.p_state->sl_samples);
+  Numeric_delete(tls->position_state_load.p_state->tl_cnt);
+  Numeric_delete(tls->position_state_load.p_state->tl_price);
+  Numeric_delete(tls->position_state_load.p_state->tl_nanos);
+  Numeric_delete(tls->position_state_load.p_state->tl_samples);
+  Numeric_delete(tls->position_state_load.p_state->tp_cnt);
+  Numeric_delete(tls->position_state_load.p_state->tp_price);
+  Numeric_delete(tls->position_state_load.p_state->tp_nanos);
+  Numeric_delete(tls->position_state_load.p_state->tp_samples);
+  heap_free(tls->position_state_load.p_state);
+  Numeric_delete(tls->position_state_save.p_state->sl_cnt);
+  Numeric_delete(tls->position_state_save.p_state->sl_price);
+  Numeric_delete(tls->position_state_save.p_state->sl_nanos);
+  Numeric_delete(tls->position_state_save.p_state->sl_samples);
+  Numeric_delete(tls->position_state_save.p_state->tl_cnt);
+  Numeric_delete(tls->position_state_save.p_state->tl_price);
+  Numeric_delete(tls->position_state_save.p_state->tl_nanos);
+  Numeric_delete(tls->position_state_save.p_state->tl_samples);
+  Numeric_delete(tls->position_state_save.p_state->tp_cnt);
+  Numeric_delete(tls->position_state_save.p_state->tp_price);
+  Numeric_delete(tls->position_state_save.p_state->tp_nanos);
+  Numeric_delete(tls->position_state_save.p_state->tp_samples);
+  heap_free(tls->position_state_save.p_state);
   Numeric_delete(tls->samples_per_nano.size);
   Numeric_delete(tls->samples_per_nano.duration);
   Numeric_delete(tls->samples_per_second.n);
@@ -629,6 +690,70 @@ static char *position_string(const struct worker_ctx *restrict const w_ctx,
   heap_free(c);
   heap_free(d);
   return res;
+}
+
+static void position_state_load(const struct worker_ctx *restrict const w_ctx,
+                                struct Position *restrict const p) {
+  const struct abag_tls *restrict const tls = abag_tls();
+  struct db_position_state_rec *restrict const p_state =
+      tls->position_state_load.p_state;
+
+  if (p->id != NULL &&
+      db_position_state_restore(p_state, w_ctx->db, String_chars(p->id))) {
+
+    Numeric_copy_to(p_state->sl_price, p->sl_trg.price);
+    Numeric_copy_to(p_state->sl_nanos, p->sl_trg.nanos);
+    Numeric_copy_to(p_state->sl_samples, p->sl_samples);
+    // XXX: long -> uintmax_t
+    p->sl_trg.cnt = Numeric_to_long(p_state->sl_cnt);
+    p->sl_trg.set = p_state->sl;
+
+    Numeric_copy_to(p_state->tl_price, p->tl_trg.price);
+    Numeric_copy_to(p_state->tl_nanos, p->tl_trg.nanos);
+    Numeric_copy_to(p_state->tl_samples, p->tl_samples);
+    // XXX: long -> uintmax_t
+    p->tl_trg.cnt = Numeric_to_long(p_state->tl_cnt);
+    p->tl_trg.set = p_state->tl;
+
+    Numeric_copy_to(p_state->tp_price, p->tp_trg.price);
+    Numeric_copy_to(p_state->tp_nanos, p->tp_trg.nanos);
+    Numeric_copy_to(p_state->tp_samples, p->tp_samples);
+    // XXX: long -> uintmax_t
+    p->tp_trg.cnt = Numeric_to_long(p_state->tp_cnt);
+    p->tp_trg.set = p_state->tp;
+  }
+}
+
+static void position_state_save(const struct worker_ctx *restrict const w_ctx,
+                                const struct Position *restrict const p) {
+  const struct abag_tls *restrict const tls = abag_tls();
+  struct db_position_state_rec *restrict const p_state =
+      tls->position_state_save.p_state;
+
+  if (p->id != NULL && !p->done) {
+    // XXX: uintmax_t -> long
+    Numeric_from_long_to(p->sl_trg.cnt, p_state->sl_cnt);
+    Numeric_copy_to(p->sl_trg.price, p_state->sl_price);
+    Numeric_copy_to(p->sl_trg.nanos, p_state->sl_nanos);
+    Numeric_copy_to(p->sl_samples, p_state->sl_samples);
+    p_state->sl = p->sl_trg.set;
+
+    // XXX: uintmax_t -> long
+    Numeric_from_long_to(p->tl_trg.cnt, p_state->tl_cnt);
+    Numeric_copy_to(p->tl_trg.price, p_state->tl_price);
+    Numeric_copy_to(p->tl_trg.nanos, p_state->tl_nanos);
+    Numeric_copy_to(p->tl_samples, p_state->tl_samples);
+    p_state->tl = p->tl_trg.set;
+
+    // XXX: uintmax_t -> long
+    Numeric_from_long_to(p->tp_trg.cnt, p_state->tp_cnt);
+    Numeric_copy_to(p->tp_trg.price, p_state->tp_price);
+    Numeric_copy_to(p->tp_trg.nanos, p_state->tp_nanos);
+    Numeric_copy_to(p->tp_samples, p_state->tp_samples);
+    p_state->tp = p->tp_trg.set;
+
+    db_position_state_persist(w_ctx->db, String_chars(p->id), p_state);
+  }
 }
 
 static inline struct Trade *trade_new(void) {
@@ -2684,6 +2809,8 @@ static struct Array *trades_load(const struct worker_ctx *restrict const w_ctx,
   items = Array_items(trades);
   for (size_t i = Array_size(trades); i > 0; i--) {
     struct Trade *restrict const t = items[i - 1];
+    position_state_load(w_ctx, &t->p_long);
+    position_state_load(w_ctx, &t->p_short);
     trade_pricing(w_ctx, t);
     trade_create(w_ctx, t, samples, sample);
     Numeric_copy_to(zero, t->p_long.pnanos);
@@ -3064,6 +3191,21 @@ int abagnale(int argc, char *argv[]) {
   if (!terminated)
     for (size_t i = ABAG_WORKERS * Array_size(exchanges); i > 0; i--)
       thread_join(workers[i - 1], NULL);
+
+  void *restrict const state_db = db_connect(String_chars(progname));
+  struct MapIterator *restrict const it = MapIterator_new(market_trades);
+  while (MapIterator_next(it)) {
+    const struct Array *restrict const trades = MapIterator_value(it);
+    items = Array_items(trades);
+    for (size_t i = Array_size(trades); i > 0; i--) {
+      position_state_save(state_db,
+                          &((const struct Trade *)items[i - 1])->p_long);
+      position_state_save(state_db,
+                          &((const struct Trade *)items[i - 1])->p_short);
+    }
+  }
+  MapIterator_delete(it);
+  db_disconnect(state_db);
 
   Numeric_delete(ninety_percent_factor);
 

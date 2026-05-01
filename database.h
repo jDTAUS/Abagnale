@@ -95,6 +95,24 @@ struct db_trade_rec {
   struct Numeric *s_q_filled;
 };
 
+struct db_position_state_rec {
+  struct Numeric *sl_cnt;
+  struct Numeric *sl_price;
+  struct Numeric *sl_nanos;
+  struct Numeric *sl_samples;
+  struct Numeric *tp_cnt;
+  struct Numeric *tp_price;
+  struct Numeric *tp_nanos;
+  struct Numeric *tp_samples;
+  struct Numeric *tl_cnt;
+  struct Numeric *tl_price;
+  struct Numeric *tl_nanos;
+  struct Numeric *tl_samples;
+  bool sl;
+  bool tp;
+  bool tl;
+};
+
 struct db_balance_rec {
   struct Numeric *q;
   struct Numeric *b;
@@ -250,4 +268,8 @@ void db_trend_state_update(const void *const, const char *const,
                            const char *const,
                            const struct db_trend_state_rec *const);
 
+bool db_position_state_restore(struct db_position_state_rec *const,
+                               const void *const, const char *const);
+void db_position_state_persist(const void *const, const char *const,
+                               const struct db_position_state_rec *const);
 #endif

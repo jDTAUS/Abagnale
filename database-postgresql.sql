@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict BYuW88gcCNyzGfg6Ed2Br3Aer5AT1HX4WzRAXvc5SgZomNh2dxuJS0GUo1qHIZz
+\restrict 5sdzORHOrgXlTIF91Kx11j0mA9qYtoztD5r9t0ibpZCNJUaHrHW33uydAYnKVYr
 
 -- Dumped from database version 17.9 (Debian 17.9-0+deb13u1)
 -- Dumped by pg_dump version 17.9 (Debian 17.9-0+deb13u1)
@@ -28,9 +28,9 @@ CREATE DATABASE "ABAGNALE" WITH TEMPLATE = template0 ENCODING = 'UTF8' LOCALE_PR
 
 ALTER DATABASE "ABAGNALE" OWNER TO abagnale;
 
-\unrestrict BYuW88gcCNyzGfg6Ed2Br3Aer5AT1HX4WzRAXvc5SgZomNh2dxuJS0GUo1qHIZz
+\unrestrict 5sdzORHOrgXlTIF91Kx11j0mA9qYtoztD5r9t0ibpZCNJUaHrHW33uydAYnKVYr
 \connect "ABAGNALE"
-\restrict BYuW88gcCNyzGfg6Ed2Br3Aer5AT1HX4WzRAXvc5SgZomNh2dxuJS0GUo1qHIZz
+\restrict 5sdzORHOrgXlTIF91Kx11j0mA9qYtoztD5r9t0ibpZCNJUaHrHW33uydAYnKVYr
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -241,6 +241,51 @@ ALTER TABLE public."PLOTS_DATAPOINTS" OWNER TO abagnale;
 --
 
 COMMENT ON TABLE public."PLOTS_DATAPOINTS" IS 'Datapoints of a two dimensional plot.';
+
+
+--
+-- Name: POSITION_STATES; Type: TABLE; Schema: public; Owner: abagnale
+--
+
+CREATE TABLE public."POSITION_STATES" (
+    "POSITION_ID" uuid NOT NULL,
+    "STOP_LOSS" boolean NOT NULL,
+    "STOP_LOSS_COUNT" numeric NOT NULL,
+    "STOP_LOSS_PRICE" numeric NOT NULL,
+    "STOP_LOSS_NANOS" numeric NOT NULL,
+    "STOP_LOSS_SAMPLES" numeric NOT NULL,
+    "TAKE_LOSS" boolean NOT NULL,
+    "TAKE_LOSS_COUNT" numeric NOT NULL,
+    "TAKE_LOSS_PRICE" numeric NOT NULL,
+    "TAKE_LOSS_NANOS" numeric NOT NULL,
+    "TAKE_LOSS_SAMPLES" numeric NOT NULL,
+    "TAKE_PROFIT" boolean NOT NULL,
+    "TAKE_PROFIT_COUNT" numeric NOT NULL,
+    "TAKE_PROFIT_PRICE" numeric NOT NULL,
+    "TAKE_PROFIT_NANOS" numeric NOT NULL,
+    "TAKE_PROFIT_SAMPLES" numeric NOT NULL,
+    CONSTRAINT "POSITION_STATES_STOP_LOSS_COUNT_check" CHECK (("STOP_LOSS_COUNT" >= (0)::numeric)),
+    CONSTRAINT "POSITION_STATES_STOP_LOSS_NANOS_check" CHECK (("STOP_LOSS_NANOS" >= (0)::numeric)),
+    CONSTRAINT "POSITION_STATES_STOP_LOSS_PRICE_check" CHECK (("STOP_LOSS_PRICE" >= (0)::numeric)),
+    CONSTRAINT "POSITION_STATES_STOP_LOSS_SAMPLES_check" CHECK (("STOP_LOSS_SAMPLES" >= (0)::numeric)),
+    CONSTRAINT "POSITION_STATES_TAKE_LOSS_COUNT_check" CHECK (("TAKE_LOSS_COUNT" >= (0)::numeric)),
+    CONSTRAINT "POSITION_STATES_TAKE_LOSS_NANOS_check" CHECK (("TAKE_LOSS_NANOS" >= (0)::numeric)),
+    CONSTRAINT "POSITION_STATES_TAKE_LOSS_PRICE_check" CHECK (("TAKE_LOSS_PRICE" >= (0)::numeric)),
+    CONSTRAINT "POSITION_STATES_TAKE_LOSS_SAMPLES_check" CHECK (("TAKE_LOSS_SAMPLES" >= (0)::numeric)),
+    CONSTRAINT "POSITION_STATES_TAKE_PROFIT_COUNT_check" CHECK (("TAKE_PROFIT_COUNT" >= (0)::numeric)),
+    CONSTRAINT "POSITION_STATES_TAKE_PROFIT_NANOS_check" CHECK (("TAKE_PROFIT_NANOS" >= (0)::numeric)),
+    CONSTRAINT "POSITION_STATES_TAKE_PROFIT_PRICE_check" CHECK (("TAKE_PROFIT_PRICE" >= (0)::numeric)),
+    CONSTRAINT "POSITION_STATES_TAKE_PROFIT_SAMPLES_check" CHECK (("TAKE_PROFIT_SAMPLES" >= (0)::numeric))
+);
+
+
+ALTER TABLE public."POSITION_STATES" OWNER TO abagnale;
+
+--
+-- Name: TABLE "POSITION_STATES"; Type: COMMENT; Schema: public; Owner: abagnale
+--
+
+COMMENT ON TABLE public."POSITION_STATES" IS 'Position state the application persists on exit and is initialized with on start.';
 
 
 --
@@ -467,6 +512,14 @@ ALTER TABLE ONLY public."PLOTS"
 
 
 --
+-- Name: POSITION_STATES POSITION_STATES_pkey; Type: CONSTRAINT; Schema: public; Owner: abagnale
+--
+
+ALTER TABLE ONLY public."POSITION_STATES"
+    ADD CONSTRAINT "POSITION_STATES_pkey" PRIMARY KEY ("POSITION_ID");
+
+
+--
 -- Name: SAMPLES SAMPLES_pkey; Type: CONSTRAINT; Schema: public; Owner: abagnale
 --
 
@@ -655,5 +708,5 @@ ALTER TABLE ONLY public."TREND_PLOTS"
 -- PostgreSQL database dump complete
 --
 
-\unrestrict BYuW88gcCNyzGfg6Ed2Br3Aer5AT1HX4WzRAXvc5SgZomNh2dxuJS0GUo1qHIZz
+\unrestrict 5sdzORHOrgXlTIF91Kx11j0mA9qYtoztD5r9t0ibpZCNJUaHrHW33uydAYnKVYr
 
