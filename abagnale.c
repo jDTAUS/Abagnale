@@ -724,7 +724,7 @@ static void position_state_load(const struct worker_ctx *restrict const w_ctx,
   }
 }
 
-static void position_state_save(const struct worker_ctx *restrict const w_ctx,
+static void position_state_save(const void *restrict const db,
                                 const struct Position *restrict const p) {
   const struct abag_tls *restrict const tls = abag_tls();
   struct db_position_state_rec *restrict const p_state =
@@ -752,7 +752,7 @@ static void position_state_save(const struct worker_ctx *restrict const w_ctx,
     Numeric_copy_to(p->tp_samples, p_state->tp_samples);
     p_state->tp = p->tp_trg.set;
 
-    db_position_state_persist(w_ctx->db, String_chars(p->id), p_state);
+    db_position_state_persist(db, String_chars(p->id), p_state);
   }
 }
 
