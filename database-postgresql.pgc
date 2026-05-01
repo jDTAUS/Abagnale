@@ -1886,8 +1886,8 @@ void db_position_state_persist(
         "TAKE_PROFIT_PRICE" = :sql_tp_price,
         "TAKE_PROFIT_NANOS" = :sql_tp_nanos,
         "TAKE_PROFIT_SAMPLES" = :sql_tp_samples
-    WHERE
-      "POSITION_ID" = :sql_p_id;
+      WHERE
+        "POSITION_ID" = :sql_p_id;
   EXEC SQL AT :con COMMIT;
   // clang-format on
 #ifdef ABAG_SQL_DEBUG
