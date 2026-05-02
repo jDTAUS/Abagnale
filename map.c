@@ -25,6 +25,7 @@ struct Entry {
   void *restrict key;
   void *restrict value;
   struct Entry *restrict next;
+  struct Entry *restrict prev;
 };
 
 struct Map {
@@ -104,7 +105,10 @@ inline void *Map_put(struct Map *restrict const m, void *restrict const k,
     bucket = heap_malloc(sizeof(struct Entry));
     bucket->key = m->k_copy(k);
     bucket->value = v;
-    bucket->next = m->buckets[i];
+
+    if ((bucket->next = m->buckets[i]) != NULL)
+      m->buckets[i]->prev = bucket;
+
     m->buckets[i] = bucket;
   }
 
@@ -139,11 +143,8 @@ inline bool MapIterator_next(struct MapIterator *restrict const it) {
   if (it->e != NULL)
     it->e = it->e->next;
 
-  for (; it->i > 0; it->i--) {
-    it->e = it->m->buckets[it->i - 1];
-    if (it->e != NULL)
-      break;
-  }
+  while (it->e == NULL && it->i != 0)
+    it->e = it->m->buckets[--it->i];
 
   return it->e != NULL;
 }
@@ -152,8 +153,13 @@ inline void *MapIterator_remove(struct MapIterator *restrict const it) {
   void *restrict value = NULL;
 
   if (it->e != NULL) {
-    it->m->buckets[it->i - 1] = it->e->next;
     value = it->e->value;
+
+    if (it->e->prev)
+      it->e->prev->next = it->e->next;
+    else
+      it->m->buckets[it->i] = NULL;
+
     it->m->k_delete(it->e->key);
     heap_free(it->e);
     it->e = NULL;
