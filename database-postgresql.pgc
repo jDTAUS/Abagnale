@@ -1863,38 +1863,6 @@ void db_position_state_persist(
   numeric *sql_tp_samples = Numeric_db(state->tp_samples);
   bool sql_tp = state->tp;
   EXEC SQL END DECLARE SECTION;
-  EXEC SQL WHENEVER SQLWARNING CALL db_warn();
-  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
-  EXEC SQL WHENEVER NOT FOUND GO TO not_found;
-  EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
-  EXEC SQL AT :con
-      UPDATE
-        "POSITION_STATES"
-      SET
-        "STOP_LOSS" = :sql_sl,
-        "STOP_LOSS_COUNT" = :sql_sl_cnt,
-        "STOP_LOSS_PRICE" = :sql_sl_price,
-        "STOP_LOSS_NANOS" = :sql_sl_nanos,
-        "STOP_LOSS_SAMPLES" = :sql_sl_samples,
-        "TAKE_LOSS" = :sql_tl,
-        "TAKE_LOSS_COUNT" = :sql_tl_cnt,
-        "TAKE_LOSS_PRICE" = :sql_tl_price,
-        "TAKE_LOSS_NANOS" = :sql_tl_nanos,
-        "TAKE_LOSS_SAMPLES" = :sql_tl_samples,
-        "TAKE_PROFIT" = :sql_tp,
-        "TAKE_PROFIT_COUNT" = :sql_tp_cnt,
-        "TAKE_PROFIT_PRICE" = :sql_tp_price,
-        "TAKE_PROFIT_NANOS" = :sql_tp_nanos,
-        "TAKE_PROFIT_SAMPLES" = :sql_tp_samples
-      WHERE
-        "POSITION_ID" = :sql_p_id;
-  EXEC SQL AT :con COMMIT;
-  // clang-format on
-#ifdef ABAG_SQL_DEBUG
-  ECPGdebug(0, stdout);
-#endif
-  return;
-not_found:
   // clang-format off
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
   EXEC SQL WHENEVER SQLERROR CALL db_fatal();
@@ -1922,7 +1890,23 @@ not_found:
       :sql_sl, :sql_sl_cnt, :sql_sl_price, :sql_sl_nanos, :sql_sl_samples,
       :sql_tl, :sql_tl_cnt, :sql_tl_price, :sql_tl_nanos, :sql_tl_samples,
       :sql_tp, :sql_tp_cnt, :sql_tp_price, :sql_tp_nanos, :sql_tp_samples
-    );
+    ) ON CONFLICT ("POSITION_ID")
+      DO UPDATE SET
+        "STOP_LOSS" = :sql_sl,
+        "STOP_LOSS_COUNT" = :sql_sl_cnt,
+        "STOP_LOSS_PRICE" = :sql_sl_price,
+        "STOP_LOSS_NANOS" = :sql_sl_nanos,
+        "STOP_LOSS_SAMPLES" = :sql_sl_samples,
+        "TAKE_LOSS" = :sql_tl,
+        "TAKE_LOSS_COUNT" = :sql_tl_cnt,
+        "TAKE_LOSS_PRICE" = :sql_tl_price,
+        "TAKE_LOSS_NANOS" = :sql_tl_nanos,
+        "TAKE_LOSS_SAMPLES" = :sql_tl_samples,
+        "TAKE_PROFIT" = :sql_tp,
+        "TAKE_PROFIT_COUNT" = :sql_tp_cnt,
+        "TAKE_PROFIT_PRICE" = :sql_tp_price,
+        "TAKE_PROFIT_NANOS" = :sql_tp_nanos,
+        "TAKE_PROFIT_SAMPLES" = :sql_tp_samples;
   EXEC SQL AT :con COMMIT;
   // clang-format on
 #ifdef ABAG_SQL_DEBUG
