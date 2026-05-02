@@ -1863,7 +1863,6 @@ void db_position_state_persist(
   numeric *sql_tp_samples = Numeric_db(state->tp_samples);
   bool sql_tp = state->tp;
   EXEC SQL END DECLARE SECTION;
-  // clang-format off
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
   EXEC SQL WHENEVER SQLERROR CALL db_fatal();
   EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
