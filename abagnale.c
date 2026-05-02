@@ -730,7 +730,7 @@ static void position_state_save(const void *restrict const db,
   struct db_position_state_rec *restrict const p_state =
       tls->position_state_save.p_state;
 
-  if (p->id != NULL && !p->done) {
+  if (p->id != NULL) {
     // XXX: uintmax_t -> long
     Numeric_from_long_to(p->sl_trg.cnt, p_state->sl_cnt);
     Numeric_copy_to(p->sl_trg.price, p_state->sl_price);
