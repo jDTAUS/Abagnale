@@ -563,8 +563,7 @@ static bool trend_market_plot(const void *restrict const db,
   FILE *restrict const f = fopen(fn, "w");
 
   if (f == NULL) {
-    werr("%s: %d: %s: %s: %s\n", __FILE__, __LINE__, __func__, fn,
-         strerror(errno));
+    werr("%s: %s: %s\n", String_chars(e->nm), fn, strerror(errno));
     return false;
   }
 
@@ -670,8 +669,7 @@ static bool trend_market_plot(const void *restrict const db,
           String_chars(m->nm), String_chars(m->q_id));
 
   if (fclose(f) == EOF) {
-    werr("%s: %d: %s: %s: %s\n", __FILE__, __LINE__, __func__, fn,
-         strerror(errno));
+    werr("%s: %s: %s\n", String_chars(e->nm), fn, strerror(errno));
     return false;
   }
 
