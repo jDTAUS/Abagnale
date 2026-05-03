@@ -692,14 +692,14 @@ static char *position_string(const struct worker_ctx *restrict const w_ctx,
   return res;
 }
 
-static void position_state_load(const struct worker_ctx *restrict const w_ctx,
+static void position_state_load(const void *restrict const db,
                                 struct Position *restrict const p) {
   const struct abag_tls *restrict const tls = abag_tls();
   struct db_position_state_rec *restrict const p_state =
       tls->position_state_load.p_state;
 
   if (p->id != NULL &&
-      db_position_state_restore(p_state, w_ctx->db, String_chars(p->id))) {
+      db_position_state_restore(p_state, db, String_chars(p->id))) {
 
     Numeric_copy_to(p_state->sl_price, p->sl_trg.price);
     Numeric_copy_to(p_state->sl_nanos, p->sl_trg.nanos);
@@ -2809,8 +2809,8 @@ static struct Array *trades_load(const struct worker_ctx *restrict const w_ctx,
   items = Array_items(trades);
   for (size_t i = Array_size(trades); i > 0; i--) {
     struct Trade *restrict const t = items[i - 1];
-    position_state_load(w_ctx, &t->p_long);
-    position_state_load(w_ctx, &t->p_short);
+    position_state_load(w_ctx->db, &t->p_long);
+    position_state_load(w_ctx->db, &t->p_short);
     trade_pricing(w_ctx, t);
     trade_create(w_ctx, t, samples, sample);
     Numeric_copy_to(zero, t->p_long.pnanos);
