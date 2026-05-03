@@ -64,16 +64,16 @@ inline struct Map *Map_new(void *(*k_copy)(void *restrict const),
 inline void Map_delete(struct Map *restrict const m,
                        void (*v_delete)(void *restrict const)) {
   for (size_t i = m->capacity; i > 0; i--) {
-    struct Entry *restrict bucket = m->buckets[i - 1];
+    struct Entry *restrict e = m->buckets[i - 1];
 
-    while (bucket != NULL) {
+    while (e != NULL) {
       if (v_delete)
-        v_delete(bucket->value);
+        v_delete(e->value);
 
-      m->k_delete(bucket->key);
+      m->k_delete(e->key);
 
-      struct Entry *tmp = bucket;
-      bucket = bucket->next;
+      struct Entry *tmp = e;
+      e = e->next;
       heap_free(tmp);
     }
   }
@@ -92,37 +92,37 @@ inline void Map_unlock(struct Map *restrict const m) { mutex_unlock(&m->mtx); }
 inline void *Map_put(struct Map *restrict const m, void *restrict const k,
                      void *restrict const v) {
   const size_t i = m->k_hash(k) % m->capacity;
-  struct Entry *restrict bucket = m->buckets[i];
-  void *restrict needle = NULL;
+  struct Entry *restrict e = m->buckets[i];
+  void *restrict value = NULL;
 
-  while (bucket != NULL && !m->k_equals(bucket->key, k))
-    bucket = bucket->next;
+  while (e != NULL && !m->k_equals(e->key, k))
+    e = e->next;
 
-  if (bucket != NULL) {
-    needle = bucket->value;
-    bucket->value = v;
+  if (e != NULL) {
+    value = e->value;
+    e->value = v;
   } else {
-    bucket = heap_malloc(sizeof(struct Entry));
-    bucket->key = m->k_copy(k);
-    bucket->value = v;
+    e = heap_malloc(sizeof(struct Entry));
+    e->key = m->k_copy(k);
+    e->value = v;
 
-    if ((bucket->next = m->buckets[i]) != NULL)
-      m->buckets[i]->prev = bucket;
+    if ((e->next = m->buckets[i]) != NULL)
+      m->buckets[i]->prev = e;
 
-    m->buckets[i] = bucket;
+    m->buckets[i] = e;
   }
 
-  return needle;
+  return value;
 }
 
 inline void *Map_get(const struct Map *restrict const m,
                      const void *restrict const k) {
-  struct Entry *restrict bucket = m->buckets[m->k_hash(k) % m->capacity];
+  struct Entry *restrict e = m->buckets[m->k_hash(k) % m->capacity];
 
-  while (bucket != NULL && !m->k_equals(bucket->key, k))
-    bucket = bucket->next;
+  while (e != NULL && !m->k_equals(e->key, k))
+    e = e->next;
 
-  return bucket != NULL ? bucket->value : NULL;
+  return e != NULL ? e->value : NULL;
 }
 
 inline struct MapIterator *MapIterator_new(const struct Map *restrict const m) {
