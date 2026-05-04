@@ -2,7 +2,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 5sdzORHOrgXlTIF91Kx11j0mA9qYtoztD5r9t0ibpZCNJUaHrHW33uydAYnKVYr
+\restrict ihFS9VsBgbAHv81dERnwr5WTvtZXiybWsF7huKRmd2bAsJ1geThdmrVouJmMBSt
 
 -- Dumped from database version 17.9 (Debian 17.9-0+deb13u1)
 -- Dumped by pg_dump version 17.9 (Debian 17.9-0+deb13u1)
@@ -28,9 +28,9 @@ CREATE DATABASE "ABAGNALE" WITH TEMPLATE = template0 ENCODING = 'UTF8' LOCALE_PR
 
 ALTER DATABASE "ABAGNALE" OWNER TO abagnale;
 
-\unrestrict 5sdzORHOrgXlTIF91Kx11j0mA9qYtoztD5r9t0ibpZCNJUaHrHW33uydAYnKVYr
+\unrestrict ihFS9VsBgbAHv81dERnwr5WTvtZXiybWsF7huKRmd2bAsJ1geThdmrVouJmMBSt
 \connect "ABAGNALE"
-\restrict 5sdzORHOrgXlTIF91Kx11j0mA9qYtoztD5r9t0ibpZCNJUaHrHW33uydAYnKVYr
+\restrict ihFS9VsBgbAHv81dERnwr5WTvtZXiybWsF7huKRmd2bAsJ1geThdmrVouJmMBSt
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -267,15 +267,12 @@ CREATE TABLE public."POSITION_STATES" (
     CONSTRAINT "POSITION_STATES_STOP_LOSS_COUNT_check" CHECK (("STOP_LOSS_COUNT" >= (0)::numeric)),
     CONSTRAINT "POSITION_STATES_STOP_LOSS_NANOS_check" CHECK (("STOP_LOSS_NANOS" >= (0)::numeric)),
     CONSTRAINT "POSITION_STATES_STOP_LOSS_PRICE_check" CHECK (("STOP_LOSS_PRICE" >= (0)::numeric)),
-    CONSTRAINT "POSITION_STATES_STOP_LOSS_SAMPLES_check" CHECK (("STOP_LOSS_SAMPLES" >= (0)::numeric)),
     CONSTRAINT "POSITION_STATES_TAKE_LOSS_COUNT_check" CHECK (("TAKE_LOSS_COUNT" >= (0)::numeric)),
     CONSTRAINT "POSITION_STATES_TAKE_LOSS_NANOS_check" CHECK (("TAKE_LOSS_NANOS" >= (0)::numeric)),
     CONSTRAINT "POSITION_STATES_TAKE_LOSS_PRICE_check" CHECK (("TAKE_LOSS_PRICE" >= (0)::numeric)),
-    CONSTRAINT "POSITION_STATES_TAKE_LOSS_SAMPLES_check" CHECK (("TAKE_LOSS_SAMPLES" >= (0)::numeric)),
     CONSTRAINT "POSITION_STATES_TAKE_PROFIT_COUNT_check" CHECK (("TAKE_PROFIT_COUNT" >= (0)::numeric)),
     CONSTRAINT "POSITION_STATES_TAKE_PROFIT_NANOS_check" CHECK (("TAKE_PROFIT_NANOS" >= (0)::numeric)),
-    CONSTRAINT "POSITION_STATES_TAKE_PROFIT_PRICE_check" CHECK (("TAKE_PROFIT_PRICE" >= (0)::numeric)),
-    CONSTRAINT "POSITION_STATES_TAKE_PROFIT_SAMPLES_check" CHECK (("TAKE_PROFIT_SAMPLES" >= (0)::numeric))
+    CONSTRAINT "POSITION_STATES_TAKE_PROFIT_PRICE_check" CHECK (("TAKE_PROFIT_PRICE" >= (0)::numeric))
 );
 
 
@@ -708,5 +705,5 @@ ALTER TABLE ONLY public."TREND_PLOTS"
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 5sdzORHOrgXlTIF91Kx11j0mA9qYtoztD5r9t0ibpZCNJUaHrHW33uydAYnKVYr
+\unrestrict ihFS9VsBgbAHv81dERnwr5WTvtZXiybWsF7huKRmd2bAsJ1geThdmrVouJmMBSt
 
