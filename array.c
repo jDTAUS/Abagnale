@@ -42,10 +42,10 @@ struct Array *Array_new(const size_t c) {
 }
 
 inline void Array_delete(struct Array *restrict const a,
-                         void (*cb)(void *restrict const)) {
-  if (cb)
+                         void (*i_delete)(void *restrict const)) {
+  if (i_delete)
     for (size_t i = a->size; i > 0; i--)
-      cb(a->items[i - 1]);
+      i_delete(a->items[i - 1]);
 
   mutex_destroy(&a->mtx);
   heap_free(a->items);
@@ -62,12 +62,12 @@ inline void Array_unlock(struct Array *restrict const a) {
 }
 
 inline struct Array *Array_copy(const struct Array *restrict const a,
-                                void *(*cb)(void *restrict const)) {
+                                void *(*i_copy)(void *restrict const)) {
   struct Array *restrict const copy = Array_new(a->size);
 
-  if (cb)
+  if (i_copy)
     for (size_t i = a->size; i > 0; i--)
-      copy->items[i - 1] = cb(a->items[i - 1]);
+      copy->items[i - 1] = i_copy(a->items[i - 1]);
   else
     for (size_t i = a->size; i > 0; i--)
       copy->items[i - 1] = a->items[i - 1];
@@ -77,17 +77,18 @@ inline struct Array *Array_copy(const struct Array *restrict const a,
 }
 
 inline void Array_cut(struct Array *restrict const a, const size_t i,
-                      const size_t cnt, void (*cb)(void *restrict const)) {
+                      const size_t cnt,
+                      void (*i_delete)(void *restrict const)) {
   void *restrict const items = heap_calloc(cnt, sizeof(void *));
   memcpy(items, &a->items[i], cnt * sizeof(void *));
 
-  if (cb) {
+  if (i_delete) {
     size_t j = i;
     while (j != 0)
-      cb(a->items[i - j--]);
+      i_delete(a->items[i - j--]);
     j = a->size - (i + cnt);
     while (j != 0)
-      cb(a->items[a->size - j--]);
+      i_delete(a->items[a->size - j--]);
   }
 
   heap_free(a->items);
@@ -98,10 +99,10 @@ inline void Array_cut(struct Array *restrict const a, const size_t i,
 }
 
 inline void Array_clear(struct Array *restrict const a,
-                        void (*cb)(void *restrict const)) {
-  if (cb)
+                        void (*i_delete)(void *restrict const)) {
+  if (i_delete)
     for (size_t i = a->size; i > 0; i--) {
-      cb(a->items[i - 1]);
+      i_delete(a->items[i - 1]);
       a->items[i - 1] = NULL;
     }
   else
