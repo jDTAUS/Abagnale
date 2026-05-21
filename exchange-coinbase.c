@@ -756,7 +756,8 @@ static inline char *b64_encode_uri(const char *restrict const s,
   }
 
   char *restrict const e = heap_malloc(4 * ((s_len + 2) / 3) + 1);
-  if (EVP_EncodeBlock((unsigned char *)e, (unsigned char *)s, s_len) < 0) {
+  if (EVP_EncodeBlock((unsigned char *)e, (const unsigned char *)s, s_len) <
+      0) {
     werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
     fatal();
   }
@@ -945,7 +946,7 @@ static char *jwt_encode_cdp(const char *restrict const uri) {
   ECDSA_SIG_free(sig);
 
   char *restrict const s_b64 =
-      b64_encode_uri((char *)raw, sizeof(raw), &s_b64_len);
+      b64_encode_uri((const char *)raw, sizeof(raw), &s_b64_len);
 
 #ifdef ABAG_COINBASE_DEBUG
   wout("coinbase: JWT signature: %s\n", s_b64);
