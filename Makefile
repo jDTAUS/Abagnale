@@ -89,11 +89,6 @@ LDFLAGS+=-lecpg
 #   https://www.postgresql.org/docs/18/ecpg-pgtypes.html
 LDFLAGS+=-lpgtypes
 
-# LibJWT - The C JSON Webtoken Library
-#   https://libjwt.io
-#   https://github.com/benmcollins/libjwt/tree/v1.18.4
-LDFLAGS+=-ljwt
-
 # Wide Character JSON for C
 #   http://wcjson.de
 #   https://github.com/wcjson/wcjson/releases/download/v0.35/wcjson-0.35.tar.gz

@@ -30,7 +30,10 @@
 #include "time.h"
 
 #include <inttypes.h>
-#include <jwt.h>
+#include <openssl/bn.h>
+#include <openssl/ec.h>
+#include <openssl/evp.h>
+#include <openssl/pem.h>
 #include <wcjson-document.h>
 #include <wcjson.h>
 
@@ -687,6 +690,15 @@ wcjson_string(struct wcjson_document *restrict const doc,
 }
 
 static struct wcjson_value *
+wcjson_number(struct wcjson_document *restrict const doc,
+              const char *restrict const s) {
+  struct wcjson_value *restrict const r = wcjson_string(doc, s);
+  r->is_string = 0;
+  r->is_number = 1;
+  return r;
+}
+
+static struct wcjson_value *
 wcjson_object(struct wcjson_document *restrict const doc) {
   struct wcjson_value *restrict const o = wcjson_value_object(doc);
   if (o == NULL) {
@@ -735,74 +747,237 @@ static void wcjson_object_add(struct wcjson_document *restrict const doc,
   }
 }
 
+static inline char *b64_encode_uri(const char *restrict const s,
+                                   const size_t s_len,
+                                   size_t *restrict const e_len) {
+  if (s_len > (SIZE_MAX / 4 - 1) * 3 - 2) {
+    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
+    fatal();
+  }
+
+  char *restrict const e = heap_malloc(4 * ((s_len + 2) / 3) + 1);
+  if (EVP_EncodeBlock((unsigned char *)e, (unsigned char *)s, s_len) < 0) {
+    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
+    fatal();
+  }
+
+  char *restrict p = e;
+  *e_len = 0;
+
+  while (*p) {
+    switch (*p) {
+    case '=':
+      *p = '\0';
+      return e;
+    case '+':
+      *p = '-';
+      break;
+    case '/':
+      *p = '_';
+      break;
+    }
+
+    *e_len += 1;
+    p++;
+  }
+
+  return e;
+}
+
 static char *jwt_encode_cdp(const char *restrict const uri) {
-  jwt_t *jwt = NULL;
-  int r = 0;
+  int r;
+  size_t h_len, h_b64_len, p_len, p_b64_len, s_len, s_b64_len;
+  char jwt_body[WCJSON_BODY_MAX + 1] = {0};
+  char jwt_time[WCJSON_STRLEN_MAX + 1] = {0};
+  struct wcjson_document jwt_doc = {
+      .values = (struct wcjson_value[36]){0},
+      .v_nitems = 36,
+      .v_nitems_cnt = 0,
+      .v_next = 0,
+      .strings = (wchar_t[512]){0},
+      .s_nitems = 512,
+      .s_nitems_cnt = 0,
+      .s_next = 0,
+      .mbstrings = (char[512]){0},
+      .mb_nitems = 512,
+      .mb_nitems_cnt = 0,
+      .mb_next = 0,
+      .esc = (wchar_t[2048]){0},
+      .e_nitems = 2048,
+      .e_nitems_cnt = 0,
+  };
 
-  r = jwt_new(&jwt);
-  if (r != 0) {
-    werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__, strerror(r));
-    fatal();
-  }
+  struct wcjson_value *restrict j_obj = wcjson_object(&jwt_doc);
+  wcjson_object_add(&jwt_doc, j_obj, L"alg", 3,
+                    wcjson_string(&jwt_doc, "ES256"));
 
-  r = jwt_add_grant(jwt, "sub", String_chars(coinbase_cnf->jwt_kid));
-  if (r != 0) {
-    werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__, strerror(r));
-    fatal();
-  }
+  wcjson_object_add(
+      &jwt_doc, j_obj, L"kid", 3,
+      wcjson_string(&jwt_doc, String_chars(coinbase_cnf->jwt_kid)));
 
-  r = jwt_add_grant(jwt, "iss", "cdp");
-  if (r != 0) {
-    werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__, strerror(r));
-    fatal();
-  }
+  wcjson_object_add(&jwt_doc, j_obj, L"typ", 3, wcjson_string(&jwt_doc, "JWT"));
+  wcjsondoc_string(jwt_body, sizeof(jwt_body), &jwt_doc, jwt_doc.values,
+                   &h_len);
+
+  char *restrict const h_b64 = b64_encode_uri(jwt_body, h_len, &h_b64_len);
+
+#ifdef ABAG_COINBASE_DEBUG
+  wout("coinbase: JWT header: %s: %s\n", jwt_body, h_b64);
+#endif
+
+  jwt_doc.v_next = 0;
+  jwt_doc.s_next = 0;
+  jwt_doc.mb_next = 0;
+
+  j_obj = wcjson_object(&jwt_doc);
+  wcjson_object_add(&jwt_doc, j_obj, L"iss", 3, wcjson_string(&jwt_doc, "cdp"));
+  wcjson_object_add(
+      &jwt_doc, j_obj, L"sub", 3,
+      wcjson_string(&jwt_doc, String_chars(coinbase_cnf->jwt_kid)));
+
+  if (uri != NULL)
+    wcjson_object_add(&jwt_doc, j_obj, L"uri", 3, wcjson_string(&jwt_doc, uri));
 
   const time_t now = time(NULL);
+  r = snprintf(jwt_time, sizeof(jwt_time), "%" PRIdMAX, (intmax_t)now - 1);
 
-  r = jwt_add_grant_int(jwt, "nbf", now - 1);
-  if (r != 0) {
-    werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__, strerror(r));
+  if (r < 0 || (size_t)r >= sizeof(jwt_time)) {
+    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
     fatal();
   }
 
-  r = jwt_add_grant_int(jwt, "exp", now + 120);
-  if (r != 0) {
-    werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__, strerror(r));
+  wcjson_object_add(&jwt_doc, j_obj, L"nbf", 3,
+                    wcjson_number(&jwt_doc, jwt_time));
+
+  r = snprintf(jwt_time, sizeof(jwt_time), "%" PRIdMAX, (intmax_t)now + 120);
+
+  if (r < 0 || (size_t)r >= sizeof(jwt_time)) {
+    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
     fatal();
   }
 
-  if (uri != NULL) {
-    r = jwt_add_grant(jwt, "uri", uri);
-    if (r != 0) {
-      werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__, strerror(r));
-      fatal();
-    }
-  }
+  wcjson_object_add(&jwt_doc, j_obj, L"exp", 3,
+                    wcjson_number(&jwt_doc, jwt_time));
 
-  r = jwt_add_header(jwt, "kid", String_chars(coinbase_cnf->jwt_kid));
-  if (r != 0) {
-    werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__, strerror(r));
+  wcjsondoc_string(jwt_body, sizeof(jwt_body), &jwt_doc, jwt_doc.values,
+                   &p_len);
+
+  char *restrict const p_b64 = b64_encode_uri(jwt_body, p_len, &p_b64_len);
+
+#ifdef ABAG_COINBASE_DEBUG
+  wout("coinbase: JWT payload: %s: %s\n", jwt_body, p_b64);
+#endif
+
+  BIO *restrict bio = BIO_new_mem_buf(String_chars(coinbase_cnf->jwt_key),
+                                      String_length(coinbase_cnf->jwt_key));
+
+  if (!bio) {
+    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
     fatal();
   }
 
-  r = jwt_set_alg(
-      jwt, JWT_ALG_ES256,
-      (const unsigned char *const)String_chars(coinbase_cnf->jwt_key),
-      String_length(coinbase_cnf->jwt_key));
+  EVP_PKEY *restrict const key = PEM_read_bio_PrivateKey(bio, NULL, NULL, NULL);
 
-  if (r != 0) {
-    werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__, strerror(r));
+  if (!key) {
+    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
     fatal();
   }
 
-  char *restrict const encoded = jwt_encode_str(jwt);
-  if (encoded == NULL) {
-    werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__, strerror(errno));
+  BIO_free(bio);
+
+  if (h_b64_len > SIZE_MAX - p_b64_len - 2 ||
+      p_b64_len > SIZE_MAX - h_b64_len - 2) {
+    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
     fatal();
   }
 
-  jwt_free(jwt);
-  return encoded;
+  const size_t hdotp_len = h_b64_len + p_b64_len + 1;
+  char *restrict const hdotp = heap_malloc(hdotp_len + 1);
+  r = snprintf(hdotp, hdotp_len + 1, "%s.%s", h_b64, p_b64);
+
+  if (r < 0 || (size_t)r >= hdotp_len + 1) {
+    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
+    fatal();
+  }
+
+  EVP_MD_CTX *restrict const sign_ctx = EVP_MD_CTX_new();
+
+  if (!sign_ctx) {
+    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
+    fatal();
+  }
+
+  if (EVP_DigestSignInit(sign_ctx, NULL, EVP_sha256(), NULL, key) <= 0 ||
+      EVP_DigestSignUpdate(sign_ctx, (unsigned char *)hdotp, hdotp_len) <= 0 ||
+      EVP_DigestSignFinal(sign_ctx, NULL, &s_len) <= 0) {
+    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
+    fatal();
+  }
+
+  char *restrict const s = heap_malloc(s_len + 1);
+
+  if (EVP_DigestSignFinal(sign_ctx, (unsigned char *)s, &s_len) <= 0) {
+    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
+    fatal();
+  }
+
+  const unsigned char *p = (const unsigned char *)s;
+  ECDSA_SIG *restrict sig = d2i_ECDSA_SIG(NULL, &p, s_len);
+
+  if (!sig) {
+    werr("%s: :%d: %s\n", __FILE__, __LINE__, __func__);
+    fatal();
+  }
+
+  const BIGNUM *ecdsa_r;
+  const BIGNUM *ecdsa_s;
+
+  ECDSA_SIG_get0(sig, &ecdsa_r, &ecdsa_s);
+
+  unsigned char raw[64] = {0};
+
+  if (BN_bn2binpad(ecdsa_r, raw, 32) != 32 ||
+      BN_bn2binpad(ecdsa_s, raw + 32, 32) != 32) {
+    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
+    fatal();
+  }
+
+  ECDSA_SIG_free(sig);
+
+  char *restrict const s_b64 =
+      b64_encode_uri((char *)raw, sizeof(raw), &s_b64_len);
+
+#ifdef ABAG_COINBASE_DEBUG
+  wout("coinbase: JWT signature: %s\n", s_b64);
+#endif
+
+  if (hdotp_len > SIZE_MAX - 2 - s_b64_len ||
+      s_b64_len > SIZE_MAX - 2 - hdotp_len) {
+    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
+    fatal();
+  }
+
+  const size_t jwt_len = hdotp_len + s_b64_len + 1;
+  char *restrict const jwt = heap_malloc(jwt_len + 1);
+  r = snprintf(jwt, jwt_len + 1, "%s.%s", hdotp, s_b64);
+
+  if (r < 0 || (size_t)r >= jwt_len + 1) {
+    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
+    fatal();
+  }
+
+#ifdef ABAG_COINBASE_DEBUG
+  wout("coinbase: JWT: %s\n", jwt);
+#endif
+
+  heap_free(s_b64);
+  heap_free(s);
+  EVP_MD_CTX_free(sign_ctx);
+  heap_free(hdotp);
+  EVP_PKEY_free(key);
+  heap_free(p_b64);
+  heap_free(h_b64);
+  return jwt;
 }
 
 static void mg_mgr_config(struct mg_mgr *restrict const mgr) {
