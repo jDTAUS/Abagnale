@@ -84,10 +84,11 @@ jobs:
       run: |
         choco install postgresql --params '/Password:postgres' -y
 
-    - name: Set PostgreSQL path (macOS)
+    - name: Set PostgreSQL paths (macOS)
       if: runner.os == 'macOS'
       run: |
-        echo "PostgreSQL_ROOT=$(brew --prefix postgresql)" > $GITHUB_ENV
+        PG_PREFIX=$(brew --prefix postgresql)
+        echo "PostgreSQL_ROOT=$PG_PREFIX" >> $GITHUB_ENV
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only
@@ -99,6 +100,7 @@ jobs:
         -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
         -DBUILD_SHARED_LIBS=ON
+        -DPostgreSQL_ROOT=${{ env.PostgreSQL_ROOT }}
         -S ${{ github.workspace }}
 
     - name: Build
