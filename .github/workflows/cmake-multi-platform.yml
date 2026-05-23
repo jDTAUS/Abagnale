@@ -99,7 +99,6 @@ jobs:
         -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
         -DBUILD_SHARED_LIBS=ON
-        ${{ runner.os == 'macOS' && format('-DPostgreSQL_ROOT={0}', env PostgreSQL_ROOT) || '' }}
         -S ${{ github.workspace }}
 
     - name: Build
