@@ -58,6 +58,7 @@ jobs:
             c_compiler: cl
 
     steps:
+    - name: Checkout repository
     - uses: actions/checkout@v4
 
     - name: Set reusable strings
@@ -67,6 +68,22 @@ jobs:
       shell: bash
       run: |
         echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
+    
+    - name: Install build dependencies (Ubuntu)
+      if: runner.os == 'Linux'
+      run : |
+        sudo apt-get update
+        sudo apt-get install -y postgresql-client libpg-dev
+
+    - name: Install build dependencies (MacOS)
+      if: runner.os == 'macOS'
+      run: |
+        brew install postgresql
+
+    - name: Install build dependencies (Windows)
+      if: runner.os == 'Windows'
+      run: |
+        choco install postgresql
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only
