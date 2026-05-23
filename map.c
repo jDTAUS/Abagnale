@@ -89,8 +89,8 @@ inline bool Map_trylock(struct Map *restrict const m) {
 }
 inline void Map_unlock(struct Map *restrict const m) { mutex_unlock(&m->mtx); }
 
-inline void *Map_put(struct Map *restrict const m, void *restrict const k,
-                     void *restrict const v) {
+inline void *Map_put(struct Map *restrict const m, void *const k,
+                     void *const v) {
   const size_t i = m->k_hash(k) % m->capacity;
   struct Entry *restrict e = m->buckets[i];
   void *restrict value = NULL;

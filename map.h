@@ -40,8 +40,7 @@ void Map_lock(struct Map *restrict const);
 bool Map_trylock(struct Map *restrict const);
 void Map_unlock(struct Map *restrict const);
 
-void *Map_put(struct Map *restrict const, void *restrict const,
-              void *restrict const);
+void *Map_put(struct Map *restrict const, void *const, void *const);
 void *Map_get(const struct Map *restrict const, const void *restrict const);
 
 struct MapIterator *MapIterator_new(const struct Map *restrict const);
