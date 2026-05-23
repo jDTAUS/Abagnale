@@ -17,12 +17,11 @@
 cmake_minimum_required(VERSION 3.31)
 
 project(
-  Abagnale
+	Abagnale
 	VERSION 0.0
-  DESCRIPTION "Abagnale - Algorithmic Trading"
+	DESCRIPTION "Abagnale - Algorithmic Trading"
 	HOMEPAGE_URL "http://www.jdtaus.org"
-	LANGUAGES
-	    C
+	LANGUAGES C
 )
 
 include(CheckTypeSize)
@@ -81,146 +80,150 @@ find_package(OpenSSL REQUIRED)
 find_package(PostgreSQL REQUIRED)
 
 find_library(ECPG_LIBRARY
-  NAMES ecpg
-  HINTS ${PostgreSQL_LIBRARY_DIR}
-  PATHS ${PostgreSQL_LIBRARY_DIR}
+	NAMES ecpg
+	HINTS ${PostgreSQL_LIBRARY_DIR}
+	PATHS ${PostgreSQL_LIBRARY_DIR}
 )
 
 find_library(PGTYPES_LIBRARY
-  NAMES pgtypes
-  HINTS ${PostgreSQL_LIBRARY_DIR}
-  PATHS ${PostgreSQL_LIBRARY_DIR}
+	NAMES pgtypes
+	HINTS ${PostgreSQL_LIBRARY_DIR}
+	PATHS ${PostgreSQL_LIBRARY_DIR}
 )
 
 find_package_handle_standard_args(ECPG REQUIRED_VARS ECPG_LIBRARY)
 find_package_handle_standard_args(PGTYPES REQUIRED_VARS PGTYPES_LIBRARY)
 
 if(ECPG_LIBRARY AND NOT TARGET PostgreSQL::ECPG)
-  add_library(PostgreSQL::ECPG UNKNOWN IMPORTED)
-  set_target_properties(PostgreSQL::ECPG PROPERTIES
-    IMPORTED_LOCATION "${ECPG_LIBRARY}"
-    INTERFACE_INCLUDE_DIRECTORIES "${PostgreSQL_INCLUDE_DIRS}"
-  )
+	add_library(PostgreSQL::ECPG UNKNOWN IMPORTED)
+	set_target_properties(PostgreSQL::ECPG PROPERTIES
+		IMPORTED_LOCATION "${ECPG_LIBRARY}"
+		INTERFACE_INCLUDE_DIRECTORIES "${PostgreSQL_INCLUDE_DIRS}"
+	)
 endif()
 
 if(PGTYPES_LIBRARY AND NOT TARGET PostgreSQL::PGTYPES)
-  add_library(PostgreSQL::PGTYPES UNKNOWN IMPORTED)
-  set_target_properties(PostgreSQL::PGTYPES PROPERTIES
-    IMPORTED_LOCATION "${PGTYPES_LIBRARY}"
-    INTERFACE_INCLUDE_DIRECTORIES "${PostgreSQL_INCLUDE_DIRS}"
-  )
+	add_library(PostgreSQL::PGTYPES UNKNOWN IMPORTED)
+	set_target_properties(PostgreSQL::PGTYPES PROPERTIES
+		IMPORTED_LOCATION "${PGTYPES_LIBRARY}"
+		INTERFACE_INCLUDE_DIRECTORIES "${PostgreSQL_INCLUDE_DIRS}"
+	)
 endif()
 
 find_program(ECPG_EXECUTABLE ecpg REQUIRED)
 find_program(YACC_EXECUTABLE yacc REQUIRED)
 
 add_custom_command(
-  OUTPUT
-    ${CMAKE_CURRENT_SOURCE_DIR}/database-postgresql.c
-  COMMAND
-    ${ECPG_EXECUTABLE}
-    -o ${CMAKE_CURRENT_SOURCE_DIR}/database-postgresql.c
-      ${CMAKE_CURRENT_SOURCE_DIR}/database-postgresql.pgc
-  DEPENDS
-    ${CMAKE_CURRENT_SOURCE_DIR}/database-postgresql.pgc
-  COMMENT
-    "Running ecpg on database-postgresql.pgc"
-  VERBATIM
+	OUTPUT
+		${CMAKE_CURRENT_SOURCE_DIR}/database-postgresql.c
+	COMMAND
+		${ECPG_EXECUTABLE}
+		-o ${CMAKE_CURRENT_SOURCE_DIR}/database-postgresql.c
+		${CMAKE_CURRENT_SOURCE_DIR}/database-postgresql.pgc
+	DEPENDS
+		${CMAKE_CURRENT_SOURCE_DIR}/database-postgresql.pgc
+	COMMENT
+		"Running ecpg on database-postgresql.pgc"
+	VERBATIM
 )
 
 add_custom_command(
-  OUTPUT
-  ${CMAKE_CURRENT_SOURCE_DIR}/config.c
-  COMMAND
-    ${YACC_EXECUTABLE}
-    -o ${CMAKE_CURRENT_SOURCE_DIR}/config.c
-      ${CMAKE_CURRENT_SOURCE_DIR}/config.y
-  DEPENDS
-    ${CMAKE_CURRENT_SOURCE_DIR}/config.y
-  COMMENT
-    "Running yacc on config.y"
-  VERBATIM
+	OUTPUT
+		${CMAKE_CURRENT_SOURCE_DIR}/config.c
+	COMMAND
+		${YACC_EXECUTABLE}
+		-o ${CMAKE_CURRENT_SOURCE_DIR}/config.c
+		${CMAKE_CURRENT_SOURCE_DIR}/config.y
+	DEPENDS
+		${CMAKE_CURRENT_SOURCE_DIR}/config.y
+	COMMENT
+		"Running yacc on config.y"
+	VERBATIM
 )
 
 add_library(objects OBJECT
-  abagnale.c
-  abagnalectl.c
-  algorithm-trend.c
-  array.c
-  exchange-coinbase.c
-  exchange.c
-  heap.c
-  main.c
-  map.c
-  math-postgresql.c
-  mongoose.c
-  patterns.c
-  proc.c
-  queue.c
-  string.c
-  thread.c
-  time.c
-  wcjson.c
-  wcjson-document.c
-  ${CMAKE_CURRENT_SOURCE_DIR}/config.c
-  ${CMAKE_CURRENT_SOURCE_DIR}/database-postgresql.c
+	abagnale.c
+	abagnalectl.c
+	algorithm-trend.c
+	array.c
+	exchange-coinbase.c
+	exchange.c
+	heap.c
+	main.c
+	map.c
+	math-postgresql.c
+	mongoose.c
+	patterns.c
+	proc.c
+	queue.c
+	string.c
+	thread.c
+	time.c
+	wcjson.c
+	wcjson-document.c
+	${CMAKE_CURRENT_SOURCE_DIR}/config.c
+	${CMAKE_CURRENT_SOURCE_DIR}/database-postgresql.c
 )
 
 set_source_files_properties(
-  ${CMAKE_CURRENT_SOURCE_DIR}/config.c
-  ${CMAKE_CURRENT_SOURCE_DIR}/database-postgresql.c
-  PROPERTIES
-    GENERATED TRUE
+	${CMAKE_CURRENT_SOURCE_DIR}/config.c
+	${CMAKE_CURRENT_SOURCE_DIR}/database-postgresql.c
+	PROPERTIES
+		GENERATED TRUE
 )
 
 add_executable(abagnale
-  $<TARGET_OBJECTS:objects>
+	$<TARGET_OBJECTS:objects>
 )
 
 add_executable(abagnalectl
-  $<TARGET_OBJECTS:objects>
+	$<TARGET_OBJECTS:objects>
 )
 
 set_target_properties(
-  abagnale abagnalectl
+	abagnale
+	abagnalectl
 	PROPERTIES
-	    MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>"
-      VERSION ${PROJECT_VERSION}
+		MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>"
+	VERSION
+		${PROJECT_VERSION}
 )
 
 target_include_directories(objects PRIVATE
-  ${PostgreSQL_INCLUDE_DIRS}
+	${PostgreSQL_INCLUDE_DIRS}
 )
 
 target_link_libraries(objects PRIVATE
-  OpenSSL::Crypto
-  OpenSSL::SSL
-  PostgreSQL::ECPG
-  PostgreSQL::PGTYPES
-  PostgreSQL::PostgreSQL
-  m
+	OpenSSL::Crypto
+	OpenSSL::SSL
+	PostgreSQL::ECPG
+	PostgreSQL::PGTYPES
+	PostgreSQL::PostgreSQL
+	m
 )
 
 target_link_libraries(abagnale PRIVATE objects)
 target_link_libraries(abagnalectl PRIVATE objects)
 
 add_custom_command(
-  TARGET abagnale POST_BUILD
-  COMMAND ${CMAKE_COMMAND} -E remove -f
-    ${CMAKE_CURRENT_SOURCE_DIR}/config.c
-    ${CMAKE_CURRENT_SOURCE_DIR}/database-postgresql.c
+	TARGET abagnale POST_BUILD
+	COMMAND
+		${CMAKE_COMMAND} -E remove -f
+		${CMAKE_CURRENT_SOURCE_DIR}/config.c
+		${CMAKE_CURRENT_SOURCE_DIR}/database-postgresql.c
 )
 
 install(
 	FILES
-    abagnale.conf
-    DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/abagnale
+		abagnale.conf
+	DESTINATION
+		${CMAKE_INSTALL_SYSCONFDIR}/abagnale
 )
 
 install(
 	TARGETS
-      abagnale
-      abagnalectl
+		abagnale
+		abagnalectl
 	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
 	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
 	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
