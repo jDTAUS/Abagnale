@@ -201,9 +201,12 @@ target_link_libraries(objects PRIVATE
 	PostgreSQL::ECPG
 	PostgreSQL::PGTYPES
 	PostgreSQL::PostgreSQL
-	PkgConfig::stdthreads
 	m
 )
+
+if(stdthreads_FOUND)
+	target_link_libraries(objects PRIVATE PkgConfig::stdthreads)
+endif()
 
 target_link_libraries(abagnale PRIVATE objects)
 target_link_libraries(abagnalectl PRIVATE objects)
