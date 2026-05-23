@@ -35,10 +35,8 @@ FORMAT=clang-format
 
 INCLUDES=-I/usr/include
 INCLUDES+=-I/usr/include/postgresql
-INCLUDES+=-I/usr/include/wcjson
 INCLUDES+=-I/usr/local/include
 INCLUDES+=-I/usr/local/include/postgresql
-INCLUDES+=-I/usr/local/include/wcjson
 
 DEBUG=
 DEBUG+=-g
@@ -51,6 +49,9 @@ DEBUG+=-g
 CONFIG=
 CONFIG+=-DMG_TLS=MG_TLS_OPENSSL
 CONFIG+=-DMG_MAX_RECV_SIZE="(1024UL * 1024UL * 1024UL)"
+CONFIG+=-DWCHAR_T_UTF32
+#CONFIG+=-DWCHAR_T_UTF16
+#CONFIG+=-DWCHAR_T_UTF8
 
 PROFILE=
 PROFILE+=-pg
@@ -89,11 +90,6 @@ LDFLAGS+=-lecpg
 #   https://www.postgresql.org/docs/18/ecpg-pgtypes.html
 LDFLAGS+=-lpgtypes
 
-# Wide Character JSON for C
-#   http://wcjson.de
-#   https://github.com/wcjson/wcjson/releases/download/v0.35/wcjson-0.35.tar.gz
-LDFLAGS+=-lwcjson
-
 LDFLAGS+=-lm
 LDFLAGS+=-lcrypto
 LDFLAGS+=-lssl
@@ -116,6 +112,8 @@ HEADERS+=queue.h
 HEADERS+=string.h
 HEADERS+=thread.h
 HEADERS+=time.h
+HEADERS+=wcjson.h
+HEADERS+=wcjson-document.h
 
 OBJS=abagnale.o
 OBJS+=abagnalectl.o
@@ -133,6 +131,8 @@ OBJS+=queue.o
 OBJS+=string.o
 OBJS+=thread.o
 OBJS+=time.o
+OBJS+=wcjson.o
+OBJS+=wcjson-document.o
 
 OBJS+=database-postgresql.o
 OBJS+=math-postgresql.o
@@ -153,6 +153,8 @@ FORMATSRC+=queue.c
 FORMATSRC+=string.c
 FORMATSRC+=thread.c
 FORMATSRC+=time.c
+FORMATSRC+=wcjson.c
+FORMATSRC+=wcjson-document.c
 
 FORMATSRC+=database-postgresql.pgc
 FORMATSRC+=math-postgresql.c

@@ -31,14 +31,13 @@
 #include "patterns.h"
 #include "proc.h"
 #include "string.h"
+#include "wcjson-document.h"
 
 #include <ctype.h>
 #include <errno.h>
 #include <stdarg.h>
 #include <string.h>
 #include <stdlib.h>
-
-#include <wcjson-document.h>
 
 extern const struct String *restrict const progname;
 

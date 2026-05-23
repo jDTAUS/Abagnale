@@ -28,14 +28,13 @@
 #include "queue.h"
 #include "thread.h"
 #include "time.h"
+#include "wcjson-document.h"
 
 #include <inttypes.h>
 #include <openssl/bn.h>
 #include <openssl/ec.h>
 #include <openssl/evp.h>
 #include <openssl/pem.h>
-#include <wcjson-document.h>
-#include <wcjson.h>
 
 #define URL_MAX_LENGTH (size_t)512
 #define HTTP_RESPONSE_MAX_WCHARS (size_t)5242880
