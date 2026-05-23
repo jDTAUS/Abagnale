@@ -51,3 +51,7 @@ Spades, the Ace of Spades. Enough said.
 ./thread.c                - Thread implementation source code
 ./time.h                  - Date and time API header file
 ./time.c                  - Date and time implementation source code
+./wcjson.h                - Wide Character JSON parser API header file
+./wcjson.c                - Wide Character JSON parser implementation source code
+./wcjson-document.h       - Wide Character JSON document API header file
+./wcjson-document.c       - Wide Character JSON document implementation source code
