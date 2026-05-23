@@ -12,6 +12,7 @@ Spades, the Ace of Spades. Enough said.
 
 ./INTRO.txt               - This file
 ./LICENSES.txt            - License information
+./CMakeLists.txt          - CMake build file
 ./Makefile                - BSD Makefile containing build instructions
 ./abagnale.conf           - Documented configuration file
 ./abagnale.service        - systemd service file
