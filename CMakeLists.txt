@@ -113,6 +113,8 @@ endif()
 find_program(ECPG_EXECUTABLE ecpg REQUIRED)
 find_program(YACC_EXECUTABLE yacc REQUIRED)
 
+pkg_check_modules(stdthreads stdthreads IMPORTED_TARGET)
+
 add_custom_command(
 	OUTPUT
 		${CMAKE_CURRENT_SOURCE_DIR}/database-postgresql.c
@@ -199,6 +201,7 @@ target_link_libraries(objects PRIVATE
 	PostgreSQL::ECPG
 	PostgreSQL::PGTYPES
 	PostgreSQL::PostgreSQL
+	PkgConfig::stdthreads
 	m
 )
 
