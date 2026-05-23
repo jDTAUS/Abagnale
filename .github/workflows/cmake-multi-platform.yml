@@ -101,9 +101,7 @@ jobs:
         -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
         -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
-        -DPostgreSQL_ROOT=${{ env.PostgreSQL_ROOT }}
-        -DPostgreSQL_INCLUDE_DIR=${{ env.PostgreSQL_INCLUDE_DIR }}
-        -DPostgreSQL_LIBRARY=${{ env.PostgreSQL_LIBRARY }}
+        ${{ runner.os == 'macOS' && format('-DPostgreSQL_ROOT={0} -DPostgreSQL_INCLUDE_DIR={0}/include -DPostgreSQL_LIBRARY={0}/lib/libpq.dylib', env.PostgreSQL_ROOT) || '' }}
         -S ${{ github.workspace }}
 
     - name: Build
