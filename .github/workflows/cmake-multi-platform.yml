@@ -91,6 +91,8 @@ jobs:
         echo "PostgreSQL_ROOT=$PG_PREFIX" >> $GITHUB_ENV
         echo "PostgreSQL_INCLUDE_DIR=$PG_PREFIX/include" >> $GITHUB_ENV
         echo "PostgreSQL_LIBRARY=$PG_PREFIX/lib/libpq.dylib" >> $GITHUB_ENV
+        echo "ECPG_LIBRARY=$PG_PREFIX/lib/libecpg.dylib" >> $GITHUB_ENV
+        echo "PGTYPES_LIBRARY=$PG_PREFIX/lib/libpgtypes.dylib" >> $GITHUB_ENV
 
     - name: Configure CMake
       # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only
@@ -101,7 +103,7 @@ jobs:
         -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
         -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
-        ${{ runner.os == 'macOS' && format('-DPostgreSQL_ROOT={0} -DPostgreSQL_INCLUDE_DIR={0}/include -DPostgreSQL_LIBRARY={0}/lib/libpq.dylib', env.PostgreSQL_ROOT) || '' }}
+        ${{ runner.os == 'macOS' && format('-DPostgreSQL_ROOT={0} -DPostgreSQL_INCLUDE_DIR={1} -DPostgreSQL_LIBRARY={2} -DECPG_LIBRARY={3} -DPGTYPES_LIBRARY={4}', env.PostgreSQL_ROOT, env.PostgreSQL_INCLUDE_DIR, env.PostgreSQL_LIBRARY, env.ECPG_LIBRARY, env.PGTYPES_LIBRARY) || '' }}
         -S ${{ github.workspace }}
 
     - name: Build
