@@ -17,6 +17,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "exchange.h"
 #include "heap.h"
 #include "math.h"
@@ -148,3 +152,7 @@ inline void ExchangeConfig_delete(void *restrict const e) {
   String_delete(cnf->jwt_key);
   heap_free(cnf);
 }
+
+#ifdef __cplusplus
+}
+#endif

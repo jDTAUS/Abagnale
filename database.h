@@ -20,6 +20,10 @@
 #ifndef ABAG_DATABASE_H
 #define ABAG_DATABASE_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "math.h"
 
 #include <stdbool.h>
@@ -272,4 +276,7 @@ bool db_position_state_restore(struct db_position_state_rec *const,
                                const void *const, const char *const);
 void db_position_state_persist(const void *const, const char *const,
                                const struct db_position_state_rec *const);
+#ifdef __cplusplus
+}
+#endif
 #endif

@@ -17,6 +17,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "heap.h"
 #include "math.h"
 #include "proc.h"
@@ -326,3 +330,7 @@ inline void Numeric_atan_to(const struct Numeric *restrict const n,
   res->s = Numeric_to_char(res, 20);
 #endif
 }
+
+#ifdef __cplusplus
+}
+#endif

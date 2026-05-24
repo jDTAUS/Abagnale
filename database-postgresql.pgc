@@ -17,6 +17,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "config.h"
 #include "database.h"
 #include "math.h"
@@ -1912,3 +1916,7 @@ void db_position_state_persist(
   ECPGdebug(0, stdout);
 #endif
 }
+
+#ifdef __cplusplus
+}
+#endif

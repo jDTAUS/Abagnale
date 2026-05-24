@@ -17,6 +17,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "array.h"
 #include "heap.h"
 #include "thread.h"
@@ -180,3 +184,7 @@ inline const size_t Array_size(const struct Array *restrict const a) {
 inline void *const *Array_items(const struct Array *restrict const a) {
   return a->items;
 }
+
+#ifdef __cplusplus
+}
+#endif

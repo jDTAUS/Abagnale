@@ -20,6 +20,10 @@
 #ifndef ABAG_THREAD_H
 #define ABAG_THREAD_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <stdbool.h>
 #include <threads.h>
 #include <time.h>
@@ -47,4 +51,7 @@ void condition_signal(cnd_t *restrict const);
 void condition_timedwait(cnd_t *restrict const, mtx_t *restrict const,
                          const struct timespec *restrict const);
 void condition_wait(cnd_t *restrict const, mtx_t *restrict const);
+#ifdef __cplusplus
+}
+#endif
 #endif

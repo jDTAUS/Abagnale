@@ -25,6 +25,10 @@
 #ifndef MONGOOSE_H
 #define MONGOOSE_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define MG_VERSION "7.21"
 
 #ifdef __cplusplus
@@ -4096,6 +4100,9 @@ struct mg_tcpip_driver_xmc7_data {
 #endif
 
 
+#ifdef __cplusplus
+}
+#endif
 #ifdef __cplusplus
 }
 #endif

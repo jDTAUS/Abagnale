@@ -20,6 +20,10 @@
 #ifndef ABAG_MATH_H
 #define ABAG_MATH_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct Numeric;
 
 struct Numeric *Numeric_new(void);
@@ -79,4 +83,7 @@ struct Numeric *Numeric_atan(const struct Numeric *restrict const);
 void Numeric_atan_to(const struct Numeric *restrict const,
                      struct Numeric *restrict const);
 
+#ifdef __cplusplus
+}
+#endif
 #endif

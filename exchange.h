@@ -20,6 +20,10 @@
 #ifndef ABAG_EXCHANGE_H
 #define ABAG_EXCHANGE_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "array.h"
 #include "math.h"
 #include "string.h"
@@ -166,4 +170,8 @@ void Pricing_delete(void *restrict const);
 
 struct ExchangeConfig *ExchangeConfig_new(void);
 void ExchangeConfig_delete(void *restrict const);
+
+#ifdef __cplusplus
+}
+#endif
 #endif

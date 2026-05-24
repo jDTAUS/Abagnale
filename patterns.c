@@ -41,6 +41,10 @@
  *                Prefix functions dealing with the heap with heap_
  */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include <ctype.h>
 #include <errno.h>
 #include <stddef.h>
@@ -714,3 +718,8 @@ str_match_free(struct str_match *m)
 	m->sm_match = NULL;
 	m->sm_nmatch = 0;
 }
+
+#ifdef __cplusplus
+}
+#endif
+

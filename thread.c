@@ -17,6 +17,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "thread.h"
 #include "proc.h"
 
@@ -171,3 +175,6 @@ inline void condition_wait(cnd_t *restrict const cond,
     fatal();
   }
 }
+#ifdef __cplusplus
+}
+#endif

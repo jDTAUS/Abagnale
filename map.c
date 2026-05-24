@@ -17,6 +17,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #include "map.h"
 #include "heap.h"
 #include "thread.h"
@@ -177,3 +181,7 @@ inline const void *const
 MapIterator_value(const struct MapIterator *restrict const it) {
   return it->e != NULL ? it->e->value : NULL;
 }
+
+#ifdef __cplusplus
+}
+#endif
