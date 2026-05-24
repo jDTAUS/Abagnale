@@ -17,10 +17,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "abagnale.h"
 #include "array.h"
 #include "config.h"
@@ -762,7 +758,3 @@ int abagnalectl(int argc, char *argv[]) {
 
   return cmd(argc, argv);
 }
-
-#ifdef __cplusplus
-}
-#endif

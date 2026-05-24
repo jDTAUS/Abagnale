@@ -20,10 +20,6 @@
 #ifndef ABAG_ARRAY_H
 #define ABAG_ARRAY_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <stdbool.h>
 #include <stddef.h>
 #include <threads.h>
@@ -58,8 +54,4 @@ void *Array_remove_idx(struct Array *restrict const, const size_t);
 
 const size_t Array_size(const struct Array *restrict const);
 void *const *Array_items(const struct Array *restrict const);
-
-#ifdef __cplusplus
-}
-#endif
 #endif

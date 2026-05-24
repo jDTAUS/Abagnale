@@ -25,10 +25,6 @@
  */
 
 %{
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "abagnale.h"
 #include "config.h"
 #include "heap.h"
@@ -1378,8 +1374,4 @@ bool MarketConfig_match(const struct MarketConfig *restrict const c,
 
   return match;
 }
-
-#ifdef __cplusplus
-}
-#endif
 

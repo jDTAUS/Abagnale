@@ -20,10 +20,6 @@
 #ifndef ABAG_TIME_H
 #define ABAG_TIME_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "math.h"
 
 #include <stdbool.h>
@@ -40,7 +36,4 @@ bool nanos_from_iso8601(const char *restrict const, const size_t,
                         struct Numeric *restrict const);
 char *nanos_to_iso8601(const struct Numeric *restrict const);
 char *nanos_string(const struct Numeric *restrict const);
-#ifdef __cplusplus
-}
-#endif
 #endif

@@ -20,10 +20,6 @@
 #ifndef ABAG_MAP_H
 #define ABAG_MAP_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <stdbool.h>
 #include <stddef.h>
 
@@ -56,7 +52,4 @@ void *MapIterator_remove(struct MapIterator *restrict const);
 const void *const MapIterator_key(const struct MapIterator *restrict const);
 const void *const MapIterator_value(const struct MapIterator *restrict const);
 
-#ifdef __cplusplus
-}
-#endif
 #endif

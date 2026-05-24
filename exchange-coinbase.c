@@ -17,10 +17,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "config.h"
 #include "database.h"
 #include "exchange.h"
@@ -2535,7 +2531,3 @@ ret:
   heap_free(doc.esc);
   return pricing;
 }
-
-#ifdef __cplusplus
-}
-#endif

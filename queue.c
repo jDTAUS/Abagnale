@@ -17,10 +17,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "queue.h"
 #include "heap.h"
 #include "thread.h"
@@ -134,7 +130,3 @@ inline void *Queue_dequeue_await(struct Queue *restrict const q) {
 
   return item;
 }
-
-#ifdef __cplusplus
-}
-#endif

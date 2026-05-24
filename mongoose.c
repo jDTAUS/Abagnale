@@ -22,10 +22,6 @@
 // Origin: https://github.com/cesanta/mongoose 7.21
 // Modifications: None.
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "mongoose.h"
 
 #ifdef MG_ENABLE_LINES
@@ -28928,7 +28924,4 @@ void ETH_IRQHandler(void) {
 struct mg_tcpip_driver mg_tcpip_driver_xmc7 = {mg_tcpip_driver_xmc7_init,
                                                mg_tcpip_driver_xmc7_tx, NULL,
                                                mg_tcpip_driver_xmc7_poll};
-#endif
-#ifdef __cplusplus
-}
 #endif

@@ -56,10 +56,6 @@
 #ifndef OPTPARSE_H
 #define OPTPARSE_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #ifndef OPTPARSE_API
 #  define OPTPARSE_API
 #endif
@@ -413,7 +409,4 @@ optparse_long(struct optparse *options,
 }
 
 #endif /* OPTPARSE_IMPLEMENTATION */
-#ifdef __cplusplus
-}
-#endif
 #endif /* OPTPARSE_H */

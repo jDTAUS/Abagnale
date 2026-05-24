@@ -17,10 +17,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "abagnale.h"
 #include "config.h"
 #include "database.h"
@@ -679,7 +675,3 @@ static bool trend_market_plot(const void *restrict const db,
 
   return true;
 }
-
-#ifdef __cplusplus
-}
-#endif

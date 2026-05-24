@@ -20,10 +20,6 @@
 #ifndef ABAG_PROC_H
 #define ABAG_PROC_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 void proc_init(void);
 void proc_destroy(void);
 
@@ -31,7 +27,4 @@ void wout(const char *, ...) __attribute__((__format__(printf, 1, 2)));
 void werr(const char *, ...) __attribute__((__format__(printf, 1, 2)));
 
 _Noreturn void fatal(void);
-#ifdef __cplusplus
-}
-#endif
 #endif

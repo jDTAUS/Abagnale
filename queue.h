@@ -20,10 +20,6 @@
 #ifndef ABAG_QUEUE_H
 #define ABAG_QUEUE_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <stddef.h>
 #include <time.h>
 
@@ -38,8 +34,4 @@ void *Queue_dequeue_await(struct Queue *restrict const);
 
 void Queue_start(struct Queue *restrict const);
 void Queue_stop(struct Queue *restrict const);
-
-#ifdef __cplusplus
-}
-#endif
 #endif

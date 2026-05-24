@@ -28,10 +28,6 @@
 #ifndef PATTERNS_H
 #define PATTERNS_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <stdint.h>
 
 #include "string.h"
@@ -58,8 +54,4 @@ int	 str_match(const char *, const char *, struct str_match *,
 void	 str_match_free(struct str_match *);
 __END_DECLS
 
-#ifdef __cplusplus
-}
-#endif
 #endif /* PATTERNS_H */
-

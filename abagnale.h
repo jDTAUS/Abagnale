@@ -20,10 +20,6 @@
 #ifndef ABAG_ABAGNALE_H
 #define ABAG_ABAGNALE_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "exchange.h"
 
 #include <stdint.h>
@@ -151,7 +147,4 @@ void samples_per_second(struct Numeric *restrict const,
 void samples_per_minute(struct Numeric *restrict const,
                         const struct Array *restrict const);
 
-#ifdef __cplusplus
-}
-#endif
 #endif

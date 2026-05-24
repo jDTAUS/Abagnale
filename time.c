@@ -17,10 +17,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "time.h"
 #include "heap.h"
 #include "math.h"
@@ -434,7 +430,3 @@ char *nanos_string(const struct Numeric *restrict const nanos) {
 
   return chars;
 }
-
-#ifdef __cplusplus
-}
-#endif

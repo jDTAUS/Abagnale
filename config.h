@@ -20,10 +20,6 @@
 #ifndef ABAG_CONF_H
 #define ABAG_CONF_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "array.h"
 #include "exchange.h"
 #include "map.h"
@@ -98,8 +94,4 @@ bool MarketConfig_match(const struct MarketConfig *restrict const,
 int config_symset(char *restrict const);
 int config_fparse(struct Config *const restrict, const char *restrict const);
 struct Numeric *config_nsparse(const struct String *restrict const);
-
-#ifdef __cplusplus
-}
-#endif
 #endif

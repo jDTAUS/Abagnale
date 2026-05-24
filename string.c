@@ -17,10 +17,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "string.h"
 #include "heap.h"
 #include "map.h"
@@ -221,7 +217,3 @@ inline bool String_equals(const void *restrict const o1,
          strncmp(((const struct String *)o1)->s, ((const struct String *)o2)->s,
                  ((const struct String *)o1)->len) == 0;
 }
-
-#ifdef __cplusplus
-}
-#endif

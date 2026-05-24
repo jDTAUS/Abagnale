@@ -17,10 +17,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "abagnale.h"
 #include "array.h"
 #include "config.h"
@@ -289,7 +285,3 @@ int main(int argc, char *argv[]) {
   proc_destroy();
   return r;
 }
-
-#ifdef __cplusplus
-}
-#endif

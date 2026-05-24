@@ -17,10 +17,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "heap.h"
 #include "proc.h"
 
@@ -67,7 +63,3 @@ inline void heap_trim(const size_t pad) {
   malloc_trim(pad);
 #endif
 }
-
-#ifdef __cplusplus
-}
-#endif

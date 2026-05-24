@@ -17,10 +17,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include "abagnale.h"
 #include "config.h"
 #include "database.h"
@@ -3221,7 +3217,3 @@ int abagnale(int argc, char *argv[]) {
 
   return EXIT_SUCCESS;
 }
-
-#ifdef __cplusplus
-}
-#endif

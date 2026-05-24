@@ -20,10 +20,6 @@
 #ifndef ABAG_STRING_H
 #define ABAG_STRING_H
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 #include <stdbool.h>
 #include <stddef.h>
 
@@ -45,7 +41,4 @@ bool String_equals(const void *restrict const, const void *restrict const);
 const char *const String_chars(const struct String *restrict const);
 const size_t String_length(const struct String *restrict const);
 
-#ifdef __cplusplus
-}
-#endif
 #endif
