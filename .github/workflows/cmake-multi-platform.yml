@@ -152,7 +152,6 @@ jobs:
         -DPostgreSQL_LIBRARY="${{ env.PostgreSQL_LIBRARY }}" `
         -DECPG_LIBRARY="${{ env.ECPG_LIBRARY }}" `
         -DPGTYPES_LIBRARY="${{ env.PGTYPES_LIBRARY }}" `
-	-D_Atomic(x)=x `
         -S ${{ github.workspace }}
 
     - name: Build

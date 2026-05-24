@@ -20,11 +20,6 @@
 #ifndef ABAG_PROC_H
 #define ABAG_PROC_H
 
-#ifdef _MSC_VER
-#define _Noreturn __declspec(noreturn)
-#define __attribute__(x)
-#endif
-
 void proc_init(void);
 void proc_destroy(void);
 
