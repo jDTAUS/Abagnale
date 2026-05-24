@@ -97,6 +97,8 @@ jobs:
         echo "PostgreSQL_ROOT=$PG_PREFIX" >> $GITHUB_ENV
         echo "PostgreSQL_INCLUDE_DIR=$PG_PREFIX/include" >> $GITHUB_ENV
         echo "PostgreSQL_LIBRARY=$PG_PREFIX/lib/libpq.dylib" >> $GITHUB_ENV
+        echo "ECPG_LIBRARY=$PG_PREFIX/lib/libecpg.dylib" >> $GITHUB_ENV
+        echo "PGTYPES_LIBRARY=$PG_PREFIX/lib/libpgtypes.lib" >> $GITHUB_ENV
 
     - name: Set PostgreSQL paths for CMake (Windows)
       if: runner.os == 'Windows'
@@ -132,6 +134,8 @@ jobs:
         -DPostgreSQL_ROOT="${{ env.PostgreSQL_ROOTi }}"
         -DPostgreSQL_INCLUDE_DIR="${{ env.PostgreSQL_INCLUDE_DIR }}"
         -DPostgreSQL_LIBRARY="${{ env.PostgreSQL_LIBRARY }}"
+        -DECPG_LIBRARY="${{ env.ECPG_LIBRARY }}"
+        -DPGTYPES_LIBRARY="${{ env.PGTYPES_LIBRARY }}"
         -S ${{ github.workspace }}
 
     - name: Configure CMake (Windows)
