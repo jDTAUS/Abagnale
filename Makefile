@@ -101,6 +101,7 @@ YACCFLAGS+=-o
 
 HEADERS=abagnale.h 
 HEADERS+=array.h
+HEADERS+=compat-msc.h
 HEADERS+=config.h
 HEADERS+=database.h
 HEADERS+=exchange.h
