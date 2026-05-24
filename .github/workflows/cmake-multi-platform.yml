@@ -128,7 +128,7 @@ jobs:
         -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
         -DPostgreSQL_ROOT="$PostgreSQL_ROOT"
-        -DPOstgreSQL_INCLUDE_DIR="$PostgreSQL_INCLUDE_DIR"
+        -DPostgreSQL_INCLUDE_DIR="$PostgreSQL_INCLUDE_DIR"
         -DPostgreSQL_LIBRARY="$PostgreSQL_LIBRARY"
         -S ${{ github.workspace }}
 
@@ -141,7 +141,7 @@ jobs:
         -DCMAKE_C_COMPILER=${{ matrix.c_compiler }} `
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} `
         -DPostgreSQL_ROOT=$env:PostgreSQL_ROOT `
-        -DPOstgreSQL_INCLUDE_DIR=$env:PostgreSQL_INCLUDE_DIR `
+        -DPostgreSQL_INCLUDE_DIR=$env:PostgreSQL_INCLUDE_DIR `
         -DPostgreSQL_LIBRARY=$env:PostgreSQL_LIBRARY `
         -S ${{ github.workspace }}
 
