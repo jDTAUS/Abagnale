@@ -78,6 +78,7 @@ endif()
 
 find_package(OpenSSL REQUIRED)
 find_package(PostgreSQL REQUIRED)
+find_package(PkgConfig REQUIRED)
 
 find_library(ECPG_LIBRARY
 	NAMES ecpg
