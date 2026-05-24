@@ -213,8 +213,11 @@ target_link_libraries(objects PRIVATE
 	PostgreSQL::ECPG
 	PostgreSQL::PGTYPES
 	PostgreSQL::PostgreSQL
-	$<$<NOT:$<PLATFORM_ID:Windows>>:m>
 )
+
+if(NOT WIN32)
+	target_link_libraries(objects PRIVATE m)
+endif()
 
 if(stdthreads_FOUND)
 	target_link_libraries(objects PRIVATE PkgConfig::stdthreads)
