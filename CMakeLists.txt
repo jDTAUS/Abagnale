@@ -29,7 +29,6 @@ if(MSVC)
 	set(CMAKE_C_STANDARD_REQUIRED	ON)
 	set(CMAKE_C_EXTENSIONS	OFF)
 	add_compile_definitions(HAVE_ABAG_HOST_H)
-	add_compile_options(/Gd)
 endif()
 
 include(CheckTypeSize)
