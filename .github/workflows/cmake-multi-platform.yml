@@ -82,7 +82,7 @@ jobs:
     - name: Install build dependencies (Windows)
       if: runner.os == 'Windows'
       run: |
-        choco install postgresql --params '/Password:postgres' -y
+        choco install pkgconfiglite postgresql winflexbison --params '/Password:postgres' -y --no-progress
         choco install winflexbison -y
 
     - name: Set PostgreSQL paths for CMake (macOS)
