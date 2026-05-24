@@ -25,10 +25,6 @@
 #ifndef MONGOOSE_H
 #define MONGOOSE_H
 
-#ifdef HAVE_ABAG_HOST_H
-#include "host.h"
-#endif
-
 #define MG_VERSION "7.21"
 
 #ifdef __cplusplus

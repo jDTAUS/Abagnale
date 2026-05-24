@@ -22,10 +22,6 @@
 // Origin: https://github.com/cesanta/mongoose 7.21
 // Modifications: None.
 
-#ifdef HAVE_ABAG_HOST_H
-#include "host.h"
-#endif
-
 #include "mongoose.h"
 
 #ifdef MG_ENABLE_LINES
