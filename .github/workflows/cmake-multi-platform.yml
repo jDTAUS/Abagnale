@@ -69,7 +69,7 @@ jobs:
         echo "build-output-dir=${{ github.workspace }}/build" >> "$GITHUB_OUTPUT"
     
     - name: Install build dependencies (Ubuntu)
-      if: runner.os == 'Linux"
+      if: runner.os == 'Linux'
       shell: sh
       run : |
         sudo apt-get update
