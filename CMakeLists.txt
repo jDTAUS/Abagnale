@@ -111,7 +111,11 @@ if(PGTYPES_LIBRARY AND NOT TARGET PostgreSQL::PGTYPES)
 endif()
 
 find_program(ECPG_EXECUTABLE ecpg REQUIRED)
-find_program(YACC_EXECUTABLE yacc REQUIRED)
+find_program(YACC_EXECUTABLE
+	NAMES yacc win_bison bison
+	DOC "yacc compatible parser generator"
+	REQUIRED
+)
 
 pkg_check_modules(stdthreads stdthreads IMPORTED_TARGET)
 

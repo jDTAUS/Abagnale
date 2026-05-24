@@ -83,6 +83,7 @@ jobs:
       if: runner.os == 'Windows'
       run: |
         choco install postgresql --params '/Password:postgres' -y
+        choco install winflexbison -y
 
     - name: Set PostgreSQL paths for CMake (macOS)
       if: runner.os == 'macOS'
