@@ -155,7 +155,7 @@ add_custom_command(
 	VERBATIM
 )
 
-add_library(objects OBJECT
+add_library(objects STATIC
 	abagnale.c
 	abagnalectl.c
 	algorithm-trend.c
