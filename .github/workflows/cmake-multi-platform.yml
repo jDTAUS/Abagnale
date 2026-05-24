@@ -129,25 +129,25 @@ jobs:
         -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
         -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
-        -DPostgreSQL_ROOT="$PostgreSQL_ROOT"
-        -DPostgreSQL_INCLUDE_DIR="$PostgreSQL_INCLUDE_DIR"
-        -DPostgreSQL_LIBRARY="$PostgreSQL_LIBRARY"
+        -DPostgreSQL_ROOT="${{ env.PostgreSQL_ROOTi }}"
+        -DPostgreSQL_INCLUDE_DIR="${{ env.PostgreSQL_INCLUDE_DIR }}"
+        -DPostgreSQL_LIBRARY="${{ env.PostgreSQL_LIBRARY }}"
         -S ${{ github.workspace }}
 
     - name: Configure CMake (Windows)
       if: runner.os == 'Windows'
       shell: pwsh
       run: |
-        $env:PATH = "$env:PostgreSQL_ROOT\bin;" + $env:PATH
+        $env:PATH = "${{ env.PostgreSQL_ROOT }}\bin;" + $env:PATH
         cmake -B ${{ steps.strings.outputs.build-output-dir }} `
         -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }} `
         -DCMAKE_C_COMPILER=${{ matrix.c_compiler }} `
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} `
-        -DPostgreSQL_ROOT=$env:PostgreSQL_ROOT `
-        -DPostgreSQL_INCLUDE_DIR=$env:PostgreSQL_INCLUDE_DIR `
-        -DPostgreSQL_LIBRARY=$env:PostgreSQL_LIBRARY `
-        -DECPG_LIBRARY=$env:ECPG_LIBRARY `
-        -DPGTYPES_LIBRARY=$env:PGTYPES_LIBRARY `
+        -DPostgreSQL_ROOT="${{ env.PostgreSQL_ROOT }}" `
+        -DPostgreSQL_INCLUDE_DIR="${{ env.PostgreSQL_INCLUDE_DIR }}" `
+        -DPostgreSQL_LIBRARY="${{ env.PostgreSQL_LIBRARY }}" `
+        -DECPG_LIBRARY="${{ env.ECPG_LIBRARY }}" `
+        -DPGTYPES_LIBRARY="${{ env.PGTYPES_LIBRARY }}" `
         -S ${{ github.workspace }}
 
     - name: Build
