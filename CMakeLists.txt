@@ -213,7 +213,7 @@ target_link_libraries(objects PRIVATE
 	PostgreSQL::ECPG
 	PostgreSQL::PGTYPES
 	PostgreSQL::PostgreSQL
-	m
+	$<$<NOT:$<PLATFORM_ID:Windows>>:m>
 )
 
 if(stdthreads_FOUND)
