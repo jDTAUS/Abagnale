@@ -28,7 +28,7 @@ if(MSVC)
 	set(CMAKE_C_STANDARD	11)
 	set(CMAKE_C_STANDARD_REQUIRED	ON)
 	set(CMAKE_C_EXTENSIONS	OFF)
-	add_compile_options(/FI${CMAKE_CURRENT_SOURCE_DIR}/compat-msc.h)
+	add_compile_definitions(HAVE_ABAG_HOST_H)
 endif()
 
 include(CheckTypeSize)

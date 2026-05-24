@@ -17,11 +17,15 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "time.h"
+#ifdef HAVE_ABAG_HOST_H
+#include "host.h"
+#endif
+
 #include "heap.h"
 #include "math.h"
 #include "proc.h"
 #include "thread.h"
+#include "time.h"
 
 #include <errno.h>
 #include <stdio.h>

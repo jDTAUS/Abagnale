@@ -20,6 +20,10 @@
 #ifndef ABAG_MATH_H
 #define ABAG_MATH_H
 
+#ifdef HAVE_ABAG_HOST_H
+#include "host.h"
+#endif
+
 struct Numeric;
 
 struct Numeric *Numeric_new(void);

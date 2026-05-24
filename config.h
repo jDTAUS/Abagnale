@@ -20,6 +20,10 @@
 #ifndef ABAG_CONF_H
 #define ABAG_CONF_H
 
+#ifdef HAVE_ABAG_HOST_H
+#include "host.h"
+#endif
+
 #include "array.h"
 #include "exchange.h"
 #include "map.h"

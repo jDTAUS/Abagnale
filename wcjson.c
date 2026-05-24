@@ -29,6 +29,10 @@
 extern "C" {
 #endif
 
+#ifdef HAVE_ABAG_HOST_H
+#include "host.h"
+#endif
+
 #ifdef HAVE_CONFIG_H
 #include <config.h>
 #endif

@@ -17,6 +17,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#ifdef HAVE_ABAG_HOST_H
+#include "host.h"
+#endif
+
 #include "proc.h"
 #include "thread.h"
 

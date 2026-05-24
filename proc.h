@@ -20,6 +20,10 @@
 #ifndef ABAG_PROC_H
 #define ABAG_PROC_H
 
+#ifdef HAVE_ABAG_HOST_H
+#include "host.h"
+#endif
+
 void proc_init(void);
 void proc_destroy(void);
 

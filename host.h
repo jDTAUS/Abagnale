@@ -16,13 +16,12 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef ABAG_COMPAT_MSC_H
-#define ABAG_COMPAT_MSC_H
+#ifndef ABAG_HOST_H
+#define ABAG_HOST_H
 
 #if defined(_MSC_VER) && !defined(__clang__)
-#define _Atomic(T) T volatile
+#define _Atomic
 #define __attribute__(x)
-#define __attribute__
 #define _Noreturn __declspec(noreturn)
 #endif
 

@@ -20,6 +20,10 @@
 #ifndef ABAG_TIME_H
 #define ABAG_TIME_H
 
+#ifdef HAVE_ABAG_HOST_H
+#include "host.h"
+#endif
+
 #include "math.h"
 
 #include <stdbool.h>

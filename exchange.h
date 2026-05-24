@@ -20,6 +20,10 @@
 #ifndef ABAG_EXCHANGE_H
 #define ABAG_EXCHANGE_H
 
+#ifdef HAVE_ABAG_HOST_H
+#include "host.h"
+#endif
+
 #include "array.h"
 #include "math.h"
 #include "string.h"

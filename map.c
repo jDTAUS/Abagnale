@@ -17,8 +17,12 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "map.h"
+#ifdef HAVE_ABAG_HOST_H
+#include "host.h"
+#endif
+
 #include "heap.h"
+#include "map.h"
 #include "thread.h"
 
 struct Entry {

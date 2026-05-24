@@ -20,6 +20,10 @@
 #ifndef ABAG_QUEUE_H
 #define ABAG_QUEUE_H
 
+#ifdef HAVE_ABAG_HOST_H
+#include "host.h"
+#endif
+
 #include <stddef.h>
 #include <time.h>
 

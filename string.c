@@ -17,10 +17,14 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "string.h"
+#ifdef HAVE_ABAG_HOST_H
+#include "host.h"
+#endif
+
 #include "heap.h"
 #include "map.h"
 #include "proc.h"
+#include "string.h"
 #include "thread.h"
 
 #include <stdint.h>

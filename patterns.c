@@ -41,6 +41,10 @@
  *                Prefix functions dealing with the heap with heap_
  */
 
+#ifdef HAVE_ABAG_HOST_H
+#include "host.h"
+#endif
+
 #include <ctype.h>
 #include <errno.h>
 #include <stddef.h>

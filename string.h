@@ -20,6 +20,10 @@
 #ifndef ABAG_STRING_H
 #define ABAG_STRING_H
 
+#ifdef HAVE_ABAG_HOST_H
+#include "host.h"
+#endif
+
 #include <stdbool.h>
 #include <stddef.h>
 

@@ -20,6 +20,10 @@
 #ifndef ABAG_THREAD_H
 #define ABAG_THREAD_H
 
+#ifdef HAVE_ABAG_HOST_H
+#include "host.h"
+#endif
+
 #include <stdbool.h>
 #include <threads.h>
 #include <time.h>

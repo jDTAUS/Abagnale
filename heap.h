@@ -20,6 +20,10 @@
 #ifndef ABAG_HEAP_H
 #define ABAG_HEAP_H
 
+#ifdef HAVE_ABAG_HOST_H
+#include "host.h"
+#endif
+
 #include <stddef.h>
 
 void *heap_malloc(const size_t);

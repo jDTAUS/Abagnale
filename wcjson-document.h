@@ -31,6 +31,10 @@
 extern "C" {
 #endif
 
+#ifdef HAVE_ABAG_HOST_H
+#include "host.h"
+#endif
+
 #include <stdio.h>
 #include <wchar.h>
 

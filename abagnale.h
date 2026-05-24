@@ -20,6 +20,10 @@
 #ifndef ABAG_ABAGNALE_H
 #define ABAG_ABAGNALE_H
 
+#ifdef HAVE_ABAG_HOST_H
+#include "host.h"
+#endif
+
 #include "exchange.h"
 
 #include <stdint.h>
