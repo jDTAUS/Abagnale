@@ -129,15 +129,18 @@ bool nanos_from_iso8601(const char *restrict const iso, const size_t len,
   struct Numeric *restrict const secs = tls->nanos_from_iso8601.secs;
 
   unsigned year = 0, month = 0, day = 0, hour = 0, minute = 0, second = 0;
-  char fr[len];
-  fr[0] = '\0';
+  char fr[TIME_ISO8601_MAX_LENGTH + 1] = {0};
   char *frp = fr;
-  char tz[len];
-  tz[0] = '\0';
+  char tz[TIME_ISO8601_MAX_LENGTH + 1] = {0};
   char *tzp = tz;
   bool in_fraction = false;
   bool has_fraction = false;
   bool in_timezone = false;
+
+  if (len > TIME_ISO8601_MAX_LENGTH) {
+    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
+    fatal();
+  }
 
   for (size_t i = 0; i < len; i++) {
     switch (i) {
