@@ -171,12 +171,12 @@ jobs:
     - name: Upload build artifacts
       if: success()
       uses: actions/upload-artifact@v4
-      with: abagnale-${{ matrix.os }}-${{ matrix.c_compiler }}-${{ matrix.build_type }}-${{ steps.strings.outputs.date}}-${{ steps.strings.outputs.short-sha }}
-      path:|
-        ${{ steps.strings.outputs.build-output-dir }}/abagnale*
-        ${{ steps.strings.outputs.build-output-dir }}/abagnalectl*
-        ${{ steps.strings.outputs.build-output-dir }}/*.exe
-        ${{ steps.strings.outputs.build-output-dir }}/*.dll
-        ${{ steps.strings.outputs.build-output-dir }}/*.so
-        ${{ steps.strings.outputs.build-output-dir }}/*.dylib
-
+      with:
+        name: abagnale-${{ matrix.os }}-${{ matrix.c_compiler }}-${{ matrix.build_type }}-${{ steps.strings.outputs.date }}-${{ steps.strings.outputs.short-sha }}
+        path: |
+          ${{ steps.strings.outputs.build-output-dir }}/abagnale*
+          ${{ steps.strings.outputs.build-output-dir }}/abagnalectl*
+          ${{ steps.strings.outputs.build-output-dir }}/**/*.exe
+          ${{ steps.strings.outputs.build-output-dir }}/**/*.dll
+          ${{ steps.strings.outputs.build-output-dir }}/**/*.so
+          ${{ steps.strings.outputs.build-output-dir }}/**/*.dylib
