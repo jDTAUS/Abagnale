@@ -70,14 +70,12 @@ jobs:
     
     - name: Install build dependencies (Ubuntu)
       if: runner.os == 'Linux'
-      shell: sh
       run : |
         sudo apt-get update
         sudo apt-get install -y libpq-dev libecpg-dev
 
     - name: Install build dependencies (MacOS)
       if: runner.os == 'macOS'
-      shell: sh
       run: |
         brew install postgresql
 
@@ -88,7 +86,6 @@ jobs:
 
     - name: Set PostgreSQL paths for CMake (macOS)
       if: runner.os == 'macOS'
-      shell: sh
       run: |
         PG_PREFIX=$(brew --prefix postgresql)
 
@@ -116,7 +113,6 @@ jobs:
 
     - name: Configure CMake (Linux)
       if: runner.os == 'Linux'
-      shell: sh
       run: |
         cmake -B ${{ steps.strings.outputs.build-output-dir }} `
         -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }} `
@@ -126,7 +122,6 @@ jobs:
 
     - name: Configure CMake (MacOS)
       if: runner.os == 'macOS'
-      shell: sh
       run: |
         cmake -B ${{ steps.strings.outputs.build-output-dir }}
         -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
