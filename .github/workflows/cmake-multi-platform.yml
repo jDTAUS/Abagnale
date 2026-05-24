@@ -114,14 +114,14 @@ jobs:
           echo "PostgreSQL_LIBRARY=$pgPath\lib\libpq.lib" >> $env:GITHUB_ENV
         }
 
-    - name: Configure CMake (Ubuntu)
+    - name: Configure CMake (Linux)
       if: runner.os == 'Linux'
       shell: sh
       run: |
         cmake -B ${{ steps.strings.outputs.build-output-dir }} `
-        -DCMAKE_CXX_COMPILER=$${{ matrix.cpp_compiler }} `
-        -DCMAKE_C_COMPILER=$${{ matrix.c_compiler }} `
-        -DCMAKE_BUILD_TYPE=$${{ matrix.build_type }} `
+        -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }} `
+        -DCMAKE_C_COMPILER=${{ matrix.c_compiler }} `
+        -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} `
         -S ${{ github.workspace }}
 
     - name: Configure CMake (MacOS)
@@ -129,9 +129,9 @@ jobs:
       shell: sh
       run: |
         cmake -B ${{ steps.strings.outputs.build-output-dir }}
-        -DCMAKE_CXX_COMPILER=$${{ matrix.cpp_compiler }}
-        -DCMAKE_C_COMPILER=$${{ matrix.c_compiler }}
-        -DCMAKE_BUILD_TYPE=$${{ matrix.build_type }}
+        -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
+        -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
+        -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
         -DPostgreSQL_ROOT="$PostgreSQL_ROOT"
         -DPOstgreSQL_INCLUDE_DIR="$PostgreSQL_INCLUDE_DIR"
         -DPostgreSQL_LIBRARY="$PostgreSQL_LIBRARY"
@@ -142,9 +142,9 @@ jobs:
       shell: pwsh
       run: |
         cmake -B ${{ steps.strings.outputs.build-output-dir }} `
-        -DCMAKE_CXX_COMPILER=$${{ matrix.cpp_compiler }} `
-        -DCMAKE_C_COMPILER=$${{ matrix.c_compiler }} `
-        -DCMAKE_BUILD_TYPE=$${{ matrix.build_type }} `
+        -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }} `
+        -DCMAKE_C_COMPILER=${{ matrix.c_compiler }} `
+        -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} `
         -DPostgreSQL_ROOT=$env:PostgreSQL_ROOT `
         -DPOstgreSQL_INCLUDE_DIR=$env:PostgreSQL_INCLUDE_DIR `
         -DPostgreSQL_LIBRARY=$env:PostgreSQL_LIBRARY `
