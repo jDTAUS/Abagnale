@@ -84,7 +84,7 @@ jobs:
       run: |
         choco install pkgconfiglite postgresql winflexbison -y --no-progress
 
-    - name: Set PostgreSQL paths for CMake (macOS)
+    - name: Set PostgreSQL paths for CMake (MacOS)
       if: runner.os == 'macOS'
       run: |
         PG_PREFIX=$(brew --prefix postgresql)
@@ -131,7 +131,7 @@ jobs:
         -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }}
         -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
-        -DPostgreSQL_ROOT="${{ env.PostgreSQL_ROOTi }}"
+        -DPostgreSQL_ROOT="${{ env.PostgreSQL_ROOT }}"
         -DPostgreSQL_INCLUDE_DIR="${{ env.PostgreSQL_INCLUDE_DIR }}"
         -DPostgreSQL_LIBRARY="${{ env.PostgreSQL_LIBRARY }}"
         -DECPG_LIBRARY="${{ env.ECPG_LIBRARY }}"
