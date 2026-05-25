@@ -84,7 +84,7 @@ if(WCHAR_T_UTF8)
 endif()
 
 find_package(OpenSSL REQUIRED)
-find_package(PostgreSQL REQUIRED CONFIG)
+find_package(PostgreSQL REQUIRED)
 find_package(PkgConfig REQUIRED)
 
 find_library(ECPG_LIBRARY
