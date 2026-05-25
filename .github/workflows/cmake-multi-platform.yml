@@ -132,10 +132,6 @@ jobs:
         -DCMAKE_C_COMPILER=${{ matrix.c_compiler }}
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }}
         -DPostgreSQL_ROOT="${{ env.PostgreSQL_ROOT }}"
-        -DPostgreSQL_INCLUDE_DIR="${{ env.PostgreSQL_INCLUDE_DIR }}"
-        -DPostgreSQL_LIBRARY="${{ env.PostgreSQL_LIBRARY }}"
-        -DECPG_LIBRARY="${{ env.ECPG_LIBRARY }}"
-        -DPGTYPES_LIBRARY="${{ env.PGTYPES_LIBRARY }}"
         -S ${{ github.workspace }}
 
     - name: Configure CMake (Windows)
