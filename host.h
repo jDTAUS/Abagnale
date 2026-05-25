@@ -20,7 +20,7 @@
 #define ABAG_HOST_H
 
 #if defined(_MSC_VER) && !defined(__clang__)
-#define _Atomic(T) T volatile
+#define _Atomic
 #define __attribute__(x)
 #define _Noreturn __declspec(noreturn)
 #define inline
