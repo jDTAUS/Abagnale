@@ -155,7 +155,7 @@ add_custom_command(
 	VERBATIM
 )
 
-set(SOURCES
+add_library(objects OBJECT
 	abagnale.c
 	abagnalectl.c
 	algorithm-trend.c
@@ -186,8 +186,8 @@ set_source_files_properties(
 		GENERATED TRUE
 )
 
-add_executable(abagnale ${SOURCES})
-add_executable(abagnalectl ${SOURCES})
+add_executable(abagnale $<TARGET_OBJECTS:objects>)
+add_executable(abagnalectl $<TARGET_OBJECTS:objects>)
 
 set_target_properties(
 	abagnale
@@ -198,23 +198,11 @@ set_target_properties(
 		${PROJECT_VERSION}
 )
 
-target_include_directories(abagnale PRIVATE
+target_include_directories(objects PRIVATE
 	${PostgreSQL_INCLUDE_DIRS}
 )
 
-target_include_directories(abagnalectl PRIVATE
-	${PostgreSQL_INCLUDE_DIRS}
-)
-
-target_link_libraries(abagnale PRIVATE
-	OpenSSL::Crypto
-	OpenSSL::SSL
-	PostgreSQL::ECPG
-	PostgreSQL::PGTYPES
-	PostgreSQL::PostgreSQL
-)
-
-target_link_libraries(abagnalectl PRIVATE
+target_link_libraries(objects PRIVATE
 	OpenSSL::Crypto
 	OpenSSL::SSL
 	PostgreSQL::ECPG
@@ -223,14 +211,15 @@ target_link_libraries(abagnalectl PRIVATE
 )
 
 if(NOT WIN32)
-	target_link_libraries(abagnale PRIVATE m)
-	target_link_libraries(abagnalectl PRIVATE m)
+	target_link_libraries(objects PRIVATE m)
 endif()
 
 if(stdthreads_FOUND)
-	target_link_libraries(abagnale PRIVATE PkgConfig::stdthreads)
-	target_link_libraries(abagnalectl PRIVATE PkgConfig::stdthreads)
+	target_link_libraries(objects PRIVATE PkgConfig::stdthreads)
 endif()
+
+target_link_libraries(abagnale PRIVATE objects)
+target_link_libraries(abagnalectl PRIVATE objects)
 
 add_custom_command(
 	TARGET abagnale POST_BUILD
