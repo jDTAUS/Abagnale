@@ -98,7 +98,7 @@ jobs:
         echo "PostgreSQL_INCLUDE_DIR=$PG_PREFIX/include" >> $GITHUB_ENV
         echo "PostgreSQL_LIBRARY=$PG_PREFIX/lib/libpq.dylib" >> $GITHUB_ENV
         echo "ECPG_LIBRARY=$PG_PREFIX/lib/libecpg.dylib" >> $GITHUB_ENV
-        echo "PGTYPES_LIBRARY=$PG_PREFIX/lib/libpgtypes.lib" >> $GITHUB_ENV
+        echo "PGTYPES_LIBRARY=$PG_PREFIX/lib/libpgtypes.dylib" >> $GITHUB_ENV
 
     - name: Set PostgreSQL paths for CMake (Windows)
       if: runner.os == 'Windows'
