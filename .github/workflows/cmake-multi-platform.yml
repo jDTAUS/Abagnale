@@ -172,6 +172,9 @@ jobs:
       # See https://cmake.org/cmake/help/latest/manual/ctest.1.html for more detail
       run: ctest --build-config ${{ matrix.build_type }}
 
+    - name: Install
+      run: cmake --install ${{ steps.strings.outputs.build-output-dir }} --prefix ${{ steps.strings.outputs.build-output-dir }}/install
+
     - name: Upload build artifacts
       if: success()
       uses: actions/upload-artifact@v4
@@ -180,6 +183,7 @@ jobs:
         path: |
           ${{ steps.strings.outputs.build-output-dir }}/abagnale*
           ${{ steps.strings.outputs.build-output-dir }}/abagnalectl*
+          ${{ steps.strings.outputs.build-output-dir }}/install/**
           ${{ steps.strings.outputs.build-output-dir }}/**/*.exe
           ${{ steps.strings.outputs.build-output-dir }}/**/*.dll
           ${{ steps.strings.outputs.build-output-dir }}/**/*.so
