@@ -318,6 +318,10 @@ if(WIN32)
 	install(
 		RUNTIME_DEPENDENCY_SET dependencies
 		DESTINATION ${CMAKE_INSTALL_BINDIR}
+		DIRECTORIES
+			"${PostgreSQL_LIBRARY_DIR}"
+			"${PostgreSQL_ROOT}/bin"
+			"${OPENSSL_ROOT_DIR}/bin"
 	)
 else()
 	install(
