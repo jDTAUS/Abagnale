@@ -111,7 +111,7 @@ if(PostgreSQL_FOUND AND NOT TARGET PostgreSQL::PostgreSQL)
 	if(WIN32)
 		add_library(PostgreSQL::PostgreSQL SHARED IMPORTED)
 		set_target_properties(PostgreSQL::PostgreSQL PROPERTIES
-			IMPORTED_LOCATION "${PostgreSQL_LIBRARY_DIR}/libpq.dll"
+			IMPORTED_LOCATION "${PostgreSQL_ROOT}/bin/libpq.dll"
 			IMPORTED_IMPLIB "${PostgreSQL_LIBRARY}"
 			INTERFACE_INCLUDE_DIRECTORIES
 				"${PostgreSQL_INCLUDE_DIRS}"
@@ -130,7 +130,7 @@ elseif(TARGET PostgreSQL::PostgreSQL)
 		if(WIN32)
 			set_target_properties(PostgreSQL::PostgreSQL PROPERTIES
 				IMPORTED_LOCATION
-					"${PostgreSQL_LIBRARY_DIR}/libpq.dll"
+					"${PostgreSQL_ROOT}/bin/libpq.dll"
 				IMPORTED_IMPLIB "${PostgreSQL_LIBRARY}"
 				INTERFACE_INCLUDE_DIRECTORIES
 					"${PostgreSQL_INCLUDE_DIRS}"
@@ -150,7 +150,7 @@ if(PostgreSQL_ECPG_LIBRARY AND NOT TARGET PostgreSQL::ECPG)
 		add_library(PostgreSQL::ECPG SHARED IMPORTED)
 		set_target_properties(PostgreSQL::ECPG PROPERTIES
 			IMPORTED_LOCATION
-				"${PostgreSQL_LIBRARY_DIR}/libecpg.dll"
+				"${PostgreSQL_ROOT}/bin/libecpg.dll"
 			IMPORTED_IMPLIB "${PostgreSQL_ECPG_LIBRARY}"
 			INTERFACE_INCLUDE_DIRECTORIES
 				"${PostgreSQL_INCLUDE_DIRS}"
@@ -170,7 +170,7 @@ if(PostgreSQL_PGTYPES_LIBRARY AND NOT TARGET PostgreSQL::PGTYPES)
 		add_library(PostgreSQL::PGTYPES SHARED IMPORTED)
 		set_target_properties(PostgreSQL::PGTYPES PROPERTIES
 			IMPORTED_LOCATION
-				"${PostgreSQL_LIBRARY_DIR}/libpgtypes.dll"
+				"${PostgreSQL_ROOT}/bin/libpgtypes.dll"
 			IMPORTED_IMPLIB "${PostgreSQL_PGTYPES_LIBRARY}"
 			INTERFACE_INCLUDE_DIRECTORIES
 				"${PostgreSQL_INCLUDE_DIRS}"
@@ -319,7 +319,6 @@ if(WIN32)
 		RUNTIME_DEPENDENCY_SET dependencies
 		DESTINATION ${CMAKE_INSTALL_BINDIR}
 		DIRECTORIES
-			"${PostgreSQL_LIBRARY_DIR}../bin"
 			"${PostgreSQL_ROOT}/bin"
 			"${OPENSSL_ROOT_DIR}/bin"
 	)
