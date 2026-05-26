@@ -51,7 +51,7 @@ jobs:
           - os: windows-latest
             c_compiler: clang
           - os: macos-latest
-            c_compiler: gcc
+            c_compiler: clang
           - os: macos-latest
             c_compiler: cl
           - os: ubuntu-latest
@@ -77,7 +77,7 @@ jobs:
     - name: Install build dependencies (MacOS)
       if: runner.os == 'macOS'
       run: |
-        brew install postgresql
+        brew install gcc postgresql
 
     - name: Install build dependencies (Windows)
       if: runner.os == 'Windows'
