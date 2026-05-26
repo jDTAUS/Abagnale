@@ -170,7 +170,7 @@ if(PostgreSQL_PGTYPES_LIBRARY AND NOT TARGET PostgreSQL::PGTYPES)
 		add_library(PostgreSQL::PGTYPES SHARED IMPORTED)
 		set_target_properties(PostgreSQL::PGTYPES PROPERTIES
 			IMPORTED_LOCATION
-				"${PostgreSQL_LIBRARY_DIR/libpgtypes.dll}"
+				"${PostgreSQL_LIBRARY_DIR}/libpgtypes.dll"
 			IMPORTED_IMPLIB "${PostgreSQL_PGTYPES_LIBRARY}"
 			INTERFACE_INCLUDE_DIRECTORIES
 				"${PostgreSQL_INCLUDE_DIRS}"
@@ -319,7 +319,7 @@ if(WIN32)
 		RUNTIME_DEPENDENCY_SET dependencies
 		DESTINATION ${CMAKE_INSTALL_BINDIR}
 		DIRECTORIES
-			"${PostgreSQL_LIBRARY_DIR}"
+			"${PostgreSQL_LIBRARY_DIR}../bin"
 			"${PostgreSQL_ROOT}/bin"
 			"${OPENSSL_ROOT_DIR}/bin"
 	)
