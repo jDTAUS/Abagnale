@@ -36,7 +36,9 @@ include(CheckCSourceRuns)
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 include(FindPackageHandleStandardArgs)
+include(CheckIncludeFile)
 
+check_include_file("threads.h" HAVE_THREADS_H)
 check_type_size("wchar_t" SIZEOF_WCHAR_T)
 
 check_c_source_runs([[
@@ -87,7 +89,7 @@ find_package(OpenSSL REQUIRED)
 find_package(PostgreSQL REQUIRED)
 find_package(PkgConfig REQUIRED)
 
-if(APPLE)
+if(NOT HAVE_THREADS_H)
 	find_package(Threads REQUIRED)
 endif()
 
@@ -231,10 +233,6 @@ target_link_libraries(objects PRIVATE
 
 if(NOT WIN32)
 	target_link_libraries(objects PRIVATE m)
-endif()
-
-if(APPLE)
-	target_link_librarties(objects PRIVATE Threads::Threads)
 endif()
 
 if(stdthreads_FOUND)

@@ -56,7 +56,7 @@ jobs:
       if: runner.os == 'Linux'
       run: |
         sudo apt-get update
-        sudo apt-get install -y libpg-dev libecpg-dev
+        sudo apt-get install -y libpq-dev libecpg-dev
 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
