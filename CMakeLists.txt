@@ -110,7 +110,7 @@ find_library(PostgreSQL_PGTYPES_LIBRARY
 if(PostgreSQL_FOUND AND NOT TARGET PostgreSQL::PostgreSQL)
 	add_library(PostgreSQL::PostgreSQL UNKNOWN IMPORTED)
 	set_target_properties(PostgreSQL::PostgreSQL PROPERTIES
-		IMPORTED_LOCATION "${POstgreSQL_LIBRARY}"
+		IMPORTED_LOCATION "${PostgreSQL_LIBRARY}"
 		INTERFACE_INCLUDE_DIRECTORIES "${PostgreSQL_INCLUDE_DIRS}"
 	)
 elseif(TARGET PostgreSQL::PostgreSQL)
@@ -271,11 +271,11 @@ install(
 if(WIN32)
 	install(
 		FILES
-			$<TARGET_FILE:OpenSSL::Crypto>
-			$<TARGET_FILE:OpenSSL::SSL>
-			$<TARGET_FILE:PostgreSQL::ECPG>
-			$<TARGET_FILE:PostgreSQL::PGTYPES>
-			$<TARGET_FILE:PostgreSQL::PostgreSQL>
+			$<TARGET_RUNTIME_DLLS:OpenSSL::Crypto>
+			$<TARGET_RUNTIME_DLLS:OpenSSL::SSL>
+			$<TARGET_RUNTIME_DLLS:PostgreSQL::ECPG>
+			$<TARGET_RUNTIME_DLLS:PostgreSQL::PGTYPES>
+			$<TARGET_RUNTIME_DLLS:PostgreSQL::PostgreSQL>
 		DESTINATION ${CMAKE_INSTALL_BINDIR}
 	)
 endif()
