@@ -173,7 +173,7 @@ jobs:
       run: ctest --build-config ${{ matrix.build_type }}
 
     - name: Install
-      run: cmake --install ${{ steps.strings.outputs.build-output-dir }} --prefix ${{ steps.strings.outputs.build-output-dir }}/install
+      run: cmake --install ${{ steps.strings.outputs.build-output-dir }} --config ${{ matrix.build_type }} --prefix ${{ steps.strings.outputs.build-output-dir }}/install
 
     - name: Upload build artifacts
       if: success()
