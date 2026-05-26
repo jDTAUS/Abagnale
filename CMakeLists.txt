@@ -107,6 +107,14 @@ if(PostgreSQL_FOUND AND NOT TARGET PostgreSQL::PostgreSQL)
 		IMPORTED_LOCATION "${POstgreSQL_LIBRARY}"
 		INTERFACE_INCLUDE_DIRECTORIES "${PostgreSQL_INCLUDE_DIRS}"
 	)
+elseif(TARGET PostgreSQL::PostgreSQL)
+	get_target_property(location PostgreSQL::PostgreSQL IMPORTED_LOCATION)
+	if(NOT location)
+		set_target_properties(PostgreSQL::PostgreSQL
+			IMPORTED_LOCATION "${PostgreSQL_LIBRARY}"
+			INTERFACE_INCLUDE_DIRECTORIES "${PostgreSQL_INCLUDE_DIRS}"
+		)
+	endif()
 endif()
 
 if(PostgreSQL_ECPG_LIBRARY AND NOT TARGET PostgreSQL::ECPG)
