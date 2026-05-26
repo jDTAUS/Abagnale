@@ -110,7 +110,7 @@ if(PostgreSQL_FOUND AND NOT TARGET PostgreSQL::PostgreSQL)
 elseif(TARGET PostgreSQL::PostgreSQL)
 	get_target_property(location PostgreSQL::PostgreSQL IMPORTED_LOCATION)
 	if(NOT location)
-		set_target_properties(PostgreSQL::PostgreSQL
+		set_target_properties(PostgreSQL::PostgreSQL PROPERTIES
 			IMPORTED_LOCATION "${PostgreSQL_LIBRARY}"
 			INTERFACE_INCLUDE_DIRECTORIES "${PostgreSQL_INCLUDE_DIRS}"
 		)
