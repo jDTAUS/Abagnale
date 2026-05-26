@@ -108,36 +108,81 @@ find_library(PostgreSQL_PGTYPES_LIBRARY
 )
 
 if(PostgreSQL_FOUND AND NOT TARGET PostgreSQL::PostgreSQL)
-	add_library(PostgreSQL::PostgreSQL SHARED IMPORTED)
-	set_target_properties(PostgreSQL::PostgreSQL PROPERTIES
-		IMPORTED_LOCATION "${PostgreSQL_LIBRARY}"
-		INTERFACE_INCLUDE_DIRECTORIES "${PostgreSQL_INCLUDE_DIRS}"
-	)
-elseif(TARGET PostgreSQL::PostgreSQL)
-	get_target_property(location PostgreSQL::PostgreSQL IMPORTED_LOCATION)
-	if(NOT location)
+	if(WIN32)
+		add_library(PostgreSQL::PostgreSQL SHARED IMPORTED)
+		set_target_properties(PostgreSQL::PostgreSQL PROPERTIES
+			IMPORTED_LOCATION "${PostgreSQL_LIBRARY_DIR}/libpq.dll"
+			IMPORTED_IMPLIB "${PostgreSQL_LIBRARY}"
+			INTERFACE_INCLUDE_DIRECTORIES
+				"${PostgreSQL_INCLUDE_DIRS}"
+		)
+	else()
+		add_library(PostgreSQL::PostgreSQL UNKNOWN IMPORTED)
 		set_target_properties(PostgreSQL::PostgreSQL PROPERTIES
 			IMPORTED_LOCATION "${PostgreSQL_LIBRARY}"
 			INTERFACE_INCLUDE_DIRECTORIES
 				"${PostgreSQL_INCLUDE_DIRS}"
 		)
 	endif()
+elseif(TARGET PostgreSQL::PostgreSQL)
+	get_target_property(location PostgreSQL::PostgreSQL IMPORTED_LOCATION)
+	if(NOT location)
+		if(WIN32)
+			set_target_properties(PostgreSQL::PostgreSQL PROPERTIES
+				IMPORTED_LOCATION
+					"${PostgreSQL_LIBRARY_DIR}/libpq.dll"
+				IMPORTED_IMPLIB "${PostgreSQL_LIBRARY}"
+				INTERFACE_INCLUDE_DIRECTORIES
+					"${PostgreSQL_INCLUDE_DIRS}"
+			)
+		else()
+			set_target_properties(PostgreSQL::PostgreSQL PROPERTIES
+				IMPORTED_LOCATION "${PostgreSQL_LIBRARY}"
+				INTERFACE_INCLUDE_DIRECTORIES
+					"${PostgreSQL_INCLUDE_DIRS}"
+			)
+		endif()
+	endif()
 endif()
 
 if(PostgreSQL_ECPG_LIBRARY AND NOT TARGET PostgreSQL::ECPG)
-	add_library(PostgreSQL::ECPG SHARED IMPORTED)
-	set_target_properties(PostgreSQL::ECPG PROPERTIES
-		IMPORTED_LOCATION "${PostgreSQL_ECPG_LIBRARY}"
-		INTERFACE_INCLUDE_DIRECTORIES "${PostgreSQL_INCLUDE_DIRS}"
-	)
+	if(WIN32)
+		add_library(PostgreSQL::ECPG SHARED IMPORTED)
+		set_target_properties(PostgreSQL::ECPG PROPERTIES
+			IMPORTED_LOCATION
+				"${PostgreSQL_LIBRARY_DIR}/libecpg.dll"
+			IMPORTED_IMPLIB "${PostgreSQL_ECPG_LIBRARY}"
+			INTERFACE_INCLUDE_DIRECTORIES
+				"${PostgreSQL_INCLUDE_DIRS}"
+		)
+	else()
+		add_library(PostgreSQL::ECPG UNKNOWN IMPORTED)
+		set_target_properties(PostgreSQL::ECPG PROPERTIES
+			IMPORTED_LOCATION "${PostgreSQL_ECPG_LIBRARY}"
+			INTERFACE_INCLUDE_DIRECTORIES
+				"${PostgreSQL_INCLUDE_DIRS}"
+		)
+	endif()
 endif()
 
 if(PostgreSQL_PGTYPES_LIBRARY AND NOT TARGET PostgreSQL::PGTYPES)
-	add_library(PostgreSQL::PGTYPES SHARED IMPORTED)
-	set_target_properties(PostgreSQL::PGTYPES PROPERTIES
-		IMPORTED_LOCATION "${PostgreSQL_PGTYPES_LIBRARY}"
-		INTERFACE_INCLUDE_DIRECTORIES "${PostgreSQL_INCLUDE_DIRS}"
-	)
+	if(WIN32)
+		add_library(PostgreSQL::PGTYPES SHARED IMPORTED)
+		set_target_properties(PostgreSQL::PGTYPES PROPERTIES
+			IMPORTED_LOCATION
+				"${PostgreSQL_LIBRARY_DIR/libpgtypes.dll}"
+			IMPORTED_IMPLIB "${PostgreSQL_PGTYPES_LIBRARY}"
+			INTERFACE_INCLUDE_DIRECTORIES
+				"${PostgreSQL_INCLUDE_DIRS}"
+		)
+	else()
+		add_library(PostgreSQL::PGTYPES UNKNOWN IMPORTED)
+		set_target_properties(PostgreSQL::PGTYPES PROPERTIES
+			IMPORTED_LOCATION "${PostgreSQL_PGTYPES_LIBRARY}"
+			INTERFACE_INCLUDE_DIRECTORIES
+				"${PostgreSQL_INCLUDE_DIRS}"
+		)
+	endif()
 endif()
 
 find_program(ECPG_EXECUTABLE ecpg REQUIRED)
