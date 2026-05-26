@@ -87,6 +87,10 @@ find_package(OpenSSL REQUIRED)
 find_package(PostgreSQL REQUIRED)
 find_package(PkgConfig REQUIRED)
 
+if(APPLE)
+	find_package(Threads REQUIRED)
+endif()
+
 find_library(PostgreSQL_ECPG_LIBRARY
 	NAMES ecpg
 	HINTS ${PostgreSQL_LIBRARY_DIR}
@@ -227,6 +231,10 @@ target_link_libraries(objects PRIVATE
 
 if(NOT WIN32)
 	target_link_libraries(objects PRIVATE m)
+endif()
+
+if(APPLE)
+	target_link_librarties(objects PRIVATE Threads::Threads)
 endif()
 
 if(stdthreads_FOUND)

@@ -45,12 +45,16 @@ jobs:
           - os: ubuntu-latest
             c_compiler: clang
             cpp_compiler: clang++
+          - os: macos-latest
+            c_compiler: clang
+            cpp_compiler: clang++
+          - os: macos-latest
+            c_compiler: gcc
+            cpp_compiler: g++
         exclude:
           - os: windows-latest
             c_compiler: gcc
           - os: windows-latest
-            c_compiler: clang
-          - os: macos-latest
             c_compiler: clang
           - os: macos-latest
             c_compiler: cl
@@ -77,7 +81,7 @@ jobs:
     - name: Install build dependencies (MacOS)
       if: runner.os == 'macOS'
       run: |
-        brew install gcc postgresql
+        brew install postgresql tinycthread
 
     - name: Install build dependencies (Windows)
       if: runner.os == 'Windows'
