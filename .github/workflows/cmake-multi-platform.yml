@@ -97,8 +97,8 @@ jobs:
         echo "PostgreSQL_ROOT=$PG_PREFIX" >> $GITHUB_ENV
         echo "PostgreSQL_INCLUDE_DIR=$PG_PREFIX/include" >> $GITHUB_ENV
         echo "PostgreSQL_LIBRARY=$PG_PREFIX/lib/libpq.dylib" >> $GITHUB_ENV
-        echo "ECPG_LIBRARY=$PG_PREFIX/lib/libecpg.dylib" >> $GITHUB_ENV
-        echo "PGTYPES_LIBRARY=$PG_PREFIX/lib/libpgtypes.dylib" >> $GITHUB_ENV
+        echo "PostgreSQL_ECPG_LIBRARY=$PG_PREFIX/lib/libecpg.dylib" >> $GITHUB_ENV
+        echo "PostgreSQL_PGTYPES_LIBRARY=$PG_PREFIX/lib/libpgtypes.dylib" >> $GITHUB_ENV
 
     - name: Set PostgreSQL paths for CMake (Windows)
       if: runner.os == 'Windows'
@@ -111,8 +111,8 @@ jobs:
           echo "PostgreSQL_ROOT=$pgPath" >> $env:GITHUB_ENV
           echo "PostgreSQL_INCLUDE_DIR=$pgPath\include" >> $env:GITHUB_ENV
           echo "PostgreSQL_LIBRARY=$pgPath\lib\libpq.lib" >> $env:GITHUB_ENV
-          echo "ECPG_LIBRARY=$pgpath\lib\libecpg.lib" >> $env:GITHUB_ENV
-          echo "PGTYPES_LIBRARY=$pgpath\lib\libpgtypes.lib" >> $env:GITHUB_ENV
+          echo "PostgreSQL_ECPG_LIBRARY=$pgpath\lib\libecpg.lib" >> $env:GITHUB_ENV
+          echo "PostgreSQL_PGTYPES_LIBRARY=$pgpath\lib\libpgtypes.lib" >> $env:GITHUB_ENV
         }
 
     - name: Configure CMake (Linux)
@@ -134,8 +134,8 @@ jobs:
         -DPostgreSQL_ROOT="${{ env.PostgreSQL_ROOT }}"
         -DPostgreSQL_INCLUDE_DIR="${{ env.PostgreSQL_INCLUDE_DIR }}"
         -DPostgreSQL_LIBRARY="${{ env.PostgreSQL_LIBRARY }}"
-        -DECPG_LIBRARY="${{ env.ECPG_LIBRARY }}"
-        -DPGTYPES_LIBRARY="${{ env.PGTYPES_LIBRARY }}"
+        -DPostgreSQL_ECPG_LIBRARY="${{ env.PostgreSQL_ECPG_LIBRARY }}"
+        -DPostgreSQL_PGTYPES_LIBRARY="${{ env.PostgreSQL_PGTYPES_LIBRARY }}"
         -S ${{ github.workspace }}
 
     - name: Configure CMake (Windows)
@@ -150,8 +150,8 @@ jobs:
         -DPostgreSQL_ROOT="${{ env.PostgreSQL_ROOT }}" `
         -DPostgreSQL_INCLUDE_DIR="${{ env.PostgreSQL_INCLUDE_DIR }}" `
         -DPostgreSQL_LIBRARY="${{ env.PostgreSQL_LIBRARY }}" `
-        -DECPG_LIBRARY="${{ env.ECPG_LIBRARY }}" `
-        -DPGTYPES_LIBRARY="${{ env.PGTYPES_LIBRARY }}" `
+        -DPostgreSQL_ECPG_LIBRARY="${{ env.PostgreSQL_ECPG_LIBRARY }}" `
+        -DPostgreSQL_PGTYPES_LIBRARY="${{ env.PostgreSQL_PGTYPES_LIBRARY }}" `
         -S ${{ github.workspace }}
 
     - name: Build

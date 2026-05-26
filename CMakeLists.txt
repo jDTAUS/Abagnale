@@ -87,33 +87,40 @@ find_package(OpenSSL REQUIRED)
 find_package(PostgreSQL REQUIRED)
 find_package(PkgConfig REQUIRED)
 
-find_library(ECPG_LIBRARY
+find_library(PostgreSQL_ECPG_LIBRARY
 	NAMES ecpg
 	HINTS ${PostgreSQL_LIBRARY_DIR}
 	PATHS ${PostgreSQL_LIBRARY_DIR}
+	REQUIRED
 )
 
-find_library(PGTYPES_LIBRARY
+find_library(PostgreSQL_PGTYPES_LIBRARY
 	NAMES pgtypes
 	HINTS ${PostgreSQL_LIBRARY_DIR}
 	PATHS ${PostgreSQL_LIBRARY_DIR}
+	REQUIRED
 )
 
-find_package_handle_standard_args(ECPG REQUIRED_VARS ECPG_LIBRARY)
-find_package_handle_standard_args(PGTYPES REQUIRED_VARS PGTYPES_LIBRARY)
-
-if(ECPG_LIBRARY AND NOT TARGET PostgreSQL::ECPG)
-	add_library(PostgreSQL::ECPG UNKNOWN IMPORTED)
-	set_target_properties(PostgreSQL::ECPG PROPERTIES
-		IMPORTED_LOCATION "${ECPG_LIBRARY}"
+if(PostgreSQL_FOUND AND NOT TARGET PostgreSQL::PostgreSQL)
+	add_library(PostgreSQL::PostgreSQL UNKNOWN IMPORTED)
+	set_target_properties(PostgreSQL::PostgreSQL PROPERTIES
+		IMPORTED_LOCATION "${POstgreSQL_LIBRARY}"
 		INTERFACE_INCLUDE_DIRECTORIES "${PostgreSQL_INCLUDE_DIRS}"
 	)
 endif()
 
-if(PGTYPES_LIBRARY AND NOT TARGET PostgreSQL::PGTYPES)
+if(PostgreSQL_ECPG_LIBRARY AND NOT TARGET PostgreSQL::ECPG)
+	add_library(PostgreSQL::ECPG UNKNOWN IMPORTED)
+	set_target_properties(PostgreSQL::ECPG PROPERTIES
+		IMPORTED_LOCATION "${PostgreSQL_ECPG_LIBRARY}"
+		INTERFACE_INCLUDE_DIRECTORIES "${PostgreSQL_INCLUDE_DIRS}"
+	)
+endif()
+
+if(PostgreSQL_PGTYPES_LIBRARY AND NOT TARGET PostgreSQL::PGTYPES)
 	add_library(PostgreSQL::PGTYPES UNKNOWN IMPORTED)
 	set_target_properties(PostgreSQL::PGTYPES PROPERTIES
-		IMPORTED_LOCATION "${PGTYPES_LIBRARY}"
+		IMPORTED_LOCATION "${PostgreSQL_PGTYPES_LIBRARY}"
 		INTERFACE_INCLUDE_DIRECTORIES "${PostgreSQL_INCLUDE_DIRS}"
 	)
 endif()
