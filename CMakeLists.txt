@@ -107,82 +107,108 @@ find_library(PostgreSQL_PGTYPES_LIBRARY
 	REQUIRED
 )
 
+macro(target_info TARGET_NAME)
+	if(NOT TARGET ${TARGET_NAME})
+		message(WARNING "${TARGET_NAME} does not exist")
+		return()
+	endif()
+
+	get_target_property(
+		loc
+		${TARGET_NAME}
+		IMPORTED_LOCATION
+	)
+	get_target_property(
+		imp
+		${TARGET_NAME}
+		IMPORTED_IMPLIB
+	)
+	get_target_property(
+		inc
+		${TARGET_NAME}
+		INTERFACE_INCLUDE_DIRECTORIES
+	)
+
+	message(STATUS "${TARGET_NAME}: IMPORTED_LOCATION: ${loc}")
+	message(STATUS "${TARGET_NAME}: IMPORTED_IMPLIB: ${imp}")
+	message(STATUS "${TARGET_NAME}: INTERFACE_INCLUDE_DIRECTORIES: ${inc}")
+endmacro()
+
+message(CHECK_START "Checking target PostgreSQL::PostgreSQL")
 if(PostgreSQL_FOUND AND NOT TARGET PostgreSQL::PostgreSQL)
-	if(WIN32)
-		add_library(PostgreSQL::PostgreSQL SHARED IMPORTED)
-		set_target_properties(PostgreSQL::PostgreSQL PROPERTIES
-			IMPORTED_LOCATION "${PostgreSQL_ROOT}/bin/libpq.dll"
-			IMPORTED_IMPLIB "${PostgreSQL_LIBRARY}"
-			INTERFACE_INCLUDE_DIRECTORIES
-				"${PostgreSQL_INCLUDE_DIRS}"
-		)
-	else()
-		add_library(PostgreSQL::PostgreSQL UNKNOWN IMPORTED)
-		set_target_properties(PostgreSQL::PostgreSQL PROPERTIES
-			IMPORTED_LOCATION "${PostgreSQL_LIBRARY}"
-			INTERFACE_INCLUDE_DIRECTORIES
-				"${PostgreSQL_INCLUDE_DIRS}"
-		)
-	endif()
-elseif(TARGET PostgreSQL::PostgreSQL)
-	get_target_property(location PostgreSQL::PostgreSQL IMPORTED_LOCATION)
-	if(NOT location)
-		if(WIN32)
-			set_target_properties(PostgreSQL::PostgreSQL PROPERTIES
-				IMPORTED_LOCATION
-					"${PostgreSQL_ROOT}/bin/libpq.dll"
-				IMPORTED_IMPLIB "${PostgreSQL_LIBRARY}"
-				INTERFACE_INCLUDE_DIRECTORIES
-					"${PostgreSQL_INCLUDE_DIRS}"
-			)
-		else()
-			set_target_properties(PostgreSQL::PostgreSQL PROPERTIES
-				IMPORTED_LOCATION "${PostgreSQL_LIBRARY}"
-				INTERFACE_INCLUDE_DIRECTORIES
-					"${PostgreSQL_INCLUDE_DIRS}"
-			)
-		endif()
-	endif()
+	message(CHECK_FAIL "not provided - creating")
+	add_library(PostgreSQL::PostgreSQL UNKNOWN IMPORTED)
+	set_target_properties(PostgreSQL::PostgreSQL PROPERTIES
+		IMPORTED_LOCATION "${PostgreSQL_LIBRARY}"
+		INTERFACE_INCLUDE_DIRECTORIES "${PostgreSQL_INCLUDE_DIRS}"
+	)
+else()
+	message(CHECK_PASS "provided")
 endif()
+target_info(PostgreSQL::PostgreSQL)
 
+message(CHECK_START "Checking target PostgreSQL::ECPG")
 if(PostgreSQL_ECPG_LIBRARY AND NOT TARGET PostgreSQL::ECPG)
-	if(WIN32)
-		add_library(PostgreSQL::ECPG SHARED IMPORTED)
-		set_target_properties(PostgreSQL::ECPG PROPERTIES
-			IMPORTED_LOCATION
-				"${PostgreSQL_ROOT}/bin/libecpg.dll"
-			IMPORTED_IMPLIB "${PostgreSQL_ECPG_LIBRARY}"
-			INTERFACE_INCLUDE_DIRECTORIES
-				"${PostgreSQL_INCLUDE_DIRS}"
-		)
+	message(CHECK_FAIL "not provided - creating")
+	add_library(PostgreSQL::ECPG UNKNOWN IMPORTED)
+	set_target_properties(PostgreSQL::ECPG PROPERTIES
+		IMPORTED_LOCATION "${PostgreSQL_ECPG_LIBRARY}"
+		INTERFACE_INCLUDE_DIRECTORIES "${PostgreSQL_INCLUDE_DIRS}"
+	)
+else()
+	message(CHECK_PASS "provided")
+endif()
+target_info(PostgreSQL::ECPG)
+
+message(CHECK_START "Checking target PostgreSQL::PGTYPES")
+if(PostgreSQL_PGTYPES_LIBRARY AND NOT TARGET PostgreSQL::PGTYPES)
+	message(CHECK_FAIL "not provided - creating")
+	add_library(PostgreSQL::PGTYPES UNKNOWN IMPORTED)
+	set_target_properties(PostgreSQL::PGTYPES PROPERTIES
+		IMPORTED_LOCATION "${PostgreSQL_PGTYPES_LIBRARY}"
+		INTERFACE_INCLUDE_DIRECTORIES "${PostgreSQL_INCLUDE_DIRS}"
+	)
+else()
+	message(CHECK_PASS "provided")
+endif()
+target_info(PostgreSQL::PGTYPES)
+
+message(CHECK_START "Checking target OpenSSL::Crypto")
+if(OpenSSL_FOUND AND NOT TARGET OpenSSL::Crypto)
+	message(CHECK_FAIL "not provided - ignoring")
+else()
+	message(CHECK_PASS "provided")
+endif()
+target_info(OpenSSL::Crypto)
+
+message(CHECK_START "Checking target OpenSSL::SSL")
+if(OpenSSL_FOUND AND NOT TARGET OpenSSL:SSL)
+	message(CHECK_FAIL "not provided - ignoring")
+else()
+	message(CHECK_PASS "provided")
+endif()
+target_info(OpenSSL::SSL)
+
+pkg_check_modules(stdthreads stdthreads IMPORTED_TARGET)
+
+if(stdthreads_FOUND)
+	message(CHECK_START "Checking target PkgConfig::stdthreads")
+	if(NOT TARGET PkgConfig::stdthreads)
+		message(CHECK_FAIL "not provided - ignoring")
 	else()
-		add_library(PostgreSQL::ECPG UNKNOWN IMPORTED)
-		set_target_properties(PostgreSQL::ECPG PROPERTIES
-			IMPORTED_LOCATION "${PostgreSQL_ECPG_LIBRARY}"
-			INTERFACE_INCLUDE_DIRECTORIES
-				"${PostgreSQL_INCLUDE_DIRS}"
-		)
+		message(CHECK_PASS "provided")
 	endif()
+	target_info(PkgConfig::stdthreads)
 endif()
 
-if(PostgreSQL_PGTYPES_LIBRARY AND NOT TARGET PostgreSQL::PGTYPES)
-	if(WIN32)
-		add_library(PostgreSQL::PGTYPES SHARED IMPORTED)
-		set_target_properties(PostgreSQL::PGTYPES PROPERTIES
-			IMPORTED_LOCATION
-				"${PostgreSQL_ROOT}/bin/libpgtypes.dll"
-			IMPORTED_IMPLIB "${PostgreSQL_PGTYPES_LIBRARY}"
-			INTERFACE_INCLUDE_DIRECTORIES
-				"${PostgreSQL_INCLUDE_DIRS}"
-		)
+if(NOT HAVE_THREADS_H)
+	message(CHECK_START "Checking target Threads::Threads")
+	if(NOT TARGET Threads::Threads)
+		message(CHECK_FAIL "not provided - ignoring")
 	else()
-		add_library(PostgreSQL::PGTYPES UNKNOWN IMPORTED)
-		set_target_properties(PostgreSQL::PGTYPES PROPERTIES
-			IMPORTED_LOCATION "${PostgreSQL_PGTYPES_LIBRARY}"
-			INTERFACE_INCLUDE_DIRECTORIES
-				"${PostgreSQL_INCLUDE_DIRS}"
-		)
+		message(CHECK_PASS "provided")
 	endif()
+	target_info(Threads::Threads)
 endif()
 
 find_program(ECPG_EXECUTABLE ecpg REQUIRED)
@@ -191,8 +217,6 @@ find_program(YACC_EXECUTABLE
 	DOC "yacc compatible parser generator"
 	REQUIRED
 )
-
-pkg_check_modules(stdthreads stdthreads IMPORTED_TARGET)
 
 add_custom_command(
 	OUTPUT
@@ -320,7 +344,7 @@ if(WIN32)
 		DESTINATION ${CMAKE_INSTALL_BINDIR}
 		DIRECTORIES
 			"${PostgreSQL_ROOT}/bin"
-			"${OPENSSL_ROOT_DIR}/bin"
+			"${OpenSSL_ROOT}/bin"
 	)
 else()
 	install(
