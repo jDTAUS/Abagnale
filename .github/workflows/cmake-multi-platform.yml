@@ -160,7 +160,6 @@ jobs:
         -DYACC_EXECUTABLE="${{ env.YACC_EXECUTABLE }}"
         -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON
         -DCMAKE_BUILD_WITH_INSTALL_RPATH=ON
-        -DBUILD_TESTING=ON
         -S ${{ github.workspace }}
 
     - name: Configure CMake (Windows)
