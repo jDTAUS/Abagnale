@@ -161,6 +161,8 @@ jobs:
         -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON
         -DCMAKE_BUILD_WITH_INSTALL_RPATH=ON
         -DCMAKE_MACOSX_RPATH=ON
+        -DCMAKE_SKIP_BUILD_RPATH=OFF
+        -DCMAKE_SKIP_RPATH=OFF
         -S ${{ github.workspace }}
 
     - name: Configure CMake (Windows)
