@@ -110,7 +110,7 @@ jobs:
         echo "PostgreSQL_ECPG_LIBRARY=$PG_PREFIX/lib/libecpg.dylib" >> $GITHUB_ENV
         echo "PostgreSQL_PGTYPES_LIBRARY=$PG_PREFIX/lib/libpgtypes.dylib" >> $GITHUB_ENV
         echo "BISON_ROOT=$BISON_PREFIX" >> $GITHUB_ENV
-        echo "YACC_EXECUTABLE=$BISON_ROOT/bin/bison" >> $GITHUB_ENV
+        echo "YACC_EXECUTABLE=$BISON_PREFIX/bin/bison" >> $GITHUB_ENV
     - name: Set PostgreSQL paths for CMake (Windows)
       if: runner.os == 'Windows'
       shell: pwsh
