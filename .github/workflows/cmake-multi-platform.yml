@@ -160,6 +160,7 @@ jobs:
         -DYACC_EXECUTABLE="${{ env.YACC_EXECUTABLE }}"
         -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON
         -DCMAKE_BUILD_WITH_INSTALL_RPATH=ON
+        -DCMAKE_MACOSX_RPATH=ON
         -S ${{ github.workspace }}
 
     - name: Configure CMake (Windows)
@@ -204,17 +205,17 @@ jobs:
         echo "=== Architecture ==="
         uname -m
         echo "=== File Type ==="
-        file ${{ steps.strings.outputs.build-output-dir }}/install/bin/abagnale || true
-        file ${{ steps.strings.outputs.build-output-dir }}/install/bin/abagnalectl || true
+        file ${{ steps.strings.outputs.build-output-dir }}/abagnale || true
+        file ${{ steps.strings.outputs.build-output-dir }}/abagnalectl || true
         echo "=== Universal Binary Info ==="
-        lipo -info ${{ steps.strings.outputs.build-output-dir }}/install/bin/abagnale
-        lipo -info ${{ steps.strings.outputs.build-output-dir }}/install/bin/abagnalectl
+        lipo -info ${{ steps.strings.outputs.build-output-dir }}/abagnale
+        lipo -info ${{ steps.strings.outputs.build-output-dir }}/abagnalectl
         echo "=== Linked Libraries ==="
-        otool -L ${{ steps.strings.outputs.build-output-dir }}/install/bin/abagnale | cat
-        otool -L ${{ steps.strings.outputs.build-output-dir }}/install/bin/abagnalectl | cat
+        otool -L ${{ steps.strings.outputs.build-output-dir }}/abagnale | cat
+        otool -L ${{ steps.strings.outputs.build-output-dir }}/abagnalectl | cat
         echo "=== Path Entries ==="
-        otool -l ${{ steps.strings.outputs.build-output-dir }}/install/bin/abagnale || true
-        otool -l ${{ steps.strings.outputs.build-output-dir }}/install/bin/abagnalectl || true 
+        otool -l ${{ steps.strings.outputs.build-output-dir }}/abagnale || true
+        otool -l ${{ steps.strings.outputs.build-output-dir }}/abagnalectl || true 
 
     - name: Upload build artifacts
       if: success()
