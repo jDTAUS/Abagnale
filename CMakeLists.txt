@@ -91,7 +91,6 @@ find_package(PostgreSQL REQUIRED)
 find_package(PkgConfig REQUIRED)
 
 if(NOT HAVE_THREADS_H)
-	find_package(Threads REQUIRED)
 endif()
 
 find_library(PostgreSQL_ECPG_LIBRARY
@@ -223,17 +222,6 @@ elseif(NOT HAVE_THREADS_H)
 	FetchContent_MakeAvailable(static-stdthreads)
 endif()
 
-if(NOT HAVE_THREADS_H)
-	message(CHECK_START "Checking target Threads::Threads")
-	if(NOT TARGET Threads::Threads)
-		message(CHECK_FAIL "not provided - ignoring")
-	else()
-		message(CHECK_PASS "provided")
-	endif()
-	target_info(Threads::Threads)
-	
-endif()
-
 find_program(ECPG_EXECUTABLE ecpg REQUIRED)
 find_program(YACC_EXECUTABLE
 	NAMES yacc win_bison bison
@@ -331,6 +319,9 @@ endif()
 if(stdthreads_FOUND)
 	target_link_libraries(objects PRIVATE PkgConfig::stdthreads)
 elseif(NOT HAVE_THREADS_H)
+	target_include_directories(objects PRIVATE
+		${static-stdthreads_SOURCE_DIR}
+	)
 	target_link_libraries(abagnale PRIVATE bsd-stdthreads)
 	target_link_libraries(abagnalectl PRIVATE bsd-stdthreads)
 endif()
