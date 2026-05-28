@@ -248,7 +248,7 @@ endif()
 
 find_program(ECPG_EXECUTABLE ecpg REQUIRED)
 find_program(YACC_EXECUTABLE
-	NAMES win_bison bison yacc
+	NAMES yacc bison win_bison
 	DOC "yacc compatible parser generator"
 	REQUIRED
 )

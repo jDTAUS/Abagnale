@@ -146,6 +146,7 @@ jobs:
         -DPostgreSQL_LIBRARY="${{ env.PostgreSQL_LIBRARY }}"
         -DPostgreSQL_ECPG_LIBRARY="${{ env.PostgreSQL_ECPG_LIBRARY }}"
         -DPostgreSQL_PGTYPES_LIBRARY="${{ env.PostgreSQL_PGTYPES_LIBRARY }}"
+        -DYACC_EXECUTABLE="/opt/homebrew/bin/bison"
         -S ${{ github.workspace }}
 
     - name: Configure CMake (Windows)
