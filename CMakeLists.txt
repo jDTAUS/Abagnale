@@ -37,6 +37,7 @@ include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 include(FindPackageHandleStandardArgs)
 include(CheckIncludeFile)
+include(FetchContent)
 
 check_include_file("threads.h" HAVE_THREADS_H)
 check_type_size("wchar_t" SIZEOF_WCHAR_T)
@@ -199,6 +200,13 @@ if(stdthreads_FOUND)
 		message(CHECK_PASS "provided")
 	endif()
 	target_info(PkgConfig::stdthreads)
+elseif(NOT HAVE_THREADS_H)
+	FetchContent_declare(
+		static-stdthreads
+		GIT_REPOSITORY https://github.com/ChristianSchulte/libstdthreads.git
+		GIT_TAG b279390634cbdcec56d4c3d5facff3920914068f
+	)
+	FetchContent_MakeAvailable(static-stdthreads)
 endif()
 
 if(NOT HAVE_THREADS_H)
@@ -209,6 +217,7 @@ if(NOT HAVE_THREADS_H)
 		message(CHECK_PASS "provided")
 	endif()
 	target_info(Threads::Threads)
+	
 endif()
 
 find_program(ECPG_EXECUTABLE ecpg REQUIRED)
@@ -307,6 +316,9 @@ endif()
 
 if(stdthreads_FOUND)
 	target_link_libraries(objects PRIVATE PkgConfig::stdthreads)
+elseif(NOT HAVE_THREADS_H)
+	target_link_libraries(abagnale PRIVATE bsd-stdthreads)
+	target_link_libraries(abagnalectl PRIVATE bsd-stdthreads)
 endif()
 
 target_link_libraries(abagnale PRIVATE objects)
