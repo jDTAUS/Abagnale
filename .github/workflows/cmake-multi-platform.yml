@@ -106,9 +106,9 @@ jobs:
 
         echo "PostgreSQL_ROOT=$PG_PREFIX" >> $GITHUB_ENV
         echo "PostgreSQL_INCLUDE_DIR=$PG_PREFIX/include" >> $GITHUB_ENV
-        echo "PostgreSQL_LIBRARY=$PG_PREFIX/lib/libpq.dylib" >> $GITHUB_ENV
-        echo "PostgreSQL_ECPG_LIBRARY=$PG_PREFIX/lib/libecpg.dylib" >> $GITHUB_ENV
-        echo "PostgreSQL_PGTYPES_LIBRARY=$PG_PREFIX/lib/libpgtypes.dylib" >> $GITHUB_ENV
+        echo "PostgreSQL_LIBRARY=$PG_PREFIX/lib/postgresql/libpq.dylib" >> $GITHUB_ENV
+        echo "PostgreSQL_ECPG_LIBRARY=$PG_PREFIX/lib/postgresql/libecpg.dylib" >> $GITHUB_ENV
+        echo "PostgreSQL_PGTYPES_LIBRARY=$PG_PREFIX/lib/postgresql/libpgtypes.dylib" >> $GITHUB_ENV
         echo "BISON_ROOT=$BISON_PREFIX" >> $GITHUB_ENV
         echo "YACC_EXECUTABLE=$BISON_PREFIX/bin/bison" >> $GITHUB_ENV
         ls -lHR $PG_PREFIX
