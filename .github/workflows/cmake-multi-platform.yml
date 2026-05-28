@@ -93,6 +93,7 @@ jobs:
       run: |
         PG_PREFIX=$(brew --prefix postgresql)
         BISON_PREFIX=$(brew --prefix bison)
+        OSSL_PREFIX=$(brew --prefix openssl)
 
         if [ -z "$PG_PREFIX" ] || [ ! -d "$PG_PREFIX" ]; then
           echo "PostgreSQL not found."
@@ -104,6 +105,11 @@ jobs:
           exit 1
         fi
 
+        if [ -z "$OSSL_PREFIX" ] || [ ! -d "$OSSL_PREFIX" ];then
+          echo "OpenSSL not found."
+          exit 1
+        fi
+
         echo "PostgreSQL_ROOT=$PG_PREFIX" >> $GITHUB_ENV
         echo "PostgreSQL_INCLUDE_DIR=$PG_PREFIX/include" >> $GITHUB_ENV
         echo "PostgreSQL_LIBRARY=$PG_PREFIX/lib/postgresql/libpq.dylib" >> $GITHUB_ENV
@@ -111,6 +117,7 @@ jobs:
         echo "PostgreSQL_PGTYPES_LIBRARY=$PG_PREFIX/lib/postgresql/libpgtypes.dylib" >> $GITHUB_ENV
         echo "BISON_ROOT=$BISON_PREFIX" >> $GITHUB_ENV
         echo "YACC_EXECUTABLE=$BISON_PREFIX/bin/bison" >> $GITHUB_ENV
+        echo "OPENSSL_ROOT=$OSSL_PREFIX" >> $GITHUB_ENV
 #        ls -lHR $PG_PREFIX
 #        ls -lHR $BISON_PREFIX
     - name: Set PostgreSQL paths for CMake (Windows)
@@ -151,6 +158,9 @@ jobs:
         -DPostgreSQL_ECPG_LIBRARY="${{ env.PostgreSQL_ECPG_LIBRARY }}"
         -DPostgreSQL_PGTYPES_LIBRARY="${{ env.PostgreSQL_PGTYPES_LIBRARY }}"
         -DYACC_EXECUTABLE="${{ env.YACC_EXECUTABLE }}"
+        -DCMAKE_INSTALL_RPATH_USE_LINK_PATH=ON
+        -DCMAKE_BUILD_WITH_INSTALL_RPATH=ON
+        -DBUILD_TESTING=ON
         -S ${{ github.workspace }}
 
     - name: Configure CMake (Windows)
