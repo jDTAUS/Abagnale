@@ -361,6 +361,22 @@ add_custom_command(
 		${CMAKE_CURRENT_SOURCE_DIR}/database-postgresql.c
 )
 
+if(BUILD_TESTING)
+	enable_testing()
+	add_test(
+		NAME
+			abagnale
+		COMMAND
+			abagnale -n -f ${CMAKE_SOURCE_DIR}/abagnale.conf
+	)
+	add_test(
+		NAME
+			abagnalectl
+		COMMAND
+			abagnalectl -n -f ${CMAKE_SOURCE_DIR}/abagnale.conf
+	)
+endif()
+
 install(
 	FILES
 		abagnale.conf

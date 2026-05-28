@@ -100,6 +100,7 @@ int main(int argc, char *argv[]) {
   verbose = false;
   struct optparse options = {0};
   void *const *items;
+  bool configtest = false;
 
   proc_init();
   string_init();
@@ -175,7 +176,7 @@ int main(int argc, char *argv[]) {
   optparse_init(&options, argv);
   options.permute = 0;
 
-  while ((c = optparse(&options, "D:f:p:v")) != -1) {
+  while ((c = optparse(&options, "D:f:p:vn")) != -1) {
     switch (c) {
     case 'D':
       if (config_symset(options.optarg) < 0) {
@@ -185,6 +186,9 @@ int main(int argc, char *argv[]) {
       break;
     case 'f':
       conffile = options.optarg;
+      break;
+    case 'n':
+      configtest = true;
       break;
     case 'p':
       plotsdir = options.optarg;
@@ -241,15 +245,18 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  if (String_equals(progname, prog_abagnale))
-    r = abagnale(argc - options.optind, argv);
-  else if (String_equals(progname, prog_abagnalectl))
-    r = abagnalectl(argc - options.optind, argv);
-  else {
-    werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__,
-         String_chars(progname));
-    fatal();
-  }
+  if (!configtest) {
+    if (String_equals(progname, prog_abagnale))
+      r = abagnale(argc - options.optind, argv);
+    else if (String_equals(progname, prog_abagnalectl))
+      r = abagnalectl(argc - options.optind, argv);
+    else {
+      werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__,
+           String_chars(progname));
+      fatal();
+    }
+  } else
+    r = EXIT_SUCCESS;
 
   for (size_t i = nitems(all_algorithms); i > 0; i--)
     all_algorithms[i - 1]->destroy();

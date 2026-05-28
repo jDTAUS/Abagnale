@@ -135,6 +135,7 @@ jobs:
         -DCMAKE_CXX_COMPILER=${{ matrix.cpp_compiler }} `
         -DCMAKE_C_COMPILER=${{ matrix.c_compiler }} `
         -DCMAKE_BUILD_TYPE=${{ matrix.build_type }} `
+        -DBUILD_TESTING=ON `
         -S ${{ github.workspace }}
 
     - name: Configure CMake (MacOS)
@@ -150,6 +151,7 @@ jobs:
         -DPostgreSQL_ECPG_LIBRARY="${{ env.PostgreSQL_ECPG_LIBRARY }}"
         -DPostgreSQL_PGTYPES_LIBRARY="${{ env.PostgreSQL_PGTYPES_LIBRARY }}"
         -DYACC_EXECUTABLE="${{ env.YACC_EXECUTABLE }}"
+        -DBUILD_TESTING=ON
         -S ${{ github.workspace }}
 
     - name: Configure CMake (Windows)
