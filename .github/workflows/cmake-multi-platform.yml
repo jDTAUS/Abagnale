@@ -92,7 +92,7 @@ jobs:
       if: runner.os == 'macOS'
       run: |
         PG_PREFIX=$(brew --prefix postgresql)
-	BISON_PREFIX=$(brew --prefix bison)
+        BISON_PREFIX=$(brew --prefix bison)
 
         if [ -z "$PG_PREFIX" ] || [ ! -d "$PG_PREFIX" ]; then
           echo "PostgreSQL not found."
