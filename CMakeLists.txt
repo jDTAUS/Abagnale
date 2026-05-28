@@ -90,9 +90,6 @@ find_package(OpenSSL REQUIRED)
 find_package(PostgreSQL REQUIRED)
 find_package(PkgConfig REQUIRED)
 
-if(NOT HAVE_THREADS_H)
-endif()
-
 find_library(PostgreSQL_ECPG_LIBRARY
 	NAMES ecpg
 	HINTS ${PostgreSQL_LIBRARY_DIR}
@@ -157,6 +154,7 @@ macro(patch_postgresql_includes TARGET_NAME)
 		)
 	endif()
 endmacro()
+
 message(CHECK_START "Checking target PostgreSQL::PostgreSQL")
 if(PostgreSQL_FOUND AND NOT TARGET PostgreSQL::PostgreSQL)
 	message(CHECK_FAIL "not provided - creating")
@@ -250,7 +248,7 @@ endif()
 
 find_program(ECPG_EXECUTABLE ecpg REQUIRED)
 find_program(YACC_EXECUTABLE
-	NAMES yacc win_bison bison
+	NAMES win_bison bison yacc
 	DOC "yacc compatible parser generator"
 	REQUIRED
 )
@@ -265,7 +263,7 @@ add_custom_command(
 	DEPENDS
 		${CMAKE_CURRENT_SOURCE_DIR}/database-postgresql.pgc
 	COMMENT
-		"Running ecpg on database-postgresql.pgc"
+		"Running ${ECPG_EXECUTABLE} on database-postgresql.pgc"
 	VERBATIM
 )
 
@@ -279,7 +277,7 @@ add_custom_command(
 	DEPENDS
 		${CMAKE_CURRENT_SOURCE_DIR}/config.y
 	COMMENT
-		"Running yacc on config.y"
+		"Running ${YACC_EXECUTABLE} on config.y"
 	VERBATIM
 )
 

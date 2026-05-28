@@ -81,7 +81,7 @@ jobs:
     - name: Install build dependencies (MacOS)
       if: runner.os == 'macOS'
       run: |
-        brew install postgresql
+        brew install bison postgresql
 
     - name: Install build dependencies (Windows)
       if: runner.os == 'Windows'
@@ -92,9 +92,15 @@ jobs:
       if: runner.os == 'macOS'
       run: |
         PG_PREFIX=$(brew --prefix postgresql)
+	BISON_PREFIX=$(brew --prefix bison)
 
         if [ -z "$PG_PREFIX" ] || [ ! -d "$PG_PREFIX" ]; then
-          echo "PostgreSQLnot found."
+          echo "PostgreSQL not found."
+          exit 1
+        fi
+
+        if [ -z "$BISON_PREFIX" ] || [ ! -d "$BISON_PREFIX" ]; then
+          echo "bison not found."
           exit 1
         fi
 
@@ -103,7 +109,7 @@ jobs:
         echo "PostgreSQL_LIBRARY=$PG_PREFIX/lib/libpq.dylib" >> $GITHUB_ENV
         echo "PostgreSQL_ECPG_LIBRARY=$PG_PREFIX/lib/libecpg.dylib" >> $GITHUB_ENV
         echo "PostgreSQL_PGTYPES_LIBRARY=$PG_PREFIX/lib/libpgtypes.dylib" >> $GITHUB_ENV
-
+        echo "BISON_ROOT=$BISON_PREFIX" >> $GITHUB_ENV
     - name: Set PostgreSQL paths for CMake (Windows)
       if: runner.os == 'Windows'
       shell: pwsh
