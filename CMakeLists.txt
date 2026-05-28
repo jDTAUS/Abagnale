@@ -134,6 +134,29 @@ macro(target_info TARGET_NAME)
 	message(STATUS "${TARGET_NAME}: INTERFACE_INCLUDE_DIRECTORIES: ${inc}")
 endmacro()
 
+macro(patch_postgresql_includes TARGET_NAME)
+	if(NOT TARGET ${TARGET_NAME})
+		message(WARNING "${TARGET_NAME} does not exist")
+		return()
+	endif()
+
+	if(IS_DIRECTORY "${PostgreSQL_INCLUDE_DIR}/postgresql")
+		get_target_property(
+			inc
+			${TARGET_NAME}
+			INTERFACE_INCLUDE_DIRECTORIES
+		)
+
+		list(APPEND inc "${PostgreSQL_INCLUDE_DIR}/postgresql")
+		list(REMOVE_DUPLICATES inc)
+
+		set_target_properties(
+			${TARGET_NAME}
+			PROPERTIES
+				INTERFACE_INCLUDE_DIRECTORIES "${inc}"
+		)
+	endif()
+endmacro()
 message(CHECK_START "Checking target PostgreSQL::PostgreSQL")
 if(PostgreSQL_FOUND AND NOT TARGET PostgreSQL::PostgreSQL)
 	message(CHECK_FAIL "not provided - creating")
@@ -158,6 +181,7 @@ elseif(TARGET PostgreSQL::PostgreSQL)
 	else()
 		message(CHECK_PASS "provided")
 	endif()
+	patch_postgresql_includes(PostgreSQL::PostgreSQL)
 endif()
 target_info(PostgreSQL::PostgreSQL)
 
@@ -169,6 +193,7 @@ if(PostgreSQL_ECPG_LIBRARY AND NOT TARGET PostgreSQL::ECPG)
 		IMPORTED_LOCATION "${PostgreSQL_ECPG_LIBRARY}"
 		INTERFACE_INCLUDE_DIRECTORIES "${PostgreSQL_INCLUDE_DIRS}"
 	)
+	patch_postgresql_includes(PostgreSQL::ECPG)
 else()
 	message(CHECK_PASS "provided")
 endif()
@@ -182,6 +207,7 @@ if(PostgreSQL_PGTYPES_LIBRARY AND NOT TARGET PostgreSQL::PGTYPES)
 		IMPORTED_LOCATION "${PostgreSQL_PGTYPES_LIBRARY}"
 		INTERFACE_INCLUDE_DIRECTORIES "${PostgreSQL_INCLUDE_DIRS}"
 	)
+	patch_postgresql_includes(PostgreSQL::PGTYPES)
 else()
 	message(CHECK_PASS "provided")
 endif()
