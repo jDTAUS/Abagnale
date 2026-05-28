@@ -186,6 +186,27 @@ jobs:
     - name: Install
       run: cmake --install ${{ steps.strings.outputs.build-output-dir }} --config ${{ matrix.build_type }} --prefix ${{ steps.strings.outputs.build-output-dir }}/install
 
+    - name: Build Info (MacOS)
+      if: runner.os == 'macOS'
+      run: |
+        echo "=== System Information ==="
+        uname -a
+        sw_vers
+        echo "=== Architecture ==="
+        uname -m
+        echo "=== File Type ==="
+        file ${{ steps.strings.outputs.build-output-dir }}/install/bin/abagnale || true
+        file ${{ steps.strings.outputs.build-output-dir }}/install/bin/abagnalectl || true
+        echo "=== Universal Binary Info ==="
+        lipo -info ${{ steps.strings.outputs.build-output-dir }}/install/bin/abagnale
+        lipo -info ${{ steps.strings.outputs.build-output-dir }}/install/bin/abagnalectl
+        echo "=== Linked Libraries ==="
+        otool -L ${{ steps.strings.outputs.build-output-dir }}/install/bin/abagnale | cat
+        otool -L ${{ steps.strings.outputs.build-output-dir }}/install/bin/abagnalectl | cat
+        echo "=== Path Entries ==="
+        otool -l ${{ steps.strings.outputs.build-output-dir }}/install/bin/abagnale || true
+        otool -l ${{ steps.strings.outputs.build-output-dir }}/install/bin/abagnalectl || true 
+
     - name: Upload build artifacts
       if: success()
       uses: actions/upload-artifact@v4
