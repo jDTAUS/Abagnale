@@ -111,8 +111,8 @@ jobs:
         echo "PostgreSQL_PGTYPES_LIBRARY=$PG_PREFIX/lib/postgresql/libpgtypes.dylib" >> $GITHUB_ENV
         echo "BISON_ROOT=$BISON_PREFIX" >> $GITHUB_ENV
         echo "YACC_EXECUTABLE=$BISON_PREFIX/bin/bison" >> $GITHUB_ENV
-        ls -lHR $PG_PREFIX
-        ls -lHR $BISON_PREFIX
+#        ls -lHR $PG_PREFIX
+#        ls -lHR $BISON_PREFIX
     - name: Set PostgreSQL paths for CMake (Windows)
       if: runner.os == 'Windows'
       shell: pwsh
@@ -191,8 +191,6 @@ jobs:
       with:
         name: abagnale-${{ matrix.os }}-${{ matrix.c_compiler }}-${{ matrix.build_type }}
         path: |
-          ${{ steps.strings.outputs.build-output-dir }}/abagnale*
-          ${{ steps.strings.outputs.build-output-dir }}/abagnalectl*
           ${{ steps.strings.outputs.build-output-dir }}/install/**
           ${{ steps.strings.outputs.build-output-dir }}/**/*.exe
           ${{ steps.strings.outputs.build-output-dir }}/**/*.dll
