@@ -143,8 +143,22 @@ if(PostgreSQL_FOUND AND NOT TARGET PostgreSQL::PostgreSQL)
 		IMPORTED_LOCATION "${PostgreSQL_LIBRARY}"
 		INTERFACE_INCLUDE_DIRECTORIES "${PostgreSQL_INCLUDE_DIRS}"
 	)
-else()
-	message(CHECK_PASS "provided")
+elseif(TARGET PostgreSQL::PostgreSQL)
+	get_target_property(
+		loc
+		PostgreSQL::PostgreSQL
+		IMPORTED_LOCATION
+	)
+
+	if(NOT loc)
+		message(CHECK_FAIL "no location - creating")
+		set_target_properties(PostgreSQL::PostgreSQL PROPERTIES
+			IMPORTED_LOCATION "${PostgreSQL_LIBRARY}"
+			INTERFACE_INCLUDE_DIRECTORIES "${PostgreSQL_INCLUDE_DIRS}"
+		)
+	else()
+		message(CHECK_PASS "provided")
+	endif()
 endif()
 target_info(PostgreSQL::PostgreSQL)
 
