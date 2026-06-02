@@ -104,7 +104,7 @@ inline void Queue_enqueue_await(struct Queue *restrict const q,
       condition_wait(&q->not_full, &q->mtx);
   }
 
-  if (q->running) {
+  if (q->running && !q->enqueue_timedout) {
     q->rear = (q->rear + 1) % q->capacity;
     q->items[q->rear] = item;
     q->size++;
