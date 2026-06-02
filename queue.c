@@ -34,6 +34,8 @@ struct Queue {
   size_t front;
   size_t rear;
   _Atomic bool running;
+  _Atomic bool enqueue_timedout;
+  _Atomic bool dequeue_timedout;
   mtx_t mtx;
   cnd_t not_empty;
   cnd_t not_full;
@@ -51,6 +53,8 @@ inline struct Queue *Queue_new(const size_t capacity, const time_t timeout) {
   q->front = 0;
   q->rear = -1;
   q->running = false;
+  q->enqueue_timedout = false;
+  q->dequeue_timedout = false;
   return q;
 }
 
@@ -76,6 +80,13 @@ inline void Queue_stop(struct Queue *restrict const q) {
   condition_broadcast(&q->not_full);
 }
 
+inline bool Queue_enqueue_timedout(struct Queue *restrict const q) {
+  return q->enqueue_timedout;
+}
+inline bool Queue_dequeue_timedout(struct Queue *restrict const q) {
+  return q->dequeue_timedout;
+}
+
 inline void Queue_enqueue_await(struct Queue *restrict const q,
                                 void *restrict const item) {
   struct timespec to;
@@ -88,7 +99,7 @@ inline void Queue_enqueue_await(struct Queue *restrict const q,
 
       to.tv_sec += q->timeout;
 
-      condition_timedwait(&q->not_full, &q->mtx, &to);
+      q->enqueue_timedout = !condition_timedwait(&q->not_full, &q->mtx, &to);
     } else
       condition_wait(&q->not_full, &q->mtx);
   }
@@ -116,12 +127,12 @@ inline void *Queue_dequeue_await(struct Queue *restrict const q) {
 
       to.tv_sec += q->timeout;
 
-      condition_timedwait(&q->not_empty, &q->mtx, &to);
+      q->dequeue_timedout = !condition_timedwait(&q->not_empty, &q->mtx, &to);
     } else
       condition_wait(&q->not_empty, &q->mtx);
   }
 
-  if (q->running) {
+  if (q->running && !q->dequeue_timedout) {
     item = q->items[q->front];
     q->items[q->front] = NULL;
     q->front = (q->front + 1) % q->capacity;

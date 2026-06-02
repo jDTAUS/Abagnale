@@ -48,7 +48,7 @@ void condition_init(cnd_t *restrict const);
 void condition_destroy(cnd_t *restrict const);
 void condition_broadcast(cnd_t *restrict const);
 void condition_signal(cnd_t *restrict const);
-void condition_timedwait(cnd_t *restrict const, mtx_t *restrict const,
+bool condition_timedwait(cnd_t *restrict const, mtx_t *restrict const,
                          const struct timespec *restrict const);
 void condition_wait(cnd_t *restrict const, mtx_t *restrict const);
 #endif

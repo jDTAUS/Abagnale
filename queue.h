@@ -24,6 +24,7 @@
 #include "host.h"
 #endif
 
+#include <stdbool.h>
 #include <stddef.h>
 #include <time.h>
 
@@ -38,4 +39,6 @@ void *Queue_dequeue_await(struct Queue *restrict const);
 
 void Queue_start(struct Queue *restrict const);
 void Queue_stop(struct Queue *restrict const);
+bool Queue_enqueue_timedout(struct Queue *restrict const);
+bool Queue_dequeue_timedout(struct Queue *restrict const);
 #endif

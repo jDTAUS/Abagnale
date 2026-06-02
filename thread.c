@@ -157,13 +157,19 @@ inline void condition_signal(cnd_t *restrict const cond) {
   }
 }
 
-inline void condition_timedwait(cnd_t *restrict const cond,
+inline bool condition_timedwait(cnd_t *restrict const cond,
                                 mtx_t *restrict const mtx,
                                 const struct timespec *restrict const ts) {
   int r = cnd_timedwait(cond, mtx, ts);
-  if (r != thrd_success) {
-    werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__, strthrd(r));
-    fatal();
+  switch (r) {
+  case thrd_timedout:
+    return false;
+  default:
+    if (r != thrd_success) {
+      werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__, strthrd(r));
+      fatal();
+    }
+    return true;
   }
 }
 
