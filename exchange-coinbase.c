@@ -1027,6 +1027,13 @@ static void ws_ticker_update(const struct wcjson_document *restrict const doc,
     j_price_num = NULL;
 
     Queue_enqueue_await(samples, s);
+
+    if (Queue_enqueue_timedout(samples)) {
+      werr("coinbase: Enqueuing ticker timed out after %" PRIdMAX " seconds.\n",
+           (intmax_t)(WEBSOCKET_STALL_MILLIS / 1000));
+
+      Sample_delete(s);
+    }
   }
 
 ret:
@@ -1700,7 +1707,17 @@ static void coinbase_stop(void) {
 }
 
 static struct Sample *coinbase_sample_await(void) {
-  return Queue_dequeue_await(samples);
+  struct Sample *restrict const s = Queue_dequeue_await(samples);
+
+  if (Queue_dequeue_timedout(samples)) {
+    werr("coinbase: Dequeuing tickers timed out after %" PRIdMAX " seconds\n",
+         (intmax_t)(WEBSOCKET_STALL_MILLIS / 1000));
+
+    for (size_t i = nitems(ws_channels); i > 0; i--)
+      ws_channels[i - 1].reconnect = true;
+  }
+
+  return s;
 }
 
 static struct Order *coinbase_order_await(void) {
