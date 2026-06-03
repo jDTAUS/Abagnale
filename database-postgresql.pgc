@@ -309,15 +309,15 @@ void db_samples_open(const void *const db, const char *const e_id,
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
   EXEC SQL WHENEVER SQLERROR CALL db_fatal();
   EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
-	EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ;
-	EXEC SQL AT :con DECLARE samples_cursor CURSOR FOR
-		SELECT "NANOS", "PRICE" 
+  EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+  EXEC SQL AT :con DECLARE samples_cursor CURSOR FOR
+    SELECT "NANOS", "PRICE" 
     FROM "SAMPLES"
-		WHERE "EXCHANGE_ID" = :sql_e_id AND "PRODUCT_ID" = :sql_m_id
-			AND "NANOS" >= :sql_since
-		ORDER BY "NANOS" ASC;
+    WHERE "EXCHANGE_ID" = :sql_e_id AND "PRODUCT_ID" = :sql_m_id
+      AND "NANOS" >= :sql_since
+    ORDER BY "NANOS" ASC;
 
-	EXEC SQL AT :con OPEN samples_cursor;
+  EXEC SQL AT :con OPEN samples_cursor;
   // clang-format on
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(0, stdout);
@@ -334,7 +334,7 @@ bool db_samples_next(struct db_sample_rec *const sample, const void *const db) {
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
   EXEC SQL WHENEVER SQLERROR CALL db_fatal();
   EXEC SQL WHENEVER NOT FOUND GOTO not_found;
-	EXEC SQL AT :con FETCH FROM samples_cursor INTO :sql_nanos, :sql_price;
+  EXEC SQL AT :con FETCH FROM samples_cursor INTO :sql_nanos, :sql_price;
   // clang-format on
   return true;
 not_found:
@@ -539,9 +539,9 @@ bool db_stats(struct db_stats_rec *const stats, const void *const db,
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
   EXEC SQL WHENEVER SQLERROR CALL db_fatal();
-	EXEC SQL WHENEVER NOT FOUND GO TO not_found;
-	EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
-	EXEC SQL AT :con
+  EXEC SQL WHENEVER NOT FOUND GO TO not_found;
+  EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
+  EXEC SQL AT :con
     SELECT "MIN_BUY_ORDER_DURATION_NANOS",
            "MAX_BUY_ORDER_DURATION_NANOS",
            "AVG_BUY_ORDER_DURATION_NANOS",
@@ -842,7 +842,7 @@ void db_trades_open(const void *const db, const char *const e_id,
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
   EXEC SQL WHENEVER SQLERROR CALL db_fatal();
   EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
-	EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ;
+  EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ;
   EXEC SQL AT :con DECLARE trades_cursor CURSOR FOR
     SELECT "TRADE_ID",
            "EXCHANGE_ID",
@@ -1493,16 +1493,16 @@ void db_tx_trend_plot_samples_open(const void *const db, const char *const e_id,
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
   EXEC SQL WHENEVER SQLERROR CALL db_fatal();
   EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
-	EXEC SQL AT :con DECLARE trend_plot_cursor CURSOR FOR
-		SELECT "X", "Y" 
+  EXEC SQL AT :con DECLARE trend_plot_cursor CURSOR FOR
+    SELECT "X", "Y"
     FROM "TREND_PLOTS" t
       JOIN "PLOTS" p ON t."PLOT_ID" = p."PLOT_ID"
       JOIN "PLOTS_DATAPOINTS" d ON p."PLOT_ID" = d."PLOT_ID"
-		WHERE t."EXCHANGE_ID" = :sql_e_id
+    WHERE t."EXCHANGE_ID" = :sql_e_id
       AND t."PRODUCT_ID" = :sql_m_id
-		ORDER BY "X" ASC;
+    ORDER BY "X" ASC;
 
-	EXEC SQL AT :con OPEN trend_plot_cursor;
+  EXEC SQL AT :con OPEN trend_plot_cursor;
   // clang-format on
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(0, stdout);
@@ -1520,7 +1520,7 @@ bool db_tx_trend_plot_samples_next(
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
   EXEC SQL WHENEVER SQLERROR CALL db_fatal();
   EXEC SQL WHENEVER NOT FOUND GOTO not_found;
-	EXEC SQL AT :con FETCH FROM trend_plot_cursor INTO :x, :y;
+  EXEC SQL AT :con FETCH FROM trend_plot_cursor INTO :x, :y;
   // clang-format on
   return true;
 not_found:
@@ -1559,17 +1559,17 @@ void db_tx_trend_plot_candles_open(const void *const db, const char *const e_id,
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
   EXEC SQL WHENEVER SQLERROR CALL db_fatal();
   EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
-	EXEC SQL AT :con DECLARE trend_plot_candles_cursor CURSOR FOR
-		SELECT c."OPEN", c."HIGH", c."LOW", c."CLOSE",
+  EXEC SQL AT :con DECLARE trend_plot_candles_cursor CURSOR FOR
+    SELECT c."OPEN", c."HIGH", c."LOW", c."CLOSE",
       c."ONANOS", c."HNANOS", c."LNANOS", c."CNANOS"
     FROM "TREND_PLOTS" t
       JOIN "TREND_CANDLES" c ON t."EXCHANGE_ID" = c."EXCHANGE_ID"
                             AND t."PRODUCT_ID" = c."PRODUCT_ID"
-		WHERE t."EXCHANGE_ID" = :sql_e_id
+    WHERE t."EXCHANGE_ID" = :sql_e_id
       AND t."PRODUCT_ID" = :sql_m_id
-		ORDER BY "ONANOS" ASC;
+    ORDER BY "ONANOS" ASC;
 
-	EXEC SQL AT :con OPEN trend_plot_candles_cursor;
+  EXEC SQL AT :con OPEN trend_plot_candles_cursor;
   // clang-format on
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(0, stdout);
@@ -1593,7 +1593,7 @@ bool db_tx_trend_plot_candles_next(struct db_candle_rec *restrict const candle,
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
   EXEC SQL WHENEVER SQLERROR CALL db_fatal();
   EXEC SQL WHENEVER NOT FOUND GOTO not_found;
-	EXEC SQL AT :con
+  EXEC SQL AT :con
     FETCH FROM trend_plot_candles_cursor
     INTO :o, :h, :l, :c, :onanos, :hnanos, :lnanos, :cnanos;
   // clang-format on
@@ -1634,18 +1634,18 @@ void db_tx_trend_plot_markers_open(const void *const db, const char *const e_id,
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
   EXEC SQL WHENEVER SQLERROR CALL db_fatal();
   EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
-	EXEC SQL AT :con DECLARE trend_plot_markers_cursor CURSOR FOR
-		SELECT d."X", d."Y", m."TYPE"
+  EXEC SQL AT :con DECLARE trend_plot_markers_cursor CURSOR FOR
+    SELECT d."X", d."Y", m."TYPE"
     FROM "TREND_PLOTS" t
       JOIN "TREND_MARKERS" m ON t."EXCHANGE_ID" = m."EXCHANGE_ID"
                             AND t."PRODUCT_ID" = m."PRODUCT_ID"
       JOIN "PLOTS" p ON p."PLOT_ID" = m."PLOT_ID"
       JOIN "PLOTS_DATAPOINTS" d ON p."PLOT_ID" = d."PLOT_ID"
-		WHERE t."EXCHANGE_ID" = :sql_e_id
+    WHERE t."EXCHANGE_ID" = :sql_e_id
       AND t."PRODUCT_ID" = :sql_m_id
-		ORDER BY "X" ASC;
+    ORDER BY "X" ASC;
 
-	EXEC SQL AT :con OPEN trend_plot_markers_cursor;
+  EXEC SQL AT :con OPEN trend_plot_markers_cursor;
   // clang-format on
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(0, stdout);
@@ -1664,7 +1664,7 @@ bool db_tx_trend_plot_markers_next(struct db_marker_rec *restrict const marker,
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
   EXEC SQL WHENEVER SQLERROR CALL db_fatal();
   EXEC SQL WHENEVER NOT FOUND GOTO not_found;
-	EXEC SQL AT :con
+  EXEC SQL AT :con
     FETCH FROM trend_plot_markers_cursor INTO :x, :y, :type;
   // clang-format on
   return true;
