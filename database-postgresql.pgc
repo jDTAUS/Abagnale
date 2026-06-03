@@ -454,17 +454,21 @@ void db_volatility_close(const void *const db) {
 #endif
 }
 
-bool db_vacuum(const void *const db, const char *const fname) {
+void db_vacuum(const void *const db, const char *const e_id,
+               const char *const m_id, const struct Numeric *const wnanos,
+               const char *const fname, bool vacuum) {
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(1, stdout);
 #endif
   struct Numeric *now = Numeric_new();
   nanos_now(now);
-  struct Numeric *before = Numeric_sub(now, cnf->wnanos_max);
+  struct Numeric *before = Numeric_sub(now, wnanos);
   Numeric_delete(now);
   // clang-format off
   EXEC SQL BEGIN DECLARE SECTION;
   const char *con = String_chars(db);
+  const char *sql_e_id = e_id;
+  const char *sql_m_id = m_id;
   const char *sql_tgt = String_chars(cnf->db_tgt);
   const char *sql_usr = String_chars(cnf->db_usr);
   char stmt[DB_STATEMENT_MAX_LENGTH + 1] = {0};
@@ -476,11 +480,11 @@ bool db_vacuum(const void *const db, const char *const fname) {
   EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
   // clang-format on
   char *before_asc = Numeric_to_char(before, 0);
-  const int r =
-      snprintf(stmt, sizeof(stmt),
-               "COPY(SELECT * FROM \"SAMPLES\" WHERE \"NANOS\" <= %s) TO "
-               "PROGRAM 'xz - > %s.xz'",
-               before_asc, fname);
+  const int r = snprintf(
+      stmt, sizeof(stmt),
+      "COPY(SELECT * FROM \"SAMPLES\" WHERE \"EXCHANGE_ID\" = '%s' AND "
+      "\"PRODUCT_ID\" = '%s' AND \"NANOS\" <= %s) TO PROGRAM 'xz - > %s.xz'",
+      e_id, m_id, before_asc, fname);
 
   if (r < 0 || (size_t)r >= sizeof(stmt)) {
     werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
@@ -492,20 +496,27 @@ bool db_vacuum(const void *const db, const char *const fname) {
   EXEC SQL AT :con PREPARE copy FROM :stmt;
   EXEC SQL AT :con EXECUTE copy;
   EXEC SQL AT :con DEALLOCATE PREPARE copy;
-  EXEC SQL AT :con DELETE FROM "SAMPLES" WHERE "NANOS" <= :sql_before;
+  EXEC SQL AT :con
+    DELETE FROM "SAMPLES"
+    WHERE "EXCHANGE_ID" = :sql_e_id
+      AND "PRODUCT_ID" = :sql_m_id
+      AND "NANOS" <= :sql_before;
   EXEC SQL AT :con DELETE FROM "PLOTS";
   EXEC SQL AT :con COMMIT;
-  EXEC SQL CONNECT TO :sql_tgt AS vfa USER :sql_usr;
-  EXEC SQL AT vfa SET AUTOCOMMIT TO ON;
-  EXEC SQL AT vfa SET TIMEZONE TO 'UTC';
-  EXEC SQL AT vfa VACUUM FULL ANALYZE;
-  EXEC SQL DISCONNECT vfa;
   // clang-format on
+  if (vacuum) {
+    // clang-format off
+    EXEC SQL CONNECT TO :sql_tgt AS vfa USER :sql_usr;
+    EXEC SQL AT vfa SET AUTOCOMMIT TO ON;
+    EXEC SQL AT vfa SET TIMEZONE TO 'UTC';
+    EXEC SQL AT vfa VACUUM FULL ANALYZE;
+    EXEC SQL DISCONNECT vfa;
+    // clang-format on
+  }
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(0, stdout);
 #endif
   Numeric_delete(before);
-  return true;
 }
 
 bool db_stats(struct db_stats_rec *const stats, const void *const db,
@@ -554,8 +565,8 @@ bool db_stats(struct db_stats_rec *const stats, const void *const db,
          :sd_max :sd_max_ind,
          :sd_avg :sd_avg_ind,
          :scl_factor
-		FROM "STATISTICS"
-		WHERE "EXCHANGE_ID" = :sql_e_id AND "PRODUCT_ID" = :sql_m_id;
+    FROM "STATISTICS"
+    WHERE "EXCHANGE_ID" = :sql_e_id AND "PRODUCT_ID" = :sql_m_id;
   EXEC SQL AT :con COMMIT;
   // clang-format on
 #ifdef ABAG_SQL_DEBUG
