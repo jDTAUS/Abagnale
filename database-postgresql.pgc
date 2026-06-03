@@ -482,7 +482,7 @@ void db_vacuum(const void *const db, const char *const e_id,
   const int r = snprintf(stmt, sizeof(stmt),
                          "COPY ( DELETE FROM \"SAMPLES\" WHERE \"EXCHANGE_ID\" "
                          "= $1 AND \"PRODUCT_ID\" = $2 AND \"NANOS\" <= $3 "
-                         "RETURNING * ) TO PROGRAM 'xz > - %s.xz'",
+                         "RETURNING * ) TO PROGRAM 'xz - > %s.xz'",
                          fname);
 
   if (r < 0 || (size_t)r >= sizeof(stmt)) {
