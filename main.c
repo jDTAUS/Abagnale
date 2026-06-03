@@ -91,24 +91,6 @@ struct Array *restrict volatility_windows;
 int abagnale(int argc, char *argv[]);
 int abagnalectl(int argc, char *argv[]);
 
-const struct Algorithm *algorithm(const struct String *restrict const nm) {
-  void *const *items = Array_items(algorithms);
-  for (size_t i = Array_size(algorithms); i > 0; i--)
-    if (String_equals(nm, ((struct Algorithm *)items[i - 1])->nm))
-      return items[i - 1];
-
-  return NULL;
-}
-
-const struct Exchange *exchange(const struct String *restrict const nm) {
-  void *const *items = Array_items(exchanges);
-  for (size_t i = Array_size(exchanges); i > 0; i--)
-    if (String_equals(nm, ((struct Exchange *)items[i - 1])->nm))
-      return items[i - 1];
-
-  return NULL;
-}
-
 static void terminate(int signum) { terminated = true; }
 
 int main(int argc, char *argv[]) {

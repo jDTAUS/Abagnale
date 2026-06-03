@@ -183,6 +183,24 @@ static struct Numeric *restrict ninety_percent_factor;
 
 int abagnale(int argc, char *argv[]);
 
+const struct Algorithm *algorithm(const struct String *restrict const nm) {
+  void *const *items = Array_items(algorithms);
+  for (size_t i = Array_size(algorithms); i > 0; i--)
+    if (String_equals(nm, ((struct Algorithm *)items[i - 1])->nm))
+      return items[i - 1];
+
+  return NULL;
+}
+
+const struct Exchange *exchange(const struct String *restrict const nm) {
+  void *const *items = Array_items(exchanges);
+  for (size_t i = Array_size(exchanges); i > 0; i--)
+    if (String_equals(nm, ((struct Exchange *)items[i - 1])->nm))
+      return items[i - 1];
+
+  return NULL;
+}
+
 static struct abag_tls *const abag_tls(void) {
   struct abag_tls *restrict tls = tls_get(abag_tls_key);
   if (tls == NULL) {
