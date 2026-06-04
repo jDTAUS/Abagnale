@@ -500,7 +500,7 @@ void db_vacuum(const void *const db, const char *const e_id,
     EXEC SQL CONNECT TO :sql_tgt AS vfa USER :sql_usr;
     EXEC SQL AT vfa SET AUTOCOMMIT TO ON;
     EXEC SQL AT vfa SET TIMEZONE TO 'UTC';
-    EXEC SQL AT :con DELETE FROM "PLOTS";
+    EXEC SQL AT vfa DELETE FROM "PLOTS";
     EXEC SQL AT vfa VACUUM FULL ANALYZE;
     EXEC SQL DISCONNECT vfa;
     // clang-format on
