@@ -1029,8 +1029,10 @@ static void ws_ticker_update(const struct wcjson_document *restrict const doc,
     Queue_enqueue_await(samples, s);
 
     if (Queue_enqueue_timedout(samples)) {
-      werr("coinbase: Enqueuing ticker timed out after %" PRIdMAX " seconds.\n",
-           (intmax_t)(WEBSOCKET_STALL_MILLIS / 1000));
+      werr("coinbase: Enqueuing ticker timed out after %" PRIdMAX
+           " seconds: %s\n",
+           (intmax_t)(WEBSOCKET_STALL_MILLIS / 1000),
+           wcjsondoc_string(errbuf, sizeof(errbuf), doc, ticker, NULL));
 
       Sample_delete(s);
     }
@@ -1118,7 +1120,8 @@ static void ws_user_update(const struct wcjson_document *restrict const doc,
   o->dnanos = o->settled ? Numeric_copy(nanos) : NULL;
 
   if (o->status == ORDER_STATUS_UNKNOWN)
-    werr("coinbase: user: %s: Order status unknown\n", j_status->mbstring);
+    werr("coinbase: user: %s: Order status unknown: %s\n", j_status->mbstring,
+         wcjsondoc_string(errbuf, sizeof(errbuf), doc, order, NULL));
 
   if ((o->status == ORDER_STATUS_CANCELLED ||
        o->status == ORDER_STATUS_FAILED || o->status == ORDER_STATUS_EXPIRED) &&
@@ -1710,7 +1713,7 @@ static struct Sample *coinbase_sample_await(void) {
   struct Sample *restrict const s = Queue_dequeue_await(samples);
 
   if (Queue_dequeue_timedout(samples)) {
-    werr("coinbase: Dequeuing tickers timed out after %" PRIdMAX " seconds\n",
+    werr("coinbase: Dequeuing ticker timed out after %" PRIdMAX " seconds\n",
          (intmax_t)(WEBSOCKET_STALL_MILLIS / 1000));
 
     for (size_t i = nitems(ws_channels); i > 0; i--)
@@ -2011,7 +2014,8 @@ parse_account(const struct wcjson_document *restrict const doc,
   a->is_ready = j_ready_exists && j_ready->is_true;
 
   if (a->type == ACCOUNT_TYPE_UNSPECIFIED)
-    werr("coinbase: %s: Account type unsupported\n", j_type->mbstring);
+    werr("coinbase: %s: Account type unsupported: %s\n", j_type->mbstring,
+         wcjsondoc_string(errbuf, sizeof(errbuf), doc, acct, NULL));
 
 ret:
   return a;
