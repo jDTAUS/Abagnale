@@ -2397,16 +2397,9 @@ static void order_create_body(char *restrict const mbbody, size_t mbbody_nitems,
                               const char *restrict const base_amount,
                               const char *restrict const price,
                               size_t *restrict mb_len) {
-  char client_id[DATABASE_UUID_MAX_LENGTH + 1] = {0};
   struct wcjson_value *restrict const body = wcjson_object(doc);
   struct wcjson_value *restrict const conf = wcjson_object(doc);
   struct wcjson_value *restrict const llgtc = wcjson_object(doc);
-
-  db_uuid(client_id, coinbase_db);
-
-  struct wcjson_value *restrict const j_client_id =
-      wcjson_string(doc, client_id);
-
   struct wcjson_value *restrict const j_p_id = wcjson_string(doc, m_sym);
   struct wcjson_value *restrict const j_side = wcjson_string(doc, side);
   struct wcjson_value *restrict const j_base = wcjson_string(doc, base_amount);
@@ -2415,7 +2408,6 @@ static void order_create_body(char *restrict const mbbody, size_t mbbody_nitems,
 
   wcjson_object_add(doc, body, L"order_configuration", 19, conf);
   wcjson_object_add(doc, conf, L"limit_limit_gtc", 15, llgtc);
-  wcjson_object_add(doc, body, L"client_order_id", 15, j_client_id);
   wcjson_object_add(doc, body, L"product_id", 10, j_p_id);
   wcjson_object_add(doc, body, L"side", 4, j_side);
   wcjson_object_add(doc, llgtc, L"post_only", 9, j_post_only);

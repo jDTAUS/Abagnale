@@ -165,8 +165,6 @@ void db_tx_rollback(const void *const);
 void db_vacuum(const void *const, const char *const, const char *const,
                const struct Numeric *const, const char *const, bool);
 
-void db_uuid(char *const, const void *const);
-
 void db_symbol_to_id(char *const, const void *const, const char *const,
                      const char *const);
 
