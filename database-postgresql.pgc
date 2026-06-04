@@ -443,9 +443,7 @@ void db_vacuum(const void *const db, const char *const e_id,
     fatal();
   }
   Numeric_char_free(nanos_asc);
-  EXEC SQL AT :con PREPARE copy FROM :stmt;
-  EXEC SQL AT :con EXECUTE copy;
-  EXEC SQL AT :con DEALLOCATE PREPARE copy;
+  EXEC SQL AT :con EXECUTE IMMEDIATE :stmt;
   EXEC SQL AT :con COMMIT;
   // clang-format on
   if (vacuum) {
