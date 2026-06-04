@@ -1326,8 +1326,7 @@ static void ws_listener(struct mg_connection *restrict c, int ev,
     break;
   }
   case MG_EV_ERROR: {
-    werr("coinbase: %s: %lu: MG_EV_ERROR: %s\n", channel->name, c->id,
-         (char *)ev_data);
+    werr("coinbase: %s: %lu: %s\n", channel->name, c->id, (char *)ev_data);
     c->is_closing = 1;
     break;
   }
@@ -1419,8 +1418,8 @@ static void http_listener(struct mg_connection *restrict c, int ev,
   }
   case MG_EV_ERROR: {
     http_ctx->success = false;
-    werr("coinbase: MG_EV_ERROR: HTTP %s %s: %lu: %s\n", method, http_ctx->url,
-         c->id, (char *)ev_data);
+    werr("coinbase: HTTP %s %s: %lu: %s\n", method, http_ctx->url, c->id,
+         (char *)ev_data);
     break;
   }
   case MG_EV_CONNECT: {
