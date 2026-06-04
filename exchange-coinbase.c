@@ -440,10 +440,10 @@ coinbase_account_currency(const struct String *restrict const);
 static struct Account *coinbase_account(const struct String *restrict const);
 static struct Order *coinbase_order(const struct String *restrict const);
 static bool coinbase_cancel(const struct String *restrict const);
-static struct String *coinbase_buy(const struct String *restrict const,
+static struct String *coinbase_buy(const char *restrict const,
                                    const char *restrict const,
                                    const char *restrict const);
-static struct String *coinbase_sell(const struct String *restrict const,
+static struct String *coinbase_sell(const char *restrict const,
                                     const char *restrict const,
                                     const char *restrict const);
 
@@ -2397,26 +2397,24 @@ ret:
 
 static void order_create_body(char *restrict const mbbody, size_t mbbody_nitems,
                               struct wcjson_document *restrict const doc,
-                              const struct String *restrict const m_id,
+                              const char *restrict const m_sym,
                               const char *restrict const side,
                               const char *restrict const base_amount,
                               const char *restrict const price,
                               size_t *restrict mb_len) {
   char client_id[DATABASE_UUID_MAX_LENGTH + 1] = {0};
-  char s_id[DATABASE_UUID_MAX_LENGTH + 1] = {0};
   struct wcjson_value *restrict const body = wcjson_object(doc);
   struct wcjson_value *restrict const conf = wcjson_object(doc);
   struct wcjson_value *restrict const llgtc = wcjson_object(doc);
 
   mutex_lock(&coinbase_db_mutex);
   db_uuid(client_id, coinbase_db);
-  db_id_to_symbol(s_id, coinbase_db, COINBASE_UUID, String_chars(m_id));
   mutex_unlock(&coinbase_db_mutex);
 
   struct wcjson_value *restrict const j_client_id =
       wcjson_string(doc, client_id);
 
-  struct wcjson_value *restrict const j_p_id = wcjson_string(doc, s_id);
+  struct wcjson_value *restrict const j_p_id = wcjson_string(doc, m_sym);
   struct wcjson_value *restrict const j_side = wcjson_string(doc, side);
   struct wcjson_value *restrict const j_base = wcjson_string(doc, base_amount);
   struct wcjson_value *restrict const j_price = wcjson_string(doc, price);
@@ -2435,7 +2433,7 @@ static void order_create_body(char *restrict const mbbody, size_t mbbody_nitems,
 }
 
 static struct String *coinbase_order_post(
-    const struct String *restrict const m_id, const char *restrict const side,
+    const char *restrict const m_sym, const char *restrict const side,
     const char *restrict const base_amount, const char *restrict const price) {
   struct String *restrict o_id = NULL;
   char body[WCJSON_BODY_MAX + 1] = {0};
@@ -2447,7 +2445,7 @@ static struct String *coinbase_order_post(
   WCJSON_DECLARE_OBJECT_ITEM(success_response)
   WCJSON_DECLARE_STRING_ITEM(order_id)
 
-  order_create_body(body, sizeof(body), b_doc, m_id, side, base_amount, price,
+  order_create_body(body, sizeof(body), b_doc, m_sym, side, base_amount, price,
                     &b_len);
 
   if (http_req(&doc, ABAG_COINBASE_ORDER_CREATE_RESOURCE_URL,
@@ -2477,16 +2475,16 @@ ret:
   return o_id;
 }
 
-static struct String *coinbase_buy(const struct String *restrict const m_id,
+static struct String *coinbase_buy(const char *restrict const m_sym,
                                    const char *restrict const base_amount,
                                    const char *restrict const price) {
-  return coinbase_order_post(m_id, "BUY", base_amount, price);
+  return coinbase_order_post(m_sym, "BUY", base_amount, price);
 }
 
-static struct String *coinbase_sell(const struct String *restrict const m_id,
+static struct String *coinbase_sell(const char *restrict const m_sym,
                                     const char *restrict const base_amount,
                                     const char *restrict const price) {
-  return coinbase_order_post(m_id, "SELL", base_amount, price);
+  return coinbase_order_post(m_sym, "SELL", base_amount, price);
 }
 
 static struct Pricing *

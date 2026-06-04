@@ -246,32 +246,6 @@ not_found:
 #endif
 }
 
-void db_id_to_symbol(char *const symbol, const void *const db,
-                     const char *const e_id, const char *const id) {
-#ifdef ABAG_SQL_DEBUG
-  ECPGdebug(1, stdout);
-#endif
-  // clang-format off
-  EXEC SQL BEGIN DECLARE SECTION;
-  const char *con = String_chars(db);
-  const char *sql_e_id = e_id;
-  const char *sql_id = id; 
-  const char *sql_symbol = symbol;
-  EXEC SQL END DECLARE SECTION;
-  EXEC SQL WHENEVER SQLWARNING CALL db_warn();
-  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
-  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
-  EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
-  EXEC SQL AT :con
-    SELECT "EXTERNAL_ID" INTO :sql_symbol FROM "IDENTIFIERS"
-    WHERE "EXCHANGE_ID" = :sql_e_id AND "INTERNAL_ID" = :sql_id;
-  EXEC SQL AT :con COMMIT;
-  // clang-format on
-#ifdef ABAG_SQL_DEBUG
-  ECPGdebug(0, stdout);
-#endif
-}
-
 void db_sample_create(const void *const db, const char *const e_id,
                       const char *const m_id, const struct Numeric *const nanos,
                       const struct Numeric *const price) {

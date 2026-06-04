@@ -2121,7 +2121,7 @@ trade:
   struct Position *restrict o_p;
   switch (p->type) {
   case POSITION_TYPE_LONG:
-    o_id = w_ctx->e->sell(w_ctx->m->id, b, pr);
+    o_id = w_ctx->e->sell(String_chars(w_ctx->m->sym), b, pr);
     if (o_id == NULL) {
       werr("%s: %s: %s: Failure creating sell order\n",
            String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
@@ -2137,7 +2137,7 @@ trade:
     o_p = &t->p_short;
     break;
   case POSITION_TYPE_SHORT:
-    o_id = w_ctx->e->buy(w_ctx->m->id, b, pr);
+    o_id = w_ctx->e->buy(String_chars(w_ctx->m->sym), b, pr);
     if (o_id == NULL) {
       werr("%s: %s: %s: Failure creating buy order\n",
            String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
@@ -2518,7 +2518,8 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
       heap_free(c);
     }
 
-    struct String *restrict const o_id = w_ctx->e->buy(w_ctx->m->id, b, pr);
+    struct String *restrict const o_id =
+        w_ctx->e->buy(String_chars(w_ctx->m->sym), b, pr);
 
     if (o_id == NULL) {
       werr("%s: %s: Failure creating buy order\n", String_chars(w_ctx->e->nm),
@@ -2580,7 +2581,8 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
       heap_free(c);
     }
 
-    struct String *restrict const o_id = w_ctx->e->sell(w_ctx->m->id, b, pr);
+    struct String *restrict const o_id =
+        w_ctx->e->sell(String_chars(w_ctx->m->sym), b, pr);
 
     if (o_id == NULL) {
       werr("%s: %s: Failure creating sell order\n", String_chars(w_ctx->e->nm),
