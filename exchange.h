@@ -142,13 +142,15 @@ struct Exchange {
   struct Account *(*account)(const struct String *restrict const);
   struct Order *(*order)(const struct String *restrict const);
   struct Pricing *(*pricing)(void);
-  struct Order *(*order_await)(void);
   struct Sample *(*sample_await)(void);
-  struct String *(*buy)(const char *restrict const, const char *restrict const,
-                        const char *restrict const);
-  struct String *(*sell)(const char *restrict const, const char *restrict const,
-                         const char *restrict const);
-  bool (*cancel)(const struct String *restrict const);
+  struct Order *(*order_await)(void);
+  bool (*order_cancel)(const struct String *restrict const);
+  struct String *(*order_buy)(const char *restrict const,
+                              const char *restrict const,
+                              const char *restrict const);
+  struct String *(*order_sell)(const char *restrict const,
+                               const char *restrict const,
+                               const char *restrict const);
 };
 
 struct Market *Market_new(void);

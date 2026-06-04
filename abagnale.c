@@ -1626,7 +1626,7 @@ static void position_maintain(const struct worker_ctx *restrict const w_ctx,
 
     // Recheck after reload.
     if (cancel && p->id != NULL && !(p->done || p->filled)) {
-      const bool cancelled = w_ctx->e->cancel(p->id);
+      const bool cancelled = w_ctx->e->order_cancel(p->id);
       char *restrict const p_info = position_string(w_ctx, t, p);
 
       if (!cancelled) {
@@ -2121,7 +2121,7 @@ trade:
   struct Position *restrict o_p;
   switch (p->type) {
   case POSITION_TYPE_LONG:
-    o_id = w_ctx->e->sell(String_chars(w_ctx->m->sym), b, pr);
+    o_id = w_ctx->e->order_sell(String_chars(w_ctx->m->sym), b, pr);
     if (o_id == NULL) {
       werr("%s: %s: %s: Failure creating sell order\n",
            String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
@@ -2137,7 +2137,7 @@ trade:
     o_p = &t->p_short;
     break;
   case POSITION_TYPE_SHORT:
-    o_id = w_ctx->e->buy(String_chars(w_ctx->m->sym), b, pr);
+    o_id = w_ctx->e->order_buy(String_chars(w_ctx->m->sym), b, pr);
     if (o_id == NULL) {
       werr("%s: %s: %s: Failure creating buy order\n",
            String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
@@ -2519,7 +2519,7 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
     }
 
     struct String *restrict const o_id =
-        w_ctx->e->buy(String_chars(w_ctx->m->sym), b, pr);
+        w_ctx->e->order_buy(String_chars(w_ctx->m->sym), b, pr);
 
     if (o_id == NULL) {
       werr("%s: %s: Failure creating buy order\n", String_chars(w_ctx->e->nm),
@@ -2582,7 +2582,7 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
     }
 
     struct String *restrict const o_id =
-        w_ctx->e->sell(String_chars(w_ctx->m->sym), b, pr);
+        w_ctx->e->order_sell(String_chars(w_ctx->m->sym), b, pr);
 
     if (o_id == NULL) {
       werr("%s: %s: Failure creating sell order\n", String_chars(w_ctx->e->nm),
