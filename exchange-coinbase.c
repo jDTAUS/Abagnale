@@ -439,12 +439,12 @@ coinbase_account_currency(const struct String *restrict const);
 static struct Account *coinbase_account(const struct String *restrict const);
 static struct Order *coinbase_order(const struct String *restrict const);
 static bool coinbase_order_cancel(const struct String *restrict const);
-static struct String *coinbase_order_buy(const char *restrict const,
-                                         const char *restrict const,
-                                         const char *restrict const);
-static struct String *coinbase_order_sell(const char *restrict const,
-                                          const char *restrict const,
-                                          const char *restrict const);
+static struct String *coinbase_order_demand(const char *restrict const,
+                                            const char *restrict const,
+                                            const char *restrict const);
+static struct String *coinbase_order_supply(const char *restrict const,
+                                            const char *restrict const,
+                                            const char *restrict const);
 
 static void ws_status_update(const struct wcjson_document *restrict const,
                              const struct wcjson_value *restrict const,
@@ -473,8 +473,8 @@ struct Exchange exchange_coinbase = {
     .accounts = coinbase_accounts,
     .account = coinbase_account,
     .order = coinbase_order,
-    .order_buy = coinbase_order_buy,
-    .order_sell = coinbase_order_sell,
+    .order_demand = coinbase_order_demand,
+    .order_supply = coinbase_order_supply,
 };
 
 static struct ws_channel {
@@ -2459,16 +2459,17 @@ ret:
   return o_id;
 }
 
-static struct String *coinbase_order_buy(const char *restrict const m_sym,
-                                         const char *restrict const base_amount,
-                                         const char *restrict const price) {
+static struct String *
+coinbase_order_demand(const char *restrict const m_sym,
+                      const char *restrict const base_amount,
+                      const char *restrict const price) {
   return coinbase_order_post(m_sym, "BUY", base_amount, price);
 }
 
 static struct String *
-coinbase_order_sell(const char *restrict const m_sym,
-                    const char *restrict const base_amount,
-                    const char *restrict const price) {
+coinbase_order_supply(const char *restrict const m_sym,
+                      const char *restrict const base_amount,
+                      const char *restrict const price) {
   return coinbase_order_post(m_sym, "SELL", base_amount, price);
 }
 

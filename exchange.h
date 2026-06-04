@@ -145,12 +145,12 @@ struct Exchange {
   struct Sample *(*sample_await)(void);
   struct Order *(*order_await)(void);
   bool (*order_cancel)(const struct String *restrict const);
-  struct String *(*order_buy)(const char *restrict const,
-                              const char *restrict const,
-                              const char *restrict const);
-  struct String *(*order_sell)(const char *restrict const,
-                               const char *restrict const,
-                               const char *restrict const);
+  struct String *(*order_demand)(const char *restrict const,
+                                 const char *restrict const,
+                                 const char *restrict const);
+  struct String *(*order_supply)(const char *restrict const,
+                                 const char *restrict const,
+                                 const char *restrict const);
 };
 
 struct Market *Market_new(void);
