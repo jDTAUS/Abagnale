@@ -356,6 +356,7 @@ void db_volatility_open(const void *const db, const char *const e_id,
   ECPGdebug(0, stdout);
 #endif
 }
+
 void db_volatility(struct Numeric *const stddev, const void *const db,
                    const struct Numeric *const wnanos) {
 #ifdef ABAG_SQL_DEBUG
@@ -407,9 +408,30 @@ void db_volatility_close(const void *const db) {
 #endif
 }
 
-void db_vacuum(const void *const db, const char *const e_id,
-               const char *const m_id, const struct Numeric *const wnanos,
-               const char *const fname, bool vacuum) {
+void db_vacuum(void) {
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(1, stdout);
+#endif
+  // clang-format off
+  EXEC SQL BEGIN DECLARE SECTION;
+  const char *sql_tgt = String_chars(cnf->db_tgt);
+  const char *sql_usr = String_chars(cnf->db_usr);
+  EXEC SQL END DECLARE SECTION;
+  EXEC SQL CONNECT TO :sql_tgt AS vfa USER :sql_usr;
+  EXEC SQL AT vfa SET AUTOCOMMIT TO ON;
+  EXEC SQL AT vfa SET TIMEZONE TO 'UTC';
+  EXEC SQL AT vfa VACUUM FULL ANALYZE;
+  EXEC SQL DISCONNECT vfa;
+  // clang-format on
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(0, stdout);
+#endif
+}
+
+void db_vacuum_samples(const void *const db, const char *const e_id,
+                       const char *const m_id,
+                       const struct Numeric *const wnanos,
+                       const char *const fname) {
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(1, stdout);
 #endif
@@ -420,8 +442,6 @@ void db_vacuum(const void *const db, const char *const e_id,
   // clang-format off
   EXEC SQL BEGIN DECLARE SECTION;
   const char *con = String_chars(db);
-  const char *sql_tgt = String_chars(cnf->db_tgt);
-  const char *sql_usr = String_chars(cnf->db_usr);
   char stmt[DB_STATEMENT_MAX_LENGTH + 1] = {0};
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
@@ -436,7 +456,7 @@ void db_vacuum(const void *const db, const char *const e_id,
     "    AND \"PRODUCT_ID\" = '%s'"
     "    AND \"NANOS\" <= %s"
     "  RETURNING *"
-    ") TO PROGRAM 'xz - > %s.xz'", e_id, m_id, nanos_asc, fname);
+    ") TO '%s'", e_id, m_id, nanos_asc, fname);
 
   if (r < 0 || (size_t)r >= sizeof(stmt)) {
     werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
@@ -446,16 +466,6 @@ void db_vacuum(const void *const db, const char *const e_id,
   EXEC SQL AT :con EXECUTE IMMEDIATE :stmt;
   EXEC SQL AT :con COMMIT;
   // clang-format on
-  if (vacuum) {
-    // clang-format off
-    EXEC SQL CONNECT TO :sql_tgt AS vfa USER :sql_usr;
-    EXEC SQL AT vfa SET AUTOCOMMIT TO ON;
-    EXEC SQL AT vfa SET TIMEZONE TO 'UTC';
-    EXEC SQL AT vfa DELETE FROM "PLOTS";
-    EXEC SQL AT vfa VACUUM FULL ANALYZE;
-    EXEC SQL DISCONNECT vfa;
-    // clang-format on
-  }
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(0, stdout);
 #endif

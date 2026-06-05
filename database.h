@@ -162,8 +162,9 @@ void db_tx_begin(const void *const);
 void db_tx_commit(const void *const);
 void db_tx_rollback(const void *const);
 
-void db_vacuum(const void *const, const char *const, const char *const,
-               const struct Numeric *const, const char *const, bool);
+void db_vacuum(void);
+void db_vacuum_samples(const void *const, const char *const, const char *const,
+                       const struct Numeric *const, const char *const);
 
 void db_symbol_to_id(char *const, const void *const, const char *const,
                      const char *const);

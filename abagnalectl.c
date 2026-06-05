@@ -278,13 +278,14 @@ static int cmd_vacuum(int argc, char *argv[]) {
         fatal();
       }
 
-      db_vacuum(db, String_chars(e->id), String_chars(m->id),
-                m_cnf != NULL ? m_cnf->wnanos : zero, mfile, j - 1 == 0);
+      db_vacuum_samples(db, String_chars(e->id), String_chars(m->id),
+                        m_cnf != NULL ? m_cnf->wnanos : zero, mfile);
     }
 
     Array_unlock(markets);
   }
 
+  db_vacuum();
   db_disconnect(db);
 
   return EXIT_SUCCESS;
