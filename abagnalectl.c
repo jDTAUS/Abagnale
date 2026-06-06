@@ -244,51 +244,52 @@ static int cmd_vacuum(int argc, char *argv[]) {
   if (argc > 0)
     usage();
 
-  if (file == NULL) {
-    db_vacuum();
-    return EXIT_SUCCESS;
-  }
-
   void *restrict const db = db_connect(String_chars(progname));
 
-  e_items = Array_items(exchanges);
-  for (size_t i = Array_size(exchanges); i > 0; i--) {
-    const struct Exchange *restrict const e = e_items[i - 1];
-    struct Array *restrict const markets = e->markets();
+  if (cnf->plts_dir != NULL)
+    db_vacuum_plots(db);
 
-    m_items = Array_items(markets);
-    for (size_t j = Array_size(markets); j > 0; j--) {
-      const struct Market *restrict const m = m_items[j - 1];
+  if (file != NULL) {
+    e_items = Array_items(exchanges);
+    for (size_t i = Array_size(exchanges); i > 0; i--) {
+      const struct Exchange *restrict const e = e_items[i - 1];
+      struct Array *restrict const markets = e->markets();
 
-      m_cnf = NULL;
-      m_cnf_items = Array_items(cnf->m_cnf);
-      for (size_t k = Array_size(cnf->m_cnf); k > 0; k--) {
-        struct MarketConfig *restrict const candidate = m_cnf_items[k - 1];
+      m_items = Array_items(markets);
+      for (size_t j = Array_size(markets); j > 0; j--) {
+        const struct Market *restrict const m = m_items[j - 1];
 
-        if (!String_equals(candidate->e_nm, e->nm))
-          continue;
+        m_cnf = NULL;
+        m_cnf_items = Array_items(cnf->m_cnf);
+        for (size_t k = Array_size(cnf->m_cnf); k > 0; k--) {
+          struct MarketConfig *restrict const candidate = m_cnf_items[k - 1];
 
-        if (!MarketConfig_match(candidate, m->nm))
-          continue;
+          if (!String_equals(candidate->e_nm, e->nm))
+            continue;
 
-        m_cnf = candidate;
-        break;
+          if (!MarketConfig_match(candidate, m->nm))
+            continue;
+
+          m_cnf = candidate;
+          break;
+        }
+
+        r = snprintf(mfile, sizeof(mfile), "%s-%s-%s", file,
+                     String_chars(e->nm), String_chars(m->nm));
+
+        if (r < 0 || (size_t)r >= sizeof(mfile)) {
+          werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
+          fatal();
+        }
+
+        db_vacuum_samples(db, String_chars(e->id), String_chars(m->id),
+                          m_cnf != NULL ? m_cnf->wnanos : zero, mfile);
       }
 
-      r = snprintf(mfile, sizeof(mfile), "%s-%s-%s", file, String_chars(e->nm),
-                   String_chars(m->nm));
-
-      if (r < 0 || (size_t)r >= sizeof(mfile)) {
-        werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-        fatal();
-      }
-
-      db_vacuum_samples(db, String_chars(e->id), String_chars(m->id),
-                        m_cnf != NULL ? m_cnf->wnanos : zero, mfile);
+      Array_unlock(markets);
     }
-
-    Array_unlock(markets);
-  }
+  } else
+    db_vacuum();
 
   db_disconnect(db);
 

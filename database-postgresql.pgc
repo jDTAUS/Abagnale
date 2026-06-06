@@ -449,6 +449,23 @@ void db_vacuum(void) {
 #endif
 }
 
+void db_vacuum_plots(const void *const db) {
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(1, stdout);
+#endif
+  // clang-format off
+  EXEC SQL BEGIN DECLARE SECTION;
+  const char *con = String_chars(db);
+  EXEC SQL END DECLARE SECTION;
+  EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
+  EXEC SQL AT :con DELETE FROM "PLOTS";
+  EXEC SQL AT :con COMMIT;
+  // clang-format on
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(0, stdout);
+#endif
+}
+
 void db_vacuum_samples(const void *const db, const char *const e_id,
                        const char *const m_id,
                        const struct Numeric *const wnanos,
