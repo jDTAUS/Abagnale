@@ -99,7 +99,7 @@ LDFLAGS+=-lssl
 YACCFLAGS=
 YACCFLAGS+=-o
 
-HEADERS=abagnale.h 
+HEADERS=abagnale.h
 HEADERS+=array.h
 HEADERS+=config.h
 HEADERS+=database.h
