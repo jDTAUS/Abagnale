@@ -187,6 +187,27 @@ void db_tx_rollback(const void *const db) {
 #endif
 }
 
+void db_uuid(char *const id, const void *const db) {
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(1, stdout);
+#endif
+  // clang-format off
+  EXEC SQL BEGIN DECLARE SECTION;
+  const char *con = String_chars(db);
+  char *sql_id = id;
+  EXEC SQL END DECLARE SECTION;
+  EXEC SQL WHENEVER SQLWARNING CALL db_warn();
+  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
+  EXEC SQL AT :con SELECT gen_random_uuid() INTO :sql_id;
+  EXEC SQL AT :con COMMIT;
+  // clang-format on
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(0, stdout);
+#endif
+}
+
 void db_symbol_to_id(char *const id, const void *const db,
                      const char *const e_id, const char *const symbol) {
 #ifdef ABAG_SQL_DEBUG
