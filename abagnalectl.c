@@ -112,7 +112,7 @@ static const struct {
   const char *restrict usage;
   int (*cmd)(int, char *[]);
 } cmd_tab[] = {
-    {"vacuum", "-o file", cmd_vacuum},
+    {"vacuum", "-o file [-s]", cmd_vacuum},
     {"algorithms", "", cmd_algorithms},
     {"exchanges", "", cmd_exchanges},
     {"markets",
@@ -224,16 +224,20 @@ static int cmd_vacuum(int argc, char *argv[]) {
   void *const *e_items;
   void *const *m_items;
   void *const *m_cnf_items;
+  bool samples = false;
   struct MarketConfig *restrict m_cnf = NULL;
   const char *restrict file = NULL;
   char mfile[4096] = {0};
   struct optparse options = {0};
   optparse_init(&options, argv);
 
-  while ((ch = optparse(&options, "o:")) != -1) {
+  while ((ch = optparse(&options, "o:s")) != -1) {
     switch (ch) {
     case 'o':
       file = options.optarg;
+      break;
+    case 's':
+      samples = true;
       break;
     default:
       usage();
@@ -245,6 +249,12 @@ static int cmd_vacuum(int argc, char *argv[]) {
     usage();
 
   void *restrict const db = db_connect(String_chars(progname));
+
+  if (!samples) {
+    db_vacuum();
+    db_disconnect(db);
+    return EXIT_SUCCESS;
+  }
 
   e_items = Array_items(exchanges);
   for (size_t i = Array_size(exchanges); i > 0; i--) {
@@ -285,7 +295,6 @@ static int cmd_vacuum(int argc, char *argv[]) {
     Array_unlock(markets);
   }
 
-  db_vacuum();
   db_disconnect(db);
 
   return EXIT_SUCCESS;
