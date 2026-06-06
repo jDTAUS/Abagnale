@@ -244,13 +244,12 @@ static int cmd_vacuum(int argc, char *argv[]) {
   if (argc > 0)
     usage();
 
-  void *restrict const db = db_connect(String_chars(progname));
-
   if (file == NULL) {
     db_vacuum();
-    db_disconnect(db);
     return EXIT_SUCCESS;
   }
+
+  void *restrict const db = db_connect(String_chars(progname));
 
   e_items = Array_items(exchanges);
   for (size_t i = Array_size(exchanges); i > 0; i--) {
