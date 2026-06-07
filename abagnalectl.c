@@ -209,7 +209,8 @@ static void print_market(const struct Market *restrict const m) {
 }
 
 static _Noreturn void usage(void) {
-  werr("usage: %s\n", String_chars(progname));
+  werr("usage: %s [-Dkey=value] [-f config file] [-p plots dir] [-v] [-n]\n",
+       String_chars(progname));
 
   for (size_t i = nitems(cmd_tab); i > 0; i--)
     werr("       %s %s %s\n", String_chars(progname), cmd_tab[i - 1].name,
