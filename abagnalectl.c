@@ -209,8 +209,8 @@ static void print_market(const struct Market *restrict const m) {
 }
 
 static _Noreturn void usage(void) {
-  werr("usage: %s [-Dkey=value] [-f config file] [-p plots dir] [-v] [-n] "
-       "command\n",
+  werr("Usage: %s [-Dmacro=value ... ] [-f config file] [-p plots dir] [-v] "
+       "[-n] command\n",
        String_chars(progname));
 
   werr("Commands:\n");
