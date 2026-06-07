@@ -213,8 +213,7 @@ static _Noreturn void usage(void) {
        String_chars(progname));
 
   for (size_t i = nitems(cmd_tab); i > 0; i--)
-    werr("       %s %s %s\n", String_chars(progname), cmd_tab[i - 1].name,
-         cmd_tab[i - 1].usage);
+    werr("       %s %s\n", cmd_tab[i - 1].name, cmd_tab[i - 1].usage);
 
   fatal();
 }
