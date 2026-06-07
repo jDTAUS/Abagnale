@@ -213,8 +213,11 @@ static _Noreturn void usage(void) {
        "command\n",
        String_chars(progname));
 
-  for (size_t i = nitems(cmd_tab); i > 0; i--)
-    werr("       %s %s\n", cmd_tab[i - 1].name, cmd_tab[i - 1].usage);
+  werr("Commands:\n");
+  for (size_t i = nitems(cmd_tab); i > 0; i--) {
+    werr("\t%s\n", cmd_tab[i - 1].name);
+    werr("\t\t%s\n", cmd_tab[i - 1].usage);
+  }
 
   fatal();
 }
