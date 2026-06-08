@@ -30,6 +30,7 @@
 
 mtx_t stdout_mutex;
 mtx_t stderr_mutex;
+bool proc_prefix_systemd = false;
 
 #ifdef ABAG_DEBUG
 inline _Noreturn void fatal(void) { abort(); }
@@ -50,7 +51,8 @@ void proc_destroy(void) {
 inline void wout(const char *restrict fmt, ...) {
   va_list ap;
   mutex_lock(&stdout_mutex);
-  (void)fprintf(stdout, "<6>");
+  if (proc_prefix_systemd)
+    (void)fprintf(stdout, "<6>");
   va_start(ap, fmt);
   (void)vfprintf(stdout, fmt, ap);
   va_end(ap);
@@ -61,7 +63,8 @@ inline void wout(const char *restrict fmt, ...) {
 inline void werr(const char *restrict fmt, ...) {
   va_list ap;
   mutex_lock(&stderr_mutex);
-  (void)fprintf(stderr, "<3>");
+  if (proc_prefix_systemd)
+    (void)fprintf(stderr, "<3>");
   va_start(ap, fmt);
   (void)vfprintf(stderr, fmt, ap);
   va_end(ap);
