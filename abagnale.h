@@ -105,7 +105,7 @@ struct Trade {
   struct Numeric *restrict tp_pc;
   struct Numeric *restrict tp_pf;
   struct Numeric *restrict q_return;
-  struct Numeric *restrict cl_samples;
+  struct Numeric *restrict pr_samples;
   const struct Algorithm *restrict a;
   enum trade_status status;
   struct Position p_long;

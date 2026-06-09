@@ -783,7 +783,7 @@ static inline struct Trade *trade_new(void) {
   t->tp_pc = Numeric_copy(zero);
   t->tp_pf = Numeric_copy(one);
   t->q_return = Numeric_copy(zero);
-  t->cl_samples = Numeric_copy(zero);
+  t->pr_samples = Numeric_copy(zero);
   t->a = NULL;
   candle_init(&t->open_cd);
   trigger_init(&t->open_trg);
@@ -805,7 +805,7 @@ static inline void trade_delete(void *restrict const t) {
   Numeric_delete(trade->tp_pc);
   Numeric_delete(trade->tp_pf);
   Numeric_delete(trade->q_return);
-  Numeric_delete(trade->cl_samples);
+  Numeric_delete(trade->pr_samples);
   Candle_delete(&trade->open_cd);
   trigger_delete(&trade->open_trg);
   position_delete(&trade->p_long);
@@ -2199,7 +2199,7 @@ static void trade_timeout(const struct worker_ctx *restrict const w_ctx,
   struct Numeric *restrict const r0 = tls->trade_timeout.r0;
 
   samples_per_nano(r0, samples);
-  Numeric_mul_to(r0, w_ctx->m_cnf->wnanos, t->cl_samples);
+  Numeric_mul_to(r0, w_ctx->m_cnf->wnanos, t->pr_samples);
 }
 
 static void trade_create(const struct worker_ctx *restrict const w_ctx,
@@ -2240,7 +2240,7 @@ static void trade_pricing(const struct worker_ctx *restrict const w_ctx,
   mutex_unlock(pricing->mtx);
 
   if (Numeric_cmp(t->fee_pc, ef_pc) >= 0 &&
-      Numeric_cmp(t->cl_samples, zero) > 0)
+      Numeric_cmp(t->pr_samples, zero) > 0)
     return;
 
   trade_timeout(w_ctx, t, samples, sample);
@@ -3114,7 +3114,7 @@ static int samples_process(void *restrict const arg) {
           goto again;
         } else if (t->status == TRADE_STATUS_NEW) {
           betting = true;
-          Numeric_dec(t->cl_samples);
+          Numeric_dec(t->pr_samples);
         }
       } else
         werr("%s: %s: %s: Configuration not available\n",
