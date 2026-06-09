@@ -904,7 +904,7 @@ static void samples_load(struct Array *restrict const a,
 }
 
 static bool quote_return(struct Numeric *restrict const q_return,
-                         struct worker_ctx *restrict const w_ctx,
+                         const struct worker_ctx *restrict const w_ctx,
                          const struct Array *restrict const samples) {
   const struct abag_tls *restrict const tls = abag_tls();
   struct Numeric *restrict const r0 = tls->quote_return.r0;
