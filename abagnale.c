@@ -2209,6 +2209,8 @@ static void trade_create(const struct worker_ctx *restrict const w_ctx,
   const struct abag_tls *restrict const tls = abag_tls();
   struct db_stats_rec *restrict const stats = tls->trade_create.stats;
 
+  trade_timeout(w_ctx, t, samples, sample);
+
   if (db_stats(stats, w_ctx->db, String_chars(w_ctx->e->id),
                String_chars(w_ctx->m->id))) {
 
@@ -2218,8 +2220,6 @@ static void trade_create(const struct worker_ctx *restrict const w_ctx,
     Numeric_copy_to(one, t->p_long.cl_factor);
     Numeric_copy_to(one, t->p_short.cl_factor);
   }
-
-  trade_timeout(w_ctx, t, samples, sample);
 
   // XXX: Calls db_stats(...) again.
   position_timeout(w_ctx, t, &t->p_long, samples, sample);
