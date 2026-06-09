@@ -227,8 +227,6 @@ static int cmd_vacuum(int argc, char *argv[]) {
   int r;
   void *const *e_items;
   void *const *m_items;
-  void *const *m_cnf_items;
-  struct MarketConfig *restrict m_cnf = NULL;
   const char *restrict file = NULL;
   char mfile[4096] = {0};
   struct optparse options = {0};
@@ -262,21 +260,8 @@ static int cmd_vacuum(int argc, char *argv[]) {
       m_items = Array_items(markets);
       for (size_t j = Array_size(markets); j > 0; j--) {
         const struct Market *restrict const m = m_items[j - 1];
-
-        m_cnf = NULL;
-        m_cnf_items = Array_items(cnf->m_cnf);
-        for (size_t k = Array_size(cnf->m_cnf); k > 0; k--) {
-          struct MarketConfig *restrict const candidate = m_cnf_items[k - 1];
-
-          if (!String_equals(candidate->e_nm, e->nm))
-            continue;
-
-          if (!MarketConfig_match(candidate, m->nm))
-            continue;
-
-          m_cnf = candidate;
-          break;
-        }
+        const struct MarketConfig *restrict const m_cnf =
+            marketconfig(e->nm, m->nm);
 
         r = snprintf(mfile, sizeof(mfile), "%s-%s-%s", file,
                      String_chars(e->nm), String_chars(m->nm));

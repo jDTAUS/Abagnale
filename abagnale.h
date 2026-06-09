@@ -143,6 +143,8 @@ void Candle_reset(struct Candle *restrict const);
 
 const struct Algorithm *algorithm(const struct String *);
 const struct Exchange *exchange(const struct String *);
+const struct MarketConfig *marketconfig(const struct String *restrict const,
+                                        const struct String *restrict const);
 
 void samples_per_nano(struct Numeric *restrict const,
                       const struct Array *restrict const);

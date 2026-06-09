@@ -51,11 +51,9 @@
 
 struct worker_ctx {
   void *restrict db;
-  const struct Algorithm *restrict a;
   const struct Exchange *restrict e;
-  struct MarketConfig *restrict m_cnf;
   struct Market *restrict m;
-  struct Numeric *restrict q_tgt;
+  const struct MarketConfig *restrict m_cnf;
 };
 
 struct abag_tls {
@@ -83,9 +81,9 @@ struct abag_tls {
     struct Numeric *restrict filter;
     struct db_sample_rec *restrict sample;
   } samples_load;
-  struct worker_configure_vars {
+  struct quote_return_vars {
     struct Numeric *restrict r0;
-  } worker_configure;
+  } quote_return;
   struct orders_process_vars {
     struct Numeric *restrict tp;
   } orders_process;
@@ -201,6 +199,20 @@ const struct Exchange *exchange(const struct String *restrict const nm) {
   return NULL;
 }
 
+const struct MarketConfig *
+marketconfig(const struct String *restrict const e_nm,
+             const struct String *restrict const m_nm) {
+  void *const *items = Array_items(cnf->m_cnf);
+
+  for (size_t i = Array_size(cnf->m_cnf); i > 0; i--)
+    if (String_equals(e_nm,
+                      ((const struct MarketConfig *)items[i - 1])->e_nm) &&
+        MarketConfig_matches(items[i - 1], m_nm))
+      return items[i - 1];
+
+  return NULL;
+}
+
 static struct abag_tls *const abag_tls(void) {
   struct abag_tls *restrict tls = tls_get(abag_tls_key);
   if (tls == NULL) {
@@ -243,7 +255,7 @@ static struct abag_tls *const abag_tls(void) {
     tls->samples_load.sample->price = Numeric_new();
     tls->samples_load.now = Numeric_new();
     tls->samples_load.filter = Numeric_new();
-    tls->worker_configure.r0 = Numeric_new();
+    tls->quote_return.r0 = Numeric_new();
     tls->orders_process.tp = Numeric_new();
     tls->samples_process.outdated_ns = Numeric_new();
     tls->samples_process.tp = Numeric_new();
@@ -356,7 +368,7 @@ static void abag_tls_dtor(void *e) {
   heap_free(tls->samples_load.sample);
   Numeric_delete(tls->samples_load.now);
   Numeric_delete(tls->samples_load.filter);
-  Numeric_delete(tls->worker_configure.r0);
+  Numeric_delete(tls->quote_return.r0);
   Numeric_delete(tls->orders_process.tp);
   Numeric_delete(tls->samples_process.outdated_ns);
   Numeric_delete(tls->samples_process.tp);
@@ -854,7 +866,10 @@ static void samples_load(struct Array *restrict const a,
   struct db_sample_rec *restrict const sample = tls->samples_load.sample;
 
   nanos_now(now);
-  Numeric_sub_to(now, cnf->wnanos_max, filter);
+  Numeric_sub_to(now,
+                 w_ctx->m_cnf != NULL ? w_ctx->m_cnf->wnanos : cnf->wnanos_max,
+                 filter);
+
   db_samples_open(w_ctx->db, String_chars(w_ctx->e->id),
                   String_chars(w_ctx->m->id), filter);
 
@@ -884,29 +899,15 @@ static void samples_load(struct Array *restrict const a,
   }
 }
 
-static void worker_configure(struct worker_ctx *restrict const w_ctx,
-                             const struct Array *restrict const samples) {
+static bool quote_return(struct Numeric *restrict const qr,
+                         struct worker_ctx *restrict const w_ctx,
+                         const struct Array *restrict const samples) {
   const struct abag_tls *restrict const tls = abag_tls();
-  struct Numeric *restrict const r0 = tls->worker_configure.r0;
+  struct Numeric *restrict const r0 = tls->quote_return.r0;
   void *const *items;
 
-  items = Array_items(cnf->m_cnf);
-  for (size_t i = Array_size(cnf->m_cnf); i > 0; i--) {
-    struct MarketConfig *restrict const m_cnf = items[i - 1];
-
-    if (!String_equals(m_cnf->e_nm, w_ctx->e->nm))
-      continue;
-
-    if (!MarketConfig_match(m_cnf, w_ctx->m->nm))
-      continue;
-
-    w_ctx->m_cnf = m_cnf;
-    w_ctx->a = algorithm(m_cnf->a_nm);
-    break;
-  }
-
   if (w_ctx->m_cnf == NULL)
-    return;
+    return false;
 
   if (!String_equals(w_ctx->m->q_id, w_ctx->m_cnf->q_id)) {
     struct Market *restrict q_m = NULL;
@@ -927,9 +928,8 @@ static void worker_configure(struct worker_ctx *restrict const w_ctx,
            String_chars(w_ctx->m->nm), String_chars(w_ctx->m->q_id),
            String_chars(w_ctx->m_cnf->q_id));
 
-      w_ctx->q_tgt = NULL;
       Array_unlock(markets);
-      return;
+      return false;
     }
 
     struct String *restrict q_m_id = String_copy(q_m->id);
@@ -947,8 +947,7 @@ static void worker_configure(struct worker_ctx *restrict const w_ctx,
            String_chars(w_ctx->m_cnf->q_id));
 
       Map_unlock(market_samples);
-      w_ctx->q_tgt = NULL;
-      return;
+      return false;
     }
     Map_unlock(market_samples);
 
@@ -961,22 +960,23 @@ static void worker_configure(struct worker_ctx *restrict const w_ctx,
            String_chars(w_ctx->m_cnf->q_id));
 
       Array_unlock(q_samples);
-      w_ctx->q_tgt = NULL;
-      return;
+      return false;
     }
 
     Numeric_div_to(one, q_sample->price, r0);
-    Numeric_mul_to(r0, w_ctx->m_cnf->q_tgt, w_ctx->q_tgt);
-    Numeric_scale(w_ctx->q_tgt, w_ctx->m->q_sc);
+    Numeric_mul_to(r0, w_ctx->m_cnf->q_tgt, qr);
+    Numeric_scale(qr, w_ctx->m->q_sc);
     Array_unlock(q_samples);
   } else
-    Numeric_copy_to(w_ctx->m_cnf->q_tgt, w_ctx->q_tgt);
+    Numeric_copy_to(w_ctx->m_cnf->q_tgt, qr);
 
-  if (Numeric_cmp(w_ctx->q_tgt, w_ctx->m->q_inc) < 0) {
-    Numeric_add_to(w_ctx->q_tgt, w_ctx->m->q_inc, r0);
-    Numeric_copy_to(r0, w_ctx->q_tgt);
-    Numeric_scale(w_ctx->q_tgt, w_ctx->m->q_sc);
+  if (Numeric_cmp(qr, w_ctx->m->q_inc) < 0) {
+    Numeric_add_to(qr, w_ctx->m->q_inc, r0);
+    Numeric_copy_to(r0, qr);
+    Numeric_scale(qr, w_ctx->m->q_sc);
   }
+
+  return true;
 }
 
 static void position_pricing(const struct worker_ctx *restrict const w_ctx,
@@ -2853,10 +2853,8 @@ static int orders_process(void *restrict const arg) {
       continue;
     }
 
-    w_ctx->a = NULL;
     w_ctx->m = Market_copy(market);
-    w_ctx->m_cnf = NULL;
-    w_ctx->q_tgt = tp;
+    w_ctx->m_cnf = marketconfig(w_ctx->e->nm, w_ctx->m->nm);
 
     mutex_unlock(market->mtx);
 
@@ -2879,9 +2877,7 @@ static int orders_process(void *restrict const arg) {
       continue;
     }
 
-    worker_configure(w_ctx, samples);
-
-    if (!(w_ctx->m_cnf != NULL && w_ctx->q_tgt != NULL &&
+    if (!(w_ctx->m_cnf != NULL && quote_return(tp, w_ctx, samples) &&
           w_ctx->m->is_active)) {
       Array_unlock(samples);
       Market_delete(w_ctx->m);
@@ -2924,8 +2920,8 @@ static int orders_process(void *restrict const arg) {
     if (t != NULL) {
       if (t->status == TRADE_STATUS_BUYING ||
           t->status == TRADE_STATUS_SELLING) {
-        t->a = w_ctx->a;
-        Numeric_copy_to(w_ctx->q_tgt, t->tp);
+        t->a = algorithm(w_ctx->m_cnf->a_nm);
+        Numeric_copy_to(tp, t->tp);
         trade_pricing(w_ctx, t);
         Array_lock(samples);
         if (Array_size(samples) > 1) {
@@ -2976,12 +2972,10 @@ static int samples_process(void *restrict const arg) {
       continue;
     }
 
-    ctx->a = NULL;
     ctx->m = Market_copy(m);
-    ctx->m_cnf = NULL;
-    ctx->q_tgt = tp;
-
     mutex_unlock(m->mtx);
+
+    ctx->m_cnf = marketconfig(ctx->e->nm, ctx->m->nm);
 
     db_sample_create(ctx->db, String_chars(ctx->e->id),
                      String_chars(ctx->m->id), sample->nanos, sample->price);
@@ -3014,8 +3008,6 @@ static int samples_process(void *restrict const arg) {
       Market_delete(ctx->m);
       continue;
     }
-
-    worker_configure(ctx, samples);
 
     if (ctx->m_cnf != NULL) {
       struct Sample *restrict const oldest = Array_head(samples);
@@ -3067,15 +3059,16 @@ static int samples_process(void *restrict const arg) {
     }
 
     bool betting = false;
-    const bool has_config = ctx->m_cnf != NULL && ctx->q_tgt != NULL;
+    const bool has_config =
+        ctx->m_cnf != NULL && quote_return(tp, ctx, samples);
   again:
     items = Array_items(trades);
     for (size_t i = Array_size(trades); i > 0; i--) {
       struct Trade *restrict const t = items[i - 1];
 
       if (has_config) {
-        t->a = ctx->a;
-        Numeric_copy_to(ctx->q_tgt, t->tp);
+        t->a = algorithm(ctx->m_cnf->a_nm);
+        Numeric_copy_to(tp, t->tp);
         trade_pricing(ctx, t);
 
         Array_lock(samples);

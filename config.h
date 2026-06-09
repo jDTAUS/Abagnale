@@ -92,8 +92,8 @@ void Pattern_delete(void *restrict const);
 
 struct MarketConfig *MarketConfig_new(void);
 void MarketConfig_delete(void *restrict const);
-bool MarketConfig_match(const struct MarketConfig *restrict const,
-                        const struct String *restrict const);
+bool MarketConfig_matches(const struct MarketConfig *restrict const,
+                          const struct String *restrict const);
 
 int config_symset(char *restrict const);
 int config_fparse(struct Config *const restrict, const char *restrict const);
