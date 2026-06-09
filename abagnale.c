@@ -85,11 +85,11 @@ struct abag_tls {
     struct Numeric *restrict r0;
   } quote_return;
   struct orders_process_vars {
-    struct Numeric *restrict tp;
+    struct Numeric *restrict q_return;
   } orders_process;
   struct samples_process_vars {
     struct Numeric *restrict outdated_ns;
-    struct Numeric *restrict tp;
+    struct Numeric *restrict q_return;
     struct Numeric *restrict nanos;
   } samples_process;
   struct position_pricing_vars {
@@ -256,9 +256,9 @@ static struct abag_tls *const abag_tls(void) {
     tls->samples_load.now = Numeric_new();
     tls->samples_load.filter = Numeric_new();
     tls->quote_return.r0 = Numeric_new();
-    tls->orders_process.tp = Numeric_new();
+    tls->orders_process.q_return = Numeric_new();
     tls->samples_process.outdated_ns = Numeric_new();
-    tls->samples_process.tp = Numeric_new();
+    tls->samples_process.q_return = Numeric_new();
     tls->samples_process.nanos = Numeric_new();
     tls->position_pricing.r0 = Numeric_new();
     tls->position_pricing.r1 = Numeric_new();
@@ -369,9 +369,9 @@ static void abag_tls_dtor(void *e) {
   Numeric_delete(tls->samples_load.now);
   Numeric_delete(tls->samples_load.filter);
   Numeric_delete(tls->quote_return.r0);
-  Numeric_delete(tls->orders_process.tp);
+  Numeric_delete(tls->orders_process.q_return);
   Numeric_delete(tls->samples_process.outdated_ns);
-  Numeric_delete(tls->samples_process.tp);
+  Numeric_delete(tls->samples_process.q_return);
   Numeric_delete(tls->samples_process.nanos);
   Numeric_delete(tls->position_pricing.r0);
   Numeric_delete(tls->position_pricing.r1);
@@ -780,7 +780,7 @@ static inline struct Trade *trade_new(void) {
   t->fee_pf = Numeric_copy(one);
   t->tp_pc = Numeric_copy(zero);
   t->tp_pf = Numeric_copy(one);
-  t->tp = Numeric_copy(zero);
+  t->q_return = Numeric_copy(zero);
   t->a = NULL;
   candle_init(&t->open_cd);
   trigger_init(&t->open_trg);
@@ -801,7 +801,7 @@ static inline void trade_delete(void *restrict const t) {
   Numeric_delete(trade->fee_pf);
   Numeric_delete(trade->tp_pc);
   Numeric_delete(trade->tp_pf);
-  Numeric_delete(trade->tp);
+  Numeric_delete(trade->q_return);
   Candle_delete(&trade->open_cd);
   trigger_delete(&trade->open_trg);
   position_delete(&trade->p_long);
@@ -899,7 +899,7 @@ static void samples_load(struct Array *restrict const a,
   }
 }
 
-static bool quote_return(struct Numeric *restrict const qr,
+static bool quote_return(struct Numeric *restrict const q_return,
                          struct worker_ctx *restrict const w_ctx,
                          const struct Array *restrict const samples) {
   const struct abag_tls *restrict const tls = abag_tls();
@@ -909,14 +909,14 @@ static bool quote_return(struct Numeric *restrict const qr,
   if (w_ctx->m_cnf == NULL)
     return false;
 
-  if (!String_equals(w_ctx->m->q_id, w_ctx->m_cnf->q_id)) {
+  if (!String_equals(w_ctx->m->q_id, w_ctx->m_cnf->r_id)) {
     struct Market *restrict q_m = NULL;
     struct Array *restrict const markets = w_ctx->e->markets();
 
     items = Array_items(markets);
     for (size_t i = Array_size(markets); i > 0; i--) {
       struct Market *restrict const needle = items[i - 1];
-      if (String_equals(needle->q_id, w_ctx->m_cnf->q_id) &&
+      if (String_equals(needle->q_id, w_ctx->m_cnf->r_id) &&
           String_equals(needle->b_id, w_ctx->m->q_id)) {
         q_m = needle;
         break;
@@ -926,7 +926,7 @@ static bool quote_return(struct Numeric *restrict const qr,
     if (q_m == NULL) {
       werr("%s: %s: Market not available: %s@%s\n", String_chars(w_ctx->e->nm),
            String_chars(w_ctx->m->nm), String_chars(w_ctx->m->q_id),
-           String_chars(w_ctx->m_cnf->q_id));
+           String_chars(w_ctx->m_cnf->r_id));
 
       Array_unlock(markets);
       return false;
@@ -944,7 +944,7 @@ static bool quote_return(struct Numeric *restrict const qr,
     if (q_samples == NULL) {
       werr("%s: %s: Tickers not available: %s@%s\n", String_chars(w_ctx->e->nm),
            String_chars(w_ctx->m->nm), String_chars(w_ctx->m->q_id),
-           String_chars(w_ctx->m_cnf->q_id));
+           String_chars(w_ctx->m_cnf->r_id));
 
       Map_unlock(market_samples);
       return false;
@@ -957,23 +957,23 @@ static bool quote_return(struct Numeric *restrict const qr,
     if (q_sample == NULL) {
       werr("%s: %s: Tickers not available: %s@%s\n", String_chars(w_ctx->e->nm),
            String_chars(w_ctx->m->nm), String_chars(w_ctx->m->q_id),
-           String_chars(w_ctx->m_cnf->q_id));
+           String_chars(w_ctx->m_cnf->r_id));
 
       Array_unlock(q_samples);
       return false;
     }
 
     Numeric_div_to(one, q_sample->price, r0);
-    Numeric_mul_to(r0, w_ctx->m_cnf->q_tgt, qr);
-    Numeric_scale(qr, w_ctx->m->q_sc);
+    Numeric_mul_to(r0, w_ctx->m_cnf->r_amount, q_return);
+    Numeric_scale(q_return, w_ctx->m->q_sc);
     Array_unlock(q_samples);
   } else
-    Numeric_copy_to(w_ctx->m_cnf->q_tgt, qr);
+    Numeric_copy_to(w_ctx->m_cnf->r_amount, q_return);
 
-  if (Numeric_cmp(qr, w_ctx->m->q_inc) < 0) {
-    Numeric_add_to(qr, w_ctx->m->q_inc, r0);
-    Numeric_copy_to(r0, qr);
-    Numeric_scale(qr, w_ctx->m->q_sc);
+  if (Numeric_cmp(q_return, w_ctx->m->q_inc) < 0) {
+    Numeric_add_to(q_return, w_ctx->m->q_inc, r0);
+    Numeric_copy_to(r0, q_return);
+    Numeric_scale(q_return, w_ctx->m->q_sc);
   }
 
   return true;
@@ -996,7 +996,7 @@ static void position_pricing(const struct worker_ctx *restrict const w_ctx,
    *  fpc = Fee percent (e.g. 0.2% = 0.002)
    *  fee = Fee percent factor (e.g. 0.2% = 1.002; fpc + 1)
    *  tgt = Volatility percent factor (e.g. 0.2% = 1.002)
-   *  tp = Targetted quote profit
+   *  tp = Targetted quote return
    *  tp_pr_long = Take profit price for a long position
    *  sl_pr_long = Stop loss price for a long position
    *  tp_pr_short = Take profit price for a short position
@@ -1117,7 +1117,7 @@ static void position_pricing(const struct worker_ctx *restrict const w_ctx,
     // r1 = p * fee
     Numeric_mul_to(r0, r1, r2);
     // r2 = p * fee * (tgt - 1)
-    Numeric_div_to(t->tp, r2, p->b_ordered);
+    Numeric_div_to(t->q_return, r2, p->b_ordered);
     Numeric_scale(p->b_ordered, w_ctx->m->b_sc);
 
     if (Numeric_cmp(p->b_ordered, w_ctx->m->b_inc) < 0) {
@@ -1131,11 +1131,11 @@ static void position_pricing(const struct worker_ctx *restrict const w_ctx,
   // r1 = 2 * fee
   Numeric_sub_to(r1, one, r0);
   // r0 = 2 * fee - 1
-  Numeric_div_to(t->tp, p->b_ordered, r1);
+  Numeric_div_to(t->q_return, p->b_ordered, r1);
   // r1 = tp / b
   Numeric_mul_to(p->b_ordered, r0, r2);
   // r2 = b * (2 * fee - 1)
-  Numeric_div_to(t->tp, r2, r3);
+  Numeric_div_to(t->q_return, r2, r3);
   // r3 = tp / (b * (2 * fee - 1))
 
   switch (p->type) {
@@ -2102,18 +2102,20 @@ trade:
   char *restrict const pr = Numeric_to_char(o_pr, w_ctx->m->p_sc);
 
   if (verbose) {
-    char *restrict const tp = Numeric_to_char(t->tp, w_ctx->m->q_sc);
     char *restrict const p_info = position_string(w_ctx, t, p);
+    char *restrict const q_return =
+        Numeric_to_char(t->q_return, w_ctx->m->q_sc);
 
     wout("%s: %s: %s: %s %s: %s%s@%s%s, return: %s%s\n",
          String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
          String_chars(t->id), ac_info, tr_info, b, String_chars(w_ctx->m->b_id),
-         pr, String_chars(w_ctx->m->q_id), tp, String_chars(w_ctx->m->q_id));
+         pr, String_chars(w_ctx->m->q_id), q_return,
+         String_chars(w_ctx->m->q_id));
 
     wout("%s: %s: %s: %s\n", String_chars(w_ctx->e->nm),
          String_chars(w_ctx->m->nm), String_chars(p->id), p_info);
 
-    Numeric_char_free(tp);
+    Numeric_char_free(q_return);
     heap_free(p_info);
   }
 
@@ -2505,16 +2507,18 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
     }
 
     if (verbose) {
-      char *restrict const tp = Numeric_to_char(t->tp, w_ctx->m->q_sc);
+      char *restrict const q_return =
+          Numeric_to_char(t->q_return, w_ctx->m->q_sc);
+
       char *restrict const c = candle_string(
           &t->open_cd, String_chars(w_ctx->m->q_id), w_ctx->m->p_sc);
 
       wout("%s: %s: Demanding %s%s@%s%s: return: %s%s, %s\n",
            String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm), b,
-           String_chars(w_ctx->m->b_id), pr, String_chars(w_ctx->m->q_id), tp,
-           String_chars(w_ctx->m->q_id), c);
+           String_chars(w_ctx->m->b_id), pr, String_chars(w_ctx->m->q_id),
+           q_return, String_chars(w_ctx->m->q_id), c);
 
-      Numeric_char_free(tp);
+      Numeric_char_free(q_return);
       heap_free(c);
     }
 
@@ -2568,16 +2572,18 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
     }
 
     if (verbose) {
-      char *restrict const tp = Numeric_to_char(t->tp, w_ctx->m->q_sc);
+      char *restrict const q_return =
+          Numeric_to_char(t->q_return, w_ctx->m->q_sc);
+
       char *restrict const c = candle_string(
           &t->open_cd, String_chars(w_ctx->m->q_id), w_ctx->m->p_sc);
 
       wout("%s: %s: Supplying %s%s@%s%s: return: %s%s, %s\n",
            String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm), b,
-           String_chars(w_ctx->m->b_id), pr, String_chars(w_ctx->m->q_id), tp,
-           String_chars(w_ctx->m->q_id), c);
+           String_chars(w_ctx->m->b_id), pr, String_chars(w_ctx->m->q_id),
+           q_return, String_chars(w_ctx->m->q_id), c);
 
-      Numeric_char_free(tp);
+      Numeric_char_free(q_return);
       heap_free(c);
     }
 
@@ -2644,17 +2650,21 @@ static void trade_maintain(const struct worker_ctx *restrict const w_ctx,
     Numeric_add_to(t->p_long.q_fees, t->p_short.q_fees, q_costs);
     Numeric_sub_to(t->p_short.q_filled, t->p_long.q_filled, q_delta);
     Numeric_sub_to(q_delta, q_costs, q_profit);
+    char *restrict const v = Numeric_to_char(t->tp_pc, 4);
     char *restrict const l_p = Numeric_to_char(t->p_long.price, w_ctx->m->p_sc);
     char *restrict const profit = Numeric_to_char(q_profit, w_ctx->m->q_sc);
     char *restrict const costs = Numeric_to_char(q_costs, w_ctx->m->q_sc);
     char *restrict const b_info = position_string(w_ctx, t, &t->p_long);
     char *restrict const q_info = position_string(w_ctx, t, &t->p_short);
-    char *restrict const tp = Numeric_to_char(t->tp, w_ctx->m->q_sc);
-    char *restrict const v = Numeric_to_char(t->tp_pc, 4);
+    char *restrict const q_return =
+        Numeric_to_char(t->q_return, w_ctx->m->q_sc);
+
     char *restrict const s_p =
         Numeric_to_char(t->p_short.price, w_ctx->m->p_sc);
+
     char *restrict const l_b =
         Numeric_to_char(t->p_long.b_filled, w_ctx->m->b_sc);
+
     char *restrict const s_b =
         Numeric_to_char(t->p_short.b_filled, w_ctx->m->b_sc);
 
@@ -2663,8 +2673,8 @@ static void trade_maintain(const struct worker_ctx *restrict const w_ctx,
          String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
          String_chars(t->id), l_b, String_chars(w_ctx->m->b_id), l_p,
          String_chars(w_ctx->m->q_id), s_b, String_chars(w_ctx->m->b_id), s_p,
-         String_chars(w_ctx->m->q_id), tp, String_chars(w_ctx->m->q_id), v,
-         costs, String_chars(w_ctx->m->q_id), profit,
+         String_chars(w_ctx->m->q_id), q_return, String_chars(w_ctx->m->q_id),
+         v, costs, String_chars(w_ctx->m->q_id), profit,
          String_chars(w_ctx->m->q_id));
 
     wout("%s: %s: %s: %s\n", String_chars(w_ctx->e->nm),
@@ -2679,7 +2689,7 @@ static void trade_maintain(const struct worker_ctx *restrict const w_ctx,
     Numeric_char_free(s_b);
     Numeric_char_free(profit);
     Numeric_char_free(costs);
-    Numeric_char_free(tp);
+    Numeric_char_free(q_return);
     Numeric_char_free(v);
     heap_free(b_info);
     heap_free(q_info);
@@ -2828,7 +2838,7 @@ static struct Array *trades_load(const struct worker_ctx *restrict const w_ctx,
 
 static int orders_process(void *restrict const arg) {
   const struct abag_tls *restrict const tls = abag_tls();
-  struct Numeric *restrict const tp = tls->orders_process.tp;
+  struct Numeric *restrict const q_return = tls->orders_process.q_return;
   struct worker_ctx *restrict const w_ctx = arg;
 
   while (!terminated) {
@@ -2877,8 +2887,7 @@ static int orders_process(void *restrict const arg) {
       continue;
     }
 
-    if (!(w_ctx->m_cnf != NULL && quote_return(tp, w_ctx, samples) &&
-          w_ctx->m->is_active)) {
+    if (!(quote_return(q_return, w_ctx, samples) && w_ctx->m->is_active)) {
       Array_unlock(samples);
       Market_delete(w_ctx->m);
       Order_delete(order);
@@ -2921,7 +2930,7 @@ static int orders_process(void *restrict const arg) {
       if (t->status == TRADE_STATUS_BUYING ||
           t->status == TRADE_STATUS_SELLING) {
         t->a = algorithm(w_ctx->m_cnf->a_nm);
-        Numeric_copy_to(tp, t->tp);
+        Numeric_copy_to(q_return, t->q_return);
         trade_pricing(w_ctx, t);
         Array_lock(samples);
         if (Array_size(samples) > 1) {
@@ -2951,7 +2960,7 @@ static int orders_process(void *restrict const arg) {
 static int samples_process(void *restrict const arg) {
   const struct abag_tls *restrict const tls = abag_tls();
   struct Numeric *restrict const outdated_ns = tls->samples_process.outdated_ns;
-  struct Numeric *restrict const tp = tls->samples_process.tp;
+  struct Numeric *restrict const q_return = tls->samples_process.q_return;
   struct Numeric *restrict const nanos = tls->samples_process.nanos;
   struct worker_ctx *restrict const w_ctx = arg;
   void *const *items;
@@ -3060,7 +3069,7 @@ static int samples_process(void *restrict const arg) {
     }
 
     bool betting = false;
-    const bool has_config = quote_return(tp, w_ctx, samples);
+    const bool has_config = quote_return(q_return, w_ctx, samples);
   again:
     items = Array_items(trades);
     for (size_t i = Array_size(trades); i > 0; i--) {
@@ -3068,7 +3077,7 @@ static int samples_process(void *restrict const arg) {
 
       if (has_config) {
         t->a = algorithm(w_ctx->m_cnf->a_nm);
-        Numeric_copy_to(tp, t->tp);
+        Numeric_copy_to(q_return, t->q_return);
         trade_pricing(w_ctx, t);
 
         Array_lock(samples);

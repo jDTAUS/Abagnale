@@ -621,18 +621,18 @@ tradeopts : opt_trade tradeopts
           ;
 
 conf_trade  : RETURN NUMBER STRING {
-              if (m_cnf->q_tgt != NULL) {
+              if (m_cnf->r_amount != NULL) {
                 yyerror("return already specified\n");
                 Numeric_delete($2);
                 String_delete($3);
                 YYERROR;
               }
-              m_cnf->q_tgt = $2;
-              m_cnf->q_id = $3;
+              m_cnf->r_amount = $2;
+              m_cnf->r_id = $3;
 
-              if (Numeric_cmp(m_cnf->q_tgt, zero) <= 0) {
-                Numeric_delete(m_cnf->q_tgt);
-                String_delete(m_cnf->q_id);
+              if (Numeric_cmp(m_cnf->r_amount, zero) <= 0) {
+                Numeric_delete(m_cnf->r_amount);
+                String_delete(m_cnf->r_id);
                 yyerror("return must be positive\n");
                 YYERROR;
               }
@@ -686,7 +686,7 @@ trade : TRADE AT STRING {
 
         Array_add_head(conf->m_cnf, m_cnf);
       } tradeconf {
-        if (m_cnf->q_tgt == NULL || m_cnf->a_nm == NULL) {
+        if (m_cnf->r_amount == NULL || m_cnf->a_nm == NULL) {
           yyerror("return and using required\n");
           MarketConfig_delete(Array_remove_tail(conf->m_cnf));
           m_cnf = NULL;
@@ -1297,8 +1297,8 @@ struct MarketConfig *MarketConfig_new(void) {
   c->e_nm = NULL;
   c->a_nm = NULL;
   c->m_pats = Array_new(4);
-  c->q_tgt = NULL;
-  c->q_id = NULL;
+  c->r_amount = NULL;
+  c->r_id = NULL;
   c->v_pc = NULL;
   c->v_wnanos = NULL;
   c->wnanos = NULL;
@@ -1327,8 +1327,8 @@ void MarketConfig_delete(void *restrict const c) {
   String_delete(cfg->e_nm);
   String_delete(cfg->a_nm);
   Array_delete(cfg->m_pats, pattern_array_delete);
-  Numeric_delete(cfg->q_tgt);
-  String_delete(cfg->q_id);
+  Numeric_delete(cfg->r_amount);
+  String_delete(cfg->r_id);
   Numeric_delete(cfg->v_pc);
   Numeric_delete(cfg->v_wnanos);
   Numeric_delete(cfg->wnanos);
