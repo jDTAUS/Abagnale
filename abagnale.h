@@ -100,11 +100,11 @@ enum trade_status {
 
 struct Trade {
   struct String *restrict id;
-  struct Numeric *restrict q_return;
   struct Numeric *restrict fee_pc;
   struct Numeric *restrict fee_pf;
   struct Numeric *restrict tp_pc;
   struct Numeric *restrict tp_pf;
+  struct Numeric *restrict q_return;
   const struct Algorithm *restrict a;
   enum trade_status status;
   struct Position p_long;
