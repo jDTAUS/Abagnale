@@ -78,6 +78,8 @@ double Numeric_to_double(const struct Numeric *restrict const);
 
 void Numeric_abs(struct Numeric *restrict const);
 void Numeric_scale(struct Numeric *restrict const, const int);
+void Numeric_inc(struct Numeric *restrict const);
+void Numeric_dec(struct Numeric *restrict const);
 
 struct Numeric *Numeric_atan(const struct Numeric *restrict const);
 void Numeric_atan_to(const struct Numeric *restrict const,

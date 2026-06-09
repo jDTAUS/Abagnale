@@ -37,6 +37,7 @@ struct Numeric {
 };
 
 extern const struct Numeric *restrict const zero;
+extern const struct Numeric *restrict const one;
 extern const struct Numeric *restrict const n_one;
 
 inline struct Numeric *Numeric_new(void) {
@@ -314,6 +315,30 @@ inline void Numeric_scale(struct Numeric *restrict const n, const int scale) {
   Numeric_copy_to(scaled, n);
   Numeric_delete(scaled);
   Numeric_char_free(s);
+}
+
+inline void Numeric_inc(struct Numeric *restrict const n) {
+  const int ret = PGTYPESnumeric_add(n->n, one->n, n->n);
+  if (ret < 0) {
+    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
+    fatal();
+  }
+#ifdef ABAG_MATH_DEBUG
+  Numeric_char_free(n->s);
+  n->s = Numeric_to_char(n, 20);
+#endif
+}
+
+inline void Numeric_dec(struct Numeric *restrict const n) {
+  const int ret = PGTYPESnumeric_sub(n->n, one->n, n->n);
+  if (ret < 0) {
+    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
+    fatal();
+  }
+#ifdef ABAG_MATH_DEBUG
+  Numeric_char_free(n->s);
+  n->s = Numeric_to_char(n, 20);
+#endif
 }
 
 inline struct Numeric *Numeric_atan(const struct Numeric *restrict const n) {
