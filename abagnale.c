@@ -118,7 +118,6 @@ struct abag_tls {
   } position_timeout;
   struct position_maintain_vars {
     struct Numeric *restrict m;
-    struct Numeric *restrict r0;
   } position_maintain;
   struct position_trigger_vars {
     struct Numeric *restrict sr;
@@ -135,6 +134,9 @@ struct abag_tls {
     struct Numeric *restrict q_costs;
     struct Numeric *restrict q_profit;
   } trade_maintain;
+  struct trade_timeout_vars {
+    struct Numeric *restrict r0;
+  } trade_timeout;
   struct trade_pricing_vars {
     struct Numeric *restrict ef_pc;
     struct Numeric *restrict r0;
@@ -283,7 +285,6 @@ static struct abag_tls *const abag_tls(void) {
     tls->position_timeout.stats->bcl_factor = Numeric_new();
     tls->position_timeout.stats->scl_factor = Numeric_new();
     tls->position_maintain.m = Numeric_new();
-    tls->position_maintain.r0 = Numeric_new();
     tls->position_trigger.sr = Numeric_new();
     tls->position_trigger.r0 = Numeric_new();
     tls->position_trade.o_pr = Numeric_new();
@@ -299,6 +300,7 @@ static struct abag_tls *const abag_tls(void) {
     tls->trade_maintain.q_delta = Numeric_new();
     tls->trade_maintain.q_costs = Numeric_new();
     tls->trade_maintain.q_profit = Numeric_new();
+    tls->trade_timeout.r0 = Numeric_new();
     tls->trade_pricing.ef_pc = Numeric_new();
     tls->trade_pricing.r0 = Numeric_new();
     tls->trade_bet.hold = heap_malloc(sizeof(struct db_balance_rec));
@@ -396,7 +398,6 @@ static void abag_tls_dtor(void *e) {
   Numeric_delete(tls->position_timeout.stats->scl_factor);
   heap_free(tls->position_timeout.stats);
   Numeric_delete(tls->position_maintain.m);
-  Numeric_delete(tls->position_maintain.r0);
   Numeric_delete(tls->position_trigger.sr);
   Numeric_delete(tls->position_trigger.r0);
   Numeric_delete(tls->position_trade.o_pr);
@@ -412,6 +413,7 @@ static void abag_tls_dtor(void *e) {
   Numeric_delete(tls->trade_maintain.q_delta);
   Numeric_delete(tls->trade_maintain.q_costs);
   Numeric_delete(tls->trade_maintain.q_profit);
+  Numeric_delete(tls->trade_timeout.r0);
   Numeric_delete(tls->trade_pricing.ef_pc);
   Numeric_delete(tls->trade_pricing.r0);
   Numeric_delete(tls->trade_bet.hold->b);
@@ -781,6 +783,7 @@ static inline struct Trade *trade_new(void) {
   t->tp_pc = Numeric_copy(zero);
   t->tp_pf = Numeric_copy(one);
   t->q_return = Numeric_copy(zero);
+  t->cl_samples = Numeric_copy(zero);
   t->a = NULL;
   candle_init(&t->open_cd);
   trigger_init(&t->open_trg);
@@ -802,6 +805,7 @@ static inline void trade_delete(void *restrict const t) {
   Numeric_delete(trade->tp_pc);
   Numeric_delete(trade->tp_pf);
   Numeric_delete(trade->q_return);
+  Numeric_delete(trade->cl_samples);
   Candle_delete(&trade->open_cd);
   trigger_delete(&trade->open_trg);
   position_delete(&trade->p_long);
@@ -1454,13 +1458,11 @@ static void position_maintain(const struct worker_ctx *restrict const w_ctx,
                               struct Order *restrict order) {
   const struct abag_tls *restrict const tls = abag_tls();
   struct Numeric *restrict const m = tls->position_maintain.m;
-  struct Numeric *restrict const r0 = tls->position_maintain.r0;
   const bool poll = Numeric_cmp(sample->nanos, p->pnanos) > 0;
   const bool free_order = order == NULL;
   bool cancel = false;
 
-  Numeric_sub_to(p->cl_samples, one, r0);
-  Numeric_copy_to(r0, p->cl_samples);
+  Numeric_dec(p->cl_samples);
 
   if (!p->filled) {
     switch (p->type) {
@@ -2189,6 +2191,17 @@ trade_status(const char *restrict const dbname) {
   fatal();
 }
 
+static void trade_timeout(const struct worker_ctx *restrict const w_ctx,
+                          struct Trade *restrict t,
+                          const struct Array *restrict const samples,
+                          const struct Sample *restrict const sample) {
+  const struct abag_tls *restrict const tls = abag_tls();
+  struct Numeric *restrict const r0 = tls->trade_timeout.r0;
+
+  samples_per_nano(r0, samples);
+  Numeric_mul_to(r0, w_ctx->m_cnf->wnanos, t->cl_samples);
+}
+
 static void trade_create(const struct worker_ctx *restrict const w_ctx,
                          struct Trade *restrict const t,
                          const struct Array *restrict const samples,
@@ -2206,13 +2219,17 @@ static void trade_create(const struct worker_ctx *restrict const w_ctx,
     Numeric_copy_to(one, t->p_short.cl_factor);
   }
 
+  trade_timeout(w_ctx, t, samples, sample);
+
   // XXX: Calls db_stats(...) again.
   position_timeout(w_ctx, t, &t->p_long, samples, sample);
   position_timeout(w_ctx, t, &t->p_short, samples, sample);
 }
 
 static void trade_pricing(const struct worker_ctx *restrict const w_ctx,
-                          struct Trade *restrict const t) {
+                          struct Trade *restrict const t,
+                          const struct Array *restrict const samples,
+                          const struct Sample *restrict const sample) {
   const struct abag_tls *restrict const tls = abag_tls();
   struct Numeric *restrict const ef_pc = tls->trade_pricing.ef_pc;
   struct Numeric *restrict const r0 = tls->trade_pricing.r0;
@@ -2222,8 +2239,11 @@ static void trade_pricing(const struct worker_ctx *restrict const w_ctx,
   Numeric_copy_to(pricing->ef_pc, ef_pc);
   mutex_unlock(pricing->mtx);
 
-  if (Numeric_cmp(t->fee_pc, ef_pc) >= 0)
+  if (Numeric_cmp(t->fee_pc, ef_pc) >= 0 &&
+      Numeric_cmp(t->cl_samples, zero) > 0)
     return;
+
+  trade_timeout(w_ctx, t, samples, sample);
 
   Numeric_copy_to(ef_pc, t->fee_pc);
   Numeric_div_to(t->fee_pc, hundred, r0);
@@ -2827,7 +2847,6 @@ static struct Array *trades_load(const struct worker_ctx *restrict const w_ctx,
     struct Trade *restrict const t = items[i - 1];
     position_state_load(w_ctx->db, &t->p_long);
     position_state_load(w_ctx->db, &t->p_short);
-    trade_pricing(w_ctx, t);
     trade_create(w_ctx, t, samples, sample);
     Numeric_copy_to(zero, t->p_long.pnanos);
     Numeric_copy_to(zero, t->p_short.pnanos);
@@ -2931,11 +2950,12 @@ static int orders_process(void *restrict const arg) {
           t->status == TRADE_STATUS_SELLING) {
         t->a = algorithm(w_ctx->m_cnf->a_nm);
         Numeric_copy_to(q_return, t->q_return);
-        trade_pricing(w_ctx, t);
         Array_lock(samples);
         if (Array_size(samples) > 1) {
-          position_maintain(w_ctx, t, p, samples, Array_tail(samples), order);
-          trade_maintain(w_ctx, t, samples, Array_tail(samples));
+          const struct Sample *restrict const s = Array_tail(samples);
+          trade_pricing(w_ctx, t, samples, s);
+          position_maintain(w_ctx, t, p, samples, s, order);
+          trade_maintain(w_ctx, t, samples, s);
         }
         Array_unlock(samples);
       }
@@ -3078,11 +3098,13 @@ static int samples_process(void *restrict const arg) {
       if (has_config) {
         t->a = algorithm(w_ctx->m_cnf->a_nm);
         Numeric_copy_to(q_return, t->q_return);
-        trade_pricing(w_ctx, t);
 
         Array_lock(samples);
-        if (Array_size(samples) > 1)
-          trade_maintain(w_ctx, t, samples, Array_tail(samples));
+        if (Array_size(samples) > 1) {
+          const struct Sample *restrict const s = Array_tail(samples);
+          trade_pricing(w_ctx, t, samples, s);
+          trade_maintain(w_ctx, t, samples, s);
+        }
         Array_unlock(samples);
 
         if (t->status == TRADE_STATUS_CANCELLED ||
@@ -3090,8 +3112,10 @@ static int samples_process(void *restrict const arg) {
           trade_delete(t);
           Array_remove_idx(trades, i - 1);
           goto again;
-        } else if (t->status == TRADE_STATUS_NEW)
+        } else if (t->status == TRADE_STATUS_NEW) {
           betting = true;
+          Numeric_dec(t->cl_samples);
+        }
       } else
         werr("%s: %s: %s: Configuration not available\n",
              String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
