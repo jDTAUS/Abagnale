@@ -2953,76 +2953,77 @@ static int samples_process(void *restrict const arg) {
   struct Numeric *restrict const outdated_ns = tls->samples_process.outdated_ns;
   struct Numeric *restrict const tp = tls->samples_process.tp;
   struct Numeric *restrict const nanos = tls->samples_process.nanos;
-  struct worker_ctx *restrict const ctx = arg;
+  struct worker_ctx *restrict const w_ctx = arg;
   void *const *items;
 
   while (!terminated) {
-    struct Sample *restrict const sample = ctx->e->sample_await();
+    struct Sample *restrict const sample = w_ctx->e->sample_await();
 
     if (sample == NULL)
       continue;
 
-    struct Market *restrict const m = ctx->e->market(sample->m_id);
+    struct Market *restrict const m = w_ctx->e->market(sample->m_id);
 
     if (m == NULL) {
-      werr("%s: %s: Market not available\n", String_chars(ctx->e->nm),
+      werr("%s: %s: Market not available\n", String_chars(w_ctx->e->nm),
            String_chars(sample->m_id));
 
       Sample_delete(sample);
       continue;
     }
 
-    ctx->m = Market_copy(m);
+    w_ctx->m = Market_copy(m);
     mutex_unlock(m->mtx);
 
-    ctx->m_cnf = marketconfig(ctx->e->nm, ctx->m->nm);
+    w_ctx->m_cnf = marketconfig(w_ctx->e->nm, w_ctx->m->nm);
 
-    db_sample_create(ctx->db, String_chars(ctx->e->id),
-                     String_chars(ctx->m->id), sample->nanos, sample->price);
+    db_sample_create(w_ctx->db, String_chars(w_ctx->e->id),
+                     String_chars(w_ctx->m->id), sample->nanos, sample->price);
 
-    if (!ctx->m->is_tradeable) {
+    if (!w_ctx->m->is_tradeable) {
       Sample_delete(sample);
-      Market_delete(ctx->m);
+      Market_delete(w_ctx->m);
       continue;
     }
 
     bool samples_init = false;
     Map_lock(market_samples);
-    struct Array *restrict samples = Map_get(market_samples, ctx->m->id);
+    struct Array *restrict samples = Map_get(market_samples, w_ctx->m->id);
     if (samples == NULL) {
       samples = Array_new(524288);
       samples_init = true;
-      Map_put(market_samples, ctx->m->id, samples);
+      Map_put(market_samples, w_ctx->m->id, samples);
     }
     Map_unlock(market_samples);
 
     Array_lock(samples);
 
     if (samples_init)
-      samples_load(samples, ctx);
+      samples_load(samples, w_ctx);
 
     Array_add_tail(samples, sample);
 
     if (Array_size(samples) < 2) {
       Array_unlock(samples);
-      Market_delete(ctx->m);
+      Market_delete(w_ctx->m);
       continue;
     }
 
-    if (ctx->m_cnf != NULL) {
+    if (w_ctx->m_cnf != NULL) {
       struct Sample *restrict const oldest = Array_head(samples);
       struct Sample *restrict const youngest = Array_tail(samples);
 
       Numeric_sub_to(youngest->nanos, oldest->nanos, nanos);
-      if (Numeric_cmp(nanos, ctx->m_cnf->wnanos) < 0) {
+      if (Numeric_cmp(nanos, w_ctx->m_cnf->wnanos) < 0) {
         Array_unlock(samples);
-        Market_delete(ctx->m);
+        Market_delete(w_ctx->m);
         continue;
       }
     }
 
     Numeric_sub_to(sample->nanos,
-                   ctx->m_cnf != NULL ? ctx->m_cnf->wnanos : cnf->wnanos_max,
+                   w_ctx->m_cnf != NULL ? w_ctx->m_cnf->wnanos
+                                        : cnf->wnanos_max,
                    outdated_ns);
 
     items = Array_items(samples);
@@ -3037,43 +3038,42 @@ static int samples_process(void *restrict const arg) {
       }
     }
 
-    if (!ctx->m->is_active) {
+    if (!w_ctx->m->is_active) {
       Array_unlock(samples);
-      Market_delete(ctx->m);
+      Market_delete(w_ctx->m);
       continue;
     }
 
     Map_lock(market_trades);
-    struct Array *restrict trades = Map_get(market_trades, ctx->m->id);
+    struct Array *restrict trades = Map_get(market_trades, w_ctx->m->id);
     if (trades == NULL) {
-      trades = trades_load(ctx, samples, sample);
-      Map_put(market_trades, ctx->m->id, trades);
+      trades = trades_load(w_ctx, samples, sample);
+      Map_put(market_trades, w_ctx->m->id, trades);
     }
     Map_unlock(market_trades);
 
     Array_unlock(samples);
 
     if (!Array_trylock(trades)) {
-      Market_delete(ctx->m);
+      Market_delete(w_ctx->m);
       continue;
     }
 
     bool betting = false;
-    const bool has_config =
-        ctx->m_cnf != NULL && quote_return(tp, ctx, samples);
+    const bool has_config = quote_return(tp, w_ctx, samples);
   again:
     items = Array_items(trades);
     for (size_t i = Array_size(trades); i > 0; i--) {
       struct Trade *restrict const t = items[i - 1];
 
       if (has_config) {
-        t->a = algorithm(ctx->m_cnf->a_nm);
+        t->a = algorithm(w_ctx->m_cnf->a_nm);
         Numeric_copy_to(tp, t->tp);
-        trade_pricing(ctx, t);
+        trade_pricing(w_ctx, t);
 
         Array_lock(samples);
         if (Array_size(samples) > 1)
-          trade_maintain(ctx, t, samples, Array_tail(samples));
+          trade_maintain(w_ctx, t, samples, Array_tail(samples));
         Array_unlock(samples);
 
         if (t->status == TRADE_STATUS_CANCELLED ||
@@ -3085,7 +3085,7 @@ static int samples_process(void *restrict const arg) {
           betting = true;
       } else
         werr("%s: %s: %s: Configuration not available\n",
-             String_chars(ctx->e->nm), String_chars(ctx->m->nm),
+             String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
              String_chars(t->id));
     }
 
@@ -3093,17 +3093,17 @@ static int samples_process(void *restrict const arg) {
       Array_lock(samples);
       if (Array_size(samples) > 1) {
         struct Trade *restrict const t = trade_new();
-        trade_create(ctx, t, samples, Array_tail(samples));
+        trade_create(w_ctx, t, samples, Array_tail(samples));
         Array_add_tail(trades, t);
       }
       Array_unlock(samples);
     }
 
     Array_unlock(trades);
-    Market_delete(ctx->m);
+    Market_delete(w_ctx->m);
   }
 
-  db_disconnect(ctx->db);
+  db_disconnect(w_ctx->db);
   heap_free(arg);
   thread_exit(EXIT_SUCCESS);
 }
