@@ -27,6 +27,7 @@
 #include "string.h"
 #include "thread.h"
 
+#include <ctype.h>
 #include <stdint.h>
 #include <string.h>
 
@@ -220,4 +221,60 @@ inline bool String_equals(const void *restrict const o1,
          ((const struct String *)o1)->len == ((const struct String *)o2)->len &&
          strncmp(((const struct String *)o1)->s, ((const struct String *)o2)->s,
                  ((const struct String *)o1)->len) == 0;
+}
+
+inline struct String *String_tolower(const struct String *restrict s,
+                                     const size_t i, const size_t c) {
+  char *s_p;
+  // i + c + 1 <= SIZE_MAX
+  // => i <= SIZE_MAX - c - 1
+  // => c <= SIZE_MAX - i - 1
+  if (i > SIZE_MAX - c - 1 || c > SIZE_MAX - i - 1 || i + c > s->len) {
+    werr("%s: %d :%s: %s: %zu: %zu\n", __FILE__, __LINE__, __func__, s->s, i,
+         c);
+    fatal();
+  }
+
+  struct String *restrict const str = heap_malloc(sizeof(struct String));
+  str->len = c;
+  str->hc = 5381;
+  str->s = heap_calloc(str->len + 1, sizeof(char));
+  memcpy(str->s, s->s + i, str->len);
+
+  for (s_p = str->s; *s_p; s_p++) {
+    *s_p = tolower(*s_p);
+    str->hc = ((str->hc << 5) + str->hc) + (unsigned char)*s_p;
+  }
+
+  mutex_init(&str->mtx);
+  str->r_cnt = 1;
+  return str;
+}
+
+inline struct String *String_toupper(const struct String *restrict s,
+                                     const size_t i, const size_t c) {
+  char *s_p;
+  // i + c + 1 <= SIZE_MAX
+  // => i <= SIZE_MAX - c - 1
+  // => c <= SIZE_MAX - i - 1
+  if (i > SIZE_MAX - c - 1 || c > SIZE_MAX - i - 1 || i + c > s->len) {
+    werr("%s: %d :%s: %s: %zu: %zu\n", __FILE__, __LINE__, __func__, s->s, i,
+         c);
+    fatal();
+  }
+
+  struct String *restrict const str = heap_malloc(sizeof(struct String));
+  str->len = c;
+  str->hc = 5381;
+  str->s = heap_calloc(str->len + 1, sizeof(char));
+  memcpy(str->s, s->s + i, str->len);
+
+  for (s_p = str->s; *s_p; s_p++) {
+    *s_p = toupper(*s_p);
+    str->hc = ((str->hc << 5) + str->hc) + (unsigned char)*s_p;
+  }
+
+  mutex_init(&str->mtx);
+  str->r_cnt = 1;
+  return str;
 }

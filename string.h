@@ -42,6 +42,11 @@ void String_delete(void *restrict const);
 size_t String_hash(const void *restrict const);
 bool String_equals(const void *restrict const, const void *restrict const);
 
+struct String *String_tolower(const struct String *restrict const, const size_t,
+                              const size_t);
+struct String *String_toupper(const struct String *restrict const, const size_t,
+                              const size_t);
+
 const char *const String_chars(const struct String *restrict const);
 const size_t String_length(const struct String *restrict const);
 #endif
