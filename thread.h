@@ -17,10 +17,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef ABAG_THREAD_H
-#define ABAG_THREAD_H
+#ifndef THREAD_H
+#define THREAD_H
 
-#ifdef HAVE_ABAG_HOST_H
+#ifdef HAVE_HOST_H
 #include "host.h"
 #endif
 

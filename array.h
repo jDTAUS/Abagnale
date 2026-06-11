@@ -17,10 +17,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef ABAG_ARRAY_H
-#define ABAG_ARRAY_H
+#ifndef ARRAY_H
+#define ARRAY_H
 
-#ifdef HAVE_ABAG_HOST_H
+#ifdef HAVE_HOST_H
 #include "host.h"
 #endif
 

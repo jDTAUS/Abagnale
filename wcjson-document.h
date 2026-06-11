@@ -27,12 +27,12 @@
 #ifndef WCJSON_DOCUMENT_H
 #define WCJSON_DOCUMENT_H
 
-#ifdef __cplusplus
-extern "C" {
+#ifdef HAVE_HOST_H
+#include "host.h"
 #endif
 
-#ifdef HAVE_ABAG_HOST_H
-#include "host.h"
+#ifdef __cplusplus
+extern "C" {
 #endif
 
 #include <stdio.h>

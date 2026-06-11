@@ -16,8 +16,8 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef ABAG_HOST_H
-#define ABAG_HOST_H
+#ifndef HOST_H
+#define HOST_H
 
 #if defined(_MSC_VER) && !defined(__clang__)
 #define _Atomic

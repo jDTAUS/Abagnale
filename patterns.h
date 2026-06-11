@@ -28,7 +28,7 @@
 #ifndef PATTERNS_H
 #define PATTERNS_H
 
-#ifdef HAVE_ABAG_HOST_H
+#ifdef HAVE_HOST_H
 #include "host.h"
 #endif
 
@@ -46,8 +46,8 @@ struct str_find {
 };
 
 struct str_match {
-  struct String **sm_match; /* allocated array of matched Strings */
-  unsigned int sm_nmatch; /* number of elements in array */
+	struct String **sm_match;	/* allocated array of matched Strings */
+	unsigned int sm_nmatch;	/* number of elements in array */
 };
 
 int	 str_find(const char *, const char *, struct str_find *, size_t,

@@ -56,7 +56,7 @@
 #ifndef OPTPARSE_H
 #define OPTPARSE_H
 
-#ifdef HAVE_ABAG_HOST_H
+#ifdef HAVE_HOST_H
 #include "host.h"
 #endif
 

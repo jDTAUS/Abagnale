@@ -17,7 +17,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifdef HAVE_ABAG_HOST_H
+#ifdef HAVE_HOST_H
 #include "host.h"
 #endif
 
@@ -32,7 +32,7 @@ mtx_t stdout_mutex;
 mtx_t stderr_mutex;
 bool proc_prefix_systemd = false;
 
-#ifdef ABAG_DEBUG
+#ifdef DEBUG
 inline _Noreturn void fatal(void) { abort(); }
 #else
 inline _Noreturn void fatal(void) { exit(EXIT_FAILURE); }

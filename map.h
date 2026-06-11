@@ -17,10 +17,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef ABAG_MAP_H
-#define ABAG_MAP_H
+#ifndef MAP_H
+#define MAP_H
 
-#ifdef HAVE_ABAG_HOST_H
+#ifdef HAVE_HOST_H
 #include "host.h"
 #endif
 
@@ -55,5 +55,4 @@ void *MapIterator_remove(struct MapIterator *restrict const);
 
 const void *const MapIterator_key(const struct MapIterator *restrict const);
 const void *const MapIterator_value(const struct MapIterator *restrict const);
-
 #endif

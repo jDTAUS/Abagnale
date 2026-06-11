@@ -17,10 +17,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef ABAG_STRING_H
-#define ABAG_STRING_H
+#ifndef STRING_H
+#define STRING_H
 
-#ifdef HAVE_ABAG_HOST_H
+#ifdef HAVE_HOST_H
 #include "host.h"
 #endif
 
@@ -44,5 +44,4 @@ bool String_equals(const void *restrict const, const void *restrict const);
 
 const char *const String_chars(const struct String *restrict const);
 const size_t String_length(const struct String *restrict const);
-
 #endif

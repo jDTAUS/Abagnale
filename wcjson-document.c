@@ -25,12 +25,12 @@
  * @brief Document implementation.
  */
 
-#ifdef __cplusplus
-extern "C" {
+#ifdef HAVE_HOST_H
+#include "host.h"
 #endif
 
-#ifdef HAVE_ABAG_HOST_H
-#include "host.h"
+#ifdef __cplusplus
+extern "C" {
 #endif
 
 #ifdef HAVE_CONFIG_H

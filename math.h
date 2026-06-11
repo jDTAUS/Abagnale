@@ -17,10 +17,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef ABAG_MATH_H
-#define ABAG_MATH_H
+#ifndef MATH_H
+#define MATH_H
 
-#ifdef HAVE_ABAG_HOST_H
+#ifdef HAVE_HOST_H
 #include "host.h"
 #endif
 
@@ -84,5 +84,4 @@ void Numeric_dec(struct Numeric *restrict const);
 struct Numeric *Numeric_atan(const struct Numeric *restrict const);
 void Numeric_atan_to(const struct Numeric *restrict const,
                      struct Numeric *restrict const);
-
 #endif
