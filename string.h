@@ -27,6 +27,8 @@
 #include <stdbool.h>
 #include <stddef.h>
 
+extern const void *const StringMapOps;
+
 struct String;
 
 void string_init(void);

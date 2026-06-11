@@ -3159,12 +3159,9 @@ int abagnale(int argc, char *argv[]) {
   void *const *items;
   ninety_percent_factor = Numeric_from_char("0.9");
 
-  market_samples = Map_new(String_copy, String_delete, String_hash,
-                           String_equals, ABAG_MAX_PRODUCTS);
-  market_prices = Map_new(String_copy, String_delete, String_hash,
-                          String_equals, ABAG_MAX_PRODUCTS);
-  market_trades = Map_new(String_copy, String_delete, String_hash,
-                          String_equals, ABAG_MAX_PRODUCTS);
+  market_samples = Map_new(StringMapOps, ABAG_MAX_PRODUCTS);
+  market_prices = Map_new(StringMapOps, ABAG_MAX_PRODUCTS);
+  market_trades = Map_new(StringMapOps, ABAG_MAX_PRODUCTS);
 
   tls_create(&abag_tls_key, abag_tls_dtor);
 

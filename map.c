@@ -33,13 +33,10 @@ struct Entry {
 };
 
 struct Map {
-  size_t capacity;
+  const struct MapOps *restrict ops;
   struct Entry **restrict buckets;
-  void *(*k_copy)(void *restrict const);
-  void (*k_delete)(void *restrict const);
-  size_t (*k_hash)(const void *restrict const);
-  bool (*k_equals)(const void *restrict const, const void *restrict const);
   mtx_t mtx;
+  size_t capacity;
 };
 
 struct MapIterator {
@@ -48,19 +45,12 @@ struct MapIterator {
   const struct Map *restrict m;
 };
 
-inline struct Map *Map_new(void *(*k_copy)(void *restrict const),
-                           void (*k_delete)(void *restrict const),
-                           size_t (*k_hash)(const void *restrict const),
-                           bool (*k_equals)(const void *restrict const,
-                                            const void *restrict const),
+inline struct Map *Map_new(const struct MapOps *restrict const ops,
                            const size_t capacity) {
   struct Map *restrict const m = heap_malloc(sizeof(struct Map));
+  m->ops = ops;
   m->capacity = capacity;
   m->buckets = heap_calloc(capacity, sizeof(struct Entry *));
-  m->k_copy = k_copy;
-  m->k_delete = k_delete;
-  m->k_hash = k_hash;
-  m->k_equals = k_equals;
   mutex_init(&m->mtx);
   return m;
 }
@@ -74,7 +64,7 @@ inline void Map_delete(struct Map *restrict const m,
       if (v_delete)
         v_delete(e->value);
 
-      m->k_delete(e->key);
+      m->ops->k_delete(e->key);
 
       struct Entry *tmp = e;
       e = e->next;
@@ -95,11 +85,11 @@ inline void Map_unlock(struct Map *restrict const m) { mutex_unlock(&m->mtx); }
 
 inline void *Map_put(struct Map *restrict const m, void *const k,
                      void *const v) {
-  const size_t i = m->k_hash(k) % m->capacity;
+  const size_t i = m->ops->k_hash(k) % m->capacity;
   struct Entry *restrict e = m->buckets[i];
   void *restrict value = NULL;
 
-  while (e != NULL && !m->k_equals(e->key, k))
+  while (e != NULL && !m->ops->k_equals(e->key, k))
     e = e->next;
 
   if (e != NULL) {
@@ -107,7 +97,7 @@ inline void *Map_put(struct Map *restrict const m, void *const k,
     e->value = v;
   } else {
     e = heap_malloc(sizeof(struct Entry));
-    e->key = m->k_copy(k);
+    e->key = m->ops->k_copy(k);
     e->value = v;
 
     if ((e->next = m->buckets[i]) != NULL)
@@ -121,9 +111,9 @@ inline void *Map_put(struct Map *restrict const m, void *const k,
 
 inline void *Map_get(const struct Map *restrict const m,
                      const void *restrict const k) {
-  struct Entry *restrict e = m->buckets[m->k_hash(k) % m->capacity];
+  struct Entry *restrict e = m->buckets[m->ops->k_hash(k) % m->capacity];
 
-  while (e != NULL && !m->k_equals(e->key, k))
+  while (e != NULL && !m->ops->k_equals(e->key, k))
     e = e->next;
 
   return e != NULL ? e->value : NULL;
@@ -164,7 +154,7 @@ inline void *MapIterator_remove(struct MapIterator *restrict const it) {
     else
       it->m->buckets[it->i] = NULL;
 
-    it->m->k_delete(it->e->key);
+    it->m->ops->k_delete(it->e->key);
     heap_free(it->e);
     it->e = NULL;
   }

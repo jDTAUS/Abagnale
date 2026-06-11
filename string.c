@@ -39,13 +39,16 @@ struct String {
   mtx_t mtx;
 };
 
+const void *const StringMapOps = &(const struct MapOps){
+    .k_copy = String_copy,
+    .k_delete = String_delete,
+    .k_hash = String_hash,
+    .k_equals = String_equals,
+};
+
 struct Map *restrict strings;
 
-void string_init(void) {
-  strings =
-      Map_new(String_copy, String_delete, String_hash, String_equals, 524288);
-}
-
+void string_init(void) { strings = Map_new(StringMapOps, 524288); }
 void string_destroy(void) { Map_delete(strings, String_delete); }
 
 inline struct String *String_cnew(const char *restrict s) {

@@ -30,12 +30,14 @@
 struct Map;
 struct MapIterator;
 
-struct Map *Map_new(void *(*k_copy)(void *restrict const),
-                    void (*k_delete)(void *restrict const),
-                    size_t (*k_hash)(const void *restrict const),
-                    bool (*k_equals)(const void *restrict const,
-                                     const void *restrict const),
-                    const size_t);
+struct MapOps {
+  void *(*k_copy)(void *restrict const);
+  void (*k_delete)(void *restrict const);
+  size_t (*k_hash)(const void *restrict const);
+  bool (*k_equals)(const void *restrict const, const void *restrict const);
+};
+
+struct Map *Map_new(const struct MapOps *restrict const, const size_t);
 
 void Map_delete(struct Map *restrict const,
                 void (*v_delete)(void *restrict const));
