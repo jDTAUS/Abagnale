@@ -70,18 +70,10 @@ inline struct String *String_cnew(const char *restrict s) {
     str = heap_malloc(sizeof(struct String));
     str->len = k.len;
     str->hc = k.hc;
-
-    // str->len + 1 <= SIZE_MAX
-    // => str->len <= SIZE_MAX - 1
-    if (str->len > SIZE_MAX - 1) {
-      werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-      fatal();
-    }
-
+    str->r_cnt = 1;
     str->s = heap_calloc(str->len + 1, sizeof(char));
     memcpy(str->s, s, str->len);
     mutex_init(&str->mtx);
-    str->r_cnt = 1;
 
     Map_put(strings, str, str);
   }
@@ -112,18 +104,10 @@ inline struct String *String_cnnew(const char *restrict s, size_t maxlen) {
     str = heap_malloc(sizeof(struct String));
     str->len = k.len;
     str->hc = k.hc;
-
-    // str->len + 1 <= SIZE_MAX
-    // => str->len <= SIZE_MAX - 1
-    if (str->len > SIZE_MAX - 1) {
-      werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-      fatal();
-    }
-
+    str->r_cnt = 1;
     str->s = heap_calloc(str->len + 1, sizeof(char));
     memcpy(str->s, s, str->len);
     mutex_init(&str->mtx);
-    str->r_cnt = 1;
 
     Map_put(strings, str, str);
   }
@@ -134,7 +118,6 @@ inline struct String *String_cnnew(const char *restrict s, size_t maxlen) {
 
 inline struct String *String_new(const struct String *restrict s,
                                  const size_t i, const size_t c) {
-  const char *s_p;
   // i + c + 1 <= SIZE_MAX
   // => i <= SIZE_MAX - c - 1
   // => c <= SIZE_MAX - i - 1
@@ -147,14 +130,19 @@ inline struct String *String_new(const struct String *restrict s,
   struct String *restrict const str = heap_malloc(sizeof(struct String));
   str->len = c;
   str->hc = 5381;
+  str->r_cnt = 1;
   str->s = heap_calloc(str->len + 1, sizeof(char));
-  memcpy(str->s, s->s + i, str->len);
 
-  for (s_p = str->s; *s_p; s_p++)
+  char *s_p = s->s + i;
+  char *d_p = str->s;
+  size_t l = str->len;
+
+  while (l-- != 0) {
     str->hc = ((str->hc << 5) + str->hc) + (unsigned char)*s_p;
+    *d_p++ = *s_p++;
+  }
 
   mutex_init(&str->mtx);
-  str->r_cnt = 1;
   return str;
 }
 
@@ -225,7 +213,6 @@ inline bool String_equals(const void *restrict const o1,
 
 inline struct String *String_tolower(const struct String *restrict s,
                                      const size_t i, const size_t c) {
-  char *s_p;
   // i + c + 1 <= SIZE_MAX
   // => i <= SIZE_MAX - c - 1
   // => c <= SIZE_MAX - i - 1
@@ -238,22 +225,24 @@ inline struct String *String_tolower(const struct String *restrict s,
   struct String *restrict const str = heap_malloc(sizeof(struct String));
   str->len = c;
   str->hc = 5381;
+  str->r_cnt = 1;
   str->s = heap_calloc(str->len + 1, sizeof(char));
-  memcpy(str->s, s->s + i, str->len);
 
-  for (s_p = str->s; *s_p; s_p++) {
-    *s_p = tolower(*s_p);
+  char *s_p = s->s + i;
+  char *d_p = str->s;
+  size_t l = str->len;
+
+  while (l-- != 0) {
     str->hc = ((str->hc << 5) + str->hc) + (unsigned char)*s_p;
+    *d_p++ = tolower(*s_p++);
   }
 
   mutex_init(&str->mtx);
-  str->r_cnt = 1;
   return str;
 }
 
 inline struct String *String_toupper(const struct String *restrict s,
                                      const size_t i, const size_t c) {
-  char *s_p;
   // i + c + 1 <= SIZE_MAX
   // => i <= SIZE_MAX - c - 1
   // => c <= SIZE_MAX - i - 1
@@ -266,15 +255,18 @@ inline struct String *String_toupper(const struct String *restrict s,
   struct String *restrict const str = heap_malloc(sizeof(struct String));
   str->len = c;
   str->hc = 5381;
+  str->r_cnt = 1;
   str->s = heap_calloc(str->len + 1, sizeof(char));
-  memcpy(str->s, s->s + i, str->len);
 
-  for (s_p = str->s; *s_p; s_p++) {
-    *s_p = toupper(*s_p);
+  char *s_p = s->s + i;
+  char *d_p = str->s;
+  size_t l = str->len;
+
+  while (l-- != 0) {
     str->hc = ((str->hc << 5) + str->hc) + (unsigned char)*s_p;
+    *d_p++ = toupper(*s_p++);
   }
 
   mutex_init(&str->mtx);
-  str->r_cnt = 1;
   return str;
 }
