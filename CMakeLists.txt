@@ -24,6 +24,8 @@ project(
 	LANGUAGES C
 )
 
+add_compile_definitions(MULTI_THREADED)
+
 if(MSVC)
 	set(CMAKE_C_STANDARD	11)
 	set(CMAKE_C_STANDARD_REQUIRED	ON)
