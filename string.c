@@ -21,11 +21,14 @@
 #include "host.h"
 #endif
 
+#ifdef MULTI_THREADED
+#include "thread.h"
+#endif
+
 #include "heap.h"
 #include "map.h"
 #include "proc.h"
 #include "string.h"
-#include "thread.h"
 
 #include <ctype.h>
 #include <stdint.h>
@@ -36,7 +39,9 @@ struct String {
   size_t len;
   size_t hc;
   size_t r_cnt;
+#ifdef MULTI_THREADED
   mtx_t mtx;
+#endif
 };
 
 const void *const StringMapOps = &(const struct MapOps){
@@ -65,8 +70,9 @@ inline struct String *String_cnew(const char *restrict s) {
       .hc = hc,
       .r_cnt = 0,
   };
-
+#ifdef MULTI_THREADED
   Map_lock(strings);
+#endif
   struct String *restrict str = Map_get(strings, &k);
 
   if (str == NULL) {
@@ -76,12 +82,14 @@ inline struct String *String_cnew(const char *restrict s) {
     str->r_cnt = 1;
     str->s = heap_calloc(str->len + 1, sizeof(char));
     memcpy(str->s, s, str->len);
+#ifdef MULTI_THREADED
     mutex_init(&str->mtx);
-
+#endif
     Map_put(strings, str, str);
   }
+#ifdef MULTI_THREADED
   Map_unlock(strings);
-
+#endif
   return String_copy(str);
 }
 
@@ -99,8 +107,9 @@ inline struct String *String_cnnew(const char *restrict s, size_t maxlen) {
       .hc = hc,
       .r_cnt = 0,
   };
-
+#ifdef MULTI_THREADED
   Map_lock(strings);
+#endif
   struct String *restrict str = Map_get(strings, &k);
 
   if (str == NULL) {
@@ -110,12 +119,14 @@ inline struct String *String_cnnew(const char *restrict s, size_t maxlen) {
     str->r_cnt = 1;
     str->s = heap_calloc(str->len + 1, sizeof(char));
     memcpy(str->s, s, str->len);
+#ifdef MULTI_THREADED
     mutex_init(&str->mtx);
-
+#endif
     Map_put(strings, str, str);
   }
+#ifdef MULTI_THREADED
   Map_unlock(strings);
-
+#endif
   return String_copy(str);
 }
 
@@ -144,8 +155,9 @@ inline struct String *String_new(const struct String *restrict s,
     str->hc = ((str->hc << 5) + str->hc) + (unsigned char)*s_p;
     *d_p++ = *s_p++;
   }
-
+#ifdef MULTI_THREADED
   mutex_init(&str->mtx);
+#endif
   return str;
 }
 
@@ -167,20 +179,24 @@ inline void String_delete(void *restrict const s) {
 
   struct String *restrict const str = s;
 
+#ifdef MULTI_THREADED
   mutex_lock(&str->mtx);
-
+#endif
   if (str->r_cnt-- == 0) {
     werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
     fatal();
   }
 
   if (str->r_cnt > 0) {
+#ifdef MULTI_THREADED
     mutex_unlock(&str->mtx);
+#endif
     return;
   }
-
+#ifdef MULTI_THREADED
   mutex_unlock(&str->mtx);
   mutex_destroy(&str->mtx);
+#endif
   heap_free(str->s);
   heap_free(s);
 }
@@ -190,9 +206,9 @@ inline void *String_copy(void *restrict const o) {
     return NULL;
 
   struct String *restrict const str = o;
-
+#ifdef MULTI_THREADED
   mutex_lock(&str->mtx);
-
+#endif
   // str->r_cnt + 1 <= SIZE_MAX
   // => str->r_cnt <= SIZE_MAX - 1
   if (str->r_cnt > SIZE_MAX - 1) {
@@ -201,8 +217,9 @@ inline void *String_copy(void *restrict const o) {
   }
 
   str->r_cnt++;
-
+#ifdef MULTI_THREADED
   mutex_unlock(&str->mtx);
+#endif
   return str;
 }
 
@@ -239,8 +256,9 @@ inline struct String *String_tolower(const struct String *restrict s,
     str->hc = ((str->hc << 5) + str->hc) + (unsigned char)*s_p;
     *d_p++ = tolower(*s_p++);
   }
-
+#ifdef MULTI_THREADED
   mutex_init(&str->mtx);
+#endif
   return str;
 }
 
@@ -269,7 +287,8 @@ inline struct String *String_toupper(const struct String *restrict s,
     str->hc = ((str->hc << 5) + str->hc) + (unsigned char)*s_p;
     *d_p++ = toupper(*s_p++);
   }
-
+#ifdef MUTI_THREADED
   mutex_init(&str->mtx);
+#endif
   return str;
 }

@@ -24,20 +24,18 @@
 #include "host.h"
 #endif
 
+#ifdef MULTI_THREADED
+#include <threads.h>
+#endif
+
 #include <stdbool.h>
 #include <stddef.h>
-#include <threads.h>
 
 struct Array;
 
 struct Array *Array_new(const size_t);
 void Array_delete(struct Array *restrict const,
                   void (*i_delete)(void *restrict const));
-
-mtx_t *Array_mutex(struct Array *restrict const);
-void Array_lock(struct Array *restrict const);
-bool Array_trylock(struct Array *restrict const);
-void Array_unlock(struct Array *restrict const);
 
 struct Array *Array_copy(const struct Array *restrict const,
                          void *(*i_copy)(void *restrict const));
@@ -58,4 +56,11 @@ void *Array_remove_idx(struct Array *restrict const, const size_t);
 
 const size_t Array_size(const struct Array *restrict const);
 void *const *Array_items(const struct Array *restrict const);
+
+#ifdef MULTI_THREADED
+mtx_t *Array_mutex(struct Array *restrict const);
+void Array_lock(struct Array *restrict const);
+bool Array_trylock(struct Array *restrict const);
+void Array_unlock(struct Array *restrict const);
+#endif
 #endif

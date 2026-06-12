@@ -21,9 +21,12 @@
 #include "host.h"
 #endif
 
+#ifdef MULTI_THREADED
+#include "thread.h"
+#endif
+
 #include "heap.h"
 #include "map.h"
-#include "thread.h"
 
 struct Entry {
   void *restrict key;
@@ -35,7 +38,9 @@ struct Entry {
 struct Map {
   const struct MapOps *restrict ops;
   struct Entry **restrict buckets;
+#ifdef MULTI_THREADED
   mtx_t mtx;
+#endif
   size_t capacity;
 };
 
@@ -51,7 +56,9 @@ inline struct Map *Map_new(const struct MapOps *restrict const ops,
   m->ops = ops;
   m->capacity = capacity;
   m->buckets = heap_calloc(capacity, sizeof(struct Entry *));
+#ifdef MULTI_THREADED
   mutex_init(&m->mtx);
+#endif
   return m;
 }
 
@@ -72,16 +79,12 @@ inline void Map_delete(struct Map *restrict const m,
     }
   }
 
+#ifdef MULTI_THREADED
   mutex_destroy(&m->mtx);
+#endif
   heap_free(m->buckets);
   heap_free(m);
 }
-
-inline void Map_lock(struct Map *restrict const m) { mutex_lock(&m->mtx); }
-inline bool Map_trylock(struct Map *restrict const m) {
-  return mutex_trylock(&m->mtx);
-}
-inline void Map_unlock(struct Map *restrict const m) { mutex_unlock(&m->mtx); }
 
 inline void *Map_put(struct Map *restrict const m, void *const k,
                      void *const v) {
@@ -171,3 +174,11 @@ inline const void *const
 MapIterator_value(const struct MapIterator *restrict const it) {
   return it->e != NULL ? it->e->value : NULL;
 }
+
+#ifdef MULTI_THREADED
+inline void Map_lock(struct Map *restrict const m) { mutex_lock(&m->mtx); }
+inline bool Map_trylock(struct Map *restrict const m) {
+  return mutex_trylock(&m->mtx);
+}
+inline void Map_unlock(struct Map *restrict const m) { mutex_unlock(&m->mtx); }
+#endif

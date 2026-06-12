@@ -21,9 +21,12 @@
 #include "host.h"
 #endif
 
+#ifdef MULTI_THREADED
+#include "thread.h"
+#endif
+
 #include "array.h"
 #include "heap.h"
-#include "thread.h"
 
 #include <string.h>
 
@@ -31,7 +34,9 @@ struct Array {
   void **items;
   size_t size;
   size_t capacity;
+#ifdef MULTI_THREADED
   mtx_t mtx;
+#endif
 };
 
 void Array_grow(struct Array *restrict const);
@@ -41,7 +46,9 @@ struct Array *Array_new(const size_t c) {
   a->size = 0;
   a->capacity = ((c | !c) + 1) & ~1U;
   a->items = heap_calloc(a->capacity, sizeof(void *));
+#ifdef MULTI_THREADED
   mutex_init(&a->mtx);
+#endif
   return a;
 }
 
@@ -51,18 +58,11 @@ inline void Array_delete(struct Array *restrict const a,
     for (size_t i = a->size; i > 0; i--)
       i_delete(a->items[i - 1]);
 
+#ifdef MULTI_THREADED
   mutex_destroy(&a->mtx);
+#endif
   heap_free(a->items);
   heap_free(a);
-}
-
-inline mtx_t *Array_mutex(struct Array *restrict const a) { return &a->mtx; }
-inline void Array_lock(struct Array *restrict const a) { mutex_lock(&a->mtx); }
-inline bool Array_trylock(struct Array *restrict const a) {
-  return mutex_trylock(&a->mtx);
-}
-inline void Array_unlock(struct Array *restrict const a) {
-  mutex_unlock(&a->mtx);
 }
 
 inline struct Array *Array_copy(const struct Array *restrict const a,
@@ -184,3 +184,14 @@ inline const size_t Array_size(const struct Array *restrict const a) {
 inline void *const *Array_items(const struct Array *restrict const a) {
   return a->items;
 }
+
+#ifdef MULTI_THREADED
+inline mtx_t *Array_mutex(struct Array *restrict const a) { return &a->mtx; }
+inline void Array_lock(struct Array *restrict const a) { mutex_lock(&a->mtx); }
+inline bool Array_trylock(struct Array *restrict const a) {
+  return mutex_trylock(&a->mtx);
+}
+inline void Array_unlock(struct Array *restrict const a) {
+  mutex_unlock(&a->mtx);
+}
+#endif

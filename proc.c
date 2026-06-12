@@ -21,15 +21,19 @@
 #include "host.h"
 #endif
 
-#include "proc.h"
+#ifdef MULTI_THREADED
 #include "thread.h"
+mtx_t stdout_mutex;
+mtx_t stderr_mutex;
+#endif
+
+#include "proc.h"
 
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <stdbool.h>
 
-mtx_t stdout_mutex;
-mtx_t stderr_mutex;
 bool proc_prefix_systemd = false;
 
 #ifdef DEBUG
@@ -38,6 +42,39 @@ inline _Noreturn void fatal(void) { abort(); }
 inline _Noreturn void fatal(void) { exit(EXIT_FAILURE); }
 #endif
 
+inline void wout(const char *restrict fmt, ...) {
+  va_list ap;
+#ifdef MULTI_THREADED
+  mutex_lock(&stdout_mutex);
+#endif
+  if (proc_prefix_systemd)
+    (void)fprintf(stdout, "<6>");
+  va_start(ap, fmt);
+  (void)vfprintf(stdout, fmt, ap);
+  va_end(ap);
+  (void)fflush(stdout);
+#ifdef MULTI_THREADED
+  mutex_unlock(&stdout_mutex);
+#endif
+}
+
+inline void werr(const char *restrict fmt, ...) {
+  va_list ap;
+#ifdef MULTI_THREADED
+  mutex_lock(&stderr_mutex);
+#endif
+  if (proc_prefix_systemd)
+    (void)fprintf(stderr, "<3>");
+  va_start(ap, fmt);
+  (void)vfprintf(stderr, fmt, ap);
+  va_end(ap);
+  (void)fflush(stderr);
+#ifdef MULTI_THREADED
+  mutex_unlock(&stderr_mutex);
+#endif
+}
+
+#ifdef MULTI_THREADED
 void proc_init(void) {
   mutex_init(&stdout_mutex);
   mutex_init(&stderr_mutex);
@@ -47,27 +84,4 @@ void proc_destroy(void) {
   mutex_destroy(&stdout_mutex);
   mutex_destroy(&stderr_mutex);
 }
-
-inline void wout(const char *restrict fmt, ...) {
-  va_list ap;
-  mutex_lock(&stdout_mutex);
-  if (proc_prefix_systemd)
-    (void)fprintf(stdout, "<6>");
-  va_start(ap, fmt);
-  (void)vfprintf(stdout, fmt, ap);
-  va_end(ap);
-  (void)fflush(stdout);
-  mutex_unlock(&stdout_mutex);
-}
-
-inline void werr(const char *restrict fmt, ...) {
-  va_list ap;
-  mutex_lock(&stderr_mutex);
-  if (proc_prefix_systemd)
-    (void)fprintf(stderr, "<3>");
-  va_start(ap, fmt);
-  (void)vfprintf(stderr, fmt, ap);
-  va_end(ap);
-  (void)fflush(stderr);
-  mutex_unlock(&stderr_mutex);
-}
+#endif

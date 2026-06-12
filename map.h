@@ -42,10 +42,6 @@ struct Map *Map_new(const struct MapOps *restrict const, const size_t);
 void Map_delete(struct Map *restrict const,
                 void (*v_delete)(void *restrict const));
 
-void Map_lock(struct Map *restrict const);
-bool Map_trylock(struct Map *restrict const);
-void Map_unlock(struct Map *restrict const);
-
 void *Map_put(struct Map *restrict const, void *const, void *const);
 void *Map_get(const struct Map *restrict const, const void *restrict const);
 
@@ -57,4 +53,10 @@ void *MapIterator_remove(struct MapIterator *restrict const);
 
 const void *const MapIterator_key(const struct MapIterator *restrict const);
 const void *const MapIterator_value(const struct MapIterator *restrict const);
+
+#ifdef MULTI_THREADED
+void Map_lock(struct Map *restrict const);
+bool Map_trylock(struct Map *restrict const);
+void Map_unlock(struct Map *restrict const);
+#endif
 #endif
