@@ -95,6 +95,14 @@ int abagnalectl(int argc, char *argv[]);
 
 static void terminate(int signum) { terminated = true; }
 
+static _Noreturn void usage(void) {
+  werr("Usage: %s [-Dmacro=value ... ] [-f config-file] [-p plots-dir] [-v] "
+       "[-n]\n",
+       String_chars(progname));
+
+  exit(EXIT_FAILURE);
+}
+
 int main(int argc, char *argv[]) {
   int c, r = EXIT_FAILURE;
   const char *conffile = ABAG_CONFIG_FILE;
@@ -181,10 +189,8 @@ int main(int argc, char *argv[]) {
   while ((c = optparse(&options, "D:f:p:vn")) != -1) {
     switch (c) {
     case 'D':
-      if (config_symset(options.optarg) < 0) {
-        werr("%s: %s\n", String_chars(progname), options.optarg);
-        exit(EXIT_FAILURE);
-      }
+      if (config_symset(options.optarg) < 0)
+        usage();
       break;
     case 'f':
       conffile = options.optarg;
@@ -199,8 +205,7 @@ int main(int argc, char *argv[]) {
       verbose = true;
       break;
     case '?':
-      werr("%s: %s\n", String_chars(progname), options.errmsg);
-      fatal();
+      usage();
     }
   }
 
