@@ -213,13 +213,12 @@ static _Noreturn void usage(void) {
        "[-n] command\n",
        String_chars(progname));
 
-  werr("Commands:\n");
   for (size_t i = nitems(cmd_tab); i > 0; i--) {
     werr("\t%s\n", cmd_tab[i - 1].name);
     werr("\t\t%s\n", cmd_tab[i - 1].usage);
   }
 
-  fatal();
+  exit(EXIT_FAILURE);
 }
 
 static int cmd_vacuum(int argc, char *argv[]) {

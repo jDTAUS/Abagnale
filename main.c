@@ -182,8 +182,8 @@ int main(int argc, char *argv[]) {
     switch (c) {
     case 'D':
       if (config_symset(options.optarg) < 0) {
-        werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__, options.optarg);
-        fatal();
+        werr("%s: %s\n", String_chars(progname), options.optarg);
+        exit(EXIT_FAILURE);
       }
       break;
     case 'f':

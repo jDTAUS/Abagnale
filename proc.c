@@ -30,9 +30,9 @@ mtx_t stderr_mutex;
 #include "proc.h"
 
 #include <stdarg.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
 
 bool proc_prefix_systemd = false;
 
