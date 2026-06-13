@@ -1074,26 +1074,25 @@ ret:
   Numeric_delete(j_outstanding_hold_amount_num);
 }
 
-static int
-mg_ws_message_decode(wchar_t *restrict const dst, size_t *dst_len,
-                     const struct mg_ws_message *restrict const msg) {
-  size_t m_len = msg->data.len;
+static int mb_decode(wchar_t *restrict const wc, size_t *wc_len,
+                     const char *restrict const mb, const size_t mb_len) {
+  size_t m_len = mb_len;
   size_t d_len = 0;
   mbstate_t mbs = {0};
 
-  for (size_t i = 0, len = 0; (*dst_len)-- != 0 && m_len != 0;
+  for (size_t i = 0, len = 0; (*wc_len)-- != 0 && m_len != 0;
        i += len, m_len -= len, d_len++) {
-    switch (len = mbrtowc(dst + d_len, msg->data.buf + i, m_len, &mbs)) {
+    switch (len = mbrtowc(wc + d_len, mb + i, m_len, &mbs)) {
     case 0:
-      *dst_len = d_len;
+      *wc_len = d_len;
       return 0;
     case (size_t)-1:
       werr("coinbase: Illegal byte sequence: %zu: 0x%.2hhx: %.*s\n", i,
-           *(msg->data.buf + i), (int)msg->data.len, msg->data.buf);
+           *(mb + i), (int)mb_len, mb);
       return -1;
     case (size_t)-2:
-      werr("coinbase: Incomplete byte sequence: %zu: %.*s\n", i,
-           (int)msg->data.len, msg->data.buf);
+      werr("coinbase: Incomplete byte sequence: %zu: %.*s\n", i, (int)mb_len,
+           mb);
       return -1;
     case (size_t)-3:
       len = 0;
@@ -1101,47 +1100,24 @@ mg_ws_message_decode(wchar_t *restrict const dst, size_t *dst_len,
     }
   }
 
-  if (*dst_len == SIZE_MAX || m_len != 0)
+  if (*wc_len == SIZE_MAX || m_len != 0)
     panic();
 
-  dst[d_len] = '\0';
-  *dst_len = d_len;
+  wc[d_len] = '\0';
+  *wc_len = d_len;
   return 0;
 }
 
-static int
-mg_http_message_decode(wchar_t *restrict const dst, size_t *dst_len,
+static inline int
+mg_ws_message_decode(wchar_t *restrict const wc, size_t *wc_len,
+                     const struct mg_ws_message *restrict const msg) {
+  return mb_decode(wc, wc_len, msg->data.buf, msg->data.len);
+}
+
+static inline int
+mg_http_message_decode(wchar_t *restrict const wc, size_t *wc_len,
                        const struct mg_http_message *restrict const msg) {
-  size_t m_len = msg->body.len;
-  size_t d_len = 0;
-  mbstate_t mbs = {0};
-
-  for (size_t i = 0, len = 0; (*dst_len)-- != 0 && m_len != 0;
-       i += len, m_len -= len, d_len++) {
-    switch (len = mbrtowc(dst + d_len, msg->body.buf + i, m_len, &mbs)) {
-    case 0:
-      *dst_len = d_len;
-      return 0;
-    case (size_t)-1:
-      werr("coinbase: Illegal byte sequence: %zu: 0x%.2hhx: %.*s\n", i,
-           *(msg->body.buf + i), (int)msg->body.len, msg->body.buf);
-      return -1;
-    case (size_t)-2:
-      werr("coinbase: Incomplete byte sequence: %zu: %.*s\n", i,
-           (int)msg->body.len, msg->body.buf);
-      return -1;
-    case (size_t)-3:
-      len = 0;
-      break;
-    }
-  }
-
-  if (*dst_len == SIZE_MAX || m_len != 0)
-    panic();
-
-  dst[d_len] = '\0';
-  *dst_len = d_len;
-  return 0;
+  return mb_decode(wc, wc_len, msg->body.buf, msg->body.len);
 }
 
 static void ws_handle_message(const struct mg_ws_message *restrict const msg) {
