@@ -629,7 +629,7 @@ wcjsondoc_string(char *restrict const dst, size_t dst_nitems,
                  const struct wcjson_value *restrict const value,
                  size_t *restrict s_len) {
   wchar_t wc[WCJSON_BODY_MAX + 1] = {0};
-  size_t wc_len = sizeof(wc) - 1;
+  size_t wc_len = nitems(wc) - 1;
 
   if (wcjsondocsprint(wc, &wc_len, doc, value) < 0)
     panic();
@@ -1134,7 +1134,7 @@ static void ws_handle_message(const struct mg_ws_message *restrict const msg) {
   ws_doc->mb_next = 0;
 
   wchar_t wcmsg[WCJSON_BODY_MAX + 1] = {0};
-  size_t wc_len = sizeof(wcmsg) - 1;
+  size_t wc_len = nitems(wcmsg) - 1;
   if (mg_ws_message_decode(wcmsg, &wc_len, msg))
     return;
 
@@ -2368,14 +2368,14 @@ ret:
   return o_id;
 }
 
-static struct String *
+static inline struct String *
 coinbase_order_demand(const char *restrict const m_sym,
                       const char *restrict const base_amount,
                       const char *restrict const price) {
   return coinbase_order_post(m_sym, "BUY", base_amount, price);
 }
 
-static struct String *
+static inline struct String *
 coinbase_order_supply(const char *restrict const m_sym,
                       const char *restrict const base_amount,
                       const char *restrict const price) {
