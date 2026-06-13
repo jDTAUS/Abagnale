@@ -150,7 +150,6 @@ int main(int argc, char *argv[]) {
   sixty = Numeric_from_int(60);
   hundred = Numeric_from_int(100);
   thousand = Numeric_from_int(1000);
-  mikro_nanos = Numeric_from_long(1000000000L);
   second_nanos = Numeric_from_long(1000000000L);
   mikro_nanos = Numeric_div(second_nanos, thousand);
   milli_nanos = Numeric_div(mikro_nanos, thousand);

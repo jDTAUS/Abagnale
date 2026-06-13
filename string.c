@@ -287,7 +287,7 @@ inline struct String *String_toupper(const struct String *restrict s,
     str->hc = ((str->hc << 5) + str->hc) + (unsigned char)*s_p;
     *d_p++ = toupper(*s_p++);
   }
-#ifdef MUTI_THREADED
+#ifdef MULTI_THREADED
   mutex_init(&str->mtx);
 #endif
   return str;
