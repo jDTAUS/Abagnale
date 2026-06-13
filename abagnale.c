@@ -566,10 +566,8 @@ static char *candle_string(const struct Candle *restrict const c,
       "[%c: O%s%s: H%s%s: L%s%s: C%s%s: S%s%s: %s%%: %srad: %s->%s]", i, o,
       c_id, h, c_id, l, c_id, cl, c_id, s_info, c_id, pc, a, open, close);
 
-  if (r < 0 || (size_t)r >= CANDLE_STRING_MAX_LENGTH + 1) {
-    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-    fatal();
-  }
+  if (r < 0 || (size_t)r >= CANDLE_STRING_MAX_LENGTH + 1)
+    panic();
 
   Numeric_char_free(o);
   Numeric_char_free(h);
@@ -679,8 +677,7 @@ static char *position_string(const struct worker_ctx *restrict const w_ctx,
     side = "Supply";
     break;
   default:
-    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-    fatal();
+    panic();
   }
 
   const int r = snprintf(
@@ -693,10 +690,8 @@ static char *position_string(const struct worker_ctx *restrict const w_ctx,
       String_chars(w_ctx->m->b_id), sl_pr, String_chars(w_ctx->m->q_id), b_o,
       String_chars(w_ctx->m->b_id), tp_pr, String_chars(w_ctx->m->q_id));
 
-  if (r < 0 || (size_t)r >= POSITION_STRING_MAX_LENGTH + 1) {
-    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-    fatal();
-  }
+  if (r < 0 || (size_t)r >= POSITION_STRING_MAX_LENGTH + 1)
+    panic();
 
   Numeric_char_free(pr);
   Numeric_char_free(sl_pr);
@@ -1184,8 +1179,7 @@ static void position_pricing(const struct worker_ctx *restrict const w_ctx,
     }
     break;
   default:
-    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-    fatal();
+    panic();
   }
 }
 
@@ -1222,8 +1216,7 @@ static void position_create(const struct worker_ctx *restrict const w_ctx,
     t->status = TRADE_STATUS_SELLING;
     break;
   default:
-    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-    fatal();
+    panic();
   }
 
   p->done = false;
@@ -1258,8 +1251,7 @@ static void position_open(const struct worker_ctx *restrict const w_ctx,
                    order->q_filled, order->q_fees);
     break;
   default:
-    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-    fatal();
+    panic();
   }
 }
 
@@ -1325,8 +1317,7 @@ static void position_fill(const struct worker_ctx *restrict const w_ctx,
 
     break;
   default:
-    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-    fatal();
+    panic();
   }
 }
 
@@ -1361,8 +1352,7 @@ static void position_cancel(const struct worker_ctx *restrict const w_ctx,
 
     break;
   default:
-    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-    fatal();
+    panic();
   }
 
   position_reset(p);
@@ -1409,8 +1399,7 @@ static void position_timeout(const struct worker_ctx *restrict const w_ctx,
       Numeric_copy_to(w_ctx->m_cnf->wnanos, stats_to);
     break;
   default:
-    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-    fatal();
+    panic();
   }
 
   Numeric_add_to(sample->nanos, stats_to, p->pnanos);
@@ -1436,8 +1425,7 @@ static void position_timeout(const struct worker_ctx *restrict const w_ctx,
       Numeric_copy_to(w_ctx->m_cnf->so_maxnanos, factor_to);
     break;
   default:
-    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-    fatal();
+    panic();
   }
 
   Numeric_sub_to(sample->nanos, p->cnanos, age);
@@ -1475,8 +1463,7 @@ static void position_maintain(const struct worker_ctx *restrict const w_ctx,
                  t->p_long.tl_trg.set);
       break;
     default:
-      werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-      fatal();
+      panic();
     }
 
     if (cancel && t->a != NULL)
@@ -1686,8 +1673,7 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
 
     break;
   default:
-    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-    fatal();
+    panic();
   }
 
   if (t->a != NULL && t->a->position_close(w_ctx->db, w_ctx->e, w_ctx->m, t, p))
@@ -2064,8 +2050,7 @@ trade:
     }
     break;
   default:
-    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-    fatal();
+    panic();
   }
 
   Numeric_scale(o_pr, w_ctx->m->p_sc);
@@ -2157,8 +2142,7 @@ trade:
     o_p = &t->p_long;
     break;
   default:
-    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-    fatal();
+    panic();
   }
 
   if (verbose) {
@@ -2186,9 +2170,7 @@ trade_status(const char *restrict const dbname) {
     if (!strcmp(db_trade_status[i - 1].dbname, dbname))
       return db_trade_status[i - 1].status;
 
-  werr("%s: %d: %s: %s: Unsupported trade status\n", __FILE__, __LINE__,
-       __func__, dbname);
-  fatal();
+  panic();
 }
 
 static void trade_timeout(const struct worker_ctx *restrict const w_ctx,
@@ -2318,10 +2300,8 @@ static void trade_plot(const struct worker_ctx *restrict const w_ctx,
                    String_chars(cnf->plts_dir), String_chars(w_ctx->e->nm),
                    String_chars(t->a->nm), String_chars(w_ctx->m->nm));
 
-  if (r < 0 || (size_t)r >= sizeof(plot_fn)) {
-    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-    fatal();
-  }
+  if (r < 0 || (size_t)r >= sizeof(plot_fn))
+    panic();
 
   t->a->market_plot(w_ctx->db, w_ctx->e, w_ctx->m, plot_fn);
 }
@@ -2621,8 +2601,7 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
     break;
   }
   default:
-    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-    fatal();
+    panic();
   }
 
   position_create(w_ctx, t, p);
@@ -2717,9 +2696,7 @@ static void trade_maintain(const struct worker_ctx *restrict const w_ctx,
   case TRADE_STATUS_CANCELLED:
     break;
   default:
-    werr("%s: %d: %s: %u: Unsupported trade status", __FILE__, __LINE__,
-         __func__, t->status);
-    fatal();
+    panic();
   }
 
   if (t->status != st)
@@ -3168,14 +3145,9 @@ int abagnale(int argc, char *argv[]) {
   // ABAG_WORKERS * Array_size(exchanges) <= SIZE_MAX
   // => Array_size(exchanges) <= SIZE_MAX / ABAG_WORKERS
   // => ABAG_WORKERS <= SIZE_MAX / Array_size(exchanges)
-  if (Array_size(exchanges) > SIZE_MAX / ABAG_WORKERS) {
-    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-    fatal();
-  }
-  if (ABAG_WORKERS > SIZE_MAX / Array_size(exchanges)) {
-    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-    fatal();
-  }
+  if (Array_size(exchanges) > SIZE_MAX / ABAG_WORKERS ||
+      ABAG_WORKERS > SIZE_MAX / Array_size(exchanges))
+    panic();
 
   workers = heap_calloc(ABAG_WORKERS * Array_size(exchanges), sizeof(thrd_t));
 
@@ -3194,10 +3166,8 @@ int abagnale(int argc, char *argv[]) {
       const int r = snprintf(cname, sizeof(cname), "%s-worker-%.3d",
                              String_chars(e->nm), j);
 
-      if (r < 0 || (size_t)r >= sizeof(cname)) {
-        werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-        fatal();
-      }
+      if (r < 0 || (size_t)r >= sizeof(cname))
+        panic();
 
       w_ctx->db = db_connect(cname);
 

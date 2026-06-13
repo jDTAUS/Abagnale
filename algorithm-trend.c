@@ -223,9 +223,7 @@ static enum candle_trend candle_trend_db(const char *const db) {
   for (size_t i = nitems(candle_trend_map); i > 0; i--)
     if (!strcmp(candle_trend_map[i - 1].db, db))
       return candle_trend_map[i - 1].trend;
-
-  werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__, db);
-  fatal();
+  panic();
 }
 
 static void db_candle_trend(char *restrict const db_trend,
@@ -237,9 +235,7 @@ static void db_candle_trend(char *restrict const db_trend,
       db_trend[candle_trend_map[i - 1].db_len] = '\0';
       return;
     }
-
-  werr("%s: %d: %s: %u\n", __FILE__, __LINE__, __func__, trend);
-  fatal();
+  panic();
 }
 
 static void trend_init(void) {
@@ -507,8 +503,7 @@ static struct Position *trend_position_open(
     Numeric_copy_to(sample->price, p->price);
     break;
   default:
-    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-    fatal();
+    panic();
   }
 
   st->cd_ltrend = t->open_cd.t;
@@ -539,8 +534,7 @@ static bool trend_position_close(const void *restrict const db,
     close = st->cd_ltrend != CANDLE_DOWN;
     break;
   default:
-    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-    fatal();
+    panic();
   }
 
   if (close && verbose && !p->tl_trg.set) {
@@ -625,10 +619,8 @@ static bool trend_market_plot(const void *restrict const db,
       fprintf(f, "window%zu_close = [\t%s, %s;\t];\n", left_cnt++, x, y);
     else if (!strcmp("RIGHT", db_mk->type))
       fprintf(f, "window%zu_open = [\t%s, %s;\t];\n", right_cnt++, x, y);
-    else {
-      werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-      fatal();
-    }
+    else
+      panic();
 
     Numeric_char_free(x);
     Numeric_char_free(y);

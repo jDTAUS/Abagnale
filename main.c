@@ -117,15 +117,11 @@ int main(int argc, char *argv[]) {
   time_init();
   config_init();
 
-  if (signal(SIGTERM, terminate) == SIG_ERR) {
-    werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__, strerror(errno));
-    fatal();
-  }
+  if (signal(SIGTERM, terminate) == SIG_ERR)
+    fatal("%s", strerror(errno));
 
-  if (signal(SIGINT, terminate) == SIG_ERR) {
-    werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__, strerror(errno));
-    fatal();
-  }
+  if (signal(SIGINT, terminate) == SIG_ERR)
+    fatal("%s", strerror(errno));
 
   if (argv[0] != NULL) {
     char *p_nm = strrchr(argv[0], '/');
@@ -221,7 +217,7 @@ int main(int argc, char *argv[]) {
     cnf->plts_dir = String_cnew(plotsdir);
 
   if (config_fparse(cnf, conffile))
-    fatal();
+    exit(EXIT_FAILURE);
 
   exchanges = Array_new(nitems(all_exchanges));
   algorithms = Array_new(nitems(all_algorithms));
@@ -257,11 +253,8 @@ int main(int argc, char *argv[]) {
       r = abagnale(argc - options.optind, argv);
     } else if (String_equals(progname, prog_abagnalectl)) {
       r = abagnalectl(argc - options.optind, argv);
-    } else {
-      werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__,
-           String_chars(progname));
-      fatal();
-    }
+    } else
+      fatal("%s", String_chars(progname));
   } else
     r = EXIT_SUCCESS;
 

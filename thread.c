@@ -39,54 +39,43 @@ inline const char *strthrd(const int r) {
   case thrd_timedout:
     return "timeout";
   default:
-    werr("%s: %d: %s: %d\n", __FILE__, __LINE__, __func__, r);
-    fatal();
+    panic();
   }
 }
 
 inline void thread_create(thrd_t *restrict const t, int (*entry)(void *),
                           void *arg) {
   int r = thrd_create(t, entry, arg);
-  if (r != thrd_success) {
-    werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__, strthrd(r));
-    fatal();
-  }
+  if (r != thrd_success)
+    fatal("%s", strthrd(r));
 }
 
 inline void thread_join(const thrd_t t, int *restrict const res) {
   int r = thrd_join(t, res);
-  if (r != thrd_success) {
-    werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__, strthrd(r));
-    fatal();
-  }
+  if (r != thrd_success)
+    fatal("%s", strthrd(r));
 }
 
 inline void thread_sleep(const struct timespec *restrict const duration) {
   int r = thrd_sleep(duration, NULL);
-  if (r != thrd_success) {
-    werr("%s: %d: %s. %s\n", __FILE__, __LINE__, __func__, strthrd(r));
-    fatal();
-  }
+  if (r != thrd_success)
+    fatal("%s", strthrd(r));
 }
 
 _Noreturn void thread_exit(const int res) { thrd_exit(res); }
 
 inline void mutex_init(mtx_t *restrict const m) {
   int r = mtx_init(m, mtx_plain | mtx_recursive);
-  if (r != thrd_success) {
-    werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__, strthrd(r));
-    fatal();
-  }
+  if (r != thrd_success)
+    fatal("%s", strthrd(r));
 }
 
 inline void mutex_destroy(mtx_t *restrict const m) { mtx_destroy(m); }
 
 inline void mutex_lock(mtx_t *restrict const m) {
   int r = mtx_lock(m);
-  if (r != thrd_success) {
-    werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__, strthrd(r));
-    fatal();
-  }
+  if (r != thrd_success)
+    fatal("%s", strthrd(r));
 }
 
 inline bool mutex_trylock(mtx_t *restrict const m) {
@@ -95,28 +84,22 @@ inline bool mutex_trylock(mtx_t *restrict const m) {
   if (r == thrd_busy)
     return false;
 
-  if (r != thrd_success) {
-    werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__, strthrd(r));
-    fatal();
-  }
+  if (r != thrd_success)
+    fatal("%s", strthrd(r));
 
   return true;
 }
 
 inline void mutex_unlock(mtx_t *restrict const m) {
   int r = mtx_unlock(m);
-  if (r != thrd_success) {
-    werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__, strthrd(r));
-    fatal();
-  }
+  if (r != thrd_success)
+    fatal("%s", strthrd(r));
 }
 
 inline void tls_create(tss_t *restrict const key, tss_dtor_t dtor) {
   int r = tss_create(key, dtor);
-  if (r != thrd_success) {
-    werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__, strthrd(r));
-    fatal();
-  }
+  if (r != thrd_success)
+    fatal("%s", strthrd(r));
 }
 
 inline void tls_delete(const tss_t key) { tss_delete(key); }
@@ -125,36 +108,28 @@ inline void *tls_get(const tss_t key) { return tss_get(key); }
 
 inline void tls_set(const tss_t key, void *restrict const val) {
   int r = tss_set(key, val);
-  if (r != thrd_success) {
-    werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__, strthrd(r));
-    fatal();
-  }
+  if (r != thrd_success)
+    fatal("%s", strthrd(r));
 }
 
 inline void condition_init(cnd_t *restrict const cond) {
   int r = cnd_init(cond);
-  if (r != thrd_success) {
-    werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__, strthrd(r));
-    fatal();
-  }
+  if (r != thrd_success)
+    fatal("%s", strthrd(r));
 }
 
 inline void condition_destroy(cnd_t *restrict const cond) { cnd_destroy(cond); }
 
 inline void condition_broadcast(cnd_t *restrict const cond) {
   int r = cnd_broadcast(cond);
-  if (r != thrd_success) {
-    werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__, strthrd(r));
-    fatal();
-  }
+  if (r != thrd_success)
+    fatal("%s", strthrd(r));
 }
 
 inline void condition_signal(cnd_t *restrict const cond) {
   int r = cnd_signal(cond);
-  if (r != thrd_success) {
-    werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__, strthrd(r));
-    fatal();
-  }
+  if (r != thrd_success)
+    fatal("%s", strthrd(r));
 }
 
 inline bool condition_timedwait(cnd_t *restrict const cond,
@@ -165,19 +140,15 @@ inline bool condition_timedwait(cnd_t *restrict const cond,
   case thrd_timedout:
     return false;
   default:
-    if (r != thrd_success) {
-      werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__, strthrd(r));
-      fatal();
-    }
-    return true;
+    if (r != thrd_success)
+      fatal("%s", strthrd(r));
   }
+  return true;
 }
 
 inline void condition_wait(cnd_t *restrict const cond,
                            mtx_t *restrict const mtx) {
   int r = cnd_wait(cond, mtx);
-  if (r != thrd_success) {
-    werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__, strthrd(r));
-    fatal();
-  }
+  if (r != thrd_success)
+    fatal("%s", strthrd(r));
 }

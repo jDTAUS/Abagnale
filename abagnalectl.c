@@ -265,10 +265,8 @@ static int cmd_vacuum(int argc, char *argv[]) {
         r = snprintf(mfile, sizeof(mfile), "%s-%s-%s", file,
                      String_chars(e->nm), String_chars(m->nm));
 
-        if (r < 0 || (size_t)r >= sizeof(mfile)) {
-          werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-          fatal();
-        }
+        if (r < 0 || (size_t)r >= sizeof(mfile))
+          panic();
 
         db_vacuum_samples(db, String_chars(e->id), String_chars(m->id),
                           m_cnf != NULL ? m_cnf->wnanos : zero, mfile);
@@ -713,6 +711,8 @@ static int cmd_volatility(int argc, char *argv[]) {
     case 'w':
       w_ns = String_cnew(options.optarg);
       w = config_nsparse(w_ns);
+      if (w == NULL)
+        usage();
       String_delete(w_ns);
       w_ns = NULL;
       break;

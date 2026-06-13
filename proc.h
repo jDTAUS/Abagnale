@@ -24,10 +24,16 @@
 #include "host.h"
 #endif
 
+#include <stdlib.h>
+
+#define panic() (werr("%s: %d: %s\n", __FILE__, __LINE__, __func__), abort())
+
+#define fatal(_fmt, ...)                                                       \
+  (werr("%s: ", __func__), werr((_fmt), __VA_ARGS__), werr("\n"),              \
+   exit(EXIT_FAILURE))
+
 void wout(const char *, ...) __attribute__((__format__(printf, 1, 2)));
 void werr(const char *, ...) __attribute__((__format__(printf, 1, 2)));
-
-_Noreturn void fatal(void);
 
 #ifdef MULTI_THREADED
 void proc_init(void);

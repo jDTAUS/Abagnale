@@ -42,10 +42,8 @@ extern const struct Numeric *restrict const n_one;
 
 inline struct Numeric *Numeric_new(void) {
   numeric *res = PGTYPESnumeric_new();
-  if (res == NULL) {
-    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-    fatal();
-  }
+  if (res == NULL)
+    panic();
   struct Numeric *restrict n = heap_malloc(sizeof(struct Numeric));
   n->n = res;
 #ifdef ABAG_MATH_DEBUG
@@ -85,10 +83,8 @@ inline struct Numeric *Numeric_from_char(const char *restrict const s) {
 inline char *Numeric_to_char(const struct Numeric *restrict const n,
                              const int d) {
   char *restrict const s = PGTYPESnumeric_to_asc(n->n, d);
-  if (s == NULL) {
-    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-    fatal();
-  }
+  if (s == NULL)
+    panic();
   return s;
 }
 
@@ -105,10 +101,8 @@ inline void Numeric_add_to(const struct Numeric *restrict const n1,
                            const struct Numeric *restrict const n2,
                            struct Numeric *restrict const res) {
   const int ret = PGTYPESnumeric_add(n1->n, n2->n, res->n);
-  if (ret < 0) {
-    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-    fatal();
-  }
+  if (ret < 0)
+    panic();
 #ifdef ABAG_MATH_DEBUG
   Numeric_char_free(res->s);
   res->s = Numeric_to_char(res, 20);
@@ -126,10 +120,8 @@ inline void Numeric_sub_to(const struct Numeric *restrict const n1,
                            const struct Numeric *restrict const n2,
                            struct Numeric *restrict const res) {
   const int ret = PGTYPESnumeric_sub(n1->n, n2->n, res->n);
-  if (ret < 0) {
-    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-    fatal();
-  }
+  if (ret < 0)
+    panic();
 #ifdef ABAG_MATH_DEBUG
   Numeric_char_free(res->s);
   res->s = Numeric_to_char(res, 20);
@@ -147,10 +139,8 @@ inline void Numeric_mul_to(const struct Numeric *restrict const n1,
                            const struct Numeric *restrict const n2,
                            struct Numeric *restrict const res) {
   const int ret = PGTYPESnumeric_mul(n1->n, n2->n, res->n);
-  if (ret < 0) {
-    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-    fatal();
-  }
+  if (ret < 0)
+    panic();
 #ifdef ABAG_MATH_DEBUG
   Numeric_char_free(res->s);
   res->s = Numeric_to_char(res, 20);
@@ -168,10 +158,8 @@ inline void Numeric_div_to(const struct Numeric *restrict const n1,
                            const struct Numeric *restrict const n2,
                            struct Numeric *restrict const res) {
   const int ret = PGTYPESnumeric_div(n1->n, n2->n, res->n);
-  if (ret < 0) {
-    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-    fatal();
-  }
+  if (ret < 0)
+    panic();
 #ifdef ABAG_MATH_DEBUG
   Numeric_char_free(res->s);
   res->s = Numeric_to_char(res, 20);
@@ -181,10 +169,8 @@ inline void Numeric_div_to(const struct Numeric *restrict const n1,
 inline int Numeric_cmp(const struct Numeric *restrict const n1,
                        const struct Numeric *restrict const n2) {
   const int ret = PGTYPESnumeric_cmp(n1->n, n2->n);
-  if (ret == INT_MAX) {
-    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-    fatal();
-  }
+  if (ret == INT_MAX)
+    panic();
   return ret;
 }
 
@@ -197,10 +183,8 @@ inline struct Numeric *Numeric_from_int(const signed int i) {
 inline void Numeric_from_int_to(const signed int i,
                                 struct Numeric *restrict const res) {
   const int ret = PGTYPESnumeric_from_int(i, res->n);
-  if (ret < 0) {
-    werr("%s: %d: %s: %d\n", __FILE__, __LINE__, __func__, i);
-    fatal();
-  }
+  if (ret < 0)
+    panic();
 #ifdef ABAG_MATH_DEBUG
   res->s = Numeric_to_char(res, 20);
 #endif
@@ -209,10 +193,8 @@ inline void Numeric_from_int_to(const signed int i,
 inline int Numeric_to_int(const struct Numeric *restrict const n) {
   int res = 0;
   const int ret = PGTYPESnumeric_to_int(n->n, &res);
-  if (ret < 0) {
-    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-    fatal();
-  }
+  if (ret < 0)
+    panic();
   return res;
 }
 
@@ -225,10 +207,8 @@ inline struct Numeric *Numeric_from_long(const signed long int l) {
 inline void Numeric_from_long_to(const signed long int l,
                                  struct Numeric *restrict const res) {
   const int ret = PGTYPESnumeric_from_long(l, res->n);
-  if (ret < 0) {
-    werr("%s: %d: %s: %ld\n", __FILE__, __LINE__, __func__, l);
-    fatal();
-  }
+  if (ret < 0)
+    panic();
 #ifdef ABAG_MATH_DEBUG
   res->s = Numeric_to_char(res, 20);
 #endif
@@ -237,10 +217,8 @@ inline void Numeric_from_long_to(const signed long int l,
 inline long Numeric_to_long(const struct Numeric *restrict const n) {
   long res = 0;
   const int ret = PGTYPESnumeric_to_long(n->n, &res);
-  if (ret < 0) {
-    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-    fatal();
-  }
+  if (ret < 0)
+    panic();
   return res;
 }
 
@@ -253,10 +231,8 @@ inline struct Numeric *Numeric_copy(const struct Numeric *restrict const n) {
 inline void Numeric_copy_to(const struct Numeric *restrict const n,
                             struct Numeric *restrict const res) {
   const int ret = PGTYPESnumeric_copy(n->n, res->n);
-  if (ret < 0) {
-    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-    fatal();
-  }
+  if (ret < 0)
+    panic();
 #ifdef ABAG_MATH_DEBUG
   Numeric_char_free(res->s);
   res->s = Numeric_to_char(res, 20);
@@ -272,10 +248,8 @@ inline struct Numeric *Numeric_from_double(const double d) {
 inline void Numeric_from_double_to(const double d,
                                    struct Numeric *restrict const res) {
   const int ret = PGTYPESnumeric_from_double(d, res->n);
-  if (ret < 0) {
-    werr("%s: %d: %s: %lf\n", __FILE__, __LINE__, __func__, d);
-    fatal();
-  }
+  if (ret < 0)
+    panic();
 #ifdef ABAG_MATH_DEBUG
   res->s = Numeric_to_char(res, 20);
 #endif
@@ -284,20 +258,16 @@ inline void Numeric_from_double_to(const double d,
 inline double Numeric_to_double(const struct Numeric *restrict const n) {
   double res = 0;
   const int ret = PGTYPESnumeric_to_double(n->n, &res);
-  if (ret < 0) {
-    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-    fatal();
-  }
+  if (ret < 0)
+    panic();
   return res;
 }
 
 inline void Numeric_abs(struct Numeric *restrict const n) {
   if (Numeric_cmp(n, zero) < 0) {
     const int ret = PGTYPESnumeric_mul(n_one->n, n->n, n->n);
-    if (ret < 0) {
-      werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-      fatal();
-    }
+    if (ret < 0)
+      panic();
   }
 #ifdef ABAG_MATH_DEBUG
   Numeric_char_free(n->s);
@@ -308,10 +278,8 @@ inline void Numeric_abs(struct Numeric *restrict const n) {
 inline void Numeric_scale(struct Numeric *restrict const n, const int scale) {
   char *restrict const s = Numeric_to_char(n, scale);
   struct Numeric *restrict const scaled = Numeric_from_char(s);
-  if (scaled == NULL) {
-    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-    fatal();
-  }
+  if (scaled == NULL)
+    panic();
   Numeric_copy_to(scaled, n);
   Numeric_delete(scaled);
   Numeric_char_free(s);
@@ -319,10 +287,8 @@ inline void Numeric_scale(struct Numeric *restrict const n, const int scale) {
 
 inline void Numeric_inc(struct Numeric *restrict const n) {
   const int ret = PGTYPESnumeric_add(n->n, one->n, n->n);
-  if (ret < 0) {
-    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-    fatal();
-  }
+  if (ret < 0)
+    panic();
 #ifdef ABAG_MATH_DEBUG
   Numeric_char_free(n->s);
   n->s = Numeric_to_char(n, 20);
@@ -331,10 +297,8 @@ inline void Numeric_inc(struct Numeric *restrict const n) {
 
 inline void Numeric_dec(struct Numeric *restrict const n) {
   const int ret = PGTYPESnumeric_sub(n->n, one->n, n->n);
-  if (ret < 0) {
-    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-    fatal();
-  }
+  if (ret < 0)
+    panic();
 #ifdef ABAG_MATH_DEBUG
   Numeric_char_free(n->s);
   n->s = Numeric_to_char(n, 20);

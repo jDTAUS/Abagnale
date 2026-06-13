@@ -43,8 +43,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-extern const struct String *restrict const progname;
-
 extern const struct Exchange *restrict const all_exchanges;
 extern const size_t all_exchanges_nitems;
 
@@ -179,10 +177,9 @@ varset  : STRING '=' STRING {
             }
           }
           if (symset($1, $3, 0) == -1) {
-            werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
             String_delete($1);
             String_delete($3);
-            fatal();
+            YYERROR;
           }
         }
         ;
@@ -362,7 +359,7 @@ conf_exchange : CDP STRING {
                 doc.strings = heap_calloc(doc.s_nitems_cnt, sizeof(wchar_t));
                 doc.s_nitems = doc.s_nitems_cnt;
                 doc.s_next = 0;
-                  
+
                 (void)wcjsondocvalues(&wcjson, &doc, w_buf, w_sz);
 
                 if (wcjsondocstrings(&wcjson, &doc) < 0) {
@@ -380,7 +377,7 @@ conf_exchange : CDP STRING {
                 doc.mb_next = 0;
                 doc.esc = heap_calloc(doc.e_nitems_cnt, sizeof(wchar_t));
                 doc.e_nitems = doc.e_nitems_cnt;
-               
+
                 if (wcjsondocmbstrings(&wcjson, &doc) < 0) {
                   yyerror("%s: %s\n", String_chars($2), strerror(wcjson.errnum));
                   String_delete($2);
@@ -392,7 +389,7 @@ conf_exchange : CDP STRING {
                   heap_free(doc.esc);
                   YYERROR;
                 }
-    
+
                 struct wcjson_value *restrict const nm =
                   wcjson_object_get(&doc, doc.values, L"name", 4);
 
@@ -715,10 +712,8 @@ int yyerror(const char *fmt, ...) {
   file->errors++;
   va_start(ap, fmt);
   r = vsnprintf(msg, sizeof(msg), fmt, ap);
-  if(r < 0 || (size_t)r >= sizeof(msg)) {
-    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-    fatal();
-  }
+  if(r < 0 || (size_t)r >= sizeof(msg))
+    panic();
   va_end(ap);
   werr("%s: %d: %s\n", String_chars(file->name), yylval.lineno, msg);
   return (0);
@@ -846,16 +841,10 @@ void lungetc(int c) {
     // =>file->ungetsize <= SIZE_MAX / 2
     // =>2 <= SIZE_MAX / file->ungetsize
     if (file->ungetsize > SIZE_MAX / 2
-        || (file->ungetsize > 0 && 2 > SIZE_MAX / file->ungetsize)) {
-      werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-      fatal();
-    }
-    void *p = realloc(file->ungetbuf, file->ungetsize * 2);
-    if (p == NULL) {
-      werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__, strerror(errno));
-      fatal();
-    }
-    file->ungetbuf = p;
+        || (file->ungetsize > 0 && 2 > SIZE_MAX / file->ungetsize))
+        panic();
+
+    file->ungetbuf = heap_realloc(file->ungetbuf, file->ungetsize * 2);
     file->ungetsize *= 2;
   }
   file->ungetbuf[file->ungetpos++] = c;
@@ -1033,8 +1022,7 @@ struct file *pushfile(struct String *restrict const name) {
   nfile = heap_calloc(1, sizeof(struct file));
   nfile->name = name;
   if ((nfile->stream = fopen(String_chars(name), "r")) == NULL) {
-    werr("%s: %s: %s\n", String_chars(progname), String_chars(name),
-      strerror(errno));
+    werr("%s: %s\n", String_chars(name), strerror(errno));
     heap_free(nfile);
     return (NULL);
   }
@@ -1084,8 +1072,7 @@ int config_fparse(struct Config *const x_conf,
   while(MapIterator_next(it)) {
     const struct sym *restrict const sym = MapIterator_value(it);
     if (!sym->used)
-      werr("%s: macro '%s' not used\n", String_chars(progname),
-        String_chars(sym->nam));
+      werr("%s: macro '%s' not used\n", filename, String_chars(sym->nam));
     if (!sym->persist)
       sym_delete(MapIterator_remove(it));
   }
@@ -1102,7 +1089,7 @@ int config_fparse(struct Config *const x_conf,
       conf->wnanos_max = m_cnf->wnanos;
 
     if (Map_get(conf->e_cnf, m_cnf->e_nm) == NULL) {
-      werr("%s: %s: Exchange configuration required\n", String_chars(progname),
+      werr("%s: %s: Exchange configuration required\n", filename,
         String_chars(m_cnf->e_nm));
       errors++;
     }
@@ -1143,6 +1130,7 @@ int symset(struct String *restrict const nam, struct String *restrict const val,
   sym->nam = nam;
   sym->val = val;
   Map_put(symbols, nam, sym);
+
   return (0);
 }
 
@@ -1161,7 +1149,7 @@ int config_symset(char *restrict const s) {
 
 struct String *symget(const struct String *restrict const nam) {
   struct sym *restrict const sym = Map_get(symbols, nam);
-  
+
   if(sym != NULL) {
     sym->used = 1;
     return sym->val;
@@ -1174,67 +1162,66 @@ struct Numeric *config_nsparse(const struct String *restrict const str) {
   struct Numeric *restrict r = NULL;
   const struct Numeric *restrict f = one;
   struct Numeric *restrict r0 = NULL;
+  const size_t l = String_length(str);
+  const char *s = String_chars(str);
 
-  if (String_length(str) > 0) {
-    if (isdigit(String_chars(str)[String_length(str) - 1])) {
-      r = Numeric_from_char(String_chars(str));
+  if (l < 1)
+    return NULL;
 
-      if (r == NULL) {
-        werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__, String_chars(str));
-        fatal();
-      }
+  if (isdigit(s[l - 1])) {
+    r = Numeric_from_char(s);
 
-      if (Numeric_cmp(r, zero) <= 0) {
-        Numeric_delete(r);
-        r = NULL;
-      }
-    } else {
-      switch (String_chars(str)[String_length(str) - 1]) {
-      case 's':
-        f = second_nanos;
-        break;
-      case 'm':
-        f = minute_nanos;
-        break;
-      case 'h':
-        f = hour_nanos;
-        break;
-      case 'd':
-        f = day_nanos;
-        break;
-      case 'w':
-        f = week_nanos;
-        break;
-      default:
-        return NULL;
-      }
+    if (r == NULL)
+      return NULL;
 
-      if (String_length(str) > 1) {
-        struct String *restrict const s =
-          String_new(str, 0, String_length(str) - 1);
-
-        r = Numeric_from_char(String_chars(s));
-        String_delete(s);
-
-        if (r == NULL) {
-          werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__,
-               String_chars(str));
-          fatal();
-        }
-
-        r0 = Numeric_mul(r, f);
-        Numeric_delete(r);
-        r = r0;
-
-        if (Numeric_cmp(r, zero) <= 0) {
-          Numeric_delete(r);
-          r = NULL;
-        }
-      }
+    if (Numeric_cmp(r, zero) <= 0) {
+      Numeric_delete(r);
+      return NULL;
     }
+
+    return r;
   }
 
-  return r;
+  if (l < 2)
+    return NULL;
+
+  switch (s[l - 1]) {
+  case 's':
+    f = second_nanos;
+    break;
+  case 'm':
+    f = minute_nanos;
+    break;
+  case 'h':
+    f = hour_nanos;
+    break;
+  case 'd':
+    f = day_nanos;
+    break;
+  case 'w':
+    f = week_nanos;
+    break;
+  default:
+    return NULL;
+  }
+
+  struct String *restrict const n = String_new(str, 0, l - 1);
+
+  r = Numeric_from_char(String_chars(n));
+  String_delete(n);
+
+  if (r == NULL)
+    return NULL;
+
+  r0 = Numeric_mul(r, f);
+  Numeric_delete(r);
+
+  if (Numeric_cmp(r0, zero) <= 0) {
+    Numeric_delete(r0);
+    return NULL;
+  }
+
+  return r0;
 }
 
 void config_init(void) {

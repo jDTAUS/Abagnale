@@ -36,22 +36,26 @@ extern const struct Numeric *restrict const zero;
 extern const struct Config *restrict const cnf;
 
 static void db_warn(void) {
-  werr("==== sqlca ====\n");
-  werr("sqlcode: %ld\n", sqlca.sqlcode);
-  werr("sqlerrm.sqlerrml: %d\n", sqlca.sqlerrm.sqlerrml);
-  werr("sqlerrm.sqlerrmc: %s\n", sqlca.sqlerrm.sqlerrmc);
-  werr("sqlerrd: %ld %ld %ld %ld %ld %ld\n", sqlca.sqlerrd[0], sqlca.sqlerrd[1],
-       sqlca.sqlerrd[2], sqlca.sqlerrd[3], sqlca.sqlerrd[4], sqlca.sqlerrd[5]);
-  werr("sqlwarn: %d %d %d %d %d %d %d %d\n", sqlca.sqlwarn[0], sqlca.sqlwarn[1],
-       sqlca.sqlwarn[2], sqlca.sqlwarn[3], sqlca.sqlwarn[4], sqlca.sqlwarn[5],
-       sqlca.sqlwarn[6], sqlca.sqlwarn[7]);
-  werr("sqlstate: %5s\n", sqlca.sqlstate);
-  werr("===============\n");
+  werr("%s: %s: %ld: %s\n", __func__, sqlca.sqlstate, sqlca.sqlcode,
+       sqlca.sqlerrm.sqlerrmc);
+  //  werr("==== sqlca ====\n");
+  //  werr("sqlcode: %ld\n", sqlca.sqlcode);
+  //  werr("sqlerrm.sqlerrml: %d\n", sqlca.sqlerrm.sqlerrml);
+  //  werr("sqlerrm.sqlerrmc: %s\n", sqlca.sqlerrm.sqlerrmc);
+  //  werr("sqlerrd: %ld %ld %ld %ld %ld %ld\n", sqlca.sqlerrd[0],
+  //  sqlca.sqlerrd[1],
+  //       sqlca.sqlerrd[2], sqlca.sqlerrd[3], sqlca.sqlerrd[4],
+  //       sqlca.sqlerrd[5]);
+  //  werr("sqlwarn: %d %d %d %d %d %d %d %d\n", sqlca.sqlwarn[0],
+  //  sqlca.sqlwarn[1],
+  //       sqlca.sqlwarn[2], sqlca.sqlwarn[3], sqlca.sqlwarn[4],
+  //       sqlca.sqlwarn[5], sqlca.sqlwarn[6], sqlca.sqlwarn[7]);
+  //  werr("sqlstate: %5s\n", sqlca.sqlstate);
+  //  werr("===============\n");
 }
 
 static void db_fatal(void) {
-  db_warn();
-  fatal();
+  fatal("%s: %ld: %s", sqlca.sqlstate, sqlca.sqlcode, sqlca.sqlerrm.sqlerrmc);
 }
 
 void *db_connect(const char *const cname) {
@@ -496,10 +500,9 @@ void db_vacuum_samples(const void *const db, const char *const e_id,
     "  RETURNING *"
     ") TO '%s'", e_id, m_id, nanos_asc, fname);
 
-  if (r < 0 || (size_t)r >= sizeof(stmt)) {
-    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-    fatal();
-  }
+  if (r < 0 || (size_t)r >= sizeof(stmt))
+    panic();
+
   Numeric_char_free(nanos_asc);
   EXEC SQL AT :con EXECUTE IMMEDIATE :stmt;
   EXEC SQL AT :con COMMIT;

@@ -135,11 +135,8 @@ inline struct String *String_new(const struct String *restrict s,
   // i + c + 1 <= SIZE_MAX
   // => i <= SIZE_MAX - c - 1
   // => c <= SIZE_MAX - i - 1
-  if (i > SIZE_MAX - c - 1 || c > SIZE_MAX - i - 1 || i + c > s->len) {
-    werr("%s: %d :%s: %s: %zu: %zu\n", __FILE__, __LINE__, __func__, s->s, i,
-         c);
-    fatal();
-  }
+  if (i > SIZE_MAX - c - 1 || c > SIZE_MAX - i - 1 || i + c > s->len)
+    panic();
 
   struct String *restrict const str = heap_malloc(sizeof(struct String));
   str->len = c;
@@ -182,10 +179,8 @@ inline void String_delete(void *restrict const s) {
 #ifdef MULTI_THREADED
   mutex_lock(&str->mtx);
 #endif
-  if (str->r_cnt-- == 0) {
-    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-    fatal();
-  }
+  if (str->r_cnt-- == 0)
+    panic();
 
   if (str->r_cnt > 0) {
 #ifdef MULTI_THREADED
@@ -211,10 +206,8 @@ inline void *String_copy(void *restrict const o) {
 #endif
   // str->r_cnt + 1 <= SIZE_MAX
   // => str->r_cnt <= SIZE_MAX - 1
-  if (str->r_cnt > SIZE_MAX - 1) {
-    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-    fatal();
-  }
+  if (str->r_cnt > SIZE_MAX - 1)
+    panic();
 
   str->r_cnt++;
 #ifdef MULTI_THREADED
@@ -236,11 +229,8 @@ inline struct String *String_tolower(const struct String *restrict s,
   // i + c + 1 <= SIZE_MAX
   // => i <= SIZE_MAX - c - 1
   // => c <= SIZE_MAX - i - 1
-  if (i > SIZE_MAX - c - 1 || c > SIZE_MAX - i - 1 || i + c > s->len) {
-    werr("%s: %d :%s: %s: %zu: %zu\n", __FILE__, __LINE__, __func__, s->s, i,
-         c);
-    fatal();
-  }
+  if (i > SIZE_MAX - c - 1 || c > SIZE_MAX - i - 1 || i + c > s->len)
+    panic();
 
   struct String *restrict const str = heap_malloc(sizeof(struct String));
   str->len = c;
@@ -267,11 +257,8 @@ inline struct String *String_toupper(const struct String *restrict s,
   // i + c + 1 <= SIZE_MAX
   // => i <= SIZE_MAX - c - 1
   // => c <= SIZE_MAX - i - 1
-  if (i > SIZE_MAX - c - 1 || c > SIZE_MAX - i - 1 || i + c > s->len) {
-    werr("%s: %d :%s: %s: %zu: %zu\n", __FILE__, __LINE__, __func__, s->s, i,
-         c);
-    fatal();
-  }
+  if (i > SIZE_MAX - c - 1 || c > SIZE_MAX - i - 1 || i + c > s->len)
+    panic();
 
   struct String *restrict const str = heap_malloc(sizeof(struct String));
   str->len = c;

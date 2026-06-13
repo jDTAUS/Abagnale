@@ -34,29 +34,24 @@
 
 inline void *heap_malloc(const size_t size) {
   void *restrict const ptr = malloc(size);
-  if (ptr == NULL) {
-    werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__, strerror(errno));
-    fatal();
-  }
+  if (ptr == NULL)
+    fatal("%s", strerror(errno));
+  // XXX: Remove memset
   memset(ptr, '\0', size);
   return ptr;
 }
 
 inline void *heap_calloc(const size_t nmemb, const size_t size) {
   void *restrict const ptr = calloc(nmemb, size);
-  if (ptr == NULL) {
-    werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__, strerror(errno));
-    fatal();
-  }
+  if (ptr == NULL)
+    fatal("%s", strerror(errno));
   return ptr;
 }
 
 inline void *heap_realloc(void *restrict const p, const size_t size) {
   void *restrict const ptr = realloc(p, size);
-  if (ptr == NULL) {
-    werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__, strerror(errno));
-    fatal();
-  }
+  if (ptr == NULL)
+    fatal("%s", strerror(errno));
   return ptr;
 }
 

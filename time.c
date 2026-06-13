@@ -115,10 +115,8 @@ void time_destroy(void) {
 }
 
 inline void time_now(struct timespec *restrict const ts) {
-  if (!timespec_get(ts, TIME_UTC)) {
-    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-    fatal();
-  }
+  if (!timespec_get(ts, TIME_UTC))
+    fatal("%s", "timespec_get");
 }
 
 bool nanos_from_iso8601(const char *restrict const iso, const size_t len,
@@ -137,10 +135,8 @@ bool nanos_from_iso8601(const char *restrict const iso, const size_t len,
   bool has_fraction = false;
   bool in_timezone = false;
 
-  if (len > TIME_ISO8601_MAX_LENGTH) {
-    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-    fatal();
-  }
+  if (len > TIME_ISO8601_MAX_LENGTH)
+    panic();
 
   for (size_t i = 0; i < len; i++) {
     switch (i) {
@@ -317,10 +313,8 @@ bool nanos_from_iso8601(const char *restrict const iso, const size_t len,
   t.tm_isdst = 0;
 
   time_t time = mktime(&t);
-  if (time == (time_t)-1) {
-    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-    fatal();
-  }
+  if (time == (time_t)-1)
+    fatal("%s", "mktime");
 
   Numeric_from_long_to(time, secs);
   Numeric_mul_to(secs, second_nanos, s_ns);
@@ -328,10 +322,8 @@ bool nanos_from_iso8601(const char *restrict const iso, const size_t len,
   if (has_fraction) {
     struct Numeric *restrict const fraction = Numeric_from_char(fr);
 
-    if (fraction == NULL) {
-      werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__, fr);
-      fatal();
-    }
+    if (fraction == NULL)
+      fatal("%s", fr);
 
     Numeric_mul_to(fraction, second_nanos, f_ns);
     Numeric_delete(fraction);
@@ -373,10 +365,8 @@ char *nanos_to_iso8601(const struct Numeric *restrict const nanos) {
   mutex_lock(&time_mtx);
   struct tm *tm = localtime(&time);
   if (strftime(res, TIME_ISO8601_MAX_LENGTH + 1, "%Y-%m-%dT%H:%M:%S%Z", tm) ==
-      0) {
-    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-    fatal();
-  }
+      0)
+    panic();
   mutex_unlock(&time_mtx);
   return res;
 }
@@ -423,10 +413,8 @@ char *nanos_string(const struct Numeric *restrict const nanos) {
       snprintf(chars, TIME_NANOS_CHARS_MAX_LENGTH + 1, "%sw%sd%sh%sm%ss%sns",
                weeks, days, hours, minutes, seconds, ns);
 
-  if (r < 0 || (size_t)r >= TIME_NANOS_CHARS_MAX_LENGTH + 1) {
-    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-    fatal();
-  }
+  if (r < 0 || (size_t)r >= TIME_NANOS_CHARS_MAX_LENGTH + 1)
+    panic();
 
   Numeric_char_free(weeks);
   Numeric_char_free(days);

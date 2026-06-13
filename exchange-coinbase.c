@@ -592,8 +592,7 @@ static int wcjsontoerrno(const struct wcjson *restrict const wcjson) {
   case WCJSON_ABORT_ERROR:
     return wcjson->errnum;
   default:
-    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-    fatal();
+    panic();
   }
 }
 
@@ -630,23 +629,14 @@ wcjsondoc_string(char *restrict const dst, size_t dst_nitems,
                  const struct wcjson_value *restrict const value,
                  size_t *restrict s_len) {
   wchar_t wc[WCJSON_BODY_MAX + 1] = {0};
-  size_t wc_len = dst_nitems;
+  size_t wc_len = sizeof(wc) - 1;
 
-  if (wcjsondocsprint(wc, &wc_len, doc, value) < 0) {
-    werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__, strerror(errno));
-    fatal();
-  }
+  if (wcjsondocsprint(wc, &wc_len, doc, value) < 0)
+    panic();
 
   size_t mb_len = wcstombs(dst, wc, dst_nitems);
-  if (mb_len == (size_t)-1) {
-    werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__, strerror(errno));
-    fatal();
-  }
-
-  if (mb_len == dst_nitems) {
-    werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__, strerror(ERANGE));
-    fatal();
-  }
+  if (mb_len == (size_t)-1 || mb_len == dst_nitems)
+    panic();
 
   if (s_len != NULL)
     *s_len = mb_len;
@@ -660,33 +650,19 @@ wcjson_string(struct wcjson_document *restrict const doc,
   wchar_t wc[WCJSON_STRLEN_MAX + 1] = {0};
   const size_t wc_len = mbstowcs(wc, s, nitems(wc));
 
-  if (wc_len == (size_t)-1) {
-    werr("%s: %d: %s: %s: %s\n", __FILE__, __LINE__, __func__, s,
-         strerror(errno));
-    fatal();
-  }
-  if (wc_len == nitems(wc)) {
-    werr("%s: %d: %s: %s: %s\n", __FILE__, __LINE__, __func__, s,
-         strerror(ERANGE));
-    fatal();
-  }
+  if (wc_len == (size_t)-1 || wc_len == nitems(wc))
+    panic();
 
   const wchar_t *restrict const doc_s = wcjson_document_string(doc, wc, wc_len);
 
-  if (doc_s == NULL) {
-    werr("%s: %d: %s: %s: %s\n", __FILE__, __LINE__, __func__, s,
-         strerror(errno));
-    fatal();
-  }
+  if (doc_s == NULL)
+    panic();
 
   struct wcjson_value *restrict const j_s =
       wcjson_value_string(doc, doc_s, wc_len);
 
-  if (j_s == NULL) {
-    werr("%s: %d: %s: %s: %s\n", __FILE__, __LINE__, __func__, s,
-         strerror(errno));
-    fatal();
-  }
+  if (j_s == NULL)
+    panic();
 
   return j_s;
 }
@@ -703,70 +679,56 @@ wcjson_number(struct wcjson_document *restrict const doc,
 static struct wcjson_value *
 wcjson_object(struct wcjson_document *restrict const doc) {
   struct wcjson_value *restrict const o = wcjson_value_object(doc);
-  if (o == NULL) {
-    werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__, strerror(errno));
-    fatal();
-  }
+  if (o == NULL)
+    panic();
   return o;
 }
 
 static struct wcjson_value *
 wcjson_array(struct wcjson_document *restrict const doc) {
   struct wcjson_value *restrict const a = wcjson_value_array(doc);
-  if (a == NULL) {
-    werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__, strerror(errno));
-    fatal();
-  }
+  if (a == NULL)
+    panic();
   return a;
 }
 
 static struct wcjson_value *
 wcjson_bool(struct wcjson_document *restrict const doc, const bool flag) {
   struct wcjson_value *restrict const v = wcjson_value_bool(doc, flag);
-  if (v == NULL) {
-    werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__, strerror(errno));
-    fatal();
-  }
+  if (v == NULL)
+    panic();
   return v;
 }
 
 static void wcjson_array_add(struct wcjson_document *restrict const doc,
                              struct wcjson_value *restrict const arr,
                              struct wcjson_value *restrict const value) {
-  if (wcjson_array_add_tail(doc, arr, value) < 0) {
-    werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__, strerror(errno));
-    fatal();
-  }
+  if (wcjson_array_add_tail(doc, arr, value) < 0)
+    panic();
 }
 
 static void wcjson_object_add(struct wcjson_document *restrict const doc,
                               struct wcjson_value *restrict const obj,
                               const wchar_t *key, const size_t key_len,
                               struct wcjson_value *restrict const value) {
-  if (wcjson_object_add_tail(doc, obj, key, key_len, value) < 0) {
-    werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__, strerror(errno));
-    fatal();
-  }
+  if (wcjson_object_add_tail(doc, obj, key, key_len, value) < 0)
+    panic();
 }
 
 static inline char *b64_encode_uri(const char *restrict const s,
                                    const size_t s_len,
                                    size_t *restrict const e_len) {
-  if (s_len > (SIZE_MAX / 4 - 1) * 3 - 2) {
-    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-    fatal();
-  }
+  if (s_len > (SIZE_MAX / 4 - 1) * 3 - 2)
+    panic();
 
   char *restrict const e = heap_malloc(4 * ((s_len + 2) / 3) + 1);
-  if (EVP_EncodeBlock((unsigned char *)e, (const unsigned char *)s, s_len) <
-      0) {
-    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-    fatal();
-  }
+  if (EVP_EncodeBlock((unsigned char *)e, (const unsigned char *)s, s_len) < 0)
+    panic();
 
   char *restrict p = e;
   *e_len = 0;
 
+  // XXX: Check out of bounds
   while (*p) {
     switch (*p) {
     case '=':
@@ -844,20 +806,16 @@ static char *jwt_encode_cdp(const char *restrict const uri) {
   const time_t now = time(NULL);
   r = snprintf(jwt_time, sizeof(jwt_time), "%" PRIdMAX, (intmax_t)now - 1);
 
-  if (r < 0 || (size_t)r >= sizeof(jwt_time)) {
-    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-    fatal();
-  }
+  if (r < 0 || (size_t)r >= sizeof(jwt_time))
+    panic();
 
   wcjson_object_add(&jwt_doc, j_obj, L"nbf", 3,
                     wcjson_number(&jwt_doc, jwt_time));
 
   r = snprintf(jwt_time, sizeof(jwt_time), "%" PRIdMAX, (intmax_t)now + 120);
 
-  if (r < 0 || (size_t)r >= sizeof(jwt_time)) {
-    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-    fatal();
-  }
+  if (r < 0 || (size_t)r >= sizeof(jwt_time))
+    panic();
 
   wcjson_object_add(&jwt_doc, j_obj, L"exp", 3,
                     wcjson_number(&jwt_doc, jwt_time));
@@ -874,63 +832,47 @@ static char *jwt_encode_cdp(const char *restrict const uri) {
   BIO *restrict bio = BIO_new_mem_buf(String_chars(coinbase_cnf->jwt_key),
                                       String_length(coinbase_cnf->jwt_key));
 
-  if (!bio) {
-    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-    fatal();
-  }
+  if (!bio)
+    panic();
 
   EVP_PKEY *restrict const key = PEM_read_bio_PrivateKey(bio, NULL, NULL, NULL);
 
-  if (!key) {
-    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-    fatal();
-  }
+  if (!key)
+    panic();
 
   BIO_free(bio);
 
   if (h_b64_len > SIZE_MAX - p_b64_len - 2 ||
-      p_b64_len > SIZE_MAX - h_b64_len - 2) {
-    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-    fatal();
-  }
+      p_b64_len > SIZE_MAX - h_b64_len - 2)
+    panic();
 
   const size_t hdotp_len = h_b64_len + p_b64_len + 1;
   char *restrict const hdotp = heap_malloc(hdotp_len + 1);
   r = snprintf(hdotp, hdotp_len + 1, "%s.%s", h_b64, p_b64);
 
-  if (r < 0 || (size_t)r >= hdotp_len + 1) {
-    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-    fatal();
-  }
+  if (r < 0 || (size_t)r >= hdotp_len + 1)
+    panic();
 
   EVP_MD_CTX *restrict const sign_ctx = EVP_MD_CTX_new();
 
-  if (!sign_ctx) {
-    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-    fatal();
-  }
+  if (!sign_ctx)
+    panic();
 
   if (EVP_DigestSignInit(sign_ctx, NULL, EVP_sha256(), NULL, key) <= 0 ||
       EVP_DigestSignUpdate(sign_ctx, (unsigned char *)hdotp, hdotp_len) <= 0 ||
-      EVP_DigestSignFinal(sign_ctx, NULL, &s_len) <= 0) {
-    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-    fatal();
-  }
+      EVP_DigestSignFinal(sign_ctx, NULL, &s_len) <= 0)
+    panic();
 
   char *restrict const s = heap_malloc(s_len + 1);
 
-  if (EVP_DigestSignFinal(sign_ctx, (unsigned char *)s, &s_len) <= 0) {
-    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-    fatal();
-  }
+  if (EVP_DigestSignFinal(sign_ctx, (unsigned char *)s, &s_len) <= 0)
+    panic();
 
   const unsigned char *p = (const unsigned char *)s;
   ECDSA_SIG *restrict sig = d2i_ECDSA_SIG(NULL, &p, s_len);
 
-  if (!sig) {
-    werr("%s: :%d: %s\n", __FILE__, __LINE__, __func__);
-    fatal();
-  }
+  if (!sig)
+    panic();
 
   const BIGNUM *ecdsa_r;
   const BIGNUM *ecdsa_s;
@@ -940,10 +882,8 @@ static char *jwt_encode_cdp(const char *restrict const uri) {
   unsigned char raw[64] = {0};
 
   if (BN_bn2binpad(ecdsa_r, raw, 32) != 32 ||
-      BN_bn2binpad(ecdsa_s, raw + 32, 32) != 32) {
-    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-    fatal();
-  }
+      BN_bn2binpad(ecdsa_s, raw + 32, 32) != 32)
+    panic();
 
   ECDSA_SIG_free(sig);
 
@@ -955,19 +895,15 @@ static char *jwt_encode_cdp(const char *restrict const uri) {
 #endif
 
   if (hdotp_len > SIZE_MAX - 2 - s_b64_len ||
-      s_b64_len > SIZE_MAX - 2 - hdotp_len) {
-    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-    fatal();
-  }
+      s_b64_len > SIZE_MAX - 2 - hdotp_len)
+    panic();
 
   const size_t jwt_len = hdotp_len + s_b64_len + 1;
   char *restrict const jwt = heap_malloc(jwt_len + 1);
   r = snprintf(jwt, jwt_len + 1, "%s.%s", hdotp, s_b64);
 
-  if (r < 0 || (size_t)r >= jwt_len + 1) {
-    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-    fatal();
-  }
+  if (r < 0 || (size_t)r >= jwt_len + 1)
+    panic();
 
 #ifdef ABAG_COINBASE_DEBUG
   wout("coinbase: JWT: %s\n", jwt);
@@ -1138,6 +1074,76 @@ ret:
   Numeric_delete(j_outstanding_hold_amount_num);
 }
 
+static int
+mg_ws_message_decode(wchar_t *restrict const dst, size_t *dst_len,
+                     const struct mg_ws_message *restrict const msg) {
+  size_t m_len = msg->data.len;
+  size_t d_len = 0;
+  mbstate_t mbs = {0};
+
+  for (size_t i = 0, len = 0; (*dst_len)-- != 0 && m_len != 0;
+       i += len, m_len -= len, d_len++) {
+    switch (len = mbrtowc(dst + d_len, msg->data.buf + i, m_len, &mbs)) {
+    case 0:
+      *dst_len = d_len;
+      return 0;
+    case (size_t)-1:
+      werr("coinbase: Illegal byte sequence: %zu: 0x%.2hhx: %.*s\n", i,
+           *(msg->data.buf + i), (int)msg->data.len, msg->data.buf);
+      return -1;
+    case (size_t)-2:
+      werr("coinbase: Incomplete byte sequence: %zu: %.*s\n", i,
+           (int)msg->data.len, msg->data.buf);
+      return -1;
+    case (size_t)-3:
+      len = 0;
+      break;
+    }
+  }
+
+  if (*dst_len == SIZE_MAX || m_len != 0)
+    panic();
+
+  dst[d_len] = '\0';
+  *dst_len = d_len;
+  return 0;
+}
+
+static int
+mg_http_message_decode(wchar_t *restrict const dst, size_t *dst_len,
+                       const struct mg_http_message *restrict const msg) {
+  size_t m_len = msg->body.len;
+  size_t d_len = 0;
+  mbstate_t mbs = {0};
+
+  for (size_t i = 0, len = 0; (*dst_len)-- != 0 && m_len != 0;
+       i += len, m_len -= len, d_len++) {
+    switch (len = mbrtowc(dst + d_len, msg->body.buf + i, m_len, &mbs)) {
+    case 0:
+      *dst_len = d_len;
+      return 0;
+    case (size_t)-1:
+      werr("coinbase: Illegal byte sequence: %zu: 0x%.2hhx: %.*s\n", i,
+           *(msg->body.buf + i), (int)msg->body.len, msg->body.buf);
+      return -1;
+    case (size_t)-2:
+      werr("coinbase: Incomplete byte sequence: %zu: %.*s\n", i,
+           (int)msg->body.len, msg->body.buf);
+      return -1;
+    case (size_t)-3:
+      len = 0;
+      break;
+    }
+  }
+
+  if (*dst_len == SIZE_MAX || m_len != 0)
+    panic();
+
+  dst[d_len] = '\0';
+  *dst_len = d_len;
+  return 0;
+}
+
 static void ws_handle_message(const struct mg_ws_message *restrict const msg) {
   struct wcjson wcjson = WCJSON_INITIALIZER;
   char errbuf[WCJSON_BODY_MAX + 1] = {0};
@@ -1151,36 +1157,27 @@ static void ws_handle_message(const struct mg_ws_message *restrict const msg) {
   ws_doc->s_next = 0;
   ws_doc->mb_next = 0;
 
-  if (msg->data.len > WCJSON_BODY_MAX) {
-    werr("%s: %d: %s: %s: %.*s\n", __FILE__, __LINE__, __func__,
-         strerror(ERANGE), (int)msg->data.len, msg->data.buf);
-    fatal();
-  }
-
   wchar_t wcmsg[WCJSON_BODY_MAX + 1] = {0};
-  size_t wc_len = mbstowcs(wcmsg, msg->data.buf, msg->data.len);
-  if (wc_len == (size_t)-1) {
-    werr("%s: %d: %s: %s: %.*s\n", __FILE__, __LINE__, __func__,
-         strerror(errno), (int)msg->data.len, msg->data.buf);
-    fatal();
-  }
+  size_t wc_len = sizeof(wcmsg) - 1;
+  if (mg_ws_message_decode(wcmsg, &wc_len, msg))
+    return;
 
   if (wcjsondocvalues(&wcjson, ws_doc, wcmsg, wc_len) < 0) {
-    werr("%s: %d: %s: %s: %.*s\n", __FILE__, __LINE__, __func__,
+    werr("coinbase: Failure parsing message: %s: %.*s\n",
          strerror(wcjsontoerrno(&wcjson)), (int)msg->data.len, msg->data.buf);
-    fatal();
+    return;
   }
 
   if (wcjsondocstrings(&wcjson, ws_doc) < 0) {
-    werr("%s: %d: %s: %s: %.*s\n", __FILE__, __LINE__, __func__,
+    werr("coinbase: Failure parsing message: %s: %.*s\n",
          strerror(wcjsontoerrno(&wcjson)), (int)msg->data.len, msg->data.buf);
-    fatal();
+    return;
   }
 
   if (wcjsondocmbstrings(&wcjson, ws_doc) < 0) {
-    werr("%s: %d: %s: %s: %.*s\n", __FILE__, __LINE__, __func__,
+    werr("coinbase: Failure parsing message: %s: %.*s\n",
          strerror(wcjsontoerrno(&wcjson)), (int)msg->data.len, msg->data.buf);
-    fatal();
+    return;
   }
 
   WCJSON_STRING_ITEM_OPT(ws_doc, ws_doc->values, type, 4, errbuf, ret)
@@ -1326,7 +1323,8 @@ static void ws_listener(struct mg_connection *restrict c, int ev,
     break;
   }
   case MG_EV_ERROR: {
-    werr("coinbase: %s: %lu: %s\n", channel->name, c->id, (char *)ev_data);
+    werr("coinbase: %s: %s: %lu: %s\n", channel->name,
+         ABAG_COINBASE_WEBSOCKET_URI, c->id, (char *)ev_data);
     c->is_closing = 1;
     break;
   }
@@ -1356,7 +1354,8 @@ static void ws_listener(struct mg_connection *restrict c, int ev,
 #endif
         c->is_closing = 1;
       } else
-        werr("coinbase: %s: %lu: %d\n", channel->name, c->id, type);
+        werr("coinbase: %s: %s: %lu: %d\n", channel->name,
+             ABAG_COINBASE_WEBSOCKET_URI, c->id, type);
 
     } else
       c->is_closing = 1;
@@ -1375,7 +1374,8 @@ static void ws_listener(struct mg_connection *restrict c, int ev,
         c = mg_ws_connect(mgr, ABAG_COINBASE_WEBSOCKET_URI, ws_listener,
                           channel, NULL);
         if (!c)
-          werr("coinbase: %s: Failure reconnecting\n", channel->name);
+          werr("coinbase: %s: %s: Failure reconnecting\n", channel->name,
+               ABAG_COINBASE_WEBSOCKET_URI);
 
       } while (!c);
     }
@@ -1388,7 +1388,8 @@ static void ws_listener(struct mg_connection *restrict c, int ev,
     channel->reconnect = true;
     channel->last_message = mg_millis();
     if (verbose)
-      wout("coinbase: %s: No events\n", channel->name);
+      wout("coinbase: %s: %s: No events\n", channel->name,
+           ABAG_COINBASE_WEBSOCKET_URI);
   }
 
   if (channel->reconnect) {
@@ -1439,10 +1440,8 @@ static void http_listener(struct mg_connection *restrict c, int ev,
     char uri[URL_MAX_LENGTH + 1] = {0};
     int r = snprintf(uri, sizeof(uri), "%s %.*s%s", method, (int)host.len,
                      host.buf, http_ctx->path);
-    if (r < 0 || (size_t)r >= sizeof(uri)) {
-      werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-      fatal();
-    }
+    if (r < 0 || (size_t)r >= sizeof(uri))
+      panic();
 
     char *restrict const jwt = jwt_encode_cdp(uri);
 
@@ -1465,7 +1464,6 @@ static void http_listener(struct mg_connection *restrict c, int ev,
   }
   case MG_EV_HTTP_MSG: {
     struct mg_http_message *restrict const msg = ev_data;
-    mbstate_t mbs = {0};
     http_ctx->success = mg_http_status(msg) == 200;
 
 #ifdef ABAG_COINBASE_DEBUG
@@ -1473,45 +1471,17 @@ static void http_listener(struct mg_connection *restrict c, int ev,
 #endif
 
     if (http_ctx->success) {
-      http_ctx->rsp_len = 0;
+      http_ctx->rsp_len = HTTP_RESPONSE_MAX_WCHARS;
       http_ctx->rsp =
           heap_calloc(HTTP_RESPONSE_MAX_WCHARS + 1, sizeof(wchar_t));
 
-      for (size_t i = 0, mb_len = 0; i < msg->body.len;
-           i += mb_len, http_ctx->rsp_len++) {
-        mb_len = mbrtowc(&http_ctx->rsp[http_ctx->rsp_len], &msg->body.buf[i],
-                         msg->body.len - i, &mbs);
-
-        if (mb_len == 0)
-          break;
-
-        if (mb_len == (size_t)-1) {
-          mg_error(c, "%s", strerror(errno));
-          return;
-        }
-
-        if (mb_len == (size_t)-2 || mb_len == (size_t)-3) {
-          mg_error(c, "Incomplete multibyte sequence");
-          return;
-        }
-
-        // i + mb_len <= SIZE_MAX
-        // => i <= SIZE_MAX - mb_len
-        // => mb_len <= SIZE_MAX - i
-        if (i > SIZE_MAX - mb_len || mb_len > SIZE_MAX - i) {
-          werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-          fatal();
-        }
-
-        // rsp_len + 1 <= HTTP_RESPONSE_MAX_WCHARS + 1
-        // => rsp_len <= HTTP_RESPONSE_MAX_WCHARS
-        if (http_ctx->rsp_len > HTTP_RESPONSE_MAX_WCHARS) {
-          werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-          fatal();
-        }
+      if (mg_http_message_decode(http_ctx->rsp, &http_ctx->rsp_len, msg)) {
+        http_ctx->success = false;
+        return;
       }
     } else {
-      mg_error(c, "%d", mg_http_status(msg));
+      mg_error(c, "%s: HTTP %d: %.*s", http_ctx->url, mg_http_status(msg),
+               (int)msg->body.len, msg->body.buf);
       return;
     }
 
@@ -1554,22 +1524,22 @@ static int http_req(struct wcjson_document *restrict const doc,
 
   if (c == NULL) {
     werr("coinbase: %s: Could not create HTTP connection\n", url);
-    goto cleanup;
+    goto err;
   }
 
   while (!http_ctx.done)
     mg_mgr_poll(&mgr, MG_POLL_WAIT_MILLIS);
 
   if (!http_ctx.success)
-    goto cleanup;
+    goto err;
 
   struct wcjson wcjson = WCJSON_INITIALIZER;
 
   r = wcjsondocvalues(&wcjson, doc, http_ctx.rsp, http_ctx.rsp_len);
   if (r < 0) {
-    werr("coinbase: %s: %s: %.*ls\n", url, strerror(wcjsontoerrno(&wcjson)),
-         (int)http_ctx.rsp_len, http_ctx.rsp);
-    goto cleanup;
+    werr("coinbase: Failure parsing response: %s: %s: %.*ls\n", url,
+         strerror(wcjsontoerrno(&wcjson)), (int)http_ctx.rsp_len, http_ctx.rsp);
+    goto err;
   }
 
   if (doc->values == NULL) {
@@ -1585,9 +1555,9 @@ static int http_req(struct wcjson_document *restrict const doc,
 
   r = wcjsondocstrings(&wcjson, doc);
   if (r < 0) {
-    werr("%s: %d: %s: %s: %s: %.*ls\n", __FILE__, __LINE__, __func__, url,
+    werr("coinbase: Failure parsing response: %s: %s: %.*ls\n", url,
          strerror(wcjsontoerrno(&wcjson)), (int)http_ctx.rsp_len, http_ctx.rsp);
-    fatal();
+    goto err;
   }
 
   if (doc->mbstrings == NULL) {
@@ -1602,13 +1572,13 @@ static int http_req(struct wcjson_document *restrict const doc,
 
   r = wcjsondocmbstrings(&wcjson, doc);
   if (r < 0) {
-    werr("%s: %d: %s: %s: %s: %.*ls\n", __FILE__, __LINE__, __func__, url,
+    werr("coinbase: Failure parsing response: %s: %s: %.*ls\n", url,
          strerror(wcjsontoerrno(&wcjson)), (int)http_ctx.rsp_len, http_ctx.rsp);
-    fatal();
+    goto err;
   }
 
   r = 0;
-cleanup:
+err:
   mg_mgr_free(&mgr);
   heap_free(http_ctx.rsp);
   return r;
@@ -1681,11 +1651,9 @@ static void coinbase_start(void) {
 
       ws_channels[i - 1].last_message = mg_millis();
 
-      if (!c) {
-        werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__,
-             ws_channels[i - 1].name);
-        fatal();
-      }
+      if (!c)
+        fatal("%s: %s: Failure starting websocket\n", ws_channels[i - 1].name,
+              ABAG_COINBASE_WEBSOCKET_URI);
     }
   }
 
@@ -1800,10 +1768,8 @@ parse_product(const struct wcjson_document *restrict const doc,
   int r = snprintf(nm, sizeof(nm), "%s@%s", j_base_currency_id->mbstring,
                    j_quote_currency_id->mbstring);
 
-  if (r < 0 || (size_t)r >= sizeof(nm)) {
-    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-    fatal();
-  }
+  if (r < 0 || (size_t)r >= sizeof(nm))
+    panic();
 
   m = Market_new();
   m->id = String_cnew(m_id);
@@ -1896,10 +1862,8 @@ static struct Array *coinbase_markets(void) {
     int r =
         snprintf(url, sizeof(url), "%s", ABAG_COINBASE_PRODUCTS_RESOURCE_URL);
 
-    if (r < 0 || (size_t)r >= sizeof(url)) {
-      werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-      fatal();
-    }
+    if (r < 0 || (size_t)r >= sizeof(url))
+      panic();
 
     if (http_req(&doc, url, ABAG_COINBASE_PRODUCTS_PATH, NULL, 0) == 0) {
       Array_clear(markets, Market_delete);
@@ -1913,17 +1877,14 @@ static struct Array *coinbase_markets(void) {
       items = Array_items(markets);
       for (size_t i = Array_size(markets); i > 0; i--) {
         if (Map_put(markets_by_symbol, ((struct Market *)items[i - 1])->sym,
-                    items[i - 1])) {
-          werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__,
-               String_chars(((struct Market *)items[i - 1])->sym));
-          fatal();
-        }
+                    items[i - 1]))
+          fatal("%s: Market symbol uniqueness constraint: %s", url,
+                String_chars(((struct Market *)items[i - 1])->sym));
+
         if (Map_put(markets_by_id, ((struct Market *)items[i - 1])->id,
-                    items[i - 1])) {
-          werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__,
-               String_chars(((struct Market *)items[i - 1])->id));
-          fatal();
-        }
+                    items[i - 1]))
+          fatal("%s: Market id uniqueness constraint: %s", url,
+                String_chars(((struct Market *)items[i - 1])->id));
       }
 
       markets_reload = false;
@@ -2041,25 +2002,18 @@ static int accounts_with_cursor(struct Array *restrict result,
   WCJSON_DECLARE_BOOL_ITEM(has_next)
   WCJSON_DECLARE_STRING_ITEM(cursor)
 
-  if (cursor) {
+  if (cursor)
     r = snprintf(url, sizeof(url), "%s?limit=%d&cursor=%s",
                  ABAG_COINBASE_ACCOUNTS_RESOURCE_URL,
                  ABAG_COINBASE_ACCOUNTS_RESOURCE_LIMIT, cursor);
 
-    if (r < 0 || (size_t)r >= sizeof(url)) {
-      werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-      fatal();
-    }
-  } else {
+  else
     r = snprintf(url, sizeof(url), "%s?limit=%d",
                  ABAG_COINBASE_ACCOUNTS_RESOURCE_URL,
                  ABAG_COINBASE_ACCOUNTS_RESOURCE_LIMIT);
 
-    if (r < 0 || (size_t)r >= sizeof(url)) {
-      werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-      fatal();
-    }
-  }
+  if (r < 0 || (size_t)r >= sizeof(url))
+    panic();
 
   r = -1;
   if (http_req(&doc, url, ABAG_COINBASE_ACCOUNTS_PATH, NULL, 0) == 0) {
@@ -2114,17 +2068,14 @@ static struct Array *coinbase_accounts(void) {
     items = Array_items(accounts);
     for (size_t i = Array_size(accounts); i > 0; i--) {
       if (Map_put(accounts_by_currency, ((struct Account *)items[i - 1])->c_id,
-                  items[i - 1]) != NULL) {
-        werr("%s: %d: %s: %s: Duplicate account\n", __FILE__, __LINE__,
-             __func__, String_chars(((struct Account *)items[i - 1])->c_id));
-        fatal();
-      }
+                  items[i - 1]) != NULL)
+        fatal("Account currency uniqueness constraint: %s",
+              String_chars(((struct Account *)items[i - 1])->c_id));
+
       if (Map_put(accounts_by_id, ((struct Account *)items[i - 1])->id,
-                  items[i - 1]) != NULL) {
-        werr("%s: %d: %s: %s: Duplicate account\n", __FILE__, __LINE__,
-             __func__, String_chars(((struct Account *)items[i - 1])->id));
-        fatal();
-      }
+                  items[i - 1]) != NULL)
+        fatal("Account id uniqueness constraint: %s",
+              String_chars(((struct Account *)items[i - 1])->id));
     }
   }
 
@@ -2159,16 +2110,12 @@ coinbase_account(const struct String *restrict const id) {
   int r = snprintf(path, sizeof(path), ABAG_COINBASE_ACCOUNT_PATH,
                    String_chars(id));
 
-  if (r < 0 || (size_t)r >= sizeof(path)) {
-    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-    fatal();
-  }
+  if (r < 0 || (size_t)r >= sizeof(path))
+    panic();
 
   r = snprintf(url, sizeof(url), "%s%s", ABAG_COINBASE_ADVANCED_API_URI, path);
-  if (r < 0 || (size_t)r >= sizeof(url)) {
-    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-    fatal();
-  }
+  if (r < 0 || (size_t)r >= sizeof(url))
+    panic();
 
   if (http_req(&doc, url, path, NULL, 0) == 0) {
     WCJSON_OBJECT_ITEM(&doc, doc.values, account, 7, errbuf, ret)
@@ -2290,16 +2237,12 @@ static struct Order *coinbase_order(const struct String *restrict const id) {
   int r =
       snprintf(path, sizeof(path), ABAG_COINBASE_ORDER_PATH, String_chars(id));
 
-  if (r < 0 || (size_t)r >= sizeof(path)) {
-    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-    fatal();
-  }
+  if (r < 0 || (size_t)r >= sizeof(path))
+    panic();
 
   r = snprintf(url, sizeof(url), "%s%s", ABAG_COINBASE_ADVANCED_API_URI, path);
-  if (r < 0 || (size_t)r >= sizeof(url)) {
-    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-    fatal();
-  }
+  if (r < 0 || (size_t)r >= sizeof(url))
+    panic();
 
   if (http_req(&doc, url, path, NULL, 0) == 0) {
     WCJSON_OBJECT_ITEM(&doc, doc.values, order, 5, errbuf, ret)
@@ -2332,11 +2275,8 @@ static bool coinbase_order_cancel(const struct String *restrict const id) {
   wcjson_object_add(b_doc, body, L"order_ids", 9, ids);
 
   struct wcjson wcjson = WCJSON_INITIALIZER;
-  if (wcjsondocstrings(&wcjson, b_doc) < 0) {
-    werr("%s: %d: %s: %s\n", __FILE__, __LINE__, __func__,
-         strerror(wcjsontoerrno(&wcjson)));
-    fatal();
-  }
+  if (wcjsondocstrings(&wcjson, b_doc) < 0)
+    panic();
 
   char mbbody[WCJSON_BODY_MAX + 1] = {0};
   size_t mb_len = 0;
@@ -2517,10 +2457,8 @@ static struct Pricing *coinbase_pricing(void) {
   int r = snprintf(url, sizeof(url), "%s?product_type=SPOT",
                    ABAG_COINBASE_FEES_RESOURCE_URL);
 
-  if (r < 0 || (size_t)r >= sizeof(url)) {
-    werr("%s: %d: %s\n", __FILE__, __LINE__, __func__);
-    fatal();
-  }
+  if (r < 0 || (size_t)r >= sizeof(url))
+    panic();
 
   if (http_req(&doc, url, ABAG_COINBASE_FEES_PATH, NULL, 0) == 0)
     pricing = parse_pricing(&doc, doc.values);

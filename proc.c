@@ -23,8 +23,8 @@
 
 #ifdef MULTI_THREADED
 #include "thread.h"
-mtx_t stdout_mutex;
-mtx_t stderr_mutex;
+mtx_t stdout_mtx;
+mtx_t stderr_mtx;
 #endif
 
 #include "proc.h"
@@ -36,16 +36,10 @@ mtx_t stderr_mutex;
 
 bool proc_prefix_systemd = false;
 
-#ifdef DEBUG
-inline _Noreturn void fatal(void) { abort(); }
-#else
-inline _Noreturn void fatal(void) { exit(EXIT_FAILURE); }
-#endif
-
 inline void wout(const char *restrict fmt, ...) {
   va_list ap;
 #ifdef MULTI_THREADED
-  mutex_lock(&stdout_mutex);
+  mutex_lock(&stdout_mtx);
 #endif
   if (proc_prefix_systemd)
     (void)fprintf(stdout, "<6>");
@@ -54,14 +48,14 @@ inline void wout(const char *restrict fmt, ...) {
   va_end(ap);
   (void)fflush(stdout);
 #ifdef MULTI_THREADED
-  mutex_unlock(&stdout_mutex);
+  mutex_unlock(&stdout_mtx);
 #endif
 }
 
 inline void werr(const char *restrict fmt, ...) {
   va_list ap;
 #ifdef MULTI_THREADED
-  mutex_lock(&stderr_mutex);
+  mutex_lock(&stderr_mtx);
 #endif
   if (proc_prefix_systemd)
     (void)fprintf(stderr, "<3>");
@@ -70,18 +64,18 @@ inline void werr(const char *restrict fmt, ...) {
   va_end(ap);
   (void)fflush(stderr);
 #ifdef MULTI_THREADED
-  mutex_unlock(&stderr_mutex);
+  mutex_unlock(&stderr_mtx);
 #endif
 }
 
 #ifdef MULTI_THREADED
 void proc_init(void) {
-  mutex_init(&stdout_mutex);
-  mutex_init(&stderr_mutex);
+  mutex_init(&stdout_mtx);
+  mutex_init(&stderr_mtx);
 }
 
 void proc_destroy(void) {
-  mutex_destroy(&stdout_mutex);
-  mutex_destroy(&stderr_mutex);
+  mutex_destroy(&stdout_mtx);
+  mutex_destroy(&stderr_mtx);
 }
 #endif
