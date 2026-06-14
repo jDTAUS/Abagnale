@@ -190,6 +190,7 @@ inline void *MapIterator_remove(struct MapIterator *restrict const it) {
     it->m->ops->k_delete(it->e->key);
     heap_free(it->e);
     it->e = NULL;
+    it->i++;
   }
 
   return value;
