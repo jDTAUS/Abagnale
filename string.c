@@ -220,8 +220,8 @@ inline bool String_equals(const void *restrict const o1,
                           const void *restrict const o2) {
   return ((const struct String *)o1)->hc == ((const struct String *)o2)->hc &&
          ((const struct String *)o1)->len == ((const struct String *)o2)->len &&
-         strncmp(((const struct String *)o1)->s, ((const struct String *)o2)->s,
-                 ((const struct String *)o1)->len) == 0;
+         memcmp(((const struct String *)o1)->s, ((const struct String *)o2)->s,
+                ((const struct String *)o1)->len) == 0;
 }
 
 inline struct String *String_tolower(const struct String *restrict s,
