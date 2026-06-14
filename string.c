@@ -188,6 +188,9 @@ inline void String_delete(void *restrict const s) {
 #endif
     return;
   }
+  Map_lock(strings);
+  Map_remove(strings, str);
+  Map_unlock(strings);
 #ifdef MULTI_THREADED
   mutex_unlock(&str->mtx);
   mutex_destroy(&str->mtx);

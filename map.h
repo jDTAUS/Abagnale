@@ -44,6 +44,7 @@ void Map_delete(struct Map *restrict const,
 
 void *Map_put(struct Map *restrict const, void *const, void *const);
 void *Map_get(const struct Map *restrict const, const void *restrict const);
+void *Map_remove(struct Map *restrict const, void *const);
 
 struct MapIterator *MapIterator_new(const struct Map *restrict const);
 void MapIterator_delete(struct MapIterator *restrict const);
