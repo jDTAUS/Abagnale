@@ -122,32 +122,6 @@ inline void *Map_get(const struct Map *restrict const m,
   return e != NULL ? e->value : NULL;
 }
 
-inline void *Map_remove(struct Map *restrict const m, void *const k) {
-  const size_t i = m->ops->k_hash(k) % m->capacity;
-  struct Entry *restrict e = m->buckets[i];
-  void *restrict value = NULL;
-
-  while (e != NULL && !m->ops->k_equals(e->key, k))
-    e = e->next;
-
-  if (e != NULL) {
-    value = e->value;
-    m->ops->k_delete(e->key);
-
-    if (e->prev)
-      e->prev->next = e->next;
-    else
-      m->buckets[i] = e->next;
-
-    if (e->next)
-      e->next->prev = e->prev;
-
-    heap_free(e);
-  }
-
-  return value;
-}
-
 inline struct MapIterator *MapIterator_new(const struct Map *restrict const m) {
   struct MapIterator *restrict const it =
       heap_malloc(sizeof(struct MapIterator));

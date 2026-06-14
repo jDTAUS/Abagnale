@@ -19,7 +19,7 @@
 
 .SUFFIXES: .c .pgc .o .y
 
-CC=clang-19
+CC=cc
 
 # ECPG - Embedded SQL in C
 #   https://www.postgresql.org/docs/18/ecpg.html
@@ -54,7 +54,7 @@ CONFIG+=-DWCHAR_T_UTF32
 #CONFIG+=-DWCHAR_T_UTF8
 
 PROFILE=
-#PROFILE+=-pg
+PROFILE+=-pg
 
 LTO=
 LTO+=-flto=auto
@@ -78,47 +78,9 @@ WARNINGS+=-Wshadow
 CFLAGS=$(INCLUDES) $(DEBUG) $(PROFILE) $(LTO) $(CONFIG) $(WARNINGS)
 CFLAGS+=-pedantic
 CFLAGS+=-O3
-CFLAGS+=-march=native
-CFLAGS+=-mtune=native
-CFLAGS+=-fverbose-asm
-CFLAGS+=-mmmx
-CFLAGS+=-msse
-CFLAGS+=-msse2
-CFLAGS+=-msse3
-CFLAGS+=-msse4
-CFLAGS+=-msse4a
-CFLAGS+=-msse4.1
-CFLAGS+=-msse4.2
-CFLAGS+=-mavx
-#CFLAGS+=-mavxvnni
-#CFLAGS+=-mavx2
-#CFLAGS+=-mavx512f
-#CFLAGS+=-mavx512cd
-#CFLAGS+=-mavx512vl
-#CFLAGS+=-mavx512bw
-#CFLAGS+=-mavx512dq
-#CFLAGS+=-mavx512ifma
-#CFLAGS+=-mavx512vbmi
-#CFLAGS+=-mavx512vbmi2
-#CFLAGS+=-mavx512bf16
-#CFLAGS+=-mavx512fp16
-#CFLAGS+=-mavx512bitalg
-#CFLAGS+=-mavx512vpopcntdq
-#CFLAGS+=-mavx512vp2intersect
-#CFLAGS+=-mavx512vnni
-#CFLAGS+=-mavx10.1
-#CFLAGS+=-mavx10.1-256
-#CFLAGS+=-mavx10.1-512
-CFLAGS+=-msha
-#CFLAGS+=-msha512
-CFLAGS+=-maes
-#CFLAGS+=-fsanitize=address
-#CFLAGS+=-fno-omit-frame-pointer
 
 LDFLAGS=$(DEBUG) $(PROFILE) $(LTO)
 LDFLAGS+=-L/usr/local/lib
-#LDFLAGS+=-fsanitize=address
-#LDFLAGS+=-fno-omit-frame-pointer
 
 # ECPG - Embedded SQL in C
 #   https://www.postgresql.org/docs/18/ecpg.html
