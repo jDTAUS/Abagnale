@@ -36,8 +36,7 @@ inline void *heap_malloc(const size_t size) {
   void *restrict const ptr = malloc(size);
   if (ptr == NULL)
     fatal("%s", strerror(errno));
-  // XXX: Remove memset
-  memset(ptr, '\0', size);
+  //  memset(ptr, 0xff, size);
   return ptr;
 }
 
