@@ -102,6 +102,7 @@ inline void *Map_put(struct Map *restrict const m, void *const k,
     e = heap_malloc(sizeof(struct Entry));
     e->key = m->ops->k_copy(k);
     e->value = v;
+    e->prev = NULL;
 
     if ((e->next = m->buckets[i]) != NULL)
       m->buckets[i]->prev = e;
@@ -182,6 +183,9 @@ inline void *MapIterator_remove(struct MapIterator *restrict const it) {
       it->e->prev->next = it->e->next;
     else
       it->m->buckets[it->i] = NULL;
+
+    if (it->e->next)
+      it->e->next->prev = it->e->prev;
 
     it->m->ops->k_delete(it->e->key);
     heap_free(it->e);
