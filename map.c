@@ -182,7 +182,7 @@ inline void *MapIterator_remove(struct MapIterator *restrict const it) {
     if (it->e->prev)
       it->e->prev->next = it->e->next;
     else
-      it->m->buckets[it->i] = NULL;
+      it->m->buckets[it->i] = it->e->next;
 
     if (it->e->next)
       it->e->next->prev = it->e->prev;
