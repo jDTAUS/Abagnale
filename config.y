@@ -685,7 +685,7 @@ trade : TRADE AT STRING {
       } tradeconf {
         if (m_cnf->r_amount == NULL || m_cnf->a_nm == NULL) {
           yyerror("return and using required\n");
-          MarketConfig_delete(Array_remove_tail(conf->m_cnf));
+          MarketConfig_delete(Array_remove_head(conf->m_cnf));
           m_cnf = NULL;
           YYERROR;
         }
