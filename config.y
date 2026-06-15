@@ -1326,6 +1326,7 @@ void MarketConfig_delete(void *restrict const c) {
   Numeric_delete(cfg->sl_dlnanos);
   Numeric_delete(cfg->tl_dlnanos);
   Numeric_delete(cfg->tp_dlnanos);
+  heap_free(cfg);
 }
 
 bool MarketConfig_matches(const struct MarketConfig *restrict const c,
