@@ -273,20 +273,17 @@
 
 #define WCJSON_ISO8601_NANOS_ITEM_OPT(_doc, _val, _item, _len, _errbuf, _ret)  \
   WCJSON_STRING_ITEM_OPT(_doc, _val, _item, _len, _errbuf, _ret)               \
-  j_##_item##_nanos = Numeric_new();                                           \
-  if (j_##_item##_exists &&                                                    \
-      !nanos_from_iso8601(j_##_item->mbstring, j_##_item->mb_len,              \
-                          j_##_item##_nanos)) {                                \
-    werr("coinbase: No '" #_item "' ISO8601 item; %s\n",                       \
-         wcjsondoc_string(_errbuf, sizeof(_errbuf), _doc, _val, NULL));        \
-    Numeric_delete(j_##_item##_nanos);                                         \
-    j_##_item##_nanos = NULL;                                                  \
-    j_##_item##_exists = false;                                                \
-    goto _ret;                                                                 \
-  } else {                                                                     \
-    Numeric_delete(j_##_item##_nanos);                                         \
-    j_##_item##_nanos = NULL;                                                  \
-    j_##_item##_exists = false;                                                \
+  if (j_##_item##_exists) {                                                    \
+    j_##_item##_nanos = Numeric_new();                                         \
+    if (!nanos_from_iso8601(j_##_item->mbstring, j_##_item->mb_len,            \
+                            j_##_item##_nanos)) {                              \
+      werr("coinbase: No '" #_item "' ISO8601 item; %s\n",                     \
+           wcjsondoc_string(_errbuf, sizeof(_errbuf), _doc, _val, NULL));      \
+      Numeric_delete(j_##_item##_nanos);                                       \
+      j_##_item##_nanos = NULL;                                                \
+      j_##_item##_exists = false;                                              \
+      goto _ret;                                                               \
+    }                                                                          \
   }
 
 #define WCJSON_DECLARE_MARKET_ITEM(_item)                                      \
