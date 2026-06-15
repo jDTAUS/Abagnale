@@ -1129,7 +1129,6 @@ int symset(struct String *restrict const nam, struct String *restrict const val,
   String_delete(sym->val);
   sym->nam = nam;
   sym->val = val;
-  Map_put(symbols, nam, sym);
 
   return (0);
 }
