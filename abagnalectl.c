@@ -112,19 +112,19 @@ static const struct {
   const char *restrict usage;
   int (*cmd)(int, char *[]);
 } cmd_tab[] = {
+    {"volatility", "-e exchange -m market [-w nanos]", cmd_volatility},
     {"vacuum", "[-o file]", cmd_vacuum},
-    {"algorithms", "", cmd_algorithms},
-    {"exchanges", "", cmd_exchanges},
+    {"plot", "-e exchange -m market -a algorithm [-f file]", cmd_plot},
+    {"order", "-e exchange -i id", cmd_order},
+    {"market", "-e exchange -i id", cmd_market},
     {"markets",
      "-e exchange [-s UNKNOWN|ONLINE|DELISTED] [-t UNKNOWN|SPOT|FUTURE]",
      cmd_markets},
-    {"market", "-e exchange -i id", cmd_market},
+    {"account", "-e exchange -i id", cmd_account},
     {"accounts", "-e exchange [-t UNSPECIFIED|CRYPTO|FIAT|VAULT|PERP_FUTURES]",
      cmd_accounts},
-    {"account", "-e exchange -i id", cmd_account},
-    {"order", "-e exchange -i id", cmd_order},
-    {"plot", "-e exchange -m market -a algorithm [-f file]", cmd_plot},
-    {"volatility", "-e exchange -m market [-w nanos]", cmd_volatility},
+    {"algorithms", "", cmd_algorithms},
+    {"exchanges", "", cmd_exchanges},
 };
 
 static const char *market_type_name(const enum market_type type) {
