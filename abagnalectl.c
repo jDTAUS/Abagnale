@@ -43,7 +43,6 @@
 #endif
 
 extern const struct String *restrict const progname;
-extern const bool terminated;
 extern const bool verbose;
 
 extern const struct Numeric *restrict const zero;
