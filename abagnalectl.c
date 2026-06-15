@@ -46,6 +46,8 @@ extern const struct String *restrict const progname;
 extern const bool terminated;
 extern const bool verbose;
 
+extern const struct Numeric *restrict const zero;
+
 extern const struct Algorithm *restrict const all_algorithms;
 extern const size_t all_algorithms_nitems;
 extern const struct Array *restrict const algorithms;
@@ -578,28 +580,32 @@ static int cmd_order(int argc, char *argv[]) {
   o = e->order(o_id);
 
   if (o == NULL) {
-    werr("%s: %s: Order not available\n", String_chars(progname),
-         String_chars(o_id));
+    werr("%s: %s: %s: Order not available\n", String_chars(progname),
+         String_chars(e_nm), String_chars(o_id));
     goto ret;
   }
 
   m = e->market(o->m_id);
 
   if (m == NULL) {
-    werr("%s: %s: Market not available\n", String_chars(progname),
-         String_chars(o->m_id));
+    werr("%s: %s: %s: %s: Market not available\n", String_chars(progname),
+         String_chars(e_nm), String_chars(o_id), String_chars(o->m_id));
     goto ret;
   }
 
   c_iso8601 = nanos_to_iso8601(o->cnanos);
-  d_iso8601 = nanos_to_iso8601(o->dnanos);
+  d_iso8601 = nanos_to_iso8601(o->dnanos != NULL ? o->dnanos : zero);
   b_ordered = Numeric_to_char(o->b_ordered, m->b_sc);
   p_ordered = Numeric_to_char(o->p_ordered, m->p_sc);
   b_filled = Numeric_to_char(o->b_filled, m->b_sc);
   q_filled = Numeric_to_char(o->q_filled, m->q_sc);
   q_fees = Numeric_to_char(o->q_fees, m->q_sc);
 
-  printf("%s\t%s\t%s\t%d\t%s\t%s\t%s%s@%s%s\t%s%s\t%s%s\t%s%s\t%s\n",
+  if (verbose)
+    printf("ID\tMARKET\tSTATUS\tSETTLED\tCREATED\tDONE\tBASE_ORDERED\tPRICE_"
+           "ORDERED\tBASE_FILLED\tQUOTE_FILLED\tFEES\tMESSAGE\n");
+
+  printf("%s\t%s\t%s\t%d\t%s\t%s\t%s@%s\t%s@%s\t%s%s\t%s%s\t%s%s\t%s\n",
          String_chars(o->id), String_chars(m->id), order_status_name(o->status),
          o->settled ? 1 : 0, c_iso8601, d_iso8601, b_ordered,
          String_chars(m->b_id), p_ordered, String_chars(m->q_id), b_filled,
@@ -607,12 +613,12 @@ static int cmd_order(int argc, char *argv[]) {
          String_chars(m->q_id), o->msg ? String_chars(o->msg) : "");
 
   mutex_unlock(m->mtx);
+
   r = EXIT_SUCCESS;
 ret:
   String_delete(e_nm);
   String_delete(o_id);
   Order_delete(o);
-  Market_delete(m);
   Numeric_char_free(b_ordered);
   Numeric_char_free(p_ordered);
   Numeric_char_free(b_filled);
