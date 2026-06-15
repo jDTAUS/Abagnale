@@ -1299,8 +1299,8 @@ static void ws_listener(struct mg_connection *restrict c, int ev,
     break;
   }
   case MG_EV_ERROR: {
-    werr("coinbase: %s: %s: %lu: %s\n", channel->name,
-         ABAG_COINBASE_WEBSOCKET_URI, c->id, (char *)ev_data);
+    werr("coinbase: %s: %s: %lu: %s\n", ABAG_COINBASE_WEBSOCKET_URI,
+         channel->name, c->id, (char *)ev_data);
     c->is_closing = 1;
     break;
   }
@@ -1330,8 +1330,8 @@ static void ws_listener(struct mg_connection *restrict c, int ev,
 #endif
         c->is_closing = 1;
       } else
-        werr("coinbase: %s: %s: %lu: %d\n", channel->name,
-             ABAG_COINBASE_WEBSOCKET_URI, c->id, type);
+        werr("coinbase: %s: %s: %lu: %d\n", ABAG_COINBASE_WEBSOCKET_URI,
+             channel->name, c->id, type);
 
     } else
       c->is_closing = 1;
@@ -1350,8 +1350,8 @@ static void ws_listener(struct mg_connection *restrict c, int ev,
         c = mg_ws_connect(mgr, ABAG_COINBASE_WEBSOCKET_URI, ws_listener,
                           channel, NULL);
         if (!c)
-          werr("coinbase: %s: %s: Failure reconnecting\n", channel->name,
-               ABAG_COINBASE_WEBSOCKET_URI);
+          werr("coinbase: %s: %s: Failure reconnecting\n",
+               ABAG_COINBASE_WEBSOCKET_URI, channel->name);
 
       } while (!c);
     }
@@ -1364,8 +1364,8 @@ static void ws_listener(struct mg_connection *restrict c, int ev,
     channel->reconnect = true;
     channel->last_message = mg_millis();
     if (verbose)
-      wout("coinbase: %s: %s: No events\n", channel->name,
-           ABAG_COINBASE_WEBSOCKET_URI);
+      wout("coinbase: %s: %s: No events\n", ABAG_COINBASE_WEBSOCKET_URI,
+           channel->name);
   }
 
   if (channel->reconnect) {
@@ -1628,8 +1628,8 @@ static void coinbase_start(void) {
       ws_channels[i - 1].last_message = mg_millis();
 
       if (!c)
-        fatal("%s: %s: Failure starting websocket\n", ws_channels[i - 1].name,
-              ABAG_COINBASE_WEBSOCKET_URI);
+        fatal("%s: %s: Failure starting websocket\n",
+              ABAG_COINBASE_WEBSOCKET_URI, ws_channels[i - 1].name);
     }
   }
 
