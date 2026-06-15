@@ -1395,8 +1395,7 @@ static void http_listener(struct mg_connection *restrict c, int ev,
   }
   case MG_EV_ERROR: {
     http_ctx->success = false;
-    werr("coinbase: HTTP %s %s: %lu: %s\n", method, http_ctx->url, c->id,
-         (char *)ev_data);
+    werr("coinbase: %s\n", (char *)ev_data);
     break;
   }
   case MG_EV_CONNECT: {
