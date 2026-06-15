@@ -44,6 +44,7 @@
 
 extern const struct String *restrict const progname;
 extern const bool terminated;
+extern const bool verbose;
 
 extern const struct Algorithm *restrict const all_algorithms;
 extern const size_t all_algorithms_nitems;
@@ -346,6 +347,11 @@ static int cmd_markets(int argc, char *argv[]) {
 
   struct Array *restrict const markets = e->markets();
 
+  if (verbose)
+    printf("ID\tNAME\tSYMBOL\tTYPE\tSTATUS\tBASE_SYMBOL\tQUOTE_SYMBOL\tBASE_"
+           "SCALE\tBASE_INCREMENT\tPRICE_SCALE\tPRICE_INCREMENT\tQUOTE_"
+           "SCALE\tQUOTE_INCREMENT\tTRADEABLE\tACTIVE\n");
+
   items = Array_items(markets);
   for (size_t i = Array_size(markets); i > 0; i--) {
     const struct Market *restrict const m = items[i - 1];
@@ -397,16 +403,24 @@ static int cmd_market(int argc, char *argv[]) {
 
   m = e->market(m_id);
 
-  if (m != NULL) {
-    print_market(m);
-    mutex_unlock(m->mtx);
+  if (m == NULL) {
+    werr("%s: %s: %s: Market not available\n", String_chars(progname),
+         String_chars(e_nm), String_chars(m_id));
+    goto ret;
   }
+
+  if (verbose)
+    printf("ID\tNAME\tSYMBOL\tTYPE\tSTATUS\tBASE_SYMBOL\tQUOTE_SYMBOL\tBASE_"
+           "SCALE\tBASE_INCREMENT\tPRICE_SCALE\tPRICE_INCREMENT\tQUOTE_"
+           "SCALE\tQUOTE_INCREMENT\tTRADEABLE\tACTIVE\n");
+
+  print_market(m);
+  mutex_unlock(m->mtx);
 
   r = EXIT_SUCCESS;
 ret:
   String_delete(e_nm);
   String_delete(m_id);
-  Market_delete(m);
   return r;
 }
 
@@ -447,6 +461,9 @@ static int cmd_accounts(int argc, char *argv[]) {
   }
 
   struct Array *restrict const accounts = e->accounts();
+
+  if (verbose)
+    printf("ID\tNAME\tSYMBOL\tTYPE\tAVAILABLE\tACTIVE\tREADY\n");
 
   items = Array_items(accounts);
   for (size_t i = Array_size(accounts); i > 0; i--) {
@@ -498,10 +515,16 @@ static int cmd_account(int argc, char *argv[]) {
 
   a = e->account(a_id);
 
-  if (a != NULL) {
-    print_account(a);
-    mutex_unlock(a->mtx);
+  if (a == NULL) {
+    werr("%s: %s: %s: Account not available\n", String_chars(progname),
+         String_chars(e_nm), String_chars(a_id));
+    goto ret;
   }
+
+  if (verbose)
+    printf("ID\tNAME\tSYMBOL\tTYPE\tAVAILABLE\tACTIVE\tREADY\n");
+
+  print_account(a);
 
   r = EXIT_SUCCESS;
 ret:
