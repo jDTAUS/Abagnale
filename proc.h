@@ -26,10 +26,11 @@
 
 #include <stdlib.h>
 
-#define panic() (werr("%s: %d: %s\n", __FILE__, __LINE__, __func__), abort())
+#define panic()                                                                \
+  (werr("%s: Abort: %s: %d\n", __func__, __FILE__, __LINE__), abort())
 
 #define fatal(_fmt, ...)                                                       \
-  (werr("%s: ", __func__), werr((_fmt), __VA_ARGS__), werr("\n"),              \
+  (werr("%s: Failure: ", __func__), werr((_fmt), __VA_ARGS__), werr("\n"),     \
    exit(EXIT_FAILURE))
 
 void wout(const char *, ...) __attribute__((__format__(printf, 1, 2)));
