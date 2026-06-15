@@ -269,7 +269,7 @@
 
 #define WCJSON_DECLARE_ISO8601_NANOS_ITEM_OPT(_item)                           \
   WCJSON_DECLARE_STRING_ITEM_OPT(_item)                                        \
-  struct Numeric *restrict j_##_item##_nanos = Numeric_new();
+  struct Numeric *restrict j_##_item##_nanos = NULL;
 
 #define WCJSON_ISO8601_NANOS_ITEM_OPT(_doc, _val, _item, _len, _errbuf, _ret)  \
   WCJSON_STRING_ITEM_OPT(_doc, _val, _item, _len, _errbuf, _ret)               \
@@ -283,6 +283,10 @@
     j_##_item##_nanos = NULL;                                                  \
     j_##_item##_exists = false;                                                \
     goto _ret;                                                                 \
+  } else {                                                                     \
+    Numeric_delete(j_##_item##_nanos);                                         \
+    j_##_item##_nanos = NULL;                                                  \
+    j_##_item##_exists = false;                                                \
   }
 
 #define WCJSON_DECLARE_MARKET_ITEM(_item)                                      \
