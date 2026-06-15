@@ -1099,8 +1099,8 @@ static int mb_decode(wchar_t *restrict const wc, size_t *wc_len,
            mb);
       return -1;
     case (size_t)-3:
-      len = 0;
-      break;
+      // Not in ISO/IEC 9899:202y (en) - 7.33.6.4.3
+      panic();
     }
   }
 
