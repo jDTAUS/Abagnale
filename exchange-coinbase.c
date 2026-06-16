@@ -941,6 +941,7 @@ static int mg_mgr_worker_func(void *restrict const arg) {
     mg_mgr_poll(mgr, MG_POLL_WAIT_MILLIS);
 
   mg_mgr_free(mgr);
+  heap_free(mgr);
   thread_exit(EXIT_SUCCESS);
 }
 

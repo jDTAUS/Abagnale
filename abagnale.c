@@ -3156,7 +3156,9 @@ int abagnale(int argc, char *argv[]) {
     struct Exchange *restrict const e = items[i - 1];
     e->start();
 
-    for (int j = 0; j < ABAG_WORKERS && !terminated; j++) {
+    thread_create(&workers[i - 1], exchange_stop, e);
+
+    for (int j = 1; j < ABAG_WORKERS && !terminated; j++) {
       char cname[DATABASE_CONNECTION_NAME_MAX_LENGTH + 1] = {0};
       struct worker_ctx *restrict const w_ctx =
           heap_calloc(1, sizeof(struct worker_ctx));
@@ -3171,19 +3173,12 @@ int abagnale(int argc, char *argv[]) {
 
       w_ctx->db = db_connect(cname);
 
-      switch (j) {
-      case 0:
-        thread_create(&workers[(i - 1) * ABAG_WORKERS + j], exchange_stop, e);
-        break;
-      case 1:
+      if (j == 1)
         thread_create(&workers[(i - 1) * ABAG_WORKERS + j], orders_process,
                       w_ctx);
-        break;
-      default:
+      else
         thread_create(&workers[(i - 1) * ABAG_WORKERS + j], samples_process,
                       w_ctx);
-        break;
-      }
     }
   }
 
