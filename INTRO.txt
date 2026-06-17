@@ -10,6 +10,9 @@ time to time. It mainly goes like "Where did that money come from, where
 did it go and why? No one knows. It's just abagnaling again." The Ace of
 Spades, the Ace of Spades. Enough said.
 
+SVN (master): http://svn.jdtaus.org/svnroot/jdtaus/Abagnale
+GIT (mirror): https://github.com/jDTAUS/Abagnale
+
 ./INTRO.txt               - This file
 ./LICENSES.txt            - License information
 ./CMakeLists.txt          - CMake build file
