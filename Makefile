@@ -1,5 +1,5 @@
 # $SchulteIT: Makefile 15282 2025-11-05 22:54:21Z schulte $
-# $JDTAUS$
+# $JDTAUS::                                                                    $
 
 #
 # Copyright (c) 2018 - 2026 Christian Schulte <cs@schulte.it>
@@ -39,7 +39,7 @@ INCLUDES+=-I/usr/local/include
 INCLUDES+=-I/usr/local/include/postgresql
 
 DEBUG=
-DEBUG+=-g
+#DEBUG+=-g
 #DEBUG+=-O0
 #DEBUG+=-DABAG_MATH_DEBUG
 #DEBUG+=-DABAG_SQL_DEBUG
@@ -54,7 +54,7 @@ CONFIG+=-DWCHAR_T_UTF32
 #CONFIG+=-DWCHAR_T_UTF8
 
 PROFILE=
-PROFILE+=-pg
+#PROFILE+=-pg
 
 LTO=
 LTO+=-flto=auto
