@@ -61,7 +61,7 @@ void string_destroy(void) { Map_delete(strings, String_delete); }
 inline struct String *String_cnew(const char *restrict s) {
   size_t hc = 5381;
   const char *s_p;
-  struct String *restrict str = NULL;
+  struct String *restrict str;
 
   for (s_p = s; *s_p; s_p++)
     hc = ((hc << 5) + hc) + (unsigned char)*s_p;
@@ -104,7 +104,7 @@ inline struct String *String_cnew(const char *restrict s) {
 inline struct String *String_cnnew(const char *restrict s, size_t maxlen) {
   size_t hc = 5381;
   const char *s_p;
-  struct String *restrict str = NULL;
+  struct String *restrict str;
 
   for (s_p = s; *s_p && maxlen != 0; s_p++, maxlen--)
     hc = ((hc << 5) + hc) + (unsigned char)*s_p;
