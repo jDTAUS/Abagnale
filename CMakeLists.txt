@@ -25,12 +25,15 @@ project(
 )
 
 add_compile_definitions(MULTI_THREADED)
+add_compile_definitions(STRING_INTERNING)
 
 if(MSVC)
 	set(CMAKE_C_STANDARD	11)
 	set(CMAKE_C_STANDARD_REQUIRED	ON)
 	set(CMAKE_C_EXTENSIONS	OFF)
+	file(REAL_PATH "~" HOME EXPAND_TILDE)
 	add_compile_definitions(HAVE_HOST_H)
+  add_compile_definitions(ABAG_CONFIG_FILE=${HOME}/abagnale.conf)
 endif()
 
 include(CheckTypeSize)
