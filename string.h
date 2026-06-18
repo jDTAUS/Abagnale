@@ -31,9 +31,6 @@ extern const void *const StringMapOps;
 
 struct String;
 
-void string_init(void);
-void string_destroy(void);
-
 struct String *String_new(const struct String *restrict const, const size_t,
                           const size_t);
 struct String *String_cnew(const char *restrict);
@@ -51,4 +48,9 @@ struct String *String_toupper(const struct String *restrict const, const size_t,
 
 const char *const String_chars(const struct String *restrict const);
 const size_t String_length(const struct String *restrict const);
+
+#ifdef STRING_INTERNING
+void string_init(void);
+void string_destroy(void);
+#endif
 #endif
