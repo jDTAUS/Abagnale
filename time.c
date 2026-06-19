@@ -173,14 +173,15 @@ bool nanos_from_iso8601(const char *restrict const iso, const size_t len,
       return false;
   }
 
-  struct tm t = {0};
-  t.tm_sec = second;
-  t.tm_min = minute;
-  t.tm_hour = hour;
-  t.tm_mday = day;
-  t.tm_mon = month - 1;
-  t.tm_year = year - 1900;
-  t.tm_isdst = 0;
+  struct tm t = {
+      .tm_sec = second,
+      .tm_min = minute,
+      .tm_hour = hour,
+      .tm_mday = day,
+      .tm_mon = month - 1,
+      .tm_year = year - 1900,
+      .tm_isdst = 0,
+  };
 
   time_t time = mktime(&t);
   if (time == (time_t)-1)
