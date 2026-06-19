@@ -28,6 +28,7 @@
 #include "time.h"
 
 #include <errno.h>
+#include <stdint.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -156,10 +157,14 @@ bool nanos_from_iso8601(const char *restrict const iso, const size_t len,
     *fr_p++ = '0';
     *fr_p++ = '.';
 
+    size_t fr_len = TIME_ISO8601_MAX_LENGTH - 2;
     size_t r_len = len - 20;
     p = &iso[20];
-    while (IS_DIGIT(*p) && r_len-- != 0)
+    while (IS_DIGIT(*p) && r_len-- != 0 && fr_len-- != 0)
       *fr_p++ = *p++;
+
+    if (fr_len == SIZE_MAX)
+      panic();
 
     *fr_p = '\0';
     fraction = Numeric_from_char(fr);
