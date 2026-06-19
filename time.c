@@ -130,9 +130,6 @@ bool nanos_from_iso8601(const char *restrict const iso, const size_t len,
   char *restrict fr_p = fr;
   const char *restrict p;
 
-  if (len > TIME_ISO8601_MAX_LENGTH)
-    panic();
-
   if (len < 19)
     return false;
 
@@ -157,7 +154,7 @@ bool nanos_from_iso8601(const char *restrict const iso, const size_t len,
     *fr_p++ = '0';
     *fr_p++ = '.';
 
-    size_t fr_len = TIME_ISO8601_MAX_LENGTH - 2;
+    size_t fr_len = sizeof(fr) - 3;
     size_t r_len = len - 20;
 
     p = &iso[20];
