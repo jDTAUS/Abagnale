@@ -36,7 +36,7 @@
 
 #define IS_DIGIT(a) (a >= '0' && a <= '9')
 #define IS_ALPHA(a) (a >= 'A' && a <= 'Z')
-#define VALUE(a) (a - '0');
+#define VALUE(a) (a - '0')
 
 struct time_tls {
   struct nanos_from_iso8601_vars {
@@ -125,183 +125,48 @@ bool nanos_from_iso8601(const char *restrict const iso, const size_t len,
   struct Numeric *restrict const s_ns = tls->nanos_from_iso8601.s_ns;
   struct Numeric *restrict const f_ns = tls->nanos_from_iso8601.f_ns;
   struct Numeric *restrict const secs = tls->nanos_from_iso8601.secs;
-
-  unsigned year = 0, month = 0, day = 0, hour = 0, minute = 0, second = 0;
+  struct Numeric *restrict fraction = NULL;
   char fr[TIME_ISO8601_MAX_LENGTH + 1] = {0};
-  char *frp = fr;
-  char tz[TIME_ISO8601_MAX_LENGTH + 1] = {0};
-  char *tzp = tz;
-  bool in_fraction = false;
-  bool has_fraction = false;
-  bool in_timezone = false;
+  char *restrict fr_p = fr;
+  const char *restrict p;
 
   if (len > TIME_ISO8601_MAX_LENGTH)
     panic();
 
-  for (size_t i = 0; i < len; i++) {
-    switch (i) {
-    case 0: {
-      if (!IS_DIGIT(iso[i]))
-        return false;
+  if (len < 19)
+    return false;
 
-      year = 1000 * VALUE(iso[i]);
-      break;
-    }
-    case 1: {
-      if (!IS_DIGIT(iso[i]))
-        return false;
+  if (!(IS_DIGIT(iso[0]) && IS_DIGIT(iso[1]) && IS_DIGIT(iso[2]) &&
+        IS_DIGIT(iso[3]) && IS_DIGIT(iso[5]) && IS_DIGIT(iso[6]) &&
+        IS_DIGIT(iso[8]) && IS_DIGIT(iso[9]) && IS_DIGIT(iso[11]) &&
+        IS_DIGIT(iso[12]) && IS_DIGIT(iso[14]) && IS_DIGIT(iso[15]) &&
+        IS_DIGIT(iso[17]) && IS_DIGIT(iso[18]) && iso[4] == '-' &&
+        iso[7] == '-' && iso[10] == 'T' && iso[13] == ':' && iso[16] == ':'))
+    return false;
 
-      year += 100 * VALUE(iso[i]);
-      break;
-    }
-    case 2: {
-      if (!IS_DIGIT(iso[i]))
-        return false;
+  const int year = 1000 * VALUE(iso[0]) + 100 * VALUE(iso[1]) +
+                   10 * VALUE(iso[2]) + VALUE(iso[3]);
 
-      year += 10 * VALUE(iso[i]);
-      break;
-    }
-    case 3: {
-      if (!IS_DIGIT(iso[i]))
-        return false;
+  const int month = 10 * VALUE(iso[5]) + VALUE(iso[6]);
+  const int day = 10 * VALUE(iso[8]) + VALUE(iso[9]);
+  const int hour = 10 * VALUE(iso[11]) + VALUE(iso[12]);
+  const int minute = 10 * VALUE(iso[14]) + VALUE(iso[15]);
+  const int second = 10 * VALUE(iso[17]) + VALUE(iso[18]);
 
-      year += VALUE(iso[i]);
-      break;
-    }
-    case 4:
-    case 7: {
-      if (iso[i] != '-')
-        return false;
+  if (len > 19 && (iso[19] == '.' || iso[19] == ',')) {
+    *fr_p++ = '0';
+    *fr_p++ = '.';
 
-      break;
-    }
-    case 5: {
-      if (!IS_DIGIT(iso[i]))
-        return false;
+    size_t r_len = len - 20;
+    p = &iso[20];
+    while (IS_DIGIT(*p) && r_len-- != 0)
+      *fr_p++ = *p++;
 
-      month = 10 * VALUE(iso[i]);
-      break;
-    }
-    case 6: {
-      if (!IS_DIGIT(iso[i]))
-        return false;
-
-      month += VALUE(iso[i]);
-      break;
-    }
-    case 8: {
-      if (!IS_DIGIT(iso[i]))
-        return false;
-
-      day = 10 * VALUE(iso[i]);
-      break;
-    }
-    case 9: {
-      if (!IS_DIGIT(iso[i]))
-        return false;
-
-      day += VALUE(iso[i]);
-      break;
-    }
-    case 10: {
-      if (iso[i] != 'T')
-        return false;
-
-      break;
-    }
-    case 11: {
-      if (!IS_DIGIT(iso[i]))
-        return false;
-
-      hour = 10 * VALUE(iso[i]);
-      break;
-    }
-    case 12: {
-      if (!IS_DIGIT(iso[i]))
-        return false;
-
-      hour += VALUE(iso[i]);
-      break;
-    }
-    case 13:
-    case 16: {
-      if (iso[i] != ':')
-        return false;
-
-      break;
-    }
-    case 14: {
-      if (!IS_DIGIT(iso[i]))
-        return false;
-
-      minute = 10 * VALUE(iso[i]);
-      break;
-    }
-    case 15: {
-      if (!IS_DIGIT(iso[i]))
-        return false;
-
-      minute += VALUE(iso[i]);
-      break;
-    }
-    case 17: {
-      if (!IS_DIGIT(iso[i]))
-        return false;
-
-      second = 10 * VALUE(iso[i]);
-      break;
-    }
-    case 18: {
-      if (!IS_DIGIT(iso[i]))
-        return false;
-
-      second += VALUE(iso[i]);
-      break;
-    }
-    case 19: {
-      if (iso[i] == '.' || iso[i] == ',') {
-        in_fraction = true;
-        has_fraction = true;
-        *frp = '0';
-        frp++;
-        *frp = '.';
-        frp++;
-      } else if (IS_ALPHA(iso[i])) {
-        in_timezone = true;
-        *tzp = iso[i];
-        tzp++;
-      } else
-        return false;
-
-      break;
-    }
-    default: {
-      if (in_fraction) {
-        if (IS_DIGIT(iso[i])) {
-          *frp = iso[i];
-          frp++;
-        } else if (IS_ALPHA(iso[i])) {
-          in_fraction = false;
-          in_timezone = true;
-          *frp = '\0';
-          *tzp = iso[i];
-          tzp++;
-        } else
-          return false;
-
-      } else if (in_timezone) {
-        if (IS_ALPHA(iso[i])) {
-          *tzp = iso[i];
-          tzp++;
-        } else
-          return false;
-      }
-    }
-    }
+    *fr_p = '\0';
+    fraction = Numeric_from_char(fr);
+    if (fraction == NULL)
+      return false;
   }
-
-  *frp = '\0';
-  *tzp = '\0';
 
   struct tm t = {0};
   t.tm_sec = second;
@@ -319,12 +184,7 @@ bool nanos_from_iso8601(const char *restrict const iso, const size_t len,
   Numeric_from_long_to(time, secs);
   Numeric_mul_to(secs, second_nanos, s_ns);
 
-  if (has_fraction) {
-    struct Numeric *restrict const fraction = Numeric_from_char(fr);
-
-    if (fraction == NULL)
-      fatal("%s", fr);
-
+  if (fraction != NULL) {
     Numeric_mul_to(fraction, second_nanos, f_ns);
     Numeric_delete(fraction);
     Numeric_add_to(s_ns, f_ns, res);
