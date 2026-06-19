@@ -35,7 +35,6 @@
 #define TIME_NANOS_CHARS_MAX_LENGTH (size_t)128
 
 #define IS_DIGIT(a) (a >= '0' && a <= '9')
-#define IS_ALPHA(a) (a >= 'A' && a <= 'Z')
 #define VALUE(a) (a - '0')
 
 struct time_tls {
