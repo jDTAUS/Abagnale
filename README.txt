@@ -13,7 +13,7 @@ SVN (master): http://svn.jdtaus.org/svnroot/jdtaus/Abagnale
 GIT (mirror): https://github.com/jDTAUS/Abagnale
 
 ./README.txt              - This file
-./LICENSES.txt            - License information
+./LICENSE.txt             - License information
 ./CMakeLists.txt          - CMake build file
 ./Makefile                - BSD Makefile containing build instructions
 ./abagnale.conf           - Configuration file format documentation
