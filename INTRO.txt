@@ -17,7 +17,8 @@ GIT (mirror): https://github.com/jDTAUS/Abagnale
 ./LICENSES.txt            - License information
 ./CMakeLists.txt          - CMake build file
 ./Makefile                - BSD Makefile containing build instructions
-./abagnale.conf           - Documented configuration file
+./abagnale.conf           - Configuration file format documentation
+./abagnale.demo           - Configuration file format demonstration
 ./abagnale.service        - systemd service file
 ./abagnale.h              - Abagnale API header file
 ./abagnale.c              - Trading application source code

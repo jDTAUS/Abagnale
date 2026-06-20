@@ -1,0 +1,690 @@
+# $JDTAUS$
+
+# This file serves as a syntax demonstration for the abagnale configuration
+# file format. This is not an example nor any kind of trading advice. Larger
+# windows demand larger amounts of RAM (>16GB). The time it takes for the
+# application to reload state when restarting depends on the IO capabilities
+# of the system and the frequency abagnalectl vacuum -s is performed. Plan
+# restarts for any configuration changes accordingly. See abagnale.conf
+# for further information.
+
+database target ABAGNALE user schulte
+dns-v4 udp://127.0.0.1:53
+dns-v6 udp://::1:53
+dns-timeout 3s
+exchange coinbase cdp-api-key /etc/abagnale/cdp_api_key.json
+
+eur_return="0.25 EUR"
+btc_return="0.00000025 BTC"
+eth_return="0.00000000000000025 ETH"
+usd_return="0.25 USD"
+usdc_return="0.25 USDC"
+usdt_return="0.25 USDT"
+inr_return="0.25 INR"
+gbp_return="0.25 GBP"
+
+trade at coinbase using trend return $eur_return window 72h\
+  market USDC@EUR\
+  demand-timeout-min 2h demand-timeout-max 3.5h\
+  supply-timeout-min 2h supply-timeout-max 3.5h\
+  stop-loss-delay 30m stop-loss-delays 1\
+  take-profit-delay 7.5m take-profit-delays 1\
+  take-loss-delay 36h take-loss-delays 1
+
+trade at coinbase using trend return $eur_return window 108h\
+  market ADA@EUR\
+  market DOGE@EUR\
+  market LTC@EUR\
+  demand-timeout-min 3h demand-timeout-max 4.5h\
+  supply-timeout-min 3h supply-timeout-max 4.5h\
+  stop-loss-delay 45m stop-loss-delays 1\
+  take-profit-delay 9m take-profit-delays 1\
+  take-loss-delay 54h take-loss-delays 1
+
+trade at coinbase using trend return $btc_return window 144h\
+  market ETH@BTC\
+  market GRT@BTC\
+  market ICP@BTC\
+  market SOL@BTC\
+  demand-timeout-min 4h demand-timeout-max 6h\
+  supply-timeout-min 4h supply-timeout-max 6h\
+  stop-loss-delay 1h stop-loss-delays 1\
+  take-profit-delay 12m take-profit-delays 1\
+  take-loss-delay 72h take-loss-delays 1
+
+trade at coinbase using trend return $eur_return window 144h\
+  market AAVE@EUR\
+  market AVAX@EUR\
+  market BCH@EUR\
+  market ICP@EUR\
+  market SHIB@EUR\
+  market XLM@EUR\
+  demand-timeout-min 4h demand-timeout-max 6h\
+  supply-timeout-min 4h supply-timeout-max 6h\
+  stop-loss-delay 1h stop-loss-delays 1\
+  take-profit-delay 12m take-profit-delays 1\
+  take-loss-delay 72h take-loss-delays 1
+
+trade at coinbase using trend return $btc_return window 180h\
+  market CRV@BTC\
+  demand-timeout-min 5h demand-timeout-max 7.5h\
+  supply-timeout-min 5h supply-timeout-max 7.5h\
+  stop-loss-delay 75m stop-loss-delays 1\
+  take-profit-delay 15m take-profit-delays 1\
+  take-loss-delay 90h take-loss-delays 1
+
+trade at coinbase using trend return $eur_return window 180h\
+  market ALGO@EUR\
+  market BAT@EUR\
+  market BTC@EUR\
+  market CRV@EUR\
+  market ETH@EUR\
+  market SOL@EUR\
+  market UNI@EUR\
+  demand-timeout-min 5h demand-timeout-max 7.5h\
+  supply-timeout-min 5h supply-timeout-max 7.5h\
+  stop-loss-delay 75m stop-loss-delays 1\
+  take-profit-delay 15m take-profit-delays 1\
+  take-loss-delay 90h take-loss-delays 1
+
+trade at coinbase using trend return $btc_return window 324h\
+  market ADA@BTC\
+  market ALGO@BTC\
+  market AVAX@BTC\
+  market BCH@BTC\
+  market DASH@BTC\
+  market DOGE@BTC\
+  market FIL@BTC\
+  market LTC@BTC\
+  market XLM@BTC\
+  demand-timeout-min 10h demand-timeout-max 15h\
+  supply-timeout-min 10h supply-timeout-max 15h\
+  stop-loss-delay 135m stop-loss-delays 1\
+  take-profit-delay 27m take-profit-delays 1\
+  take-loss-delay 162h take-loss-delays 1
+
+trade at coinbase using trend return $eth_return window 324h\
+  market BAT@ETH\
+  market SOL@ETH\
+  demand-timeout-min 10h demand-timeout-max 15h\
+  supply-timeout-min 10h supply-timeout-max 15h\
+  stop-loss-delay 135m stop-loss-delays 1\
+  take-profit-delay 27m take-profit-delays 1\
+  take-loss-delay 162h take-loss-delays 1
+
+trade at coinbase using trend return $eur_return window 324h\
+  market ANKR@EUR\
+  market APE@EUR\
+  market ETC@EUR\
+  market FIL@EUR\
+  market GRT@EUR\
+  market SNX@EUR\
+  demand-timeout-min 10h demand-timeout-max 15h\
+  supply-timeout-min 10h supply-timeout-max 15h\
+  stop-loss-delay 135m stop-loss-delays 1\
+  take-profit-delay 27m take-profit-delays 1\
+  take-loss-delay 162h take-loss-delays 1
+
+trade at coinbase using trend return $btc_return window 648h\
+  market AAVE@BTC\
+  market BAT@BTC\
+  market ETC@BTC\
+  market UNI@BTC\
+  demand-timeout-min 20h demand-timeout-max 30h\
+  supply-timeout-min 20h supply-timeout-max 30h\
+  stop-loss-delay 270m stop-loss-delays 1\
+  take-profit-delay 54m take-profit-delays 1\
+  take-loss-delay 324h take-loss-delays 1
+
+trade at coinbase using trend return $eth_return window 648h\
+  market ADA@ETH\
+  demand-timeout-min 20h demand-timeout-max 30h\
+  supply-timeout-min 20h supply-timeout-max 30h\
+  stop-loss-delay 270m stop-loss-delays 1\
+  take-profit-delay 54m take-profit-delays 1\
+  take-loss-delay 324h take-loss-delays 1
+
+trade at coinbase using trend return $eur_return window 648h\
+  market 1INCH@EUR\
+  demand-timeout-min 20h demand-timeout-max 30h\
+  supply-timeout-min 20h supply-timeout-max 30h\
+  stop-loss-delay 270m stop-loss-delays 1\
+  take-profit-delay 54m take-profit-delays 1\
+  take-loss-delay 324h take-loss-delays 1
+
+trade at coinbase using trend return $eur_return window 1296h\
+  market MANA@EUR\
+  demand-timeout-min 40h demand-timeout-max 60h\
+  supply-timeout-min 40h supply-timeout-max 60h\
+  stop-loss-delay 540m stop-loss-delays 1\
+  take-profit-delay 108m take-profit-delays 1\
+  take-loss-delay 648h take-loss-delays 1
+
+trade at coinbase using trend return $btc_return window 36h\
+  market not match CGLD\
+         not match CLV\
+         not match EOS\
+         not match LOKA\
+         not match MUSE\
+         not match WCFG\
+         not match MKR\
+         not match NOIA\
+         not match DVI\
+         not match PSP\
+         not match BZRX\
+         not match NATION\
+         not match CBAT\
+         not match EWTB\
+         not match UMEE\
+         not match DAD\
+         not match RFOX\
+         not match SQT\
+         not match VR\
+         not match LMR\
+         not match CETH\
+         not match GRID\
+         not match DAO\
+         not match SURE\
+         not match UXP\
+         not match BFC\
+         not match YOUC\
+         not match MFG\
+         not match FXC\
+         not match LUNR\
+         not match PHA\
+         not match SOFI\
+         not match MIM\
+         not match J\
+         not match TITAN\
+         not match ELON\
+         not match BETA\
+         not match OM\
+         not match CREAM\
+         not match MTA\
+         not match CQT\
+         not match DPX\
+         not match UBT\
+         not match LTX\
+         not match DOGEGF\
+         not match STAKE\
+         not match PUSH\
+         not match INXT\
+         not match AGI\
+         not match LST\
+         not match ANTV1\
+         not match CVP\
+         not match SEAM\
+         not ETH@DAI\
+         not FLOW@USDT\
+         not MANA@ETH\
+         not COMP@BTC\
+         not YFI@BTC\
+         match @BTC\
+  demand-timeout-min 1h demand-timeout-max 1.5h\
+  supply-timeout-min 1h supply-timeout-max 1.5h\
+  stop-loss-delay 15m stop-loss-delays 1\
+  take-profit-delay 3m take-profit-delays 1\
+  take-loss-delay 18h take-loss-delays 1
+
+trade at coinbase using trend return $eth_return window 36h\
+  market not match CGLD\
+         not match CLV\
+         not match EOS\
+         not match LOKA\
+         not match MUSE\
+         not match WCFG\
+         not match MKR\
+         not match NOIA\
+         not match DVI\
+         not match PSP\
+         not match BZRX\
+         not match NATION\
+         not match CBAT\
+         not match EWTB\
+         not match UMEE\
+         not match DAD\
+         not match RFOX\
+         not match SQT\
+         not match VR\
+         not match LMR\
+         not match CETH\
+         not match GRID\
+         not match DAO\
+         not match SURE\
+         not match UXP\
+         not match BFC\
+         not match YOUC\
+         not match MFG\
+         not match FXC\
+         not match LUNR\
+         not match PHA\
+         not match SOFI\
+         not match MIM\
+         not match J\
+         not match TITAN\
+         not match ELON\
+         not match BETA\
+         not match OM\
+         not match CREAM\
+         not match MTA\
+         not match CQT\
+         not match DPX\
+         not match UBT\
+         not match LTX\
+         not match DOGEGF\
+         not match STAKE\
+         not match PUSH\
+         not match INXT\
+         not match AGI\
+         not match LST\
+         not match ANTV1\
+         not match CVP\
+         not match SEAM\
+         not ETH@DAI\
+         not FLOW@USDT\
+         not MANA@ETH\
+         not COMP@BTC\
+         not YFI@BTC\
+         match @ETH\
+  demand-timeout-min 1h demand-timeout-max 1.5h\
+  supply-timeout-min 1h supply-timeout-max 1.5h\
+  stop-loss-delay 15m stop-loss-delays 1\
+  take-profit-delay 3m take-profit-delays 1\
+  take-loss-delay 18h take-loss-delays 1
+
+trade at coinbase using trend return $eur_return window 36h\
+  market not match CGLD\
+         not match CLV\
+         not match EOS\
+         not match LOKA\
+         not match MUSE\
+         not match WCFG\
+         not match MKR\
+         not match NOIA\
+         not match DVI\
+         not match PSP\
+         not match BZRX\
+         not match NATION\
+         not match CBAT\
+         not match EWTB\
+         not match UMEE\
+         not match DAD\
+         not match RFOX\
+         not match SQT\
+         not match VR\
+         not match LMR\
+         not match CETH\
+         not match GRID\
+         not match DAO\
+         not match SURE\
+         not match UXP\
+         not match BFC\
+         not match YOUC\
+         not match MFG\
+         not match FXC\
+         not match LUNR\
+         not match PHA\
+         not match SOFI\
+         not match MIM\
+         not match J\
+         not match TITAN\
+         not match ELON\
+         not match BETA\
+         not match OM\
+         not match CREAM\
+         not match MTA\
+         not match CQT\
+         not match DPX\
+         not match UBT\
+         not match LTX\
+         not match DOGEGF\
+         not match STAKE\
+         not match PUSH\
+         not match INXT\
+         not match AGI\
+         not match LST\
+         not match ANTV1\
+         not match CVP\
+         not match SEAM\
+         not ETH@DAI\
+         not FLOW@USDT\
+         not MANA@ETH\
+         not COMP@BTC\
+         not YFI@BTC\
+         match @EUR\
+  demand-timeout-min 1h demand-timeout-max 1.5h\
+  supply-timeout-min 1h supply-timeout-max 1.5h\
+  stop-loss-delay 15m stop-loss-delays 1\
+  take-profit-delay 3m take-profit-delays 1\
+  take-loss-delay 18h take-loss-delays 1
+
+trade at coinbase using trend return $usdc_return window 36h\
+  market not match CGLD\
+         not match CLV\
+         not match EOS\
+         not match LOKA\
+         not match MUSE\
+         not match WCFG\
+         not match MKR\
+         not match NOIA\
+         not match DVI\
+         not match PSP\
+         not match BZRX\
+         not match NATION\
+         not match CBAT\
+         not match EWTB\
+         not match UMEE\
+         not match DAD\
+         not match RFOX\
+         not match SQT\
+         not match VR\
+         not match LMR\
+         not match CETH\
+         not match GRID\
+         not match DAO\
+         not match SURE\
+         not match UXP\
+         not match BFC\
+         not match YOUC\
+         not match MFG\
+         not match FXC\
+         not match LUNR\
+         not match PHA\
+         not match SOFI\
+         not match MIM\
+         not match J\
+         not match TITAN\
+         not match ELON\
+         not match BETA\
+         not match OM\
+         not match CREAM\
+         not match MTA\
+         not match CQT\
+         not match DPX\
+         not match UBT\
+         not match LTX\
+         not match DOGEGF\
+         not match STAKE\
+         not match PUSH\
+         not match INXT\
+         not match AGI\
+         not match LST\
+         not match ANTV1\
+         not match CVP\
+         not match SEAM\
+         not ETH@DAI\
+         not FLOW@USDT\
+         not MANA@ETH\
+         not COMP@BTC\
+         not YFI@BTC\
+         match @USDC\
+  demand-timeout-min 1h demand-timeout-max 1.5h\
+  supply-timeout-min 1h supply-timeout-max 1.5h\
+  stop-loss-delay 15m stop-loss-delays 1\
+  take-profit-delay 3m take-profit-delays 1\
+  take-loss-delay 18h take-loss-delays 1
+
+trade at coinbase using trend return $usdt_return window 36h\
+  market not match CGLD\
+         not match CLV\
+         not match EOS\
+         not match LOKA\
+         not match MUSE\
+         not match WCFG\
+         not match MKR\
+         not match NOIA\
+         not match DVI\
+         not match PSP\
+         not match BZRX\
+         not match NATION\
+         not match CBAT\
+         not match EWTB\
+         not match UMEE\
+         not match DAD\
+         not match RFOX\
+         not match SQT\
+         not match VR\
+         not match LMR\
+         not match CETH\
+         not match GRID\
+         not match DAO\
+         not match SURE\
+         not match UXP\
+         not match BFC\
+         not match YOUC\
+         not match MFG\
+         not match FXC\
+         not match LUNR\
+         not match PHA\
+         not match SOFI\
+         not match MIM\
+         not match J\
+         not match TITAN\
+         not match ELON\
+         not match BETA\
+         not match OM\
+         not match CREAM\
+         not match MTA\
+         not match CQT\
+         not match DPX\
+         not match UBT\
+         not match LTX\
+         not match DOGEGF\
+         not match STAKE\
+         not match PUSH\
+         not match INXT\
+         not match AGI\
+         not match LST\
+         not match ANTV1\
+         not match CVP\
+         not match SEAM\
+         not ETH@DAI\
+         not FLOW@USDT\
+         not MANA@ETH\
+         not COMP@BTC\
+         not YFI@BTC\
+         match @USDT\
+  demand-timeout-min 1h demand-timeout-max 1.5h\
+  supply-timeout-min 1h supply-timeout-max 1.5h\
+  stop-loss-delay 15m stop-loss-delays 1\
+  take-profit-delay 3m take-profit-delays 1\
+  take-loss-delay 18h take-loss-delays 1
+
+trade at coinbase using trend return $usd_return window 36h\
+  market not match CGLD\
+         not match CLV\
+         not match EOS\
+         not match LOKA\
+         not match MUSE\
+         not match WCFG\
+         not match MKR\
+         not match NOIA\
+         not match DVI\
+         not match PSP\
+         not match BZRX\
+         not match NATION\
+         not match CBAT\
+         not match EWTB\
+         not match UMEE\
+         not match DAD\
+         not match RFOX\
+         not match SQT\
+         not match VR\
+         not match LMR\
+         not match CETH\
+         not match GRID\
+         not match DAO\
+         not match SURE\
+         not match UXP\
+         not match BFC\
+         not match YOUC\
+         not match MFG\
+         not match FXC\
+         not match LUNR\
+         not match PHA\
+         not match SOFI\
+         not match MIM\
+         not match J\
+         not match TITAN\
+         not match ELON\
+         not match BETA\
+         not match OM\
+         not match CREAM\
+         not match MTA\
+         not match CQT\
+         not match DPX\
+         not match UBT\
+         not match LTX\
+         not match DOGEGF\
+         not match STAKE\
+         not match PUSH\
+         not match INXT\
+         not match AGI\
+         not match LST\
+         not match ANTV1\
+         not match CVP\
+         not match SEAM\
+         not ETH@DAI\
+         not FLOW@USDT\
+         not MANA@ETH\
+         not COMP@BTC\
+         not YFI@BTC\
+         match @USD\
+  demand-timeout-min 1h demand-timeout-max 1.5h\
+  supply-timeout-min 1h supply-timeout-max 1.5h\
+  stop-loss-delay 15m stop-loss-delays 1\
+  take-profit-delay 3m take-profit-delays 1\
+  take-loss-delay 18h take-loss-delays 1
+
+trade at coinbase using trend return $inr_return window 36h\
+  market not match CGLD\
+         not match CLV\
+         not match EOS\
+         not match LOKA\
+         not match MUSE\
+         not match WCFG\
+         not match MKR\
+         not match NOIA\
+         not match DVI\
+         not match PSP\
+         not match BZRX\
+         not match NATION\
+         not match CBAT\
+         not match EWTB\
+         not match UMEE\
+         not match DAD\
+         not match RFOX\
+         not match SQT\
+         not match VR\
+         not match LMR\
+         not match CETH\
+         not match GRID\
+         not match DAO\
+         not match SURE\
+         not match UXP\
+         not match BFC\
+         not match YOUC\
+         not match MFG\
+         not match FXC\
+         not match LUNR\
+         not match PHA\
+         not match SOFI\
+         not match MIM\
+         not match J\
+         not match TITAN\
+         not match ELON\
+         not match BETA\
+         not match OM\
+         not match CREAM\
+         not match MTA\
+         not match CQT\
+         not match DPX\
+         not match UBT\
+         not match LTX\
+         not match DOGEGF\
+         not match STAKE\
+         not match PUSH\
+         not match INXT\
+         not match AGI\
+         not match LST\
+         not match ANTV1\
+         not match CVP\
+         not match SEAM\
+         not ETH@DAI\
+         not FLOW@USDT\
+         not MANA@ETH\
+         not COMP@BTC\
+         not YFI@BTC\
+         match @INR\
+  demand-timeout-min 1h demand-timeout-max 1.5h\
+  supply-timeout-min 1h supply-timeout-max 1.5h\
+  stop-loss-delay 15m stop-loss-delays 1\
+  take-profit-delay 3m take-profit-delays 1\
+  take-loss-delay 18h take-loss-delays 1
+
+trade at coinbase using trend return $gbp_return window 36h\
+  market not match CGLD\
+         not match CLV\
+         not match EOS\
+         not match LOKA\
+         not match MUSE\
+         not match WCFG\
+         not match MKR\
+         not match NOIA\
+         not match DVI\
+         not match PSP\
+         not match BZRX\
+         not match NATION\
+         not match CBAT\
+         not match EWTB\
+         not match UMEE\
+         not match DAD\
+         not match RFOX\
+         not match SQT\
+         not match VR\
+         not match LMR\
+         not match CETH\
+         not match GRID\
+         not match DAO\
+         not match SURE\
+         not match UXP\
+         not match BFC\
+         not match YOUC\
+         not match MFG\
+         not match FXC\
+         not match LUNR\
+         not match PHA\
+         not match SOFI\
+         not match MIM\
+         not match J\
+         not match TITAN\
+         not match ELON\
+         not match BETA\
+         not match OM\
+         not match CREAM\
+         not match MTA\
+         not match CQT\
+         not match DPX\
+         not match UBT\
+         not match LTX\
+         not match DOGEGF\
+         not match STAKE\
+         not match PUSH\
+         not match INXT\
+         not match AGI\
+         not match LST\
+         not match ANTV1\
+         not match CVP\
+         not match SEAM\
+         not ETH@DAI\
+         not FLOW@USDT\
+         not MANA@ETH\
+         not COMP@BTC\
+         not YFI@BTC\
+         match @GBP\
+  demand-timeout-min 1h demand-timeout-max 1.5h\
+  supply-timeout-min 1h supply-timeout-max 1.5h\
+  stop-loss-delay 15m stop-loss-delays 1\
+  take-profit-delay 3m take-profit-delays 1\
+  take-loss-delay 18h take-loss-delays 1
+
