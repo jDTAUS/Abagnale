@@ -1301,6 +1301,7 @@ static void ws_listener(struct mg_connection *restrict c, int ev,
     break;
   }
   case MG_EV_ERROR: {
+    // XXX: ev_data
     werr("coinbase: %s: %s: %lu: %s\n", ABAG_COINBASE_WEBSOCKET_URI,
          channel->name, c->id, (char *)ev_data);
     c->is_closing = 1;
@@ -1397,6 +1398,7 @@ static void http_listener(struct mg_connection *restrict c, int ev,
   }
   case MG_EV_ERROR: {
     http_ctx->success = false;
+    // XXX: ev_data
     werr("coinbase: %s\n", (char *)ev_data);
     break;
   }

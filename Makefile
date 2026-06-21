@@ -60,7 +60,7 @@ PROFILE=
 LTO=
 LTO+=-flto=auto
 
-STANDARD=-std=c11
+STANDARD=-std=c2x
 
 WARNINGS=-Wall
 WARNINGS+=-Werror

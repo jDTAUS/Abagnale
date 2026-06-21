@@ -12,7 +12,6 @@ RestartSec=300
 User=abagnale
 Group=abagnale
 Environment=PATH=/usr/bin:/usr/local/bin
-Environment=TZ=UTC
 Environment=LC_CTYPE=C.UTF-8
 WorkingDirectory=/tmp
 KillMode=process

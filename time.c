@@ -67,7 +67,6 @@ extern const struct Numeric *restrict const day_nanos;
 extern const struct Numeric *restrict const week_nanos;
 
 static tss_t time_tls_key;
-static mtx_t time_mtx;
 
 static struct time_tls *const time_tls(void) {
   struct time_tls *restrict tls = tls_get(time_tls_key);
@@ -104,18 +103,12 @@ static void time_tls_dtor(void *restrict e) {
   tls_set(time_tls_key, NULL);
 }
 
-void time_init(void) {
-  tls_create(&time_tls_key, time_tls_dtor);
-  mutex_init(&time_mtx);
-}
+void time_init(void) { tls_create(&time_tls_key, time_tls_dtor); }
 
-void time_destroy(void) {
-  tls_delete(time_tls_key);
-  mutex_destroy(&time_mtx);
-}
+void time_destroy(void) { tls_delete(time_tls_key); }
 
 inline void time_now(struct timespec *restrict const ts) {
-  if (!timespec_get(ts, TIME_UTC))
+  if (timespec_get(ts, TIME_UTC) == 0)
     fatal("%s", "timespec_get");
 }
 
@@ -141,51 +134,82 @@ bool nanos_from_iso8601(const char *restrict const iso, const size_t len,
         iso[7] == '-' && iso[10] == 'T' && iso[13] == ':' && iso[16] == ':'))
     return false;
 
-  const int year = 1000 * VALUE(iso[0]) + 100 * VALUE(iso[1]) +
-                   10 * VALUE(iso[2]) + VALUE(iso[3]);
-
-  const int month = 10 * VALUE(iso[5]) + VALUE(iso[6]);
-  const int day = 10 * VALUE(iso[8]) + VALUE(iso[9]);
-  const int hour = 10 * VALUE(iso[11]) + VALUE(iso[12]);
-  const int minute = 10 * VALUE(iso[14]) + VALUE(iso[15]);
-  const int second = 10 * VALUE(iso[17]) + VALUE(iso[18]);
-
-  if (len > 19 && (iso[19] == '.' || iso[19] == ',')) {
-    *fr_p++ = '0';
-    *fr_p++ = '.';
-
-    size_t fr_len = sizeof(fr) - 3;
-    size_t r_len = len - 20;
-
-    p = &iso[20];
-    while (r_len-- != 0 && fr_len-- != 0 && IS_DIGIT(*p))
-      *fr_p++ = *p++;
-
-    if (fr_len == SIZE_MAX)
-      panic();
-
-    if (fr_p - fr < 3)
-      return false;
-
-    *fr_p = '\0';
-    fraction = Numeric_from_char(fr);
-    if (fraction == NULL)
-      return false;
-  }
-
   struct tm t = {
-      .tm_sec = second,
-      .tm_min = minute,
-      .tm_hour = hour,
-      .tm_mday = day,
-      .tm_mon = month - 1,
-      .tm_year = year - 1900,
-      .tm_isdst = 0,
+      .tm_sec = 10 * VALUE(iso[17]) + VALUE(iso[18]),
+      .tm_min = 10 * VALUE(iso[14]) + VALUE(iso[15]),
+      .tm_hour = 10 * VALUE(iso[11]) + VALUE(iso[12]),
+      .tm_mday = 10 * VALUE(iso[8]) + VALUE(iso[9]),
+      .tm_mon = 10 * VALUE(iso[5]) + VALUE(iso[6]) - 1,
+      .tm_year = 1000 * VALUE(iso[0]) + 100 * VALUE(iso[1]) +
+                 10 * VALUE(iso[2]) + VALUE(iso[3]) - 1900,
+      .tm_isdst = -1,
   };
 
-  time_t time = mktime(&t);
+  int tz_sec = 0;
+  bool neg = false;
+
+  if (len > 19) {
+    p = &iso[19];
+
+    if (*p == '.' || *p == ',') {
+      *fr_p++ = '0';
+      *fr_p++ = '.';
+      p++;
+
+      size_t fr_len = sizeof(fr) - 3;
+      size_t r_len = p - iso;
+
+      p++;
+      while (r_len-- != 0 && fr_len-- != 0 && IS_DIGIT(*p))
+        *fr_p++ = *p++;
+
+      if (fr_len == SIZE_MAX)
+        panic();
+
+      if (fr_p - fr < 3)
+        return false;
+
+      *fr_p = '\0';
+      fraction = Numeric_from_char(fr);
+      if (fraction == NULL)
+        return false;
+    }
+
+    if (p - iso > 0) {
+      if (*p != 'z' && *p != 'Z') {
+        if (*p == '-') {
+          neg = true;
+          p++;
+        } else if (*p == '+')
+          p++;
+
+        if (p - iso < 2 || !(IS_DIGIT(*p) && IS_DIGIT(*(p + 1))))
+          return false;
+
+        tz_sec = (10 * VALUE(*p) + VALUE(*(p + 1))) * 3600;
+        p += 2;
+
+        if (p - iso > 0) {
+          if (*p == ':')
+            p++;
+
+          if (p - iso < 2 || !(IS_DIGIT(*p) && IS_DIGIT(*(p + 1))))
+            return false;
+
+          tz_sec += (10 * VALUE(*p) + VALUE(*(p + 1))) * 60;
+        }
+      }
+    }
+  }
+
+  if (neg)
+    t.tm_sec += tz_sec;
+  else
+    t.tm_sec -= tz_sec;
+
+  time_t time = timegm(&t);
   if (time == (time_t)-1)
-    fatal("%s", "mktime");
+    fatal("%s", strerror(errno));
 
   Numeric_from_long_to(time, secs);
   Numeric_mul_to(secs, second_nanos, s_ns);
@@ -223,18 +247,20 @@ void nanos_now(struct Numeric *restrict const res) {
 char *nanos_to_iso8601(const struct Numeric *restrict const nanos) {
   const struct time_tls *restrict const tls = time_tls();
   struct Numeric *restrict const s = tls->nanos_to_iso8601.s;
+  struct tm t = {0};
 
   Numeric_div_to(nanos, second_nanos, s);
   time_t time = Numeric_to_long(s);
 
-  char *restrict const res = heap_malloc(TIME_ISO8601_MAX_LENGTH + 1);
-  mutex_lock(&time_mtx);
-  struct tm *tm = localtime(&time);
-  if (strftime(res, TIME_ISO8601_MAX_LENGTH + 1, "%Y-%m-%dT%H:%M:%S%Z", tm) ==
-      0)
+  // XXX: localtime_s - C11 Annex K
+  if (localtime_r(&time, &t) == NULL)
+    fatal("%s", "localtime_r");
+
+  char *restrict const r = heap_malloc(TIME_ISO8601_MAX_LENGTH + 1);
+  if (strftime(r, TIME_ISO8601_MAX_LENGTH + 1, "%Y-%m-%dT%H:%M:%S%Z", &t) == 0)
     panic();
-  mutex_unlock(&time_mtx);
-  return res;
+
+  return r;
 }
 
 char *nanos_string(const struct Numeric *restrict const nanos) {

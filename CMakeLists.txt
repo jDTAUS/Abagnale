@@ -28,7 +28,7 @@ add_compile_definitions(MULTI_THREADED)
 add_compile_definitions(STRING_INTERNING)
 
 if(MSVC)
-	set(CMAKE_C_STANDARD	11)
+	set(CMAKE_C_STANDARD	23)
 	set(CMAKE_C_STANDARD_REQUIRED	ON)
 	set(CMAKE_C_EXTENSIONS	OFF)
 	file(REAL_PATH "~" HOME EXPAND_TILDE)
