@@ -31,9 +31,10 @@ if(MSVC)
 	set(CMAKE_C_STANDARD	23)
 	set(CMAKE_C_STANDARD_REQUIRED	ON)
 	set(CMAKE_C_EXTENSIONS	OFF)
+	file(TO_CMAKE_PATH	"$ENV{ALLUSERSPROFILE}"	PROG_DATA_DIR)
 	add_compile_definitions(HAVE_HOST_H)
 	add_compile_definitions(
-    ABAG_CONFIG_FILE="$ENV{ProgramData}/Abagnale/abagnale.conf"
+	  ABAG_CONFIG_FILE="${PROG_DATA_DIR}/Abagnale/abagnale.conf"
 	)
 endif()
 
