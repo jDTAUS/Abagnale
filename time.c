@@ -253,8 +253,8 @@ char *nanos_to_iso8601(const struct Numeric *restrict const nanos) {
   time_t time = Numeric_to_long(s);
 
 #if defined(_MSC_VER)
-  // This is not localtime_s from C Annex K
-  int lt_s = localtime_s(&t, &time);
+  // This is not errno_t and localtime_s from C Annex K
+  errno_t lt_s = localtime_s(&t, &time);
   if (lt_s != 0)
     fatal("%s", strerror(lt_s));
 #else
