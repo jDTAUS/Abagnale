@@ -24,6 +24,7 @@
 #define __attribute__(x)
 #define _Noreturn __declspec(noreturn)
 #define inline
+#define timegm _mkgmtime
 #endif
 
 #endif

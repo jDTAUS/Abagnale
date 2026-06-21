@@ -252,9 +252,14 @@ char *nanos_to_iso8601(const struct Numeric *restrict const nanos) {
   Numeric_div_to(nanos, second_nanos, s);
   time_t time = Numeric_to_long(s);
 
-  // XXX: localtime_s - C11 Annex K
+#if defined(_MSC_VER)
+  int lt_s = localtime_s(&t, &time);
+  if(lt_s != 0)
+    fatal("%s", strerror(lt_s));
+#else
   if (localtime_r(&time, &t) == NULL)
     fatal("%s", "localtime_r");
+#endif
 
   char *restrict const r = heap_malloc(TIME_ISO8601_MAX_LENGTH + 1);
   if (strftime(r, TIME_ISO8601_MAX_LENGTH + 1, "%Y-%m-%dT%H:%M:%S%Z", &t) == 0)
