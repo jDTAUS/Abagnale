@@ -31,9 +31,10 @@ if(MSVC)
 	set(CMAKE_C_STANDARD	23)
 	set(CMAKE_C_STANDARD_REQUIRED	ON)
 	set(CMAKE_C_EXTENSIONS	OFF)
-	file(REAL_PATH "~" HOME EXPAND_TILDE)
 	add_compile_definitions(HAVE_HOST_H)
-	add_compile_definitions(ABAG_CONFIG_FILE=${HOME}/abagnale.conf)
+	add_compile_definitions(
+		ABAG_CONFIG_FILE="${CMAKE_INSTALL_SYSCONFDIR}/abagnale/abagnale.conf"
+	)
 endif()
 
 include(CheckTypeSize)
