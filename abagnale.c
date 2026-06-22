@@ -1239,7 +1239,6 @@ static void position_open(const struct worker_ctx *restrict const w_ctx,
   p->filled = Numeric_cmp(zero, order->b_filled) != 0;
 
   Numeric_div_to(p->cnanos, second_nanos, csecs);
-  Numeric_scale(csecs, 0);
 
   switch (p->type) {
   case POSITION_TYPE_LONG:
@@ -1282,8 +1281,6 @@ static void position_fill(const struct worker_ctx *restrict const w_ctx,
 
   Numeric_div_to(p->cnanos, second_nanos, csecs);
   Numeric_div_to(p->dnanos, second_nanos, dsecs);
-  Numeric_scale(csecs, 0);
-  Numeric_scale(dsecs, 0);
 
   switch (p->type) {
   case POSITION_TYPE_LONG:
