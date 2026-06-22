@@ -454,8 +454,8 @@ void db_vacuum(void) {
 }
 
 void db_vacuum_plots(const void *const db, const char *const e_id,
-                     const char *const m_id,
-                     const struct Numeric *const wnanos) {
+                     const char *const m_id, const struct Numeric *const wnanos,
+                     const char *const fname) {
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(1, stdout);
 #endif
@@ -463,36 +463,99 @@ void db_vacuum_plots(const void *const db, const char *const e_id,
   nanos_now(now);
   struct Numeric *nanos = Numeric_sub(now, wnanos);
   Numeric_delete(now);
+  int r;
   // clang-format off
   EXEC SQL BEGIN DECLARE SECTION;
   const char *con = String_chars(db);
   const char *sql_e_id = e_id;
   const char *sql_m_id = m_id;
   const numeric *sql_exp = Numeric_db(nanos);
+  char stmt[DB_STATEMENT_MAX_LENGTH + 1] = {0};
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
   EXEC SQL WHENEVER SQLERROR CALL db_fatal();
   EXEC SQL WHENEVER NOT FOUND CONTINUE;
   EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
-  EXEC SQL AT :con
-    DELETE FROM "PLOTS_DATAPOINTS"
+  // clang-format on
+  if (fname != NULL) {
+    char *restrict const nanos_asc = Numeric_to_char(nanos, 0);
+    r = snprintf(stmt, sizeof(stmt),
+                 "COPY ("
+                 "  DELETE FROM \"PLOTS_DATAPOINTS\""
+                 "  WHERE \"PLOT_ID\" IN ("
+                 "    SELECT \"PLOT_ID\" FROM \"TREND_PLOTS\""
+                 "    WHERE \"EXCHANGE_ID\" = '%s'"
+                 "      AND \"PRODUCT_ID\" = '%s'"
+                 "  ) AND \"X\" <= %s"
+                 "  RETURNING *"
+                 ") TO '%s-TREND-PLOTS-DATAPOINTS'",
+                 e_id, m_id, nanos_asc, fname);
+
+    if (r < 0 || (size_t)r >= sizeof(stmt))
+      panic();
+
+    // clang-format off
+    EXEC SQL AT :con EXECUTE IMMEDIATE :stmt;
+    // clang-format on
+    r = snprintf(stmt, sizeof(stmt),
+                 "COPY ("
+                 "  DELETE FROM \"PLOTS_DATAPOINTS\""
+                 "  WHERE \"PLOT_ID\" IN ("
+                 "    SELECT \"PLOT_ID\" FROM \"TREND_MARKERS\""
+                 "    WHERE \"EXCHANGE_ID\" = '%s'"
+                 "      AND \"PRODUCT_ID\" = '%s'"
+                 "  ) AND \"X\" <= %s"
+                 "  RETURNING *"
+                 ") TO '%s-TREND-MARKERS-DATAPOINTS'",
+                 e_id, m_id, nanos_asc, fname);
+
+    if (r < 0 || (size_t)r >= sizeof(stmt))
+      panic();
+
+    // clang-format off
+    EXEC SQL AT :con EXECUTE IMMEDIATE :stmt;
+    // clang-format on
+    r = snprintf(stmt, sizeof(stmt),
+                 "COPY ("
+                 "  DELETE FROM \"TREND_CANDLES\""
+                 "  WHERE \"EXCHANGE_ID\" = '%s'"
+                 "    AND \"PRODUCT_ID\" = '%s'"
+                 "    AND \"CNANOS\" <= %s"
+                 "  RETURNING *"
+                 ") TO '%s-TREND-CANDLES'",
+                 e_id, m_id, nanos_asc, fname);
+
+    if (r < 0 || (size_t)r >= sizeof(stmt))
+      panic();
+
+    // clang-format off
+    EXEC SQL AT :con EXECUTE IMMEDIATE :stmt;
+    // clang-format on
+    Numeric_char_free(nanos_asc);
+  } else {
+    // clang-format off
+    EXEC SQL AT :con
+      DELETE FROM "PLOTS_DATAPOINTS"
       WHERE "PLOT_ID" IN (
         SELECT "PLOT_ID" FROM "TREND_PLOTS"
         WHERE "EXCHANGE_ID" = :sql_e_id
           AND "PRODUCT_ID" = :sql_m_id
       ) AND "X" < :sql_exp;
-  EXEC SQL AT :con
-    DELETE FROM "PLOTS_DATAPOINTS"
+    EXEC SQL AT :con
+      DELETE FROM "PLOTS_DATAPOINTS"
       WHERE "PLOT_ID" IN (
         SELECT "PLOT_ID" FROM "TREND_MARKERS"
         WHERE "EXCHANGE_ID" = :sql_e_id
           AND "PRODUCT_ID" = :sql_m_id
       ) AND "X" < :sql_exp;
-  EXEC SQL AT :con
-    DELETE FROM "TREND_CANDLES" c
+    EXEC SQL AT :con
+      DELETE FROM "TREND_CANDLES" c
       WHERE c."EXCHANGE_ID" = :sql_e_id
         AND c."PRODUCT_ID" = :sql_m_id
         AND c."CNANOS" < :sql_exp;
+    // clang-format on
+  }
+  // clang-format off
   EXEC SQL AT :con COMMIT;
   // clang-format on
 #ifdef ABAG_SQL_DEBUG
@@ -514,27 +577,45 @@ void db_vacuum_samples(const void *const db, const char *const e_id,
   // clang-format off
   EXEC SQL BEGIN DECLARE SECTION;
   const char *con = String_chars(db);
+  const char *sql_e_id = e_id;
+  const char *sql_m_id = m_id;
+  const numeric *sql_nanos = Numeric_db(nanos);
   char stmt[DB_STATEMENT_MAX_LENGTH + 1] = {0};
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
   EXEC SQL WHENEVER SQLERROR CALL db_fatal();
   EXEC SQL WHENEVER NOT FOUND CONTINUE;
   EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
-  char *restrict const nanos_asc = Numeric_to_char(nanos, 0);
-  const int r = snprintf(stmt, sizeof(stmt),
-    "COPY ( "
-    "  DELETE FROM \"SAMPLES\""
-    "  WHERE \"EXCHANGE_ID\" = '%s'"
-    "    AND \"PRODUCT_ID\" = '%s'"
-    "    AND \"NANOS\" <= %s"
-    "  RETURNING *"
-    ") TO '%s'", e_id, m_id, nanos_asc, fname);
+  // clang-format on
+  if (fname != NULL) {
+    char *restrict const nanos_asc = Numeric_to_char(nanos, 0);
+    const int r = snprintf(stmt, sizeof(stmt),
+                           "COPY ( "
+                           "  DELETE FROM \"SAMPLES\""
+                           "  WHERE \"EXCHANGE_ID\" = '%s'"
+                           "    AND \"PRODUCT_ID\" = '%s'"
+                           "    AND \"NANOS\" <= %s"
+                           "  RETURNING *"
+                           ") TO '%s-SAMPLES'",
+                           e_id, m_id, nanos_asc, fname);
 
-  if (r < 0 || (size_t)r >= sizeof(stmt))
-    panic();
+    if (r < 0 || (size_t)r >= sizeof(stmt))
+      panic();
 
-  Numeric_char_free(nanos_asc);
-  EXEC SQL AT :con EXECUTE IMMEDIATE :stmt;
+    Numeric_char_free(nanos_asc);
+    // clang-format off
+    EXEC SQL AT :con EXECUTE IMMEDIATE :stmt;
+    // clang-format on
+  } else {
+    // clang-format off
+    EXEC SQL AT :con
+      DELETE FROM "SAMPLES"
+      WHERE "EXCHANGE_ID" = :sql_e_id
+        AND "PRODUCT_ID" = :sql_m_id
+        AND "NANOS" <= :sql_nanos;
+    // clang-format on
+  }
+  // clang-format off
   EXEC SQL AT :con COMMIT;
   // clang-format on
 #ifdef ABAG_SQL_DEBUG

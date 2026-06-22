@@ -115,7 +115,7 @@ static const struct {
   int (*cmd)(int, char *[]);
 } cmd_tab[] = {
     {"volatility", "-e exchange -m market [-w nanos]", cmd_volatility},
-    {"vacuum", "[-o file]", cmd_vacuum},
+    {"vacuum", "[-b dir] [-a analyze]", cmd_vacuum},
     {"plot", "-e exchange -m market -a algorithm [-f file]", cmd_plot},
     {"order", "-e exchange -i id", cmd_order},
     {"market", "-e exchange -i id", cmd_market},
@@ -228,15 +228,19 @@ static int cmd_vacuum(int argc, char *argv[]) {
   int r;
   void *const *e_items;
   void *const *m_items;
-  const char *restrict file = NULL;
+  const char *restrict dir = NULL;
+  bool analyze = false;
   char mfile[4096] = {0};
   struct optparse options = {0};
   optparse_init(&options, argv);
 
-  while ((ch = optparse(&options, "o:")) != -1) {
+  while ((ch = optparse(&options, "ab:")) != -1) {
     switch (ch) {
-    case 'o':
-      file = options.optarg;
+    case 'a':
+      analyze = true;
+      break;
+    case 'b':
+      dir = options.optarg;
       break;
     default:
       usage();
@@ -249,43 +253,39 @@ static int cmd_vacuum(int argc, char *argv[]) {
 
   void *restrict const db = db_connect(String_chars(progname));
 
-  if (file != NULL || cnf->plts_dir != NULL) {
-    e_items = Array_items(exchanges);
-    for (size_t i = Array_size(exchanges); i > 0; i--) {
-      const struct Exchange *restrict const e = e_items[i - 1];
-      struct Array *restrict const markets = e->markets();
+  e_items = Array_items(exchanges);
+  for (size_t i = Array_size(exchanges); i > 0; i--) {
+    const struct Exchange *restrict const e = e_items[i - 1];
+    struct Array *restrict const markets = e->markets();
 
-      m_items = Array_items(markets);
-      for (size_t j = Array_size(markets); j > 0; j--) {
-        const struct Market *restrict const m = m_items[j - 1];
-        const struct MarketConfig *restrict const m_cnf =
-            marketconfig(e->nm, m->nm);
+    m_items = Array_items(markets);
+    for (size_t j = Array_size(markets); j > 0; j--) {
+      char *restrict fname = NULL;
+      const struct Market *restrict const m = m_items[j - 1];
+      const struct MarketConfig *restrict const m_cnf =
+          marketconfig(e->nm, m->nm);
 
-        if (cnf->plts_dir != NULL)
-          db_vacuum_plots(db, String_chars(e->id), String_chars(m->id),
-                          m_cnf != NULL ? m_cnf->wnanos : zero);
+      if (dir != NULL) {
+        r = snprintf(mfile, sizeof(mfile), "%s/%s-%s", dir, String_chars(e->nm),
+                     String_chars(m->nm));
 
-        if (file != NULL) {
-          r = snprintf(mfile, sizeof(mfile), "%s-%s-%s", file,
-                       String_chars(e->nm), String_chars(m->nm));
+        if (r < 0 || (size_t)r >= sizeof(mfile))
+          panic();
 
-          if (r < 0 || (size_t)r >= sizeof(mfile))
-            panic();
-
-          db_vacuum_samples(db, String_chars(e->id), String_chars(m->id),
-                            m_cnf != NULL ? m_cnf->wnanos : zero, mfile);
-        }
+        fname = mfile;
       }
 
-      Array_unlock(markets);
+      db_vacuum_plots(db, String_chars(e->id), String_chars(m->id),
+                      m_cnf != NULL ? m_cnf->wnanos : zero, fname);
+
+      db_vacuum_samples(db, String_chars(e->id), String_chars(m->id),
+                        m_cnf != NULL ? m_cnf->wnanos : zero, fname);
     }
+
+    Array_unlock(markets);
   }
 
-  /*
-   * Give users a chance to move the data dumped above out of the way before
-   * performing vacuum full analyze.
-   */
-  if (file == NULL)
+  if (analyze)
     db_vacuum();
 
   db_disconnect(db);
