@@ -453,16 +453,46 @@ void db_vacuum(void) {
 #endif
 }
 
-void db_vacuum_plots(const void *const db) {
+void db_vacuum_plots(const void *const db, const char *const e_id,
+                     const char *const m_id,
+                     const struct Numeric *const wnanos) {
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(1, stdout);
 #endif
+  struct Numeric *now = Numeric_new();
+  nanos_now(now);
+  struct Numeric *nanos = Numeric_sub(now, wnanos);
+  Numeric_delete(now);
   // clang-format off
   EXEC SQL BEGIN DECLARE SECTION;
   const char *con = String_chars(db);
+  const char *sql_e_id = e_id;
+  const char *sql_m_id = m_id;
+  const numeric *sql_exp = Numeric_db(nanos);
   EXEC SQL END DECLARE SECTION;
+  EXEC SQL WHENEVER SQLWARNING CALL db_warn();
+  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL WHENEVER NOT FOUND CONTINUE;
   EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
-  EXEC SQL AT :con DELETE FROM "PLOTS";
+  EXEC SQL AT :con
+    DELETE FROM "PLOTS_DATAPOINTS"
+      WHERE "PLOT_ID" IN (
+        SELECT "PLOT_ID" FROM "TREND_PLOTS"
+        WHERE "EXCHANGE_ID" = :sql_e_id
+          AND "PRODUCT_ID" = :sql_m_id
+      ) AND "X" < :sql_exp;
+  EXEC SQL AT :con
+    DELETE FROM "PLOTS_DATAPOINTS"
+      WHERE "PLOT_ID" IN (
+        SELECT "PLOT_ID" FROM "TREND_MARKERS"
+        WHERE "EXCHANGE_ID" = :sql_e_id
+          AND "PRODUCT_ID" = :sql_m_id
+      ) AND "X" < :sql_exp;
+  EXEC SQL AT :con
+    DELETE FROM "TREND_CANDLES" c
+      WHERE c."EXCHANGE_ID" = :sql_e_id
+        AND c."PRODUCT_ID" = :sql_m_id
+        AND c."CNANOS" < :sql_exp;
   EXEC SQL AT :con COMMIT;
   // clang-format on
 #ifdef ABAG_SQL_DEBUG

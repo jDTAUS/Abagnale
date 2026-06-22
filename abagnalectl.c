@@ -249,10 +249,7 @@ static int cmd_vacuum(int argc, char *argv[]) {
 
   void *restrict const db = db_connect(String_chars(progname));
 
-  if (cnf->plts_dir != NULL)
-    db_vacuum_plots(db);
-
-  if (file != NULL) {
+  if (file != NULL || cnf->plts_dir != NULL) {
     e_items = Array_items(exchanges);
     for (size_t i = Array_size(exchanges); i > 0; i--) {
       const struct Exchange *restrict const e = e_items[i - 1];
@@ -264,19 +261,31 @@ static int cmd_vacuum(int argc, char *argv[]) {
         const struct MarketConfig *restrict const m_cnf =
             marketconfig(e->nm, m->nm);
 
-        r = snprintf(mfile, sizeof(mfile), "%s-%s-%s", file,
-                     String_chars(e->nm), String_chars(m->nm));
+        if (cnf->plts_dir != NULL)
+          db_vacuum_plots(db, String_chars(e->id), String_chars(m->id),
+                          m_cnf != NULL ? m_cnf->wnanos : zero);
 
-        if (r < 0 || (size_t)r >= sizeof(mfile))
-          panic();
+        if (file != NULL) {
+          r = snprintf(mfile, sizeof(mfile), "%s-%s-%s", file,
+                       String_chars(e->nm), String_chars(m->nm));
 
-        db_vacuum_samples(db, String_chars(e->id), String_chars(m->id),
-                          m_cnf != NULL ? m_cnf->wnanos : zero, mfile);
+          if (r < 0 || (size_t)r >= sizeof(mfile))
+            panic();
+
+          db_vacuum_samples(db, String_chars(e->id), String_chars(m->id),
+                            m_cnf != NULL ? m_cnf->wnanos : zero, mfile);
+        }
       }
 
       Array_unlock(markets);
     }
-  } else
+  }
+
+  /*
+   * Give users a chance to move the data dumped above out of the way before
+   * performing vacuum full analyze.
+   */
+  if (file == NULL)
     db_vacuum();
 
   db_disconnect(db);
