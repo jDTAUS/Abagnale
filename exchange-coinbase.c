@@ -1056,6 +1056,21 @@ static void ws_user_update(const struct wcjson_document *restrict const doc,
                Numeric_cmp(o->b_ordered, o->b_filled) == 0;
   o->dnanos = o->settled ? Numeric_copy(nanos) : NULL;
 
+  /*
+   * The user channel is lacking the last_fill_time property the REST API
+   * provides. The timestamp of the event is used instead. Sadly the events are
+   * sent out before the final settle is performed so that the timestamp of the
+   * event can be lower a few nanoseconds or microsends than the timestamp of
+   * the real settle. For orders filled immediately this can lead to the event
+   * timestamp lying before the creation timestamp. We just compare them here
+   * and make them equal. There is no other way due to the channel events
+   * lacking that information.
+   */
+  if (o->dnanos != NULL && Numeric_cmp(o->dnanos, o->cnanos) < 0) {
+    Numeric_delete(o->dnanos);
+    o->dnanos = Numeric_copy(o->cnanos);
+  }
+
   if (o->status == ORDER_STATUS_UNKNOWN)
     werr("coinbase: user: %s: Order status unknown: %s\n", j_status->mbstring,
          wcjsondoc_string(errbuf, sizeof(errbuf), doc, order, NULL));
