@@ -2206,7 +2206,7 @@ static void trade_create(const struct worker_ctx *restrict const w_ctx,
 
 static void trade_pricing(const struct worker_ctx *restrict const w_ctx,
                           struct Trade *restrict const t,
-                          const struct Array *restrict const samples,
+                          struct Array *restrict const samples,
                           const struct Sample *restrict const sample) {
   const struct abag_tls *restrict const tls = abag_tls();
   struct Numeric *restrict const ef_pc = tls->trade_pricing.ef_pc;
@@ -2228,6 +2228,7 @@ static void trade_pricing(const struct worker_ctx *restrict const w_ctx,
   Numeric_add_to(r0, one, t->fee_pf);
 
   if (w_ctx->m_cnf->v_pc == NULL) {
+    Array_unlock(samples);
     db_volatility_open(w_ctx->db, String_chars(w_ctx->e->id),
                        String_chars(w_ctx->m->id));
 
@@ -2257,6 +2258,7 @@ static void trade_pricing(const struct worker_ctx *restrict const w_ctx,
     }
 
     db_volatility_close(w_ctx->db);
+    Array_lock(samples);
   } else
     Numeric_copy_to(w_ctx->m_cnf->v_pc, t->tp_pc);
 
@@ -2924,10 +2926,13 @@ static int orders_process(void *restrict const arg) {
         Numeric_copy_to(q_return, t->q_return);
         Array_lock(samples);
         if (Array_size(samples) > 1) {
-          const struct Sample *restrict const s = Array_tail(samples);
+          const struct Sample *restrict s = Array_tail(samples);
           trade_pricing(w_ctx, t, samples, s);
-          position_maintain(w_ctx, t, p, samples, s, order);
-          trade_maintain(w_ctx, t, samples, s);
+          if (Array_size(samples) > 1) {
+            s = Array_tail(samples);
+            position_maintain(w_ctx, t, p, samples, s, order);
+            trade_maintain(w_ctx, t, samples, s);
+          }
         }
         Array_unlock(samples);
       }
@@ -3073,9 +3078,9 @@ static int samples_process(void *restrict const arg) {
 
         Array_lock(samples);
         if (Array_size(samples) > 1) {
-          const struct Sample *restrict const s = Array_tail(samples);
-          trade_pricing(w_ctx, t, samples, s);
-          trade_maintain(w_ctx, t, samples, s);
+          trade_pricing(w_ctx, t, samples, Array_tail(samples));
+          if (Array_size(samples) > 1)
+            trade_maintain(w_ctx, t, samples, Array_tail(samples));
         }
         Array_unlock(samples);
 
