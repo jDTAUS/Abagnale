@@ -1,8 +1,24 @@
+-- $JDTAUS$
+
+-- Copyright (c) 2018 - 2026 Christian Schulte <cs@schulte.it>
+--
+-- Permission to use, copy, modify, and distribute this software for any
+-- purpose with or without fee is hereby granted, provided that the above
+-- copyright notice and this permission notice appear in all copies.
+--
+-- THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+-- WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+-- MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+-- ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+-- WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+-- ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+-- OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+
 --
 -- PostgreSQL database dump
 --
 
-\restrict vUhzvQBRpSLFmXSFnSBHs7dhDTatyHgovSwg5nRPshezS75B0fwBGiMaCkqPcL0
+\restrict QCKmDJJuT5TglVClkhZbeFZQss40S5ZcwvNDNsXQErkJLnZVy1BrAm0I84tFJlB
 
 -- Dumped from database version 17.10 (Debian 17.10-0+deb13u1)
 -- Dumped by pg_dump version 17.10 (Debian 17.10-0+deb13u1)
@@ -28,9 +44,9 @@ CREATE DATABASE "ABAGNALE" WITH TEMPLATE = template0 ENCODING = 'UTF8' LOCALE_PR
 
 ALTER DATABASE "ABAGNALE" OWNER TO abagnale;
 
-\unrestrict vUhzvQBRpSLFmXSFnSBHs7dhDTatyHgovSwg5nRPshezS75B0fwBGiMaCkqPcL0
+\unrestrict QCKmDJJuT5TglVClkhZbeFZQss40S5ZcwvNDNsXQErkJLnZVy1BrAm0I84tFJlB
 \connect "ABAGNALE"
-\restrict vUhzvQBRpSLFmXSFnSBHs7dhDTatyHgovSwg5nRPshezS75B0fwBGiMaCkqPcL0
+\restrict QCKmDJJuT5TglVClkhZbeFZQss40S5ZcwvNDNsXQErkJLnZVy1BrAm0I84tFJlB
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -199,7 +215,7 @@ ALTER TABLE public."IDENTIFIERS" OWNER TO abagnale;
 -- Name: TABLE "IDENTIFIERS"; Type: COMMENT; Schema: public; Owner: abagnale
 --
 
-COMMENT ON TABLE public."IDENTIFIERS" IS 'Mappings of external identifiers to internal UUIDs.';
+COMMENT ON TABLE public."IDENTIFIERS" IS 'Symbol to id mappings.';
 
 
 --
@@ -240,7 +256,7 @@ ALTER TABLE public."PLOTS_DATAPOINTS" OWNER TO abagnale;
 -- Name: TABLE "PLOTS_DATAPOINTS"; Type: COMMENT; Schema: public; Owner: abagnale
 --
 
-COMMENT ON TABLE public."PLOTS_DATAPOINTS" IS 'Datapoints of a two dimensional plot.';
+COMMENT ON TABLE public."PLOTS_DATAPOINTS" IS 'Datapoints of two dimensional plots.';
 
 
 --
@@ -697,5 +713,5 @@ ALTER TABLE ONLY public."TREND_PLOTS"
 -- PostgreSQL database dump complete
 --
 
-\unrestrict vUhzvQBRpSLFmXSFnSBHs7dhDTatyHgovSwg5nRPshezS75B0fwBGiMaCkqPcL0
+\unrestrict QCKmDJJuT5TglVClkhZbeFZQss40S5ZcwvNDNsXQErkJLnZVy1BrAm0I84tFJlB
 
