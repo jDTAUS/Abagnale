@@ -109,7 +109,7 @@ int main(int argc, char *argv[]) {
   char *plotsdir = NULL;
   verbose = false;
   struct optparse options = {0};
-  void *const *items;
+  void *const *restrict items;
   bool configtest = false;
 
   proc_init();
@@ -206,11 +206,11 @@ int main(int argc, char *argv[]) {
 
   argv += options.optind;
 
-  for (size_t i = nitems(all_algorithms); i > 0; i--)
-    all_algorithms[i - 1]->init();
+  for (size_t i = nitems(all_algorithms); i-- > 0;)
+    all_algorithms[i]->init();
 
-  for (size_t i = nitems(all_exchanges); i > 0; i--)
-    all_exchanges[i - 1]->init();
+  for (size_t i = nitems(all_exchanges); i-- > 0;)
+    all_exchanges[i]->init();
 
   cnf = Config_new();
   if (plotsdir != NULL)
@@ -223,27 +223,27 @@ int main(int argc, char *argv[]) {
   algorithms = Array_new(nitems(all_algorithms));
 
   items = Array_items(cnf->m_cnf);
-  for (size_t i = nitems(all_algorithms); i > 0; i--) {
+  for (size_t i = nitems(all_algorithms); i-- > 0;) {
     bool a_found = false;
 
-    for (size_t j = Array_size(cnf->m_cnf); j > 0; j--)
-      if (String_equals(all_algorithms[i - 1]->nm,
-                        ((struct MarketConfig *)items[j - 1])->a_nm)) {
+    for (size_t j = Array_size(cnf->m_cnf); j-- > 0;)
+      if (String_equals(all_algorithms[i]->nm,
+                        ((struct MarketConfig *)items[j])->a_nm)) {
         a_found = true;
         break;
       }
 
     if (a_found)
-      Array_add_tail(algorithms, all_algorithms[i - 1]);
+      Array_add_tail(algorithms, all_algorithms[i]);
   }
 
-  for (size_t i = nitems(all_exchanges); i > 0; i--) {
+  for (size_t i = nitems(all_exchanges); i-- > 0;) {
     const struct ExchangeConfig *restrict const e_cnf =
-        Map_get(cnf->e_cnf, all_exchanges[i - 1]->nm);
+        Map_get(cnf->e_cnf, all_exchanges[i]->nm);
 
     if (e_cnf != NULL) {
-      all_exchanges[i - 1]->configure(e_cnf);
-      Array_add_tail(exchanges, all_exchanges[i - 1]);
+      all_exchanges[i]->configure(e_cnf);
+      Array_add_tail(exchanges, all_exchanges[i]);
     }
   }
 
@@ -258,11 +258,11 @@ int main(int argc, char *argv[]) {
   } else
     r = EXIT_SUCCESS;
 
-  for (size_t i = nitems(all_algorithms); i > 0; i--)
-    all_algorithms[i - 1]->destroy();
+  for (size_t i = nitems(all_algorithms); i-- > 0;)
+    all_algorithms[i]->destroy();
 
-  for (size_t i = nitems(all_exchanges); i > 0; i--)
-    all_exchanges[i - 1]->destroy();
+  for (size_t i = nitems(all_exchanges); i-- > 0;)
+    all_exchanges[i]->destroy();
 
   Array_delete(algorithms, NULL);
   Array_delete(exchanges, NULL);

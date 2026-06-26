@@ -300,8 +300,8 @@
   if (j_##_item##_m == NULL) {                                                 \
     werr("coinbase: Market '%s' not available: %s\n", j_##_item->mbstring,     \
          wcjsondoc_string(_errbuf, sizeof(_errbuf), _doc, _val, NULL));        \
-    for (size_t i = nitems(ws_channels); i > 0; i--)                           \
-      ws_channels[i - 1].reconnect = true;                                     \
+    for (size_t i = nitems(ws_channels); i-- > 0;)                             \
+      ws_channels[i].reconnect = true;                                         \
     goto _ret;                                                                 \
   }
 
@@ -320,8 +320,8 @@
     if (j_##_item##_m == NULL) {                                               \
       werr("coinbase: Market '%s' not available: %s\n", j_##_item->mbstring,   \
            wcjsondoc_string(_errbuf, sizeof(_errbuf), _doc, _val, NULL));      \
-      for (size_t i = nitems(ws_channels); i > 0; i--)                         \
-        ws_channels[i - 1].reconnect = true;                                   \
+      for (size_t i = nitems(ws_channels); i-- > 0;)                           \
+        ws_channels[i].reconnect = true;                                       \
       goto _ret;                                                               \
     }                                                                          \
   }
@@ -545,41 +545,41 @@ static struct ws_channel {
 };
 
 static enum order_status order_status(const char *restrict status) {
-  for (int i = nitems(order_status_map); i > 0; i--)
-    if (!strcmp(order_status_map[i - 1].json, status))
-      return order_status_map[i - 1].status;
+  for (int i = nitems(order_status_map); i-- > 0;)
+    if (!strcmp(order_status_map[i].json, status))
+      return order_status_map[i].status;
 
   return ORDER_STATUS_UNKNOWN;
 }
 
 static enum market_type market_type(const char *restrict const type) {
-  for (int i = nitems(market_type_map); i > 0; i--)
-    if (!strcmp(market_type_map[i - 1].json, type))
-      return market_type_map[i - 1].type;
+  for (int i = nitems(market_type_map); i-- > 0;)
+    if (!strcmp(market_type_map[i].json, type))
+      return market_type_map[i].type;
 
   return MARKET_TYPE_UNKNOWN;
 }
 
 static enum market_status market_status(const char *restrict const status) {
-  for (int i = nitems(market_status_map); i > 0; i--)
-    if (!strcmp(market_status_map[i - 1].json, status))
-      return market_status_map[i - 1].status;
+  for (int i = nitems(market_status_map); i-- > 0;)
+    if (!strcmp(market_status_map[i].json, status))
+      return market_status_map[i].status;
 
   return MARKET_STATUS_UNKNOWN;
 }
 
 static enum account_type account_type(const char *restrict const type) {
-  for (int i = nitems(account_type_map); i > 0; i--)
-    if (!strcmp(account_type_map[i - 1].json, type))
-      return account_type_map[i - 1].type;
+  for (int i = nitems(account_type_map); i-- > 0;)
+    if (!strcmp(account_type_map[i].json, type))
+      return account_type_map[i].type;
 
   return ACCOUNT_TYPE_UNSPECIFIED;
 }
 
 static struct ws_channel *ws_channel(const char *restrict const name) {
-  for (size_t i = nitems(ws_channels); i > 0; i--)
-    if (!strcmp(ws_channels[i - 1].name, name))
-      return &ws_channels[i - 1];
+  for (size_t i = nitems(ws_channels); i-- > 0;)
+    if (!strcmp(ws_channels[i].name, name))
+      return &ws_channels[i];
 
   return NULL;
 }
@@ -987,8 +987,8 @@ ret:
 static void ws_status_update(const struct wcjson_document *restrict const doc,
                              const struct wcjson_value *restrict const product,
                              const struct Numeric *restrict const nanos) {
-  for (size_t i = nitems(ws_channels); i > 0; i--)
-    ws_channels[i - 1].reconnect = true;
+  for (size_t i = nitems(ws_channels); i-- > 0;)
+    ws_channels[i].reconnect = true;
 }
 
 static void ws_user_update(const struct wcjson_document *restrict const doc,
@@ -1251,16 +1251,16 @@ ret:
 static void ws_subscribe(struct mg_connection *restrict const c,
                          const struct ws_channel *restrict const channel) {
   struct wcjson_document *restrict const doc = wcjsondoc_new();
-  void *const *items;
+  void *const *restrict items;
 
   struct Array *restrict const m_array = coinbase_markets();
   struct wcjson_value *restrict const j_msg = wcjson_object(doc);
   struct wcjson_value *restrict const j_arr = wcjson_array(doc);
 
   items = Array_items(m_array);
-  for (size_t i = Array_size(m_array); i > 0; i--) {
+  for (size_t i = Array_size(m_array); i-- > 0;) {
     struct wcjson_value *restrict const j_id =
-        wcjson_string(doc, String_chars(((struct Market *)items[i - 1])->sym));
+        wcjson_string(doc, String_chars(((struct Market *)items[i])->sym));
 
     wcjson_array_add(doc, j_arr, j_id);
   }
@@ -1640,17 +1640,16 @@ static void coinbase_start(void) {
   Queue_start(samples);
 
   running = true;
-  for (size_t i = nitems(ws_channels); i > 0; i--) {
-    if (ws_channels[i - 1].items != NULL) {
-      struct mg_connection *restrict const c =
-          mg_ws_connect(mgr, ABAG_COINBASE_WEBSOCKET_URI, ws_listener,
-                        &ws_channels[i - 1], NULL);
+  for (size_t i = nitems(ws_channels); i-- > 0;) {
+    if (ws_channels[i].items != NULL) {
+      struct mg_connection *restrict const c = mg_ws_connect(
+          mgr, ABAG_COINBASE_WEBSOCKET_URI, ws_listener, &ws_channels[i], NULL);
 
-      ws_channels[i - 1].last_message = mg_millis();
+      ws_channels[i].last_message = mg_millis();
 
       if (!c)
         fatal("%s: %s: Failure starting websocket\n",
-              ABAG_COINBASE_WEBSOCKET_URI, ws_channels[i - 1].name);
+              ABAG_COINBASE_WEBSOCKET_URI, ws_channels[i].name);
     }
   }
 
@@ -1671,8 +1670,8 @@ static struct Sample *coinbase_sample_await(void) {
     werr("coinbase: Dequeuing ticker timed out after %" PRIdMAX " seconds\n",
          (intmax_t)(WEBSOCKET_STALL_MILLIS / 1000));
 
-    for (size_t i = nitems(ws_channels); i > 0; i--)
-      ws_channels[i - 1].reconnect = true;
+    for (size_t i = nitems(ws_channels); i-- > 0;)
+      ws_channels[i].reconnect = true;
   }
 
   return s;
@@ -1850,7 +1849,7 @@ ret:
 static struct Array *coinbase_markets(void) {
   struct wcjson_document doc = WCJSON_DOCUMENT_INITIALIZER;
   char url[URL_MAX_LENGTH + 1] = {0};
-  void *const *items;
+  void *const *restrict items;
 
   Array_lock(markets);
 
@@ -1872,22 +1871,21 @@ static struct Array *coinbase_markets(void) {
       markets_by_id = Map_new(StringMapOps, Array_size(markets));
 
       items = Array_items(markets);
-      for (size_t i = Array_size(markets); i > 0; i--) {
-        if (Map_put(markets_by_symbol, ((struct Market *)items[i - 1])->sym,
-                    items[i - 1]))
+      for (size_t i = Array_size(markets); i-- > 0;) {
+        if (Map_put(markets_by_symbol, ((struct Market *)items[i])->sym,
+                    items[i]))
           fatal("%s: Market symbol uniqueness constraint: %s", url,
-                String_chars(((struct Market *)items[i - 1])->sym));
+                String_chars(((struct Market *)items[i])->sym));
 
-        if (Map_put(markets_by_id, ((struct Market *)items[i - 1])->id,
-                    items[i - 1]))
+        if (Map_put(markets_by_id, ((struct Market *)items[i])->id, items[i]))
           fatal("%s: Market id uniqueness constraint: %s", url,
-                String_chars(((struct Market *)items[i - 1])->id));
+                String_chars(((struct Market *)items[i])->id));
       }
 
       markets_reload = false;
     } else
-      for (size_t i = nitems(ws_channels); i > 0; i--)
-        ws_channels[i - 1].reconnect = true;
+      for (size_t i = nitems(ws_channels); i-- > 0;)
+        ws_channels[i].reconnect = true;
   }
 
   heap_free(doc.values);
@@ -2042,7 +2040,7 @@ ret:
 }
 
 static struct Array *coinbase_accounts(void) {
-  void *const *items;
+  void *const *restrict items;
 
   Array_lock(accounts);
 
@@ -2063,16 +2061,16 @@ static struct Array *coinbase_accounts(void) {
     accounts_by_currency = Map_new(StringMapOps, Array_size(accounts));
 
     items = Array_items(accounts);
-    for (size_t i = Array_size(accounts); i > 0; i--) {
-      if (Map_put(accounts_by_currency, ((struct Account *)items[i - 1])->c_id,
-                  items[i - 1]) != NULL)
+    for (size_t i = Array_size(accounts); i-- > 0;) {
+      if (Map_put(accounts_by_currency, ((struct Account *)items[i])->c_id,
+                  items[i]) != NULL)
         fatal("Account currency uniqueness constraint: %s",
-              String_chars(((struct Account *)items[i - 1])->c_id));
+              String_chars(((struct Account *)items[i])->c_id));
 
-      if (Map_put(accounts_by_id, ((struct Account *)items[i - 1])->id,
-                  items[i - 1]) != NULL)
+      if (Map_put(accounts_by_id, ((struct Account *)items[i])->id, items[i]) !=
+          NULL)
         fatal("Account id uniqueness constraint: %s",
-              String_chars(((struct Account *)items[i - 1])->id));
+              String_chars(((struct Account *)items[i])->id));
     }
   }
 
@@ -2083,11 +2081,11 @@ static struct Account *
 coinbase_account_currency(const struct String *restrict const currency) {
   struct Array *restrict const haystack = coinbase_accounts();
   struct Account *restrict needle = NULL;
-  void *const *items = Array_items(haystack);
+  void *const *restrict items = Array_items(haystack);
 
-  for (size_t i = Array_size(haystack); i > 0; i--)
-    if (String_equals(((struct Account *)items[i - 1])->c_id, currency)) {
-      needle = items[i - 1];
+  for (size_t i = Array_size(haystack); i-- > 0;)
+    if (String_equals(((struct Account *)items[i])->c_id, currency)) {
+      needle = items[i];
       needle->mtx = Array_mutex(accounts);
       return needle;
     }

@@ -130,58 +130,58 @@ static const struct {
 };
 
 static const char *market_type_name(const enum market_type type) {
-  for (size_t i = nitems(market_types); i > 0; i--)
-    if (market_types[i - 1].type == type)
-      return market_types[i - 1].name;
+  for (size_t i = nitems(market_types); i-- > 0;)
+    if (market_types[i].type == type)
+      return market_types[i].name;
 
   return "NOT FOUND";
 }
 
 static const enum market_type market_type_value(const char *restrict type) {
-  for (size_t i = nitems(market_types); i > 0; i--)
-    if (!strcmp(type, market_types[i - 1].name))
-      return market_types[i - 1].type;
+  for (size_t i = nitems(market_types); i-- > 0;)
+    if (!strcmp(type, market_types[i].name))
+      return market_types[i].type;
 
   return 0;
 }
 
 static const char *market_status_name(const enum market_status status) {
-  for (size_t i = nitems(market_status); i > 0; i--)
-    if (market_status[i - 1].status == status)
-      return market_status[i - 1].name;
+  for (size_t i = nitems(market_status); i-- > 0;)
+    if (market_status[i].status == status)
+      return market_status[i].name;
 
   return "NOT FOUND";
 }
 
 static const enum market_status
 market_status_value(const char *restrict status) {
-  for (size_t i = nitems(market_status); i > 0; i--)
-    if (!strcmp(status, market_status[i - 1].name))
-      return market_status[i - 1].status;
+  for (size_t i = nitems(market_status); i-- > 0;)
+    if (!strcmp(status, market_status[i].name))
+      return market_status[i].status;
 
   return 0;
 }
 
 static const char *account_type_name(const enum account_type type) {
-  for (size_t i = nitems(account_types); i > 0; i--)
-    if (account_types[i - 1].type == type)
-      return account_types[i - 1].name;
+  for (size_t i = nitems(account_types); i-- > 0;)
+    if (account_types[i].type == type)
+      return account_types[i].name;
 
   return "NOT FOUND";
 }
 
 static const enum account_type account_type_value(const char *restrict type) {
-  for (size_t i = nitems(account_types); i > 0; i--)
-    if (!strcmp(type, account_types[i - 1].name))
-      return account_types[i - 1].type;
+  for (size_t i = nitems(account_types); i-- > 0;)
+    if (!strcmp(type, account_types[i].name))
+      return account_types[i].type;
 
   return 0;
 }
 
 static const char *order_status_name(const enum order_status status) {
-  for (size_t i = nitems(order_status); i > 0; i--)
-    if (status == order_status[i - 1].status)
-      return order_status[i - 1].name;
+  for (size_t i = nitems(order_status); i-- > 0;)
+    if (status == order_status[i].status)
+      return order_status[i].name;
 
   return "NOT FOUND";
 }
@@ -215,9 +215,9 @@ static _Noreturn void usage(void) {
        "[-n] command\n",
        String_chars(progname));
 
-  for (size_t i = nitems(cmd_tab); i > 0; i--) {
-    werr("\t%s\n", cmd_tab[i - 1].name);
-    werr("\t\t%s\n", cmd_tab[i - 1].usage);
+  for (size_t i = nitems(cmd_tab); i-- > 0;) {
+    werr("\t%s\n", cmd_tab[i].name);
+    werr("\t\t%s\n", cmd_tab[i].usage);
   }
 
   exit(EXIT_FAILURE);
@@ -226,8 +226,8 @@ static _Noreturn void usage(void) {
 static int cmd_vacuum(int argc, char *argv[]) {
   int ch;
   int r;
-  void *const *e_items;
-  void *const *m_items;
+  void *const *restrict e_items;
+  void *const *restrict m_items;
   const char *restrict dir = NULL;
   bool analyze = false;
   char mfile[4096] = {0};
@@ -254,14 +254,14 @@ static int cmd_vacuum(int argc, char *argv[]) {
   void *restrict const db = db_connect(String_chars(progname));
 
   e_items = Array_items(exchanges);
-  for (size_t i = Array_size(exchanges); i > 0; i--) {
-    const struct Exchange *restrict const e = e_items[i - 1];
+  for (size_t i = Array_size(exchanges); i-- > 0;) {
+    const struct Exchange *restrict const e = e_items[i];
     struct Array *restrict const markets = e->markets();
 
     m_items = Array_items(markets);
-    for (size_t j = Array_size(markets); j > 0; j--) {
+    for (size_t j = Array_size(markets); j-- > 0;) {
       char *restrict fname = NULL;
-      const struct Market *restrict const m = m_items[j - 1];
+      const struct Market *restrict const m = m_items[j];
       const struct MarketConfig *restrict const m_cnf =
           marketconfig(e->nm, m->nm);
 
@@ -297,8 +297,8 @@ static int cmd_algorithms(int argc, char *argv[]) {
   if (argc > 1)
     usage();
 
-  for (size_t i = all_algorithms_nitems; i > 0; i--)
-    printf("%s\n", String_chars(all_algorithms[i - 1].nm));
+  for (size_t i = all_algorithms_nitems; i-- > 0;)
+    printf("%s\n", String_chars(all_algorithms[i].nm));
 
   return EXIT_SUCCESS;
 }
@@ -307,8 +307,8 @@ static int cmd_exchanges(int argc, char *argv[]) {
   if (argc > 1)
     usage();
 
-  for (size_t i = all_exchanges_nitems; i > 0; i--)
-    printf("%s\n", String_chars(all_exchanges[i - 1].nm));
+  for (size_t i = all_exchanges_nitems; i-- > 0;)
+    printf("%s\n", String_chars(all_exchanges[i].nm));
 
   return EXIT_SUCCESS;
 }
@@ -319,7 +319,7 @@ static int cmd_markets(int argc, char *argv[]) {
   enum market_status status = 0;
   enum market_type type = 0;
   struct optparse options = {0};
-  void *const *items;
+  void *const *restrict items;
 
   optparse_init(&options, argv);
 
@@ -363,8 +363,8 @@ static int cmd_markets(int argc, char *argv[]) {
            "SCALE\tQUOTE_INCREMENT\tTRADEABLE\tACTIVE\n");
 
   items = Array_items(markets);
-  for (size_t i = Array_size(markets); i > 0; i--) {
-    const struct Market *restrict const m = items[i - 1];
+  for (size_t i = Array_size(markets); i-- > 0;) {
+    const struct Market *restrict const m = items[i];
 
     if ((status && m->status == status) || (type && m->type == type) ||
         !(status || type))
@@ -439,7 +439,7 @@ static int cmd_accounts(int argc, char *argv[]) {
   struct String *restrict e_nm = NULL;
   enum account_type type = 0;
   struct optparse options = {0};
-  void *const *items;
+  void *const *restrict items;
 
   optparse_init(&options, argv);
 
@@ -476,8 +476,8 @@ static int cmd_accounts(int argc, char *argv[]) {
     printf("ID\tNAME\tSYMBOL\tTYPE\tAVAILABLE\tACTIVE\tREADY\n");
 
   items = Array_items(accounts);
-  for (size_t i = Array_size(accounts); i > 0; i--) {
-    const struct Account *restrict const a = items[i - 1];
+  for (size_t i = Array_size(accounts); i-- > 0;) {
+    const struct Account *restrict const a = items[i];
 
     if ((type && a->type == type) || !type)
       print_account(a);
@@ -645,7 +645,7 @@ static int cmd_plot(int argc, char *argv[]) {
   char *restrict f_nm = NULL;
   struct Market *restrict m = NULL;
   struct optparse options = {0};
-  void *const *items;
+  void *const *restrict items;
 
   optparse_init(&options, argv);
 
@@ -691,8 +691,8 @@ static int cmd_plot(int argc, char *argv[]) {
   struct Array *restrict const markets = e->markets();
 
   items = Array_items(markets);
-  for (size_t i = Array_size(markets); i > 0; i--) {
-    struct Market *restrict const needle = items[i - 1];
+  for (size_t i = Array_size(markets); i-- > 0;) {
+    struct Market *restrict const needle = items[i];
     if (String_equals(needle->nm, m_nm)) {
       m = needle;
       break;
@@ -733,7 +733,7 @@ static int cmd_volatility(int argc, char *argv[]) {
   struct Numeric *restrict w = NULL;
   struct Market *restrict m = NULL;
   struct optparse options = {0};
-  void *const *items;
+  void *const *restrict items;
 
   optparse_init(&options, argv);
 
@@ -773,8 +773,8 @@ static int cmd_volatility(int argc, char *argv[]) {
   struct Array *restrict const markets = e->markets();
 
   items = Array_items(markets);
-  for (size_t i = Array_size(markets); i > 0; i--) {
-    struct Market *restrict const needle = items[i - 1];
+  for (size_t i = Array_size(markets); i-- > 0;) {
+    struct Market *restrict const needle = items[i];
     if (String_equals(needle->nm, m_nm)) {
       m = needle;
       break;
@@ -795,9 +795,9 @@ static int cmd_volatility(int argc, char *argv[]) {
 
   if (w == NULL) {
     items = Array_items(volatility_windows);
-    for (size_t i = Array_size(volatility_windows); i > 0; i--) {
-      db_volatility(v, db, items[i - 1]);
-      char *restrict const w_info = nanos_string(items[i - 1]);
+    for (size_t i = Array_size(volatility_windows); i-- > 0;) {
+      db_volatility(v, db, items[i]);
+      char *restrict const w_info = nanos_string(items[i]);
       char *restrict const v_info = Numeric_to_char(v, 4);
       printf("%s\t%s\n", w_info, v_info);
       Numeric_char_free(v_info);
@@ -829,9 +829,9 @@ int abagnalectl(int argc, char *argv[]) {
   int (*cmd)(int, char *[]) = NULL;
 
   if (argv[0] != NULL)
-    for (size_t i = nitems(cmd_tab); i > 0; i--)
-      if (!strcmp(argv[0], cmd_tab[i - 1].name)) {
-        cmd = cmd_tab[i - 1].cmd;
+    for (size_t i = nitems(cmd_tab); i-- > 0;)
+      if (!strcmp(argv[0], cmd_tab[i].name)) {
+        cmd = cmd_tab[i].cmd;
         break;
       }
 

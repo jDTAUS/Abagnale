@@ -184,19 +184,19 @@ static struct Numeric *restrict ninety_percent_factor;
 int abagnale(int argc, char *argv[]);
 
 const struct Algorithm *algorithm(const struct String *restrict const nm) {
-  void *const *items = Array_items(algorithms);
-  for (size_t i = Array_size(algorithms); i > 0; i--)
-    if (String_equals(nm, ((struct Algorithm *)items[i - 1])->nm))
-      return items[i - 1];
+  void *const *restrict items = Array_items(algorithms);
+  for (size_t i = Array_size(algorithms); i-- > 0;)
+    if (String_equals(nm, ((struct Algorithm *)items[i])->nm))
+      return items[i];
 
   return NULL;
 }
 
 const struct Exchange *exchange(const struct String *restrict const nm) {
-  void *const *items = Array_items(exchanges);
-  for (size_t i = Array_size(exchanges); i > 0; i--)
-    if (String_equals(nm, ((struct Exchange *)items[i - 1])->nm))
-      return items[i - 1];
+  void *const *restrict items = Array_items(exchanges);
+  for (size_t i = Array_size(exchanges); i-- > 0;)
+    if (String_equals(nm, ((struct Exchange *)items[i])->nm))
+      return items[i];
 
   return NULL;
 }
@@ -204,13 +204,12 @@ const struct Exchange *exchange(const struct String *restrict const nm) {
 const struct MarketConfig *
 marketconfig(const struct String *restrict const e_nm,
              const struct String *restrict const m_nm) {
-  void *const *items = Array_items(cnf->m_cnf);
+  void *const *restrict items = Array_items(cnf->m_cnf);
 
-  for (size_t i = Array_size(cnf->m_cnf); i > 0; i--)
-    if (String_equals(e_nm,
-                      ((const struct MarketConfig *)items[i - 1])->e_nm) &&
-        MarketConfig_matches(items[i - 1], m_nm))
-      return items[i - 1];
+  for (size_t i = Array_size(cnf->m_cnf); i-- > 0;)
+    if (String_equals(e_nm, ((const struct MarketConfig *)items[i])->e_nm) &&
+        MarketConfig_matches(items[i], m_nm))
+      return items[i];
 
   return NULL;
 }
@@ -903,7 +902,7 @@ static bool quote_return(struct Numeric *restrict const q_return,
                          const struct Array *restrict const samples) {
   const struct abag_tls *restrict const tls = abag_tls();
   struct Numeric *restrict const r0 = tls->quote_return.r0;
-  void *const *items;
+  void *const *restrict items;
 
   if (w_ctx->m_cnf == NULL)
     return false;
@@ -913,8 +912,8 @@ static bool quote_return(struct Numeric *restrict const q_return,
     struct Array *restrict const markets = w_ctx->e->markets();
 
     items = Array_items(markets);
-    for (size_t i = Array_size(markets); i > 0; i--) {
-      struct Market *restrict const needle = items[i - 1];
+    for (size_t i = Array_size(markets); i-- > 0;) {
+      struct Market *restrict const needle = items[i];
       if (String_equals(needle->q_id, w_ctx->m_cnf->r_id) &&
           String_equals(needle->b_id, w_ctx->m->q_id)) {
         q_m = needle;
@@ -2028,8 +2027,8 @@ trade:
     ac_info = "Supplying";
     // Long: Sell at highest price since trigger.
     items = Array_items(samples);
-    for (size_t i = Array_size(samples); i > 0; i--) {
-      const struct Sample *restrict const s = items[i - 1];
+    for (size_t i = Array_size(samples); i-- > 0;) {
+      const struct Sample *restrict const s = items[i];
       if (Numeric_cmp(s->nanos, tr_nanos) > 0 &&
           Numeric_cmp(s->price, o_pr) > 0)
         Numeric_copy_to(s->price, o_pr);
@@ -2039,8 +2038,8 @@ trade:
     ac_info = "Demanding";
     // Short: Buy at lowest price since trigger.
     items = Array_items(samples);
-    for (size_t i = Array_size(samples); i > 0; i--) {
-      const struct Sample *restrict const s = items[i - 1];
+    for (size_t i = Array_size(samples); i-- > 0;) {
+      const struct Sample *restrict const s = items[i];
       if (Numeric_cmp(s->nanos, tr_nanos) > 0 &&
           Numeric_cmp(s->price, o_pr) < 0)
         Numeric_copy_to(s->price, o_pr);
@@ -2163,9 +2162,9 @@ static const struct {
 
 static inline enum trade_status
 trade_status(const char *restrict const dbname) {
-  for (size_t i = nitems(db_trade_status); i > 0; i--)
-    if (!strcmp(db_trade_status[i - 1].dbname, dbname))
-      return db_trade_status[i - 1].status;
+  for (size_t i = nitems(db_trade_status); i-- > 0;)
+    if (!strcmp(db_trade_status[i].dbname, dbname))
+      return db_trade_status[i].status;
 
   panic();
 }
@@ -2213,7 +2212,7 @@ static void trade_pricing(const struct worker_ctx *restrict const w_ctx,
   struct Numeric *restrict const ef_pc = tls->trade_pricing.ef_pc;
   struct Numeric *restrict const r0 = tls->trade_pricing.r0;
   const struct Pricing *restrict const pricing = w_ctx->e->pricing();
-  void *const *items;
+  void *const *restrict items;
 
   Numeric_copy_to(pricing->ef_pc, ef_pc);
   mutex_unlock(pricing->mtx);
@@ -2236,9 +2235,8 @@ static void trade_pricing(const struct worker_ctx *restrict const w_ctx,
       Numeric_copy_to(zero, t->tp_pc);
 
       items = Array_items(volatility_windows);
-      for (size_t i = Array_size(volatility_windows); !terminated && i > 0;
-           i--) {
-        db_volatility(r0, w_ctx->db, items[i - 1]);
+      for (size_t i = Array_size(volatility_windows); !terminated && i-- > 0;) {
+        db_volatility(r0, w_ctx->db, items[i]);
 
         if (Numeric_cmp(r0, t->tp_pc) > 0)
           Numeric_copy_to(r0, t->tp_pc);
@@ -2817,8 +2815,8 @@ static struct Array *trades_load(const struct worker_ctx *restrict const w_ctx,
   db_trades_close(w_ctx->db);
 
   items = Array_items(trades);
-  for (size_t i = Array_size(trades); i > 0; i--) {
-    struct Trade *restrict const t = items[i - 1];
+  for (size_t i = Array_size(trades); i-- > 0;) {
+    struct Trade *restrict const t = items[i];
     position_state_load(w_ctx->db, &t->p_long);
     position_state_load(w_ctx->db, &t->p_short);
     trade_create(w_ctx, t, samples, sample);
@@ -2840,7 +2838,7 @@ static int orders_process(void *restrict const arg) {
     struct Array *restrict trades = NULL;
     struct Array *restrict samples = NULL;
     size_t i;
-    void *const *items;
+    void *const *restrict items;
     struct Order *restrict const order = w_ctx->e->order_await();
 
     if (order == NULL)
@@ -2902,8 +2900,8 @@ static int orders_process(void *restrict const arg) {
 
     Array_lock(trades);
     items = Array_items(trades);
-    for (i = Array_size(trades); i > 0; i--) {
-      struct Trade *restrict const trade = items[i - 1];
+    for (i = Array_size(trades); i-- > 0;) {
+      struct Trade *restrict const trade = items[i];
 
       if (trade->p_long.id != NULL &&
           String_equals(trade->p_long.id, order->id)) {
@@ -2937,7 +2935,7 @@ static int orders_process(void *restrict const arg) {
       if (t->status == TRADE_STATUS_CANCELLED ||
           t->status == TRADE_STATUS_DONE) {
         trade_delete(t);
-        Array_remove_idx(trades, i - 1);
+        Array_remove_idx(trades, i);
       }
     }
 
@@ -2957,7 +2955,7 @@ static int samples_process(void *restrict const arg) {
   struct Numeric *restrict const q_return = tls->samples_process.q_return;
   struct Numeric *restrict const nanos = tls->samples_process.nanos;
   struct worker_ctx *restrict const w_ctx = arg;
-  void *const *items;
+  void *const *restrict items;
 
   while (!terminated) {
     struct Sample *restrict const sample = w_ctx->e->sample_await();
@@ -3066,8 +3064,8 @@ static int samples_process(void *restrict const arg) {
     const bool has_config = quote_return(q_return, w_ctx, samples);
   again:
     items = Array_items(trades);
-    for (size_t i = Array_size(trades); i > 0; i--) {
-      struct Trade *restrict const t = items[i - 1];
+    for (size_t i = Array_size(trades); i-- > 0;) {
+      struct Trade *restrict const t = items[i];
 
       if (has_config) {
         t->a = algorithm(w_ctx->m_cnf->a_nm);
@@ -3084,7 +3082,7 @@ static int samples_process(void *restrict const arg) {
         if (t->status == TRADE_STATUS_CANCELLED ||
             t->status == TRADE_STATUS_DONE) {
           trade_delete(t);
-          Array_remove_idx(trades, i - 1);
+          Array_remove_idx(trades, i);
           goto again;
         } else if (t->status == TRADE_STATUS_NEW) {
           betting = true;
@@ -3130,7 +3128,7 @@ static int exchange_stop(void *restrict const arg) {
 }
 
 int abagnale(int argc, char *argv[]) {
-  void *const *items;
+  void *const *restrict items;
   ninety_percent_factor = Numeric_from_char("0.9");
 
   market_samples = Map_new(StringMapOps, ABAG_MAX_PRODUCTS);
@@ -3149,11 +3147,11 @@ int abagnale(int argc, char *argv[]) {
   workers = heap_calloc(ABAG_WORKERS * Array_size(exchanges), sizeof(thrd_t));
 
   items = Array_items(exchanges);
-  for (size_t i = Array_size(exchanges); i > 0 && !terminated; i--) {
-    struct Exchange *restrict const e = items[i - 1];
+  for (size_t i = Array_size(exchanges); i-- > 0 && !terminated;) {
+    struct Exchange *restrict const e = items[i];
     e->start();
 
-    thread_create(&workers[i - 1], exchange_stop, e);
+    thread_create(&workers[i], exchange_stop, e);
 
     for (int j = 1; j < ABAG_WORKERS && !terminated; j++) {
       char cname[DATABASE_CONNECTION_NAME_MAX_LENGTH + 1] = {0};
@@ -3171,28 +3169,24 @@ int abagnale(int argc, char *argv[]) {
       w_ctx->db = db_connect(cname);
 
       if (j == 1)
-        thread_create(&workers[(i - 1) * ABAG_WORKERS + j], orders_process,
-                      w_ctx);
+        thread_create(&workers[i * ABAG_WORKERS + j], orders_process, w_ctx);
       else
-        thread_create(&workers[(i - 1) * ABAG_WORKERS + j], samples_process,
-                      w_ctx);
+        thread_create(&workers[i * ABAG_WORKERS + j], samples_process, w_ctx);
     }
   }
 
   if (!terminated)
-    for (size_t i = ABAG_WORKERS * Array_size(exchanges); i > 0; i--)
-      thread_join(workers[i - 1], NULL);
+    for (size_t i = ABAG_WORKERS * Array_size(exchanges); i-- > 0;)
+      thread_join(workers[i], NULL);
 
   void *restrict const state_db = db_connect(String_chars(progname));
   struct MapIterator *restrict const it = MapIterator_new(market_trades);
   while (MapIterator_next(it)) {
     const struct Array *restrict const trades = MapIterator_value(it);
     items = Array_items(trades);
-    for (size_t i = Array_size(trades); i > 0; i--) {
-      position_state_save(state_db,
-                          &((const struct Trade *)items[i - 1])->p_long);
-      position_state_save(state_db,
-                          &((const struct Trade *)items[i - 1])->p_short);
+    for (size_t i = Array_size(trades); i-- > 0;) {
+      position_state_save(state_db, &((const struct Trade *)items[i])->p_long);
+      position_state_save(state_db, &((const struct Trade *)items[i])->p_short);
     }
   }
   MapIterator_delete(it);

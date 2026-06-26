@@ -220,19 +220,18 @@ struct Algorithm algorithm_trend = {
 };
 
 static enum candle_trend candle_trend_db(const char *const db) {
-  for (size_t i = nitems(candle_trend_map); i > 0; i--)
-    if (!strcmp(candle_trend_map[i - 1].db, db))
-      return candle_trend_map[i - 1].trend;
+  for (size_t i = nitems(candle_trend_map); i-- > 0;)
+    if (!strcmp(candle_trend_map[i].db, db))
+      return candle_trend_map[i].trend;
   panic();
 }
 
 static void db_candle_trend(char *restrict const db_trend,
                             const enum candle_trend trend) {
-  for (size_t i = nitems(candle_trend_map); i > 0; i--)
-    if (candle_trend_map[i - 1].trend == trend) {
-      memcpy(db_trend, candle_trend_map[i - 1].db,
-             candle_trend_map[i - 1].db_len);
-      db_trend[candle_trend_map[i - 1].db_len] = '\0';
+  for (size_t i = nitems(candle_trend_map); i-- > 0;)
+    if (candle_trend_map[i].trend == trend) {
+      memcpy(db_trend, candle_trend_map[i].db, candle_trend_map[i].db_len);
+      db_trend[candle_trend_map[i].db_len] = '\0';
       return;
     }
   panic();
@@ -303,7 +302,7 @@ static struct Position *trend_position_open(
   struct db_candle_rec db_candle = {0};
   struct trend_state *restrict const st = trend_state(db, e->id, m->id);
   struct Position *restrict p = NULL;
-  void *const *items;
+  void *const *restrict items;
 
   Numeric_copy_to(t->tp_pc, cd_pc);
   Numeric_mul_to(t->tp_pc, n_one, r0);
@@ -320,15 +319,13 @@ static struct Position *trend_position_open(
 
   items = Array_items(samples);
   for (size_t i = Array_size(samples);
-       i > 0 &&
+       i-- > 0 &&
        (cd_first->t == CANDLE_NONE
-            ? Numeric_cmp(((struct Sample *)items[i - 1])->nanos,
-                          st->cd_lnanos) > 0
+            ? Numeric_cmp(((struct Sample *)items[i])->nanos, st->cd_lnanos) > 0
             : true) &&
-       (cd_last->t == CANDLE_NONE || cd_last->t == cd_first->t);
-       i--) {
-    Numeric_copy_to(((struct Sample *)items[i - 1])->price, cd_cur->o);
-    Numeric_copy_to(((struct Sample *)items[i - 1])->nanos, cd_cur->onanos);
+       (cd_last->t == CANDLE_NONE || cd_last->t == cd_first->t);) {
+    Numeric_copy_to(((struct Sample *)items[i])->price, cd_cur->o);
+    Numeric_copy_to(((struct Sample *)items[i])->nanos, cd_cur->onanos);
 
     if (Numeric_cmp(pr_cur, cd_cur->o) == 0)
       continue;
@@ -410,11 +407,11 @@ static struct Position *trend_position_open(
   Numeric_copy_to(sample->price, pr_max);
 
   items = Array_items(samples);
-  for (size_t i = Array_size(samples); i > 0; i--) {
-    if (Numeric_cmp(pr_min, ((struct Sample *)items[i - 1])->price) > 0)
-      Numeric_copy_to(((struct Sample *)items[i - 1])->price, pr_min);
-    if (Numeric_cmp(pr_max, ((struct Sample *)items[i - 1])->price) < 0)
-      Numeric_copy_to(((struct Sample *)items[i - 1])->price, pr_max);
+  for (size_t i = Array_size(samples); i-- > 0;) {
+    if (Numeric_cmp(pr_min, ((struct Sample *)items[i])->price) > 0)
+      Numeric_copy_to(((struct Sample *)items[i])->price, pr_min);
+    if (Numeric_cmp(pr_max, ((struct Sample *)items[i])->price) < 0)
+      Numeric_copy_to(((struct Sample *)items[i])->price, pr_max);
   }
 
   // spread percent = 100 / window spread * spread
@@ -449,12 +446,10 @@ static struct Position *trend_position_open(
 
     items = Array_items(samples);
     for (size_t i = Array_size(samples);
-         i > 0 && Numeric_cmp(((struct Sample *)items[i - 1])->nanos,
-                              db_plot->enanos) > 0;
-         i--) {
-      db_tx_plot_datapoint(db, db_plot->id,
-                           ((struct Sample *)items[i - 1])->nanos,
-                           ((struct Sample *)items[i - 1])->price);
+         i-- > 0 && Numeric_cmp(((struct Sample *)items[i])->nanos,
+                                db_plot->enanos) > 0;) {
+      db_tx_plot_datapoint(db, db_plot->id, ((struct Sample *)items[i])->nanos,
+                           ((struct Sample *)items[i])->price);
     }
 
     db_tx_plot_enanos(db, db_plot->id, sample->nanos);
@@ -632,29 +627,23 @@ static bool trend_market_plot(const void *restrict const db,
   fprintf(f, "plot(\n");
   fprintf(f, "\tsamples(:,1), samples(:,2), \"-k;%s;\"", String_chars(m->nm));
 
-  for (size_t i = cd_red_cnt; i > 0; i--)
-    fprintf(f, ",\n\tred_candle%zu(:,1), red_candle%zu(:,2), \"-r\"", i - 1,
-            i - 1);
+  for (size_t i = cd_red_cnt; i-- > 0;)
+    fprintf(f, ",\n\tred_candle%zu(:,1), red_candle%zu(:,2), \"-r\"", i, i);
 
-  for (size_t i = cd_green_cnt; i > 0; i--)
-    fprintf(f, ",\n\tgreen_candle%zu(:,1), green_candle%zu(:,2), \"-g\"", i - 1,
-            i - 1);
+  for (size_t i = cd_green_cnt; i-- > 0;)
+    fprintf(f, ",\n\tgreen_candle%zu(:,1), green_candle%zu(:,2), \"-g\"", i, i);
 
-  for (size_t i = up_cnt; i > 0; i--)
-    fprintf(f, ",\n\tcandle%zu_high(:,1), candle%zu_high(:,2), \"b^\"", i - 1,
-            i - 1);
+  for (size_t i = up_cnt; i-- > 0;)
+    fprintf(f, ",\n\tcandle%zu_high(:,1), candle%zu_high(:,2), \"b^\"", i, i);
 
-  for (size_t i = down_cnt; i > 0; i--)
-    fprintf(f, ",\n\tcandle%zu_low(:,1), candle%zu_low(:,2), \"bv\"", i - 1,
-            i - 1);
+  for (size_t i = down_cnt; i-- > 0;)
+    fprintf(f, ",\n\tcandle%zu_low(:,1), candle%zu_low(:,2), \"bv\"", i, i);
 
-  for (size_t i = left_cnt; i > 0; i--)
-    fprintf(f, ",\n\twindow%zu_close(:,1), window%zu_close(:,2), \"m<\"", i - 1,
-            i - 1);
+  for (size_t i = left_cnt; i-- > 0;)
+    fprintf(f, ",\n\twindow%zu_close(:,1), window%zu_close(:,2), \"m<\"", i, i);
 
-  for (size_t i = right_cnt; i > 0; i--)
-    fprintf(f, ",\n\twindow%zu_open(:,1), window%zu_open(:,2), \"m>\"", i - 1,
-            i - 1);
+  for (size_t i = right_cnt; i-- > 0;)
+    fprintf(f, ",\n\twindow%zu_open(:,1), window%zu_open(:,2), \"m>\"", i, i);
 
   fprintf(f, "\n);\n");
   fprintf(f,

@@ -424,8 +424,8 @@ conf_exchange : CDP STRING {
 
 exchange  : EXCHANGE STRING {
             bool e_found = false;
-            for (size_t i = all_exchanges_nitems; i > 0; i--)
-              if (String_equals($2, all_exchanges[i - 1].nm)) {
+            for (size_t i = all_exchanges_nitems; i-- > 0;)
+              if (String_equals($2, all_exchanges[i].nm)) {
                 e_found = true;
                 break;
               }
@@ -643,8 +643,8 @@ conf_trade  : RETURN NUMBER STRING {
               m_cnf->a_nm = $2;
 
               bool a_found = false;
-              for (size_t i = all_algorithms_nitems; i > 0; i--)
-                if (String_equals(m_cnf->a_nm, all_algorithms[i - 1].nm)) {
+              for (size_t i = all_algorithms_nitems; i-- > 0;)
+                if (String_equals(m_cnf->a_nm, all_algorithms[i].nm)) {
                   a_found = true;
                   break;
                 }
@@ -667,8 +667,8 @@ trade : TRADE AT STRING {
         m_cnf->e_nm = $3;
 
         bool e_found = false;
-        for (size_t i = all_exchanges_nitems; i > 0; i--)
-          if (String_equals(m_cnf->e_nm, all_exchanges[i - 1].nm)) {
+        for (size_t i = all_exchanges_nitems; i-- > 0;)
+          if (String_equals(m_cnf->e_nm, all_exchanges[i].nm)) {
             e_found = true;
             break;
           }
@@ -911,8 +911,8 @@ top:
     }
 
     lungetc(DONE_EXPAND);
-    for (size_t i = String_length(val); i > 0; i--)
-      lungetc((unsigned char)String_chars(val)[i - 1]);
+    for (size_t i = String_length(val); i-- > 0;)
+      lungetc((unsigned char)String_chars(val)[i]);
 
     lungetc(START_EXPAND);
     goto top;
@@ -1082,8 +1082,8 @@ int config_fparse(struct Config *const x_conf,
     return (-1);
 
   items = Array_items(conf->m_cnf);
-  for (size_t i = Array_size(conf->m_cnf); i > 0; i--) {
-    m_cnf = items[i - 1];
+  for (size_t i = Array_size(conf->m_cnf); i-- > 0;) {
+    m_cnf = items[i];
     if (conf->wnanos_max == NULL
         || Numeric_cmp(conf->wnanos_max, m_cnf->wnanos) < 0)
       conf->wnanos_max = m_cnf->wnanos;
@@ -1336,13 +1336,13 @@ bool MarketConfig_matches(const struct MarketConfig *restrict const c,
   void *const *m_items = Array_items(c->m_pats);
   const char *mk = String_chars(m);
 
-  for (size_t i = Array_size(c->m_pats); i > 0 && !match; i--) {
-    const struct Array *restrict const pats = m_items[i - 1];
+  for (size_t i = Array_size(c->m_pats); i-- > 0 && !match;) {
+    const struct Array *restrict const pats = m_items[i];
     void *const *p_items = Array_items(pats);
     bool market = true;
 
-    for (size_t j = Array_size(pats); j > 0 && market; j--) {
-      struct Pattern *restrict const p = p_items[j - 1];
+    for (size_t j = Array_size(pats); j-- > 0 && market;) {
+      struct Pattern *restrict const p = p_items[j];
 
       if (p->match) {
         market = str_find(mk, String_chars(p->pat), sm, MAXCAPTURES, &errstr)

@@ -65,8 +65,8 @@ inline void Queue_delete(struct Queue *restrict const q,
   mutex_destroy(&q->mtx);
 
   if (cb)
-    for (size_t i = q->capacity; i > 0; i--)
-      cb(q->items[i - 1]);
+    for (size_t i = q->capacity; i-- > 0;)
+      cb(q->items[i]);
 
   heap_free(q->items);
   heap_free(q);

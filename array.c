@@ -55,8 +55,8 @@ struct Array *Array_new(const size_t c) {
 inline void Array_delete(struct Array *restrict const a,
                          void (*i_delete)(void *restrict const)) {
   if (i_delete)
-    for (size_t i = a->size; i > 0; i--)
-      i_delete(a->items[i - 1]);
+    for (size_t i = a->size; i-- > 0;)
+      i_delete(a->items[i]);
 
 #ifdef MULTI_THREADED
   mutex_destroy(&a->mtx);
@@ -70,11 +70,11 @@ inline struct Array *Array_copy(const struct Array *restrict const a,
   struct Array *restrict const copy = Array_new(a->size);
 
   if (i_copy)
-    for (size_t i = a->size; i > 0; i--)
-      copy->items[i - 1] = i_copy(a->items[i - 1]);
+    for (size_t i = a->size; i-- > 0;)
+      copy->items[i] = i_copy(a->items[i]);
   else
-    for (size_t i = a->size; i > 0; i--)
-      copy->items[i - 1] = a->items[i - 1];
+    for (size_t i = a->size; i-- > 0;)
+      copy->items[i] = a->items[i];
 
   copy->size = a->size;
   return copy;
@@ -105,13 +105,13 @@ inline void Array_cut(struct Array *restrict const a, const size_t i,
 inline void Array_clear(struct Array *restrict const a,
                         void (*i_delete)(void *restrict const)) {
   if (i_delete)
-    for (size_t i = a->size; i > 0; i--) {
-      i_delete(a->items[i - 1]);
-      a->items[i - 1] = NULL;
+    for (size_t i = a->size; i-- > 0;) {
+      i_delete(a->items[i]);
+      a->items[i] = NULL;
     }
   else
-    for (size_t i = a->size; i > 0; i--)
-      a->items[i - 1] = NULL;
+    for (size_t i = a->size; i-- > 0;)
+      a->items[i] = NULL;
 
   a->size = 0;
   Array_shrink(a);
