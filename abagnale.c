@@ -837,9 +837,12 @@ static void trade_state_save(const void *restrict const db,
   position_state_save(db, &t->p_short);
 }
 
-static inline struct Trade *trade_new(void) {
+static inline struct Trade *trade_new(struct String *restrict const e_id,
+                                      struct String *restrict const m_id) {
   struct Trade *restrict const t = heap_malloc(sizeof(struct Trade));
   t->id = NULL;
+  t->e_id = String_copy(e_id);
+  t->m_id = String_copy(m_id);
   t->status = TRADE_STATUS_NEW;
   t->fee_pc = Numeric_copy(zero);
   t->fee_pf = Numeric_copy(one);
@@ -2788,7 +2791,7 @@ static struct Array *trades_load(const struct worker_ctx *restrict const w_ctx,
   struct Array *restrict const trades = Array_new(128);
 
   while (db_trades_next(trade, w_ctx->db)) {
-    struct Trade *restrict const t = trade_new();
+    struct Trade *restrict const t = trade_new(w_ctx->e->id, w_ctx->m->id);
 
     t->id = String_cnew(trade->id);
 
@@ -3176,7 +3179,7 @@ static int samples_process(void *restrict const arg) {
     if (!betting && has_config) {
       Array_lock(samples);
       if (Array_size(samples) > 1) {
-        struct Trade *restrict const t = trade_new();
+        struct Trade *restrict const t = trade_new(w_ctx->e->id, w_ctx->m->id);
         trade_create(w_ctx, t, samples, Array_tail(samples));
         Array_add_tail(trades, t);
       }

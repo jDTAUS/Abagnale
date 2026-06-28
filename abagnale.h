@@ -100,6 +100,8 @@ enum trade_status {
 
 struct Trade {
   struct String *restrict id;
+  struct String *restrict e_id;
+  struct String *restrict m_id;
   struct Numeric *restrict fee_pc;
   struct Numeric *restrict fee_pf;
   struct Numeric *restrict tp_pc;
