@@ -18,7 +18,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict QCKmDJJuT5TglVClkhZbeFZQss40S5ZcwvNDNsXQErkJLnZVy1BrAm0I84tFJlB
+\restrict VW9VeZ6a4hwmeyBqzt7OeaCKS86LG595p21qVcjyrhpxMyS8dvocJFJDqjbLgay
 
 -- Dumped from database version 17.10 (Debian 17.10-0+deb13u1)
 -- Dumped by pg_dump version 17.10 (Debian 17.10-0+deb13u1)
@@ -44,9 +44,9 @@ CREATE DATABASE "ABAGNALE" WITH TEMPLATE = template0 ENCODING = 'UTF8' LOCALE_PR
 
 ALTER DATABASE "ABAGNALE" OWNER TO abagnale;
 
-\unrestrict QCKmDJJuT5TglVClkhZbeFZQss40S5ZcwvNDNsXQErkJLnZVy1BrAm0I84tFJlB
+\unrestrict VW9VeZ6a4hwmeyBqzt7OeaCKS86LG595p21qVcjyrhpxMyS8dvocJFJDqjbLgay
 \connect "ABAGNALE"
-\restrict QCKmDJJuT5TglVClkhZbeFZQss40S5ZcwvNDNsXQErkJLnZVy1BrAm0I84tFJlB
+\restrict VW9VeZ6a4hwmeyBqzt7OeaCKS86LG595p21qVcjyrhpxMyS8dvocJFJDqjbLgay
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -405,6 +405,30 @@ COMMENT ON TABLE public."TRADES" IS 'Trade book keeping.';
 
 
 --
+-- Name: TRADE_STATES; Type: TABLE; Schema: public; Owner: schulte
+--
+
+CREATE TABLE public."TRADE_STATES" (
+    "TRADE_ID" uuid NOT NULL,
+    "FEE_PERCENT" numeric NOT NULL,
+    "TAKE_PROFIT_PERCENT" numeric NOT NULL,
+    "PRICING_SAMPLES" numeric NOT NULL,
+    CONSTRAINT "TRADE_STATES_FEE_PERCENT_check" CHECK (("FEE_PERCENT" >= (0)::numeric)),
+    CONSTRAINT "TRADE_STATES_PRICING_SAMPLES_check" CHECK (("PRICING_SAMPLES" >= (0)::numeric)),
+    CONSTRAINT "TRADE_STATES_TAKE_PROFIT_PERCENT_check" CHECK (("TAKE_PROFIT_PERCENT" >= (0)::numeric))
+);
+
+
+ALTER TABLE public."TRADE_STATES" OWNER TO schulte;
+
+--
+-- Name: TABLE "TRADE_STATES"; Type: COMMENT; Schema: public; Owner: schulte
+--
+
+COMMENT ON TABLE public."TRADE_STATES" IS 'Trade state the application persists on exit and is initialized with on start.';
+
+
+--
 -- Name: TREND_CANDLES; Type: TABLE; Schema: public; Owner: abagnale
 --
 
@@ -546,6 +570,14 @@ ALTER TABLE ONLY public."STATISTICS"
 
 ALTER TABLE ONLY public."TRADES"
     ADD CONSTRAINT "TRADES_pkey" PRIMARY KEY ("TRADE_ID");
+
+
+--
+-- Name: TRADE_STATES TRADE_STATES_pkey; Type: CONSTRAINT; Schema: public; Owner: schulte
+--
+
+ALTER TABLE ONLY public."TRADE_STATES"
+    ADD CONSTRAINT "TRADE_STATES_pkey" PRIMARY KEY ("TRADE_ID");
 
 
 --
@@ -713,5 +745,5 @@ ALTER TABLE ONLY public."TREND_PLOTS"
 -- PostgreSQL database dump complete
 --
 
-\unrestrict QCKmDJJuT5TglVClkhZbeFZQss40S5ZcwvNDNsXQErkJLnZVy1BrAm0I84tFJlB
+\unrestrict VW9VeZ6a4hwmeyBqzt7OeaCKS86LG595p21qVcjyrhpxMyS8dvocJFJDqjbLgay
 

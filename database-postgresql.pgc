@@ -2032,3 +2032,84 @@ void db_position_state_persist(
   ECPGdebug(0, stdout);
 #endif
 }
+
+bool db_trade_state_restore(struct db_trade_state_rec *const state,
+                            const void *const db, const char *const t_id) {
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(1, stdout);
+#endif
+  // clang-format off
+  EXEC SQL BEGIN DECLARE SECTION;
+  const char *con = String_chars(db);
+  const char *sql_t_id = t_id;
+  numeric *sql_fee_pc = Numeric_db(state->fee_pc);
+  numeric *sql_tp_pc = Numeric_db(state->tp_pc);
+  numeric *sql_pr_samples = Numeric_db(state->pr_samples);
+  EXEC SQL END DECLARE SECTION;
+  EXEC SQL WHENEVER SQLWARNING CALL db_warn();
+  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL WHENEVER NOT FOUND GO TO not_found;
+  EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
+  EXEC SQL AT :con
+    SELECT
+      "FEE_PERCENT",
+      "TAKE_PROFIT_PERCENT",
+      "PRICING_SAMPLES"
+    INTO
+      :sql_fee_pc, :sql_tp_pc, :sql_pr_samples
+    FROM
+      "TRADE_STATES"
+    WHERE
+      "TRADE_ID" = :sql_t_id;
+  EXEC SQL AT :con DELETE FROM "TRADE_STATES" WHERE "TRADE_ID" = :sql_t_id;
+  EXEC SQL AT :con COMMIT;
+  // clang-format on
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(0, stdout);
+#endif
+  return true;
+not_found:
+  // clang-format off
+  EXEC SQL AT :con ROLLBACK;
+  // clang-format on
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(0, stdout);
+#endif
+  return false;
+}
+
+void db_trade_state_persist(const void *const db, const char *const t_id,
+                            const struct db_trade_state_rec *const state) {
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(1, stdout);
+#endif
+  // clang-format off
+  EXEC SQL BEGIN DECLARE SECTION;
+  const char *con = String_chars(db);
+  const char *sql_t_id = t_id;
+  numeric *sql_fee_pc = Numeric_db(state->fee_pc);
+  numeric *sql_tp_pc = Numeric_db(state->tp_pc);
+  numeric *sql_pr_samples = Numeric_db(state->pr_samples);
+  EXEC SQL END DECLARE SECTION;
+  EXEC SQL WHENEVER SQLWARNING CALL db_warn();
+  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL AT :con
+    INSERT INTO "TRADE_STATES" (
+      "TRADE_ID",
+      "FEE_PERCENT",
+      "TAKE_PROFIT_PERCENT",
+      "PRICING_SAMPLES"
+    ) VALUES (
+      :sql_t_id, :sql_fee_pc, :sql_tp_pc, :sql_pr_samples
+    ) ON CONFLICT ("TRADE_ID")
+      DO UPDATE SET
+        "FEE_PERCENT" = :sql_fee_pc,
+        "TAKE_PROFIT_PERCENT" = :sql_tp_pc,
+        "PRICING_SAMPLES" = :sql_pr_samples;
+  EXEC SQL AT :con COMMIT;
+  // clang-format on
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(0, stdout);
+#endif
+}
