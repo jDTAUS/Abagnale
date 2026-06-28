@@ -57,6 +57,7 @@
 #endif
 
 #define TRADE_IS_READY(t) (Numeric_cmp((t)->tp_pc, zero) > 0)
+#define TRADE_SET_READY(t, tp_pc) (Numeric_copy_to((tp_pc), (t)->tp_pc))
 #define TRADE_IS_DELETED(t) (Numeric_cmp((t)->tp_pc, n_one) == 0)
 #define TRADE_SET_DELETED(t) (Numeric_copy_to(n_one, (t)->tp_pc))
 #define TRADE_IS_ENQUEUED(t) (Numeric_cmp((t)->tp_pc, n_two) == 0)
@@ -3319,7 +3320,7 @@ static int trades_process(void *restrict const arg) {
       continue;
     }
 
-    Numeric_copy_to(tp_pc, t->tp_pc);
+    TRADE_SET_READY(t, tp_pc);
     Numeric_div_to(t->tp_pc, hundred, r0);
     Numeric_add_to(r0, one, t->tp_pf);
     mutex_unlock(&t->mtx);
