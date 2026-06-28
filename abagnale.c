@@ -198,7 +198,6 @@ extern const struct Numeric *restrict const hundred;
 extern const struct Numeric *restrict const second_nanos;
 extern const struct Numeric *restrict const minute_nanos;
 
-static thrd_t *restrict workers;
 static struct Map *restrict market_samples;
 static struct Map *restrict market_prices;
 static struct Map *restrict market_trades;
@@ -3368,6 +3367,8 @@ static inline void trade_queue_delete(void *restrict const entry) {
   Queue_delete(entry, trade_queue_entry_delete);
 }
 
+static inline void thrd_delete(void *restrict const entry) { heap_free(entry); }
+
 int abagnale(int argc, char *argv[]) {
   struct Array *restrict const trade_queues = Array_new(128);
   void *const *restrict items;
@@ -3386,7 +3387,8 @@ int abagnale(int argc, char *argv[]) {
       ABAG_WORKERS > SIZE_MAX / Array_size(exchanges))
     panic();
 
-  workers = heap_calloc(ABAG_WORKERS * Array_size(exchanges), sizeof(thrd_t));
+  struct Array *restrict const workers =
+      Array_new(ABAG_WORKERS * Array_size(exchanges));
 
   items = Array_items(exchanges);
   for (size_t i = Array_size(exchanges); i-- > 0 && !terminated;) {
@@ -3400,7 +3402,9 @@ int abagnale(int argc, char *argv[]) {
     Queue_start(e_ctx->trades_queue);
     Array_add_tail(trade_queues, e_ctx->trades_queue);
 
-    thread_create(&workers[i * ABAG_WORKERS], exchange_stop, e_ctx);
+    thrd_t *restrict thrd = heap_calloc(1, sizeof(thrd_t));
+    thread_create(thrd, exchange_stop, e_ctx);
+    Array_add_tail(workers, thrd);
 
     for (int j = 1; j < ABAG_WORKERS && !terminated; j++) {
       char cname[DATABASE_CONNECTION_NAME_MAX_LENGTH + 1] = {0};
@@ -3418,18 +3422,23 @@ int abagnale(int argc, char *argv[]) {
 
       w_ctx->db = db_connect(cname);
 
+      thrd = heap_calloc(1, sizeof(thrd_t));
+      Array_add_tail(workers, thrd);
+
       if (j == 1)
-        thread_create(&workers[i * ABAG_WORKERS + j], orders_process, w_ctx);
+        thread_create(thrd, orders_process, w_ctx);
       else if (j - 1 < ABAG_TRADE_WORKERS)
-        thread_create(&workers[i * ABAG_WORKERS + j], trades_process, w_ctx);
+        thread_create(thrd, trades_process, w_ctx);
       else
-        thread_create(&workers[i * ABAG_WORKERS + j], samples_process, w_ctx);
+        thread_create(thrd, samples_process, w_ctx);
     }
   }
 
-  if (!terminated)
-    for (size_t i = ABAG_WORKERS * Array_size(exchanges); i-- > 0;)
-      thread_join(workers[i], NULL);
+  if (!terminated) {
+    items = Array_items(workers);
+    for (size_t i = Array_size(workers); i-- > 0;)
+      thread_join(*((thrd_t *)items[i]), NULL);
+  }
 
   void *restrict const state_db = db_connect(String_chars(progname));
   struct MapIterator *restrict const it = MapIterator_new(market_trades);
@@ -3444,11 +3453,11 @@ int abagnale(int argc, char *argv[]) {
 
   Numeric_delete(ninety_percent_factor);
 
-  heap_free(workers);
   Map_delete(market_samples, sample_array_delete);
   Map_delete(market_prices, Numeric_delete);
   Map_delete(market_trades, trade_array_delete);
   Array_delete(trade_queues, trade_queue_delete);
+  Array_delete(workers, thrd_delete);
   tls_delete(abag_tls_key);
 
   return EXIT_SUCCESS;
