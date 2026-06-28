@@ -18,7 +18,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict VW9VeZ6a4hwmeyBqzt7OeaCKS86LG595p21qVcjyrhpxMyS8dvocJFJDqjbLgay
+\restrict rzzWShrrfBRK7JOcBNttZGa5gTv2DpA8bM4l2UEjfIr5KY7NyTRGQFxlB7z0Vin
 
 -- Dumped from database version 17.10 (Debian 17.10-0+deb13u1)
 -- Dumped by pg_dump version 17.10 (Debian 17.10-0+deb13u1)
@@ -44,9 +44,9 @@ CREATE DATABASE "ABAGNALE" WITH TEMPLATE = template0 ENCODING = 'UTF8' LOCALE_PR
 
 ALTER DATABASE "ABAGNALE" OWNER TO abagnale;
 
-\unrestrict VW9VeZ6a4hwmeyBqzt7OeaCKS86LG595p21qVcjyrhpxMyS8dvocJFJDqjbLgay
+\unrestrict rzzWShrrfBRK7JOcBNttZGa5gTv2DpA8bM4l2UEjfIr5KY7NyTRGQFxlB7z0Vin
 \connect "ABAGNALE"
-\restrict VW9VeZ6a4hwmeyBqzt7OeaCKS86LG595p21qVcjyrhpxMyS8dvocJFJDqjbLgay
+\restrict rzzWShrrfBRK7JOcBNttZGa5gTv2DpA8bM4l2UEjfIr5KY7NyTRGQFxlB7z0Vin
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -405,7 +405,7 @@ COMMENT ON TABLE public."TRADES" IS 'Trade book keeping.';
 
 
 --
--- Name: TRADE_STATES; Type: TABLE; Schema: public; Owner: schulte
+-- Name: TRADE_STATES; Type: TABLE; Schema: public; Owner: abagnale
 --
 
 CREATE TABLE public."TRADE_STATES" (
@@ -419,10 +419,10 @@ CREATE TABLE public."TRADE_STATES" (
 );
 
 
-ALTER TABLE public."TRADE_STATES" OWNER TO schulte;
+ALTER TABLE public."TRADE_STATES" OWNER TO abagnale;
 
 --
--- Name: TABLE "TRADE_STATES"; Type: COMMENT; Schema: public; Owner: schulte
+-- Name: TABLE "TRADE_STATES"; Type: COMMENT; Schema: public; Owner: abagnale
 --
 
 COMMENT ON TABLE public."TRADE_STATES" IS 'Trade state the application persists on exit and is initialized with on start.';
@@ -573,7 +573,7 @@ ALTER TABLE ONLY public."TRADES"
 
 
 --
--- Name: TRADE_STATES TRADE_STATES_pkey; Type: CONSTRAINT; Schema: public; Owner: schulte
+-- Name: TRADE_STATES TRADE_STATES_pkey; Type: CONSTRAINT; Schema: public; Owner: abagnale
 --
 
 ALTER TABLE ONLY public."TRADE_STATES"
@@ -745,5 +745,5 @@ ALTER TABLE ONLY public."TREND_PLOTS"
 -- PostgreSQL database dump complete
 --
 
-\unrestrict VW9VeZ6a4hwmeyBqzt7OeaCKS86LG595p21qVcjyrhpxMyS8dvocJFJDqjbLgay
+\unrestrict rzzWShrrfBRK7JOcBNttZGa5gTv2DpA8bM4l2UEjfIr5KY7NyTRGQFxlB7z0Vin
 
