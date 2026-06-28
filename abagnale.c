@@ -2311,6 +2311,14 @@ static void trade_pricing(const struct worker_ctx *restrict const w_ctx,
         if (Numeric_cmp(r0, t->tp_pc) > 0)
           Numeric_copy_to(r0, t->tp_pc);
       }
+
+      if (terminated) {
+        Numeric_copy_to(zero, t->pr_samples);
+        Numeric_copy_to(zero, t->fee_pc);
+        Numeric_copy_to(zero, t->tp_pc);
+        Numeric_copy_to(one, t->fee_pf);
+        Numeric_copy_to(one, t->tp_pf);
+      }
     } else {
       db_volatility(t->tp_pc, w_ctx->db, w_ctx->m_cnf->v_wnanos);
 
@@ -2996,7 +3004,7 @@ static int orders_process(void *restrict const arg) {
         if (Array_size(samples) > 1) {
           const struct Sample *restrict s = Array_tail(samples);
           trade_pricing(w_ctx, t, samples, s);
-          if (Array_size(samples) > 1) {
+          if (Array_size(samples) > 1 && !terminated) {
             s = Array_tail(samples);
             position_maintain(w_ctx, t, p, samples, s, order);
             trade_maintain(w_ctx, t, samples, s);
@@ -3147,7 +3155,7 @@ static int samples_process(void *restrict const arg) {
         Array_lock(samples);
         if (Array_size(samples) > 1) {
           trade_pricing(w_ctx, t, samples, Array_tail(samples));
-          if (Array_size(samples) > 1)
+          if (Array_size(samples) > 1 && !terminated)
             trade_maintain(w_ctx, t, samples, Array_tail(samples));
         }
         Array_unlock(samples);
