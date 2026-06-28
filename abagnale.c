@@ -952,7 +952,7 @@ static void samples_load(struct Array *restrict const a,
   db_samples_close(w_ctx->db);
   Array_shrink(a);
 
-  if (verbose && Array_size(a) > 1) {
+  if (verbose && !terminated && Array_size(a) > 1) {
     const struct Sample *restrict const s_head = Array_head(a);
     const struct Sample *restrict const s_tail = Array_tail(a);
     char *restrict const b = nanos_to_iso8601(s_head->nanos);
