@@ -2293,6 +2293,8 @@ static void trade_pricing(const struct worker_ctx *restrict const w_ctx,
   trade_timeout(w_ctx, t, samples, sample);
 
   Numeric_copy_to(ef_pc, t->fee_pc);
+  Numeric_div_to(t->fee_pc, hundred, r0);
+  Numeric_add_to(r0, one, t->fee_pf);
 
   if (w_ctx->m_cnf->v_pc == NULL) {
     Array_unlock(samples);
@@ -2311,9 +2313,11 @@ static void trade_pricing(const struct worker_ctx *restrict const w_ctx,
       }
 
       if (terminated) {
+        Numeric_copy_to(zero, t->pr_samples);
         Numeric_copy_to(zero, t->fee_pc);
         Numeric_copy_to(zero, t->tp_pc);
-        Numeric_copy_to(zero, t->pr_samples);
+        Numeric_copy_to(one, t->fee_pf);
+        Numeric_copy_to(one, t->tp_pf);
       }
     } else {
       db_volatility(t->tp_pc, w_ctx->db, w_ctx->m_cnf->v_wnanos);
@@ -2336,21 +2340,19 @@ static void trade_pricing(const struct worker_ctx *restrict const w_ctx,
     Numeric_copy_to(w_ctx->m_cnf->v_pc, t->tp_pc);
 
   if (Numeric_cmp(t->tp_pc, t->fee_pc) < 0) {
+    char *restrict const stddev = Numeric_to_char(t->tp_pc, 4);
+    char *restrict const fee = Numeric_to_char(t->fee_pc, 2);
+
+    werr("%s: %s: Volatility fee constraint: %s%%<%s%%\n",
+         String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm), stddev, fee);
+
+    Numeric_char_free(stddev);
+    Numeric_char_free(fee);
+
     Numeric_copy_to(t->fee_pc, t->tp_pc);
-
-    if (!terminated) {
-      char *restrict const stddev = Numeric_to_char(t->tp_pc, 4);
-      char *restrict const fee = Numeric_to_char(t->fee_pc, 2);
-
-      werr("%s: %s: Volatility fee constraint: %s%%<%s%%\n",
-           String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm), stddev, fee);
-
-      Numeric_char_free(stddev);
-      Numeric_char_free(fee);
-    }
   }
 
-  if (verbose && !terminated) {
+  if (verbose) {
     char *restrict const fee = Numeric_to_char(t->fee_pc, 2);
     char *restrict const v = Numeric_to_char(t->tp_pc, 4);
 
@@ -2361,8 +2363,6 @@ static void trade_pricing(const struct worker_ctx *restrict const w_ctx,
     Numeric_char_free(v);
   }
 
-  Numeric_div_to(t->fee_pc, hundred, r0);
-  Numeric_add_to(r0, one, t->fee_pf);
   Numeric_div_to(t->tp_pc, hundred, r0);
   Numeric_add_to(r0, one, t->tp_pf);
 }
