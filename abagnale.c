@@ -2306,7 +2306,8 @@ static void trade_pricing(const struct worker_ctx *restrict const w_ctx,
       Numeric_cmp(t->pr_samples, zero) > 0 && TRADE_IS_READY(t))
     return;
 
-  trade_timeout(w_ctx, t, samples, sample);
+  if (!TRADE_IS_ENQUEUED(t) && !TRADE_IS_DELETED(t))
+    trade_timeout(w_ctx, t, samples, sample);
 
   Numeric_copy_to(ef_pc, t->fee_pc);
   Numeric_div_to(t->fee_pc, hundred, r0);
