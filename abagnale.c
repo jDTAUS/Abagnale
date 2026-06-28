@@ -57,11 +57,11 @@
 #endif
 
 #define TRADE_IS_READY(t) (Numeric_cmp((t)->tp_pc, zero) > 0)
-#define TRADE_UNSET_READY(t) (Numeric_copy_to(zero, (t)->tp_pc))
 #define TRADE_IS_DELETED(t) (Numeric_cmp((t)->tp_pc, n_one) == 0)
 #define TRADE_SET_DELETED(t) (Numeric_copy_to(n_one, (t)->tp_pc))
 #define TRADE_IS_ENQUEUED(t) (Numeric_cmp((t)->tp_pc, n_two) == 0)
 #define TRADE_SET_ENQUEUED(t) (Numeric_copy_to(n_two, (t)->tp_pc))
+#define TRADE_UNSET_ENQUEUED(t) (Numeric_copy_to(zero, (t)->tp_pc))
 
 struct worker_ctx {
   void *restrict db;
@@ -3217,7 +3217,7 @@ static int trades_process(void *restrict const arg) {
         continue;
       }
 
-      TRADE_UNSET_READY(t);
+      TRADE_UNSET_ENQUEUED(t);
       mutex_unlock(&t->mtx);
       continue;
     }
@@ -3236,7 +3236,7 @@ static int trades_process(void *restrict const arg) {
         continue;
       }
 
-      TRADE_UNSET_READY(t);
+      TRADE_UNSET_ENQUEUED(t);
       mutex_unlock(&t->mtx);
       Market_delete(w_ctx->m);
       continue;
@@ -3265,7 +3265,7 @@ static int trades_process(void *restrict const arg) {
           continue;
         }
 
-        TRADE_UNSET_READY(t);
+        TRADE_UNSET_ENQUEUED(t);
         mutex_unlock(&t->mtx);
         Market_delete(w_ctx->m);
         continue;
