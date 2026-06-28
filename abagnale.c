@@ -3085,7 +3085,7 @@ static int samples_process(void *restrict const arg) {
 
     Array_add_tail(samples, sample);
 
-    if (Array_size(samples) < 2) {
+    if (Array_size(samples) < 2 || terminated) {
       Array_unlock(samples);
       Market_delete(w_ctx->m);
       continue;
