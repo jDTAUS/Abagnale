@@ -3362,7 +3362,7 @@ static inline void trade_queue_entry_delete(void *restrict const entry) {
     trade_delete(t);
 }
 
-static inline void trade_queue_array_delete(void *restrict const entry) {
+static inline void trade_queue_delete(void *restrict const entry) {
   Queue_delete(entry, trade_queue_entry_delete);
 }
 
@@ -3446,7 +3446,7 @@ int abagnale(int argc, char *argv[]) {
   Map_delete(market_samples, sample_array_delete);
   Map_delete(market_prices, Numeric_delete);
   Map_delete(market_trades, trade_array_delete);
-  Array_delete(trade_queues, trade_queue_array_delete);
+  Array_delete(trade_queues, trade_queue_delete);
   tls_delete(abag_tls_key);
 
   return EXIT_SUCCESS;
