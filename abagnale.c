@@ -2315,8 +2315,8 @@ static void trade_pricing(const struct worker_ctx *restrict const w_ctx,
     if (!TRADE_IS_ENQUEUED(t) && !TRADE_IS_DELETED(t)) {
       TRADE_SET_ENQUEUED(t);
       Queue_enqueue_await(w_ctx->trades_queue, t);
-      return;
     }
+    return;
   } else
     Numeric_copy_to(w_ctx->m_cnf->v_pc, t->tp_pc);
 
