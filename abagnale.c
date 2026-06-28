@@ -866,6 +866,8 @@ static inline void trade_delete(void *restrict const t) {
 
   struct Trade *restrict const trade = t;
   String_delete(trade->id);
+  String_delete(trade->e_id);
+  String_delete(trade->m_id);
   Numeric_delete(trade->fee_pc);
   Numeric_delete(trade->fee_pf);
   Numeric_delete(trade->tp_pc);
