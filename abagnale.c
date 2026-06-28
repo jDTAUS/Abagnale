@@ -29,6 +29,7 @@
 #include "map.h"
 #include "math.h"
 #include "proc.h"
+#include "queue.h"
 #include "thread.h"
 #include "time.h"
 
@@ -37,9 +38,15 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifndef ABAG_WORKERS
-#define ABAG_WORKERS 14
+#ifndef ABAG_TRADE_WORKERS
+#define ABAG_TRADE_WORKERS 6
 #endif
+
+#ifndef ABAG_TICKER_WORKERS
+#define ABAG_TICKER_WORKERS 12
+#endif
+
+#define ABAG_WORKERS (ABAG_TRADE_WORKERS + ABAG_TICKER_WORKERS + 2)
 
 #ifndef ABAG_MAX_PRODUCTS
 #define ABAG_MAX_PRODUCTS 1200
@@ -49,9 +56,17 @@
 #define nitems(_a) (sizeof((_a)) / sizeof((_a)[0]))
 #endif
 
+#define TRADE_IS_READY(t) (Numeric_cmp((t)->tp_pc, zero) > 0)
+#define TRADE_UNSET_READY(t) (Numeric_copy_to(zero, (t)->tp_pc))
+#define TRADE_IS_DELETED(t) (Numeric_cmp((t)->tp_pc, n_one) == 0)
+#define TRADE_SET_DELETED(t) (Numeric_copy_to(n_one, (t)->tp_pc))
+#define TRADE_IS_ENQUEUED(t) (Numeric_cmp((t)->tp_pc, n_two) == 0)
+#define TRADE_SET_ENQUEUED(t) (Numeric_copy_to(n_two, (t)->tp_pc))
+
 struct worker_ctx {
   void *restrict db;
   const struct Exchange *restrict e;
+  struct Queue *restrict trades_queue;
   struct Market *restrict m;
   const struct MarketConfig *restrict m_cnf;
 };
@@ -174,7 +189,9 @@ extern const bool verbose;
 
 extern const struct Numeric *restrict const zero;
 extern const struct Numeric *restrict const one;
+extern const struct Numeric *restrict const n_one;
 extern const struct Numeric *restrict const two;
+extern const struct Numeric *restrict const n_two;
 extern const struct Numeric *restrict const four;
 extern const struct Numeric *restrict const hundred;
 extern const struct Numeric *restrict const second_nanos;
@@ -827,7 +844,7 @@ static void trade_state_save(const void *restrict const db,
 
   if (t->id != NULL) {
     Numeric_copy_to(t->fee_pc, t_state->fee_pc);
-    Numeric_copy_to(t->tp_pc, t_state->tp_pc);
+    Numeric_copy_to(TRADE_IS_READY(t) ? t->tp_pc : zero, t_state->tp_pc);
     Numeric_copy_to(t->pr_samples, t_state->pr_samples);
 
     db_trade_state_persist(db, String_chars(t->id), t_state);
@@ -851,6 +868,7 @@ static inline struct Trade *trade_new(struct String *restrict const e_id,
   t->q_return = Numeric_copy(zero);
   t->pr_samples = Numeric_copy(zero);
   t->a = NULL;
+  mutex_init(&t->mtx);
   candle_init(&t->open_cd);
   trigger_init(&t->open_trg);
   position_init(&t->p_long);
@@ -878,15 +896,8 @@ static inline void trade_delete(void *restrict const t) {
   trigger_delete(&trade->open_trg);
   position_delete(&trade->p_long);
   position_delete(&trade->p_short);
+  mutex_destroy(&trade->mtx);
   heap_free(trade);
-}
-
-static inline void sample_array_delete(void *restrict const entry) {
-  Array_delete(entry, Sample_delete);
-}
-
-static inline void trade_array_delete(void *restrict const entry) {
-  Array_delete(entry, trade_delete);
 }
 
 void samples_per_nano(struct Numeric *restrict const ret,
@@ -2286,57 +2297,26 @@ static void trade_pricing(const struct worker_ctx *restrict const w_ctx,
   struct Numeric *restrict const ef_pc = tls->trade_pricing.ef_pc;
   struct Numeric *restrict const r0 = tls->trade_pricing.r0;
   const struct Pricing *restrict const pricing = w_ctx->e->pricing();
-  void *const *restrict items;
 
   Numeric_copy_to(pricing->ef_pc, ef_pc);
   mutex_unlock(pricing->mtx);
 
   if (Numeric_cmp(t->fee_pc, ef_pc) >= 0 &&
-      Numeric_cmp(t->pr_samples, zero) > 0)
+      Numeric_cmp(t->pr_samples, zero) > 0 && TRADE_IS_READY(t))
     return;
 
   trade_timeout(w_ctx, t, samples, sample);
 
   Numeric_copy_to(ef_pc, t->fee_pc);
+  Numeric_div_to(t->fee_pc, hundred, r0);
+  Numeric_add_to(r0, one, t->fee_pf);
 
   if (w_ctx->m_cnf->v_pc == NULL) {
-    Array_unlock(samples);
-    db_volatility_open(w_ctx->db, String_chars(w_ctx->e->id),
-                       String_chars(w_ctx->m->id));
-
-    if (w_ctx->m_cnf->v_wnanos == NULL) {
-      Numeric_copy_to(zero, t->tp_pc);
-
-      items = Array_items(volatility_windows);
-      for (size_t i = Array_size(volatility_windows); !terminated && i-- > 0;) {
-        db_volatility(r0, w_ctx->db, items[i]);
-
-        if (Numeric_cmp(r0, t->tp_pc) > 0)
-          Numeric_copy_to(r0, t->tp_pc);
-      }
-
-      if (terminated) {
-        Numeric_copy_to(zero, t->fee_pc);
-        Numeric_copy_to(zero, t->tp_pc);
-        Numeric_copy_to(zero, t->pr_samples);
-      }
-    } else {
-      db_volatility(t->tp_pc, w_ctx->db, w_ctx->m_cnf->v_wnanos);
-
-      if (Numeric_cmp(t->tp_pc, zero) == 0) {
-        Numeric_copy_to(t->fee_pc, t->tp_pc);
-
-        char *restrict const win = nanos_string(w_ctx->m_cnf->v_wnanos);
-
-        werr("%s: %s: Volatility not available: %s\n",
-             String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm), win);
-
-        heap_free(win);
-      }
+    if (!TRADE_IS_ENQUEUED(t) && !TRADE_IS_DELETED(t)) {
+      TRADE_SET_ENQUEUED(t);
+      Queue_enqueue_await(w_ctx->trades_queue, t);
+      return;
     }
-
-    db_volatility_close(w_ctx->db);
-    Array_lock(samples);
   } else
     Numeric_copy_to(w_ctx->m_cnf->v_pc, t->tp_pc);
 
@@ -2353,7 +2333,7 @@ static void trade_pricing(const struct worker_ctx *restrict const w_ctx,
     Numeric_copy_to(t->fee_pc, t->tp_pc);
   }
 
-  if (verbose && !terminated) {
+  if (verbose) {
     char *restrict const fee = Numeric_to_char(t->fee_pc, 2);
     char *restrict const v = Numeric_to_char(t->tp_pc, 4);
 
@@ -2364,8 +2344,6 @@ static void trade_pricing(const struct worker_ctx *restrict const w_ctx,
     Numeric_char_free(v);
   }
 
-  Numeric_div_to(t->fee_pc, hundred, r0);
-  Numeric_add_to(r0, one, t->fee_pf);
   Numeric_div_to(t->tp_pc, hundred, r0);
   Numeric_add_to(r0, one, t->tp_pf);
 }
@@ -3005,20 +2983,27 @@ static int orders_process(void *restrict const arg) {
         Numeric_copy_to(q_return, t->q_return);
         Array_lock(samples);
         if (Array_size(samples) > 1) {
-          const struct Sample *restrict s = Array_tail(samples);
+          const struct Sample *restrict const s = Array_tail(samples);
+          mutex_lock(&t->mtx);
           trade_pricing(w_ctx, t, samples, s);
-          if (Array_size(samples) > 1 && !terminated) {
-            s = Array_tail(samples);
+          if (TRADE_IS_READY(t)) {
             position_maintain(w_ctx, t, p, samples, s, order);
             trade_maintain(w_ctx, t, samples, s);
           }
+          mutex_unlock(&t->mtx);
         }
         Array_unlock(samples);
       }
 
       if (t->status == TRADE_STATUS_CANCELLED ||
           t->status == TRADE_STATUS_DONE) {
-        trade_delete(t);
+        mutex_lock(&t->mtx);
+        if (!TRADE_IS_ENQUEUED(t) && !TRADE_IS_DELETED(t))
+          trade_delete(t);
+        else
+          TRADE_SET_DELETED(t);
+
+        mutex_unlock(&t->mtx);
         Array_remove_idx(trades, i);
       }
     }
@@ -3138,11 +3123,7 @@ static int samples_process(void *restrict const arg) {
     Map_unlock(market_trades);
 
     Array_unlock(samples);
-
-    if (!Array_trylock(trades)) {
-      Market_delete(w_ctx->m);
-      continue;
-    }
+    Array_lock(trades);
 
     bool betting = false;
     const bool has_config = quote_return(q_return, w_ctx, samples);
@@ -3157,20 +3138,31 @@ static int samples_process(void *restrict const arg) {
 
         Array_lock(samples);
         if (Array_size(samples) > 1) {
-          trade_pricing(w_ctx, t, samples, Array_tail(samples));
-          if (Array_size(samples) > 1 && !terminated)
-            trade_maintain(w_ctx, t, samples, Array_tail(samples));
+          const struct Sample *restrict const s = Array_tail(samples);
+          mutex_lock(&t->mtx);
+          trade_pricing(w_ctx, t, samples, s);
+          if (TRADE_IS_READY(t))
+            trade_maintain(w_ctx, t, samples, s);
+          mutex_unlock(&t->mtx);
         }
         Array_unlock(samples);
 
         if (t->status == TRADE_STATUS_CANCELLED ||
             t->status == TRADE_STATUS_DONE) {
-          trade_delete(t);
+          mutex_lock(&t->mtx);
+          if (!TRADE_IS_ENQUEUED(t) && !TRADE_IS_DELETED(t))
+            trade_delete(t);
+          else
+            TRADE_SET_DELETED(t);
+
+          mutex_unlock(&t->mtx);
           Array_remove_idx(trades, i);
           goto again;
         } else if (t->status == TRADE_STATUS_NEW) {
           betting = true;
+          mutex_lock(&t->mtx);
           Numeric_dec(t->pr_samples);
+          mutex_unlock(&t->mtx);
         }
       } else
         werr("%s: %s: %s: Configuration not available\n",
@@ -3197,8 +3189,152 @@ static int samples_process(void *restrict const arg) {
   thread_exit(EXIT_SUCCESS);
 }
 
+static int trades_process(void *restrict const arg) {
+  struct worker_ctx *restrict const w_ctx = arg;
+  struct Numeric *restrict const tp_pc = Numeric_new();
+  struct Numeric *restrict const r0 = Numeric_new();
+  void *const *restrict items;
+
+  while (!terminated) {
+    struct Trade *restrict const t = Queue_dequeue_await(w_ctx->trades_queue);
+
+    if (t == NULL)
+      continue;
+
+    if (!String_equals(t->e_id, w_ctx->e->id))
+      panic();
+
+    struct Market *restrict const m = w_ctx->e->market(t->m_id);
+
+    if (m == NULL) {
+      werr("%s: %s: Market not available\n", String_chars(w_ctx->e->nm),
+           String_chars(t->m_id));
+
+      mutex_lock(&t->mtx);
+      if (TRADE_IS_DELETED(t)) {
+        mutex_unlock(&t->mtx);
+        trade_delete(t);
+        continue;
+      }
+
+      TRADE_UNSET_READY(t);
+      mutex_unlock(&t->mtx);
+      continue;
+    }
+
+    w_ctx->m = Market_copy(m);
+    mutex_unlock(m->mtx);
+
+    w_ctx->m_cnf = marketconfig(w_ctx->e->nm, w_ctx->m->nm);
+
+    if (w_ctx->m_cnf == NULL || w_ctx->m_cnf->v_pc != NULL) {
+      mutex_lock(&t->mtx);
+      if (TRADE_IS_DELETED(t)) {
+        mutex_unlock(&t->mtx);
+        trade_delete(t);
+        Market_delete(w_ctx->m);
+        continue;
+      }
+
+      TRADE_UNSET_READY(t);
+      mutex_unlock(&t->mtx);
+      Market_delete(w_ctx->m);
+      continue;
+    }
+
+    db_volatility_open(w_ctx->db, String_chars(w_ctx->e->id),
+                       String_chars(w_ctx->m->id));
+
+    if (w_ctx->m_cnf->v_wnanos == NULL) {
+      Numeric_copy_to(zero, tp_pc);
+
+      items = Array_items(volatility_windows);
+      for (size_t i = Array_size(volatility_windows); !terminated && i-- > 0;) {
+        db_volatility(r0, w_ctx->db, items[i]);
+
+        if (Numeric_cmp(r0, tp_pc) > 0)
+          Numeric_copy_to(r0, tp_pc);
+      }
+
+      if (terminated) {
+        mutex_lock(&t->mtx);
+        if (TRADE_IS_DELETED(t)) {
+          mutex_unlock(&t->mtx);
+          trade_delete(t);
+          Market_delete(w_ctx->m);
+          continue;
+        }
+
+        TRADE_UNSET_READY(t);
+        mutex_unlock(&t->mtx);
+        Market_delete(w_ctx->m);
+        continue;
+      }
+    } else {
+      db_volatility(tp_pc, w_ctx->db, w_ctx->m_cnf->v_wnanos);
+
+      if (Numeric_cmp(tp_pc, zero) == 0) {
+        Numeric_copy_to(t->fee_pc, tp_pc);
+
+        char *restrict const win = nanos_string(w_ctx->m_cnf->v_wnanos);
+
+        werr("%s: %s: Volatility not available: %s\n",
+             String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm), win);
+
+        heap_free(win);
+      }
+    }
+
+    db_volatility_close(w_ctx->db);
+
+    if (Numeric_cmp(tp_pc, t->fee_pc) < 0) {
+      char *restrict const stddev = Numeric_to_char(tp_pc, 4);
+      char *restrict const fee = Numeric_to_char(t->fee_pc, 2);
+
+      werr("%s: %s: Volatility fee constraint: %s%%<%s%%\n",
+           String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm), stddev, fee);
+
+      Numeric_char_free(stddev);
+      Numeric_char_free(fee);
+
+      Numeric_copy_to(t->fee_pc, tp_pc);
+    }
+
+    if (verbose) {
+      char *restrict const fee = Numeric_to_char(t->fee_pc, 2);
+      char *restrict const v = Numeric_to_char(tp_pc, 4);
+
+      wout("%s: %s: Pricing: fee: %s%%, volatility: %s%%\n",
+           String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm), fee, v);
+
+      Numeric_char_free(fee);
+      Numeric_char_free(v);
+    }
+
+    mutex_lock(&t->mtx);
+    if (TRADE_IS_DELETED(t)) {
+      mutex_unlock(&t->mtx);
+      trade_delete(t);
+      Market_delete(w_ctx->m);
+      continue;
+    }
+
+    Numeric_copy_to(tp_pc, t->tp_pc);
+    Numeric_div_to(t->tp_pc, hundred, r0);
+    Numeric_add_to(r0, one, t->tp_pf);
+    mutex_unlock(&t->mtx);
+    Market_delete(w_ctx->m);
+  }
+
+  db_disconnect(w_ctx->db);
+  Numeric_delete(tp_pc);
+  Numeric_delete(r0);
+  heap_free(arg);
+  thread_exit(EXIT_SUCCESS);
+}
+
 static int exchange_stop(void *restrict const arg) {
-  const struct Exchange *restrict const e = arg;
+  const struct worker_ctx *restrict const e_ctx = arg;
   struct timespec sleep_rate = {
       .tv_sec = 15,
       .tv_nsec = 0L,
@@ -3207,11 +3343,31 @@ static int exchange_stop(void *restrict const arg) {
   while (!terminated)
     thread_sleep(&sleep_rate);
 
-  e->stop();
+  e_ctx->e->stop();
+  Queue_stop(e_ctx->trades_queue);
   thread_exit(EXIT_SUCCESS);
 }
 
+static inline void sample_array_delete(void *restrict const entry) {
+  Array_delete(entry, Sample_delete);
+}
+
+static inline void trade_array_delete(void *restrict const entry) {
+  Array_delete(entry, trade_delete);
+}
+
+static inline void trade_queue_entry_delete(void *restrict const entry) {
+  struct Trade *restrict const t = entry;
+  if (TRADE_IS_DELETED(t))
+    trade_delete(t);
+}
+
+static inline void trade_queue_array_delete(void *restrict const entry) {
+  Queue_delete(entry, trade_queue_entry_delete);
+}
+
 int abagnale(int argc, char *argv[]) {
+  struct Array *restrict const trade_queues = Array_new(128);
   void *const *restrict items;
   ninety_percent_factor = Numeric_from_char("0.9");
 
@@ -3233,9 +3389,16 @@ int abagnale(int argc, char *argv[]) {
   items = Array_items(exchanges);
   for (size_t i = Array_size(exchanges); i-- > 0 && !terminated;) {
     struct Exchange *restrict const e = items[i];
-    e->start();
+    struct worker_ctx *restrict const e_ctx =
+        heap_calloc(1, sizeof(struct worker_ctx));
 
-    thread_create(&workers[i], exchange_stop, e);
+    e_ctx->e = e;
+    e_ctx->trades_queue = Queue_new(ABAG_MAX_PRODUCTS, (time_t)0);
+    e_ctx->e->start();
+    Queue_start(e_ctx->trades_queue);
+    Array_add_tail(trade_queues, e_ctx->trades_queue);
+
+    thread_create(&workers[i * ABAG_WORKERS], exchange_stop, e_ctx);
 
     for (int j = 1; j < ABAG_WORKERS && !terminated; j++) {
       char cname[DATABASE_CONNECTION_NAME_MAX_LENGTH + 1] = {0};
@@ -3243,6 +3406,7 @@ int abagnale(int argc, char *argv[]) {
           heap_calloc(1, sizeof(struct worker_ctx));
 
       w_ctx->e = e;
+      w_ctx->trades_queue = e_ctx->trades_queue;
 
       const int r = snprintf(cname, sizeof(cname), "%s-worker-%.3d",
                              String_chars(e->nm), j);
@@ -3254,6 +3418,8 @@ int abagnale(int argc, char *argv[]) {
 
       if (j == 1)
         thread_create(&workers[i * ABAG_WORKERS + j], orders_process, w_ctx);
+      else if (j - 1 < ABAG_TRADE_WORKERS)
+        thread_create(&workers[i * ABAG_WORKERS + j], trades_process, w_ctx);
       else
         thread_create(&workers[i * ABAG_WORKERS + j], samples_process, w_ctx);
     }
@@ -3280,6 +3446,7 @@ int abagnale(int argc, char *argv[]) {
   Map_delete(market_samples, sample_array_delete);
   Map_delete(market_prices, Numeric_delete);
   Map_delete(market_trades, trade_array_delete);
+  Array_delete(trade_queues, trade_queue_array_delete);
   tls_delete(abag_tls_key);
 
   return EXIT_SUCCESS;
