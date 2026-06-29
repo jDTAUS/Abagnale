@@ -18,7 +18,6 @@ cmake_minimum_required(VERSION 3.31)
 
 project(
 	Abagnale
-	VERSION 0.0
 	DESCRIPTION "Abagnale - Algorithmic Trading"
 	HOMEPAGE_URL "http://www.jdtaus.org"
 	LANGUAGES C
@@ -327,8 +326,6 @@ set_target_properties(
 	abagnalectl
 	PROPERTIES
 		MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>"
-	VERSION
-		${PROJECT_VERSION}
 )
 
 target_include_directories(objects PRIVATE
