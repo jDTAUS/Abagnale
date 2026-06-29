@@ -1,5 +1,5 @@
 $SchulteIT: INTRO.txt 15283 2025-11-05 23:02:14Z schulte $
-$JDTAUS$
+$JDTAUS: README.txt 9554 2026-06-20 10:15:32Z schulte $
 
 Abagnale - Algorithmic Trading
 
