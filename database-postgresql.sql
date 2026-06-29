@@ -18,7 +18,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict 2JWi7ETu3eYrdeE5U63dsPEfCqQNZrQu9hXLVxO8xBWpHrvgvHFNJ1y3ElljHKQ
+\restrict vCDAaeTVtcDotE2TFVQeFN5ZNLVI6WBs1SJnCmsGIvxLK2ckZ2cbjv9Ur8DjfrE
 
 -- Dumped from database version 17.10 (Debian 17.10-0+deb13u1)
 -- Dumped by pg_dump version 17.10 (Debian 17.10-0+deb13u1)
@@ -44,9 +44,9 @@ CREATE DATABASE "ABAGNALE" WITH TEMPLATE = template0 ENCODING = 'UTF8' LOCALE_PR
 
 ALTER DATABASE "ABAGNALE" OWNER TO abagnale;
 
-\unrestrict 2JWi7ETu3eYrdeE5U63dsPEfCqQNZrQu9hXLVxO8xBWpHrvgvHFNJ1y3ElljHKQ
+\unrestrict vCDAaeTVtcDotE2TFVQeFN5ZNLVI6WBs1SJnCmsGIvxLK2ckZ2cbjv9Ur8DjfrE
 \connect "ABAGNALE"
-\restrict 2JWi7ETu3eYrdeE5U63dsPEfCqQNZrQu9hXLVxO8xBWpHrvgvHFNJ1y3ElljHKQ
+\restrict vCDAaeTVtcDotE2TFVQeFN5ZNLVI6WBs1SJnCmsGIvxLK2ckZ2cbjv9Ur8DjfrE
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -126,11 +126,11 @@ DECLARE
 	v_AVG_SELL_ORDER_DURATION_NANOS numeric;
 BEGIN
 	SELECT
-        	min(extract(EPOCH FROM "BUY_ORDER_DONE_AT")
+		min(extract(EPOCH FROM "BUY_ORDER_DONE_AT")
 			- extract(EPOCH FROM "BUY_ORDER_CREATED_AT")),
 		max(extract(EPOCH FROM "BUY_ORDER_DONE_AT")
 			- extract(EPOCH FROM "BUY_ORDER_CREATED_AT")),
-        	avg(extract(EPOCH FROM "BUY_ORDER_DONE_AT")
+		avg(extract(EPOCH FROM "BUY_ORDER_DONE_AT")
 			- extract(EPOCH FROM "BUY_ORDER_CREATED_AT")),
 		min(extract(EPOCH FROM "SELL_ORDER_DONE_AT")
 			- extract(EPOCH FROM "SELL_ORDER_CREATED_AT")),
@@ -755,5 +755,5 @@ ALTER TABLE ONLY public."TREND_PLOTS"
 -- PostgreSQL database dump complete
 --
 
-\unrestrict 2JWi7ETu3eYrdeE5U63dsPEfCqQNZrQu9hXLVxO8xBWpHrvgvHFNJ1y3ElljHKQ
+\unrestrict vCDAaeTVtcDotE2TFVQeFN5ZNLVI6WBs1SJnCmsGIvxLK2ckZ2cbjv9Ur8DjfrE
 
