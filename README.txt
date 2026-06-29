@@ -1,16 +1,13 @@
 $SchulteIT: INTRO.txt 15283 2025-11-05 23:02:14Z schulte $
 $JDTAUS$
 
-Abagnale - Algorithmic Trading
+Abagnale - Algorithmic Trading - https://github.com/jdtaus/Abagnale
 
 That name rings a bell? Well, it matches perfectly and was choosen out of
 joking about a long standing bug which - as of today - still has not been
 understood in detail and keeps reappearing in various incarnations from
 time to time. It mainly goes like "Where did that money come from, where
 did it go and why? No one knows. It's just abagnaling again."
-
-SVN (master): http://svn.jdtaus.org/svnroot/jdtaus/Abagnale
-GIT (mirror): https://github.com/jDTAUS/Abagnale
 
 ./README.txt              - This file
 ./LICENSE.txt             - License information
