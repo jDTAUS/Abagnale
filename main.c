@@ -28,6 +28,7 @@
 #include "heap.h"
 #include "proc.h"
 #include "time.h"
+#include "version.h"
 
 #include <errno.h>
 #include <signal.h>
@@ -97,8 +98,9 @@ int abagnalectl(int argc, char *argv[]);
 static void terminate(int signum) { terminated = true; }
 
 static _Noreturn void usage(void) {
-  werr("Usage: %s [-Dmacro=value ... ] [-f config-file] [-p plots-dir] [-v] "
-       "[-n]\n",
+  werr("%s\n", ABAG_REVISION);
+  werr("Usage: %s [-Dmacro=value ... ] [-f config-file] [-n] [-p plots-dir] "
+       "[-v]\n",
        String_chars(progname));
 
   exit(EXIT_FAILURE);

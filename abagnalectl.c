@@ -30,6 +30,7 @@
 #include "proc.h"
 #include "thread.h"
 #include "time.h"
+#include "version.h"
 
 #include <inttypes.h>
 #include <stdio.h>
@@ -211,8 +212,9 @@ static void print_market(const struct Market *restrict const m) {
 }
 
 static _Noreturn void usage(void) {
-  werr("Usage: %s [-Dmacro=value ... ] [-f config-file] [-p plots-dir] [-v] "
-       "[-n] command\n",
+  werr("%s\n", ABAG_REVISION);
+  werr("Usage: %s [-Dmacro=value ... ] [-f config-file] [-n] [-p plots-dir] "
+       "[-v] command\n",
        String_chars(progname));
 
   for (size_t i = nitems(cmd_tab); i-- > 0;) {

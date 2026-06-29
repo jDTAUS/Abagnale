@@ -189,5 +189,5 @@ mongoose.o: mongoose.c
 .y.c:
 	$(YACC) $(YACCFLAGS) $@ $<
 
-$(OBJS): $(HEADERS)
+$(OBJS): $(HEADERS) version.h
 
