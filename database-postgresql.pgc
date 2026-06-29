@@ -77,10 +77,10 @@ void *db_connect(const char *const cname) {
   EXEC SQL AT :con SET AUTOCOMMIT TO OFF;
   EXEC SQL AT :con SET TIMEZONE TO 'UTC';
   EXEC SQL AT :con SET application_name TO :sql_progname;
-  EXEC SQL AT :con PREPARE sample_create AS 
+  EXEC SQL AT :con PREPARE sample_create AS
     INSERT INTO "SAMPLES" (
       "EXCHANGE_ID",
-      "PRODUCT_ID",
+      "MARKET_ID",
       "NANOS",
       "PRICE"
     ) VALUES (
@@ -88,18 +88,18 @@ void *db_connect(const char *const cname) {
     );
 
   EXEC SQL AT :con PREPARE id AS
-    SELECT "INTERNAL_ID" FROM "IDENTIFIERS"
+    SELECT "ID" FROM "IDENTIFIERS"
     WHERE "EXCHANGE_ID" = $1
-      AND "EXTERNAL_ID" = $2;
+      AND "SYMBOL" = $2;
 
   EXEC SQL AT :con PREPARE id_create AS
     INSERT INTO "IDENTIFIERS" (
       "EXCHANGE_ID",
-      "EXTERNAL_ID",
-      "INTERNAL_ID"
+      "SYMBOL",
+      "ID"
     ) VALUES (
       $1, $2, gen_random_uuid()
-    ) RETURNING "INTERNAL_ID";
+    ) RETURNING "ID";
 
   EXEC SQL AT :con PREPARE plot_datapoint AS
     INSERT INTO "PLOTS_DATAPOINTS" (
@@ -291,7 +291,7 @@ void db_samples_open(const void *const db, const char *const e_id,
   EXEC SQL AT :con DECLARE samples_cursor CURSOR FOR
     SELECT "NANOS", "PRICE" 
     FROM "SAMPLES"
-    WHERE "EXCHANGE_ID" = :sql_e_id AND "PRODUCT_ID" = :sql_m_id
+    WHERE "EXCHANGE_ID" = :sql_e_id AND "MARKET_ID" = :sql_m_id
       AND "NANOS" >= :sql_since
     ORDER BY "NANOS" ASC;
 
@@ -366,7 +366,7 @@ void db_volatility_open(const void *const db, const char *const e_id,
             lag("PRICE", 1) OVER (ORDER BY "NANOS") AS "PREVIOUS"
           FROM "SAMPLES"
           WHERE "EXCHANGE_ID" = :sql_e_id
-            AND "PRODUCT_ID" = :sql_m_id
+            AND "MARKET_ID" = :sql_m_id
         ) sub
         WHERE "PRICE" <> "PREVIOUS" OR "PREVIOUS" IS NULL
       )
@@ -485,7 +485,7 @@ void db_vacuum_plots(const void *const db, const char *const e_id,
                  "  WHERE \"PLOT_ID\" IN ("
                  "    SELECT \"PLOT_ID\" FROM \"TREND_PLOTS\""
                  "    WHERE \"EXCHANGE_ID\" = '%s'"
-                 "      AND \"PRODUCT_ID\" = '%s'"
+                 "      AND \"MARKET_ID\" = '%s'"
                  "  ) AND \"X\" <= %s"
                  "  RETURNING *"
                  ") TO '%s-TREND-PLOTS-DATAPOINTS'",
@@ -503,7 +503,7 @@ void db_vacuum_plots(const void *const db, const char *const e_id,
                  "  WHERE \"PLOT_ID\" IN ("
                  "    SELECT \"PLOT_ID\" FROM \"TREND_MARKERS\""
                  "    WHERE \"EXCHANGE_ID\" = '%s'"
-                 "      AND \"PRODUCT_ID\" = '%s'"
+                 "      AND \"MARKET_ID\" = '%s'"
                  "  ) AND \"X\" <= %s"
                  "  RETURNING *"
                  ") TO '%s-TREND-MARKERS-DATAPOINTS'",
@@ -519,7 +519,7 @@ void db_vacuum_plots(const void *const db, const char *const e_id,
                  "COPY ("
                  "  DELETE FROM \"TREND_CANDLES\""
                  "  WHERE \"EXCHANGE_ID\" = '%s'"
-                 "    AND \"PRODUCT_ID\" = '%s'"
+                 "    AND \"MARKET_ID\" = '%s'"
                  "    AND \"CNANOS\" <= %s"
                  "  RETURNING *"
                  ") TO '%s-TREND-CANDLES'",
@@ -539,19 +539,19 @@ void db_vacuum_plots(const void *const db, const char *const e_id,
       WHERE "PLOT_ID" IN (
         SELECT "PLOT_ID" FROM "TREND_PLOTS"
         WHERE "EXCHANGE_ID" = :sql_e_id
-          AND "PRODUCT_ID" = :sql_m_id
+          AND "MARKET_ID" = :sql_m_id
       ) AND "X" < :sql_exp;
     EXEC SQL AT :con
       DELETE FROM "PLOTS_DATAPOINTS"
       WHERE "PLOT_ID" IN (
         SELECT "PLOT_ID" FROM "TREND_MARKERS"
         WHERE "EXCHANGE_ID" = :sql_e_id
-          AND "PRODUCT_ID" = :sql_m_id
+          AND "MARKET_ID" = :sql_m_id
       ) AND "X" < :sql_exp;
     EXEC SQL AT :con
       DELETE FROM "TREND_CANDLES" c
       WHERE c."EXCHANGE_ID" = :sql_e_id
-        AND c."PRODUCT_ID" = :sql_m_id
+        AND c."MARKET_ID" = :sql_m_id
         AND c."CNANOS" < :sql_exp;
     // clang-format on
   }
@@ -593,7 +593,7 @@ void db_vacuum_samples(const void *const db, const char *const e_id,
                            "COPY ( "
                            "  DELETE FROM \"SAMPLES\""
                            "  WHERE \"EXCHANGE_ID\" = '%s'"
-                           "    AND \"PRODUCT_ID\" = '%s'"
+                           "    AND \"MARKET_ID\" = '%s'"
                            "    AND \"NANOS\" <= %s"
                            "  RETURNING *"
                            ") TO '%s-SAMPLES'",
@@ -611,7 +611,7 @@ void db_vacuum_samples(const void *const db, const char *const e_id,
     EXEC SQL AT :con
       DELETE FROM "SAMPLES"
       WHERE "EXCHANGE_ID" = :sql_e_id
-        AND "PRODUCT_ID" = :sql_m_id
+        AND "MARKET_ID" = :sql_m_id
         AND "NANOS" <= :sql_nanos;
     // clang-format on
   }
@@ -671,7 +671,7 @@ bool db_stats(struct db_stats_rec *const stats, const void *const db,
          :sd_avg :sd_avg_ind,
          :scl_factor
     FROM "STATISTICS"
-    WHERE "EXCHANGE_ID" = :sql_e_id AND "PRODUCT_ID" = :sql_m_id;
+    WHERE "EXCHANGE_ID" = :sql_e_id AND "MARKET_ID" = :sql_m_id;
   EXEC SQL AT :con COMMIT;
   // clang-format on
 #ifdef ABAG_SQL_DEBUG
@@ -713,7 +713,7 @@ void db_stats_bcl_factor(const void *const db, const char *const e_id,
   EXEC SQL AT :con
     UPDATE "STATISTICS"
     SET "BUY_ORDER_CANCEL_FACTOR" = :sql_factor
-    WHERE "EXCHANGE_ID" = :sql_e_id AND "PRODUCT_ID" = :sql_m_id;
+    WHERE "EXCHANGE_ID" = :sql_e_id AND "MARKET_ID" = :sql_m_id;
   EXEC SQL AT :con COMMIT;
   // clang-format on
 #ifdef ABAG_SQL_DEBUG
@@ -748,7 +748,7 @@ void db_stats_scl_factor(const void *const db, const char *const e_id,
   EXEC SQL AT :con
     UPDATE "STATISTICS"
     SET "SELL_ORDER_CANCEL_FACTOR" = :sql_factor
-    WHERE "EXCHANGE_ID" = :sql_e_id AND "PRODUCT_ID" = :sql_m_id;
+    WHERE "EXCHANGE_ID" = :sql_e_id AND "MARKET_ID" = :sql_m_id;
   EXEC SQL AT :con COMMIT;
   // clang-format on
 #ifdef ABAG_SQL_DEBUG
@@ -958,7 +958,7 @@ void db_trades_open(const void *const db, const char *const e_id,
   EXEC SQL AT :con DECLARE trades_cursor CURSOR FOR
     SELECT "TRADE_ID",
            "EXCHANGE_ID",
-           "PRODUCT_ID",
+           "MARKET_ID",
            "BASE_CURRENCY_ID",
            "QUOTE_CURRENCY_ID",
            "STATUS",
@@ -979,7 +979,7 @@ void db_trades_open(const void *const db, const char *const e_id,
            "SELL_ORDER_QUOTE_AMOUNT_FILLED",
            "SELL_ORDER_QUOTE_FEES"
     FROM "TRADES"
-    WHERE "EXCHANGE_ID" = :sql_e_id AND "PRODUCT_ID" = :sql_m_id
+    WHERE "EXCHANGE_ID" = :sql_e_id AND "MARKET_ID" = :sql_m_id
       AND NOT ("STATUS" = 'DONE' OR "STATUS" = 'SUSPENDED');
   EXEC SQL AT :con OPEN trades_cursor;
   // clang-format on
@@ -1131,7 +1131,7 @@ void db_trade_bcreate(char *const t_id, const void *const db,
     INSERT INTO "TRADES"
       (
       "EXCHANGE_ID",
-      "PRODUCT_ID",
+      "MARKET_ID",
       "BASE_CURRENCY_ID",
       "QUOTE_CURRENCY_ID",
       "STATUS",
@@ -1217,7 +1217,7 @@ void db_trade_screate(char *const t_id, const void *const db,
     INSERT INTO "TRADES"
       (
       "EXCHANGE_ID",
-      "PRODUCT_ID",
+      "MARKET_ID",
       "BASE_CURRENCY_ID",
       "QUOTE_CURRENCY_ID",
       "STATUS",
@@ -1475,9 +1475,15 @@ void db_tx_trend_plot(struct db_plot_rec *plot, const void *const db,
   EXEC SQL WHENEVER SQLERROR CALL db_fatal();
   EXEC SQL WHENEVER NOT FOUND GOTO not_found;
   EXEC SQL AT :con
-    SELECT p."PLOT_ID", p."SNANOS", p."ENANOS" INTO :id, :snanos, :enanos
-    FROM "TREND_PLOTS" t JOIN "PLOTS" p ON t."PLOT_ID" = p."PLOT_ID"
-    WHERE t."EXCHANGE_ID" = :sql_e_id AND t."PRODUCT_ID" = :sql_m_id;
+    SELECT
+      p."PLOT_ID",
+      p."SNANOS",
+      p."ENANOS"
+    INTO :id, :snanos, :enanos
+    FROM "TREND_PLOTS" t
+      JOIN "PLOTS" p ON t."PLOT_ID" = p."PLOT_ID"
+    WHERE t."EXCHANGE_ID" = :sql_e_id
+      AND t."MARKET_ID" = :sql_m_id;
   // clang-format on
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(0, stdout);
@@ -1500,11 +1506,11 @@ not_found:
       SELECT :id, "NANOS", "PRICE"
       FROM "SAMPLES"
       WHERE "EXCHANGE_ID" = :sql_e_id
-        AND "PRODUCT_ID" = :sql_m_id
+        AND "MARKET_ID" = :sql_m_id
         AND "NANOS" >= :snanos;
   EXEC SQL AT :con
     INSERT INTO "TREND_PLOTS"
-      ("EXCHANGE_ID", "PRODUCT_ID", "PLOT_ID")
+      ("EXCHANGE_ID", "MARKET_ID", "PLOT_ID")
     VALUES
       ( :sql_e_id, :sql_m_id, :id);
   // clang-format on
@@ -1538,7 +1544,7 @@ void db_tx_trend_plot_candle(const void *const db, const char *const e_id,
   EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
   EXEC SQL AT :con
     INSERT INTO "TREND_CANDLES"
-      ("EXCHANGE_ID", "PRODUCT_ID", "OPEN", "HIGH", "LOW", "CLOSE",
+      ("EXCHANGE_ID", "MARKET_ID", "OPEN", "HIGH", "LOW", "CLOSE",
        "ONANOS", "HNANOS", "LNANOS", "CNANOS")
     VALUES
       (:sql_e_id, :sql_m_id, :o, :h, :l, :c, :onanos, :hnanos, :lnanos, :cnanos);
@@ -1582,7 +1588,7 @@ void db_tx_trend_plot_marker(const void *const db, const char *const e_id,
       (:sql_id, :sql_x, :sql_y);
   EXEC SQL AT :con
     INSERT INTO "TREND_MARKERS"
-      ("EXCHANGE_ID", "PRODUCT_ID", "PLOT_ID", "TYPE")
+      ("EXCHANGE_ID", "MARKET_ID", "PLOT_ID", "TYPE")
     VALUES
       (:sql_e_id, :sql_m_id, :sql_id, :sql_type);
   // clang-format on
@@ -1611,7 +1617,7 @@ void db_tx_trend_plot_samples_open(const void *const db, const char *const e_id,
       JOIN "PLOTS" p ON t."PLOT_ID" = p."PLOT_ID"
       JOIN "PLOTS_DATAPOINTS" d ON p."PLOT_ID" = d."PLOT_ID"
     WHERE t."EXCHANGE_ID" = :sql_e_id
-      AND t."PRODUCT_ID" = :sql_m_id
+      AND t."MARKET_ID" = :sql_m_id
     ORDER BY "X" ASC;
 
   EXEC SQL AT :con OPEN trend_plot_cursor;
@@ -1676,9 +1682,9 @@ void db_tx_trend_plot_candles_open(const void *const db, const char *const e_id,
       c."ONANOS", c."HNANOS", c."LNANOS", c."CNANOS"
     FROM "TREND_PLOTS" t
       JOIN "TREND_CANDLES" c ON t."EXCHANGE_ID" = c."EXCHANGE_ID"
-                            AND t."PRODUCT_ID" = c."PRODUCT_ID"
+                            AND t."MARKET_ID" = c."MARKET_ID"
     WHERE t."EXCHANGE_ID" = :sql_e_id
-      AND t."PRODUCT_ID" = :sql_m_id
+      AND t."MARKET_ID" = :sql_m_id
     ORDER BY "ONANOS" ASC;
 
   EXEC SQL AT :con OPEN trend_plot_candles_cursor;
@@ -1750,11 +1756,11 @@ void db_tx_trend_plot_markers_open(const void *const db, const char *const e_id,
     SELECT d."X", d."Y", m."TYPE"
     FROM "TREND_PLOTS" t
       JOIN "TREND_MARKERS" m ON t."EXCHANGE_ID" = m."EXCHANGE_ID"
-                            AND t."PRODUCT_ID" = m."PRODUCT_ID"
+                            AND t."MARKET_ID" = m."MARKET_ID"
       JOIN "PLOTS" p ON p."PLOT_ID" = m."PLOT_ID"
       JOIN "PLOTS_DATAPOINTS" d ON p."PLOT_ID" = d."PLOT_ID"
     WHERE t."EXCHANGE_ID" = :sql_e_id
-      AND t."PRODUCT_ID" = :sql_m_id
+      AND t."MARKET_ID" = :sql_m_id
     ORDER BY "X" ASC;
 
   EXEC SQL AT :con OPEN trend_plot_markers_cursor;
@@ -1825,7 +1831,7 @@ void db_trend_state(struct db_trend_state_rec *const state,
     SELECT "CANDLE_LAST_NANOS", "CANDLE_LAST_ANGLE", "CANDLE_LAST_TREND"
     INTO :lnanos, :langle, :ltrend
     FROM "TREND_STATES"
-    WHERE "EXCHANGE_ID" = :sql_e_id AND "PRODUCT_ID" = :sql_m_id;
+    WHERE "EXCHANGE_ID" = :sql_e_id AND "MARKET_ID" = :sql_m_id;
   EXEC SQL AT :con COMMIT;
   // clang-format on
 #ifdef ABAG_SQL_DEBUG
@@ -1836,7 +1842,7 @@ not_found:
   // clang-format off
   EXEC SQL AT :con
     INSERT INTO "TREND_STATES"
-      ("EXCHANGE_ID", "PRODUCT_ID", "CANDLE_LAST_NANOS", "CANDLE_LAST_ANGLE",
+      ("EXCHANGE_ID", "MARKET_ID", "CANDLE_LAST_NANOS", "CANDLE_LAST_ANGLE",
        "CANDLE_LAST_TREND")
     VALUES
       (:sql_e_id, :sql_m_id, 0, 0, 'NONE')
@@ -1875,7 +1881,7 @@ void db_trend_state_update(const void *const db, const char *const e_id,
           "CANDLE_LAST_ANGLE" = :langle,
           "CANDLE_LAST_TREND" = :ltrend
     WHERE
-      "EXCHANGE_ID" = :sql_e_id AND "PRODUCT_ID" = :sql_m_id;
+      "EXCHANGE_ID" = :sql_e_id AND "MARKET_ID" = :sql_m_id;
   EXEC SQL AT :con COMMIT;
   // clang-format on
 #ifdef ABAG_SQL_DEBUG
