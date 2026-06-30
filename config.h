@@ -30,16 +30,16 @@
 #include "math.h"
 #include "string.h"
 
-#ifndef ABAG_CONFIG_FILE
-#define ABAG_CONFIG_FILE "/etc/abagnale/abagnale.conf"
+#ifndef DEFAULT_ABAG_CONFIG_FILE
+#define DEFAULT_ABAG_CONFIG_FILE "/etc/abagnale/abagnale.conf"
 #endif
 
-#ifndef ABAG_DATABASE_TARGET
-#define ABAG_DATABASE_TARGET "ABAGNALE"
+#ifndef DEFAULT_ABAG_DATABASE_TARGET
+#define DEFAULT_ABAG_DATABASE_TARGET "ABAGNALE"
 #endif
 
-#ifndef ABAG_DATABASE_USER
-#define ABAG_DATABASE_USER "abagnale"
+#ifndef DEFAULT_ABAG_DATABASE_USER
+#define DEFAULT_ABAG_DATABASE_USER "abagnale"
 #endif
 
 struct Config {

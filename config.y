@@ -43,6 +43,8 @@
 #include <string.h>
 #include <stdlib.h>
 
+extern const bool verbose;
+
 extern const struct Exchange *restrict const all_exchanges;
 extern const size_t all_exchanges_nitems;
 
@@ -241,7 +243,7 @@ dbconf  : conf_db
         ;
 
 database  : DATABASE dbconf;
- 
+
 nanos : STRING {
         $$ = config_nsparse($1);
         if ($$ == NULL) {
@@ -1096,10 +1098,17 @@ int config_fparse(struct Config *const x_conf,
   }
 
   if (conf->db_tgt == NULL)
-   conf->db_tgt = String_cnew(ABAG_DATABASE_TARGET);
+   conf->db_tgt = String_cnew(envs("ABAG_DATABASE_TARGET",
+                                   DEFAULT_ABAG_DATABASE_TARGET));
 
   if (conf->db_usr == NULL)
-    conf->db_usr = String_cnew(ABAG_DATABASE_USER);
+    conf->db_usr = String_cnew(envs("ABAG_DATABASE_USER",
+                                    DEFAULT_ABAG_DATABASE_USER));
+
+  if (verbose) {
+    wout("\tABAG_DATABASE_TARGET=%s\n", String_chars(conf->db_tgt));
+    wout("\tABAG_DATABASE_USER=%s\n", String_chars(conf->db_usr));
+  }
 
   if (errors)
     return (-1);

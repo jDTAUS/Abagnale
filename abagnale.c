@@ -32,24 +32,21 @@
 #include "queue.h"
 #include "thread.h"
 #include "time.h"
+#include "version.h"
 
+#include <errno.h>
 #include <inttypes.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 
-#ifndef ABAG_TRADE_WORKERS
-#define ABAG_TRADE_WORKERS 6
+#ifndef DEFAULT_ABAG_TRADE_WORKERS
+#define DEFAULT_ABAG_TRADE_WORKERS 6
 #endif
 
-#ifndef ABAG_TICKER_WORKERS
-#define ABAG_TICKER_WORKERS 12
-#endif
-
-#define ABAG_WORKERS (ABAG_TRADE_WORKERS + ABAG_TICKER_WORKERS + 2)
-
-#ifndef ABAG_MAX_PRODUCTS
-#define ABAG_MAX_PRODUCTS 1200
+#ifndef DEFAULT_ABAG_TICKER_WORKERS
+#define DEFAULT_ABAG_TICKER_WORKERS 12
 #endif
 
 #ifndef nitems
@@ -3359,7 +3356,7 @@ static inline void trade_array_delete(void *restrict const entry) {
 
 static inline void trade_queue_entry_delete(void *restrict const entry) {
   struct Trade *restrict const t = entry;
-  if (TRADE_IS_DELETED(t))
+  if (t != NULL && TRADE_IS_DELETED(t))
     trade_delete(t);
 }
 
@@ -3369,26 +3366,48 @@ static inline void trade_queue_delete(void *restrict const entry) {
 
 static inline void thrd_delete(void *restrict const entry) { heap_free(entry); }
 
+#define AVG_PRODUCTS 2048
+
 int abagnale(int argc, char *argv[]) {
-  struct Array *restrict const trade_queues = Array_new(128);
   void *const *restrict items;
+  const unsigned long trade_workers =
+      envul("ABAG_TRADE_WORKERS", DEFAULT_ABAG_TRADE_WORKERS);
+
+  const unsigned long ticker_workers =
+      envul("ABAG_TICKER_WORKERS", DEFAULT_ABAG_TICKER_WORKERS);
+
+  if (verbose) {
+    wout("\tABAG_TICKER_WORKERS=%lu\n", ticker_workers);
+    wout("\tABAG_TRADE_WORKERS=%lu\n", trade_workers);
+  }
+
+  // trade_workers + ticker_workers + 2 <= LONG_MAX
+  // => trade_workers <= LONG_MAX - ticker_workers - 2
+  // => ticker_workers <= LONG_MAX - trade_workers - 2
+  if (trade_workers > LONG_MAX - ticker_workers - 2 ||
+      ticker_workers > LONG_MAX - trade_workers - 2)
+    panic();
+
+  const unsigned long w_cnt = trade_workers + ticker_workers + 2;
+
+  // w_cnt * Array_size(exchanges) <= SIZE_MAX
+  // => Array_size(exchanges) <= SIZE_MAX /w_cnt
+  // => w_cnt <= SIZE_MAX / Array_size(exchanges)
+  if (Array_size(exchanges) > SIZE_MAX / w_cnt ||
+      w_cnt > SIZE_MAX / Array_size(exchanges))
+    panic();
+
   ninety_percent_factor = Numeric_from_char("0.9");
 
-  market_samples = Map_new(StringMapOps, ABAG_MAX_PRODUCTS);
-  market_prices = Map_new(StringMapOps, ABAG_MAX_PRODUCTS);
-  market_trades = Map_new(StringMapOps, ABAG_MAX_PRODUCTS);
+  market_samples = Map_new(StringMapOps, AVG_PRODUCTS);
+  market_prices = Map_new(StringMapOps, AVG_PRODUCTS);
+  market_trades = Map_new(StringMapOps, AVG_PRODUCTS);
 
   tls_create(&abag_tls_key, abag_tls_dtor);
 
-  // ABAG_WORKERS * Array_size(exchanges) <= SIZE_MAX
-  // => Array_size(exchanges) <= SIZE_MAX / ABAG_WORKERS
-  // => ABAG_WORKERS <= SIZE_MAX / Array_size(exchanges)
-  if (Array_size(exchanges) > SIZE_MAX / ABAG_WORKERS ||
-      ABAG_WORKERS > SIZE_MAX / Array_size(exchanges))
-    panic();
-
+  struct Array *restrict const trade_queues = Array_new(128);
   struct Array *restrict const workers =
-      Array_new(ABAG_WORKERS * Array_size(exchanges));
+      Array_new(w_cnt * Array_size(exchanges));
 
   items = Array_items(exchanges);
   for (size_t i = Array_size(exchanges); i-- > 0 && !terminated;) {
@@ -3397,7 +3416,7 @@ int abagnale(int argc, char *argv[]) {
         heap_calloc(1, sizeof(struct worker_ctx));
 
     e_ctx->e = e;
-    e_ctx->trades_queue = Queue_new(ABAG_MAX_PRODUCTS, (time_t)0);
+    e_ctx->trades_queue = Queue_new(AVG_PRODUCTS, (time_t)0);
     e_ctx->e->start();
     Queue_start(e_ctx->trades_queue);
     Array_add_tail(trade_queues, e_ctx->trades_queue);
@@ -3406,7 +3425,7 @@ int abagnale(int argc, char *argv[]) {
     thread_create(thrd, exchange_stop, e_ctx);
     Array_add_tail(workers, thrd);
 
-    for (int j = 1; j < ABAG_WORKERS && !terminated; j++) {
+    for (size_t j = 1; j < w_cnt && !terminated; j++) {
       char cname[DATABASE_CONNECTION_NAME_MAX_LENGTH + 1] = {0};
       struct worker_ctx *restrict const w_ctx =
           heap_calloc(1, sizeof(struct worker_ctx));
@@ -3414,7 +3433,7 @@ int abagnale(int argc, char *argv[]) {
       w_ctx->e = e;
       w_ctx->trades_queue = e_ctx->trades_queue;
 
-      const int r = snprintf(cname, sizeof(cname), "%s-worker-%.3d",
+      const int r = snprintf(cname, sizeof(cname), "%s-worker-%.3zu",
                              String_chars(e->nm), j);
 
       if (r < 0 || (size_t)r >= sizeof(cname))
@@ -3427,7 +3446,7 @@ int abagnale(int argc, char *argv[]) {
 
       if (j == 1)
         thread_create(thrd, orders_process, w_ctx);
-      else if (j - 1 < ABAG_TRADE_WORKERS)
+      else if (j - 1 < trade_workers)
         thread_create(thrd, trades_process, w_ctx);
       else
         thread_create(thrd, samples_process, w_ctx);

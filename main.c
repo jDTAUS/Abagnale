@@ -98,7 +98,6 @@ int abagnalectl(int argc, char *argv[]);
 static void terminate(int signum) { terminated = true; }
 
 static _Noreturn void usage(void) {
-  werr("%s\n", ABAG_REVISION);
   werr("Usage: %s [-Dmacro=value ... ] [-f config-file] [-n] [-p plots-dir] "
        "[-v]\n",
        String_chars(progname));
@@ -108,7 +107,7 @@ static _Noreturn void usage(void) {
 
 int main(int argc, char *argv[]) {
   int c, r = EXIT_FAILURE;
-  const char *conffile = ABAG_CONFIG_FILE;
+  const char *conffile = envs("ABAG_CONFIG_FILE", DEFAULT_ABAG_CONFIG_FILE);
   char *plotsdir = NULL;
   verbose = false;
   struct optparse options = {0};
@@ -209,6 +208,11 @@ int main(int argc, char *argv[]) {
   }
 
   argv += options.optind;
+
+  if (verbose) {
+    wout("%s\n", ABAG_REVISION);
+    wout("\tABAG_CONFIG_FILE=%s\n", conffile);
+  }
 
   for (size_t i = nitems(all_algorithms); i-- > 0;)
     all_algorithms[i]->init();

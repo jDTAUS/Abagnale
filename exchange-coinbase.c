@@ -32,6 +32,7 @@
 #include "queue.h"
 #include "thread.h"
 #include "time.h"
+#include "version.h"
 #include "wcjson-document.h"
 
 #include <inttypes.h>
@@ -39,6 +40,61 @@
 #include <openssl/ec.h>
 #include <openssl/evp.h>
 #include <openssl/pem.h>
+
+#ifndef DEFAULT_CDP_WS_URI
+#define DEFAULT_CDP_WS_URI "wss://advanced-trade-ws.coinbase.com"
+#endif
+
+#ifndef DEFAULT_CDP_REST_URI
+#define DEFAULT_CDP_REST_URI "https://api.coinbase.com"
+#endif
+
+#ifndef DEFAULT_CDP_ACCOUNT_PATH
+#define DEFAULT_CDP_ACCOUNT_PATH "/api/v3/brokerage/accounts/%s"
+#endif
+
+#ifndef DEFAULT_CDP_ACCOUNTS_PATH
+#define DEFAULT_CDP_ACCOUNTS_PATH "/api/v3/brokerage/accounts"
+#endif
+
+#ifndef DEFAULT_CDP_FEES_PATH
+#define DEFAULT_CDP_FEES_PATH "/api/v3/brokerage/transaction_summary"
+#endif
+
+#ifndef DEFAULT_CDP_ORDER_PATH
+#define DEFAULT_CDP_ORDER_PATH "/api/v3/brokerage/orders/historical/%s"
+#endif
+
+#ifndef DEFAULT_CDP_ORDER_CANCEL_PATH
+#define DEFAULT_CDP_ORDER_CANCEL_PATH "/api/v3/brokerage/orders/batch_cancel"
+#endif
+
+#ifndef DEFAULT_CDP_ORDER_CREATE_PATH
+#define DEFAULT_CDP_ORDER_CREATE_PATH "/api/v3/brokerage/orders"
+#endif
+
+#ifndef DEFAULT_CDP_PRODUCTS_PATH
+#define DEFAULT_CDP_PRODUCTS_PATH "/api/v3/brokerage/products"
+#endif
+
+#ifndef DEFAULT_CDP_HTTP_REQUESTS_PER_SECOND
+#define DEFAULT_CDP_HTTP_REQUESTS_PER_SECOND 30
+#endif
+
+#ifndef DEFAULT_CDP_HTTP_RETRY_SECONDS
+#define DEFAULT_CDP_HTTP_RETRY_SECONDS 3
+#endif
+
+#ifndef DEFAULT_CDP_HTTP_STALL_MILLIS
+#define DEFAULT_CDP_HTTP_STALL_MILLIS 3600000L
+#endif
+
+#ifndef DEFAULT_CDP_HTTP_TIMEOUT_MILLIS
+#define DEFAULT_CDP_HTTP_TIMEOUT_MILLIS 60000L
+#endif
+
+#define COINBASE_UUID "74cc13c5-4835-491b-95f2-6af672ad141a"
+#define COINBASE_DBCON "coinbase"
 
 #define URL_MAX_LENGTH (size_t)512
 #define HTTP_RESPONSE_MAX_WCHARS (size_t)5242880
@@ -49,110 +105,6 @@
 #define WCJSON_MAX_ESCCHARACTERS (size_t)512    // 2kb
 #define WCJSON_STRLEN_MAX (size_t)8192
 #define WCJSON_BODY_MAX (size_t)32767
-
-#define COINBASE_UUID "74cc13c5-4835-491b-95f2-6af672ad141a"
-#define COINBASE_DBCON "coinbase"
-
-#ifndef ABAG_COINBASE_ADVANCED_API_WEBSOCKET_HOST
-#define ABAG_COINBASE_ADVANCED_API_WEBSOCKET_HOST                              \
-  "advanced-trade-ws.coinbase.com"
-#endif
-
-#ifndef ABAG_COINBASE_WEBSOCKET_URI
-#define ABAG_COINBASE_WEBSOCKET_URI                                            \
-  "wss://" ABAG_COINBASE_ADVANCED_API_WEBSOCKET_HOST
-#endif
-
-#ifndef ABAG_COINBASE_ADVANCED_API_HOST
-#define ABAG_COINBASE_ADVANCED_API_HOST "api.coinbase.com"
-#endif
-
-#ifndef ABAG_COINBASE_ADVANCED_API_URI
-#define ABAG_COINBASE_ADVANCED_API_URI                                         \
-  "https://" ABAG_COINBASE_ADVANCED_API_HOST
-#endif
-
-#ifndef ABAG_COINBASE_PRODUCTS_PATH
-#define ABAG_COINBASE_PRODUCTS_PATH "/api/v3/brokerage/products"
-#endif
-
-#ifndef ABAG_COINBASE_PRODUCTS_RESOURCE_URL
-#define ABAG_COINBASE_PRODUCTS_RESOURCE_URL                                    \
-  ABAG_COINBASE_ADVANCED_API_URI                                               \
-  ABAG_COINBASE_PRODUCTS_PATH
-#endif
-
-#ifndef ABAG_COINBASE_ACCOUNTS_PATH
-#define ABAG_COINBASE_ACCOUNTS_PATH "/api/v3/brokerage/accounts"
-#endif
-
-#ifndef ABAG_COINBASE_ACCOUNTS_RESOURCE_URL
-#define ABAG_COINBASE_ACCOUNTS_RESOURCE_URL                                    \
-  ABAG_COINBASE_ADVANCED_API_URI                                               \
-  ABAG_COINBASE_ACCOUNTS_PATH
-#endif
-
-#ifndef ABAG_COINBASE_ACCOUNTS_RESOURCE_LIMIT
-#define ABAG_COINBASE_ACCOUNTS_RESOURCE_LIMIT 200
-#endif
-
-#ifndef ABAG_COINBASE_FEES_PATH
-#define ABAG_COINBASE_FEES_PATH "/api/v3/brokerage/transaction_summary"
-#endif
-
-#ifndef ABAG_COINBASE_FEES_RESOURCE_URL
-#define ABAG_COINBASE_FEES_RESOURCE_URL                                        \
-  ABAG_COINBASE_ADVANCED_API_URI                                               \
-  ABAG_COINBASE_FEES_PATH
-#endif
-
-#ifndef ABAG_COINBASE_ACCOUNT_PATH
-#define ABAG_COINBASE_ACCOUNT_PATH "/api/v3/brokerage/accounts/%s"
-#endif
-
-#ifndef ABAG_COINBASE_ORDER_PATH
-#define ABAG_COINBASE_ORDER_PATH "/api/v3/brokerage/orders/historical/%s"
-#endif
-
-#ifndef ABAG_COINBASE_ORDER_CANCEL_PATH
-#define ABAG_COINBASE_ORDER_CANCEL_PATH "/api/v3/brokerage/orders/batch_cancel"
-#endif
-
-#ifndef ABAG_COINBASE_ORDER_CANCEL_RESOURCE_URL
-#define ABAG_COINBASE_ORDER_CANCEL_RESOURCE_URL                                \
-  ABAG_COINBASE_ADVANCED_API_URI                                               \
-  ABAG_COINBASE_ORDER_CANCEL_PATH
-#endif
-
-#ifndef ABAG_COINBASE_ORDER_CREATE_PATH
-#define ABAG_COINBASE_ORDER_CREATE_PATH "/api/v3/brokerage/orders"
-#endif
-
-#ifndef ABAG_COINBASE_ORDER_CREATE_RESOURCE_URL
-#define ABAG_COINBASE_ORDER_CREATE_RESOURCE_URL                                \
-  ABAG_COINBASE_ADVANCED_API_URI                                               \
-  ABAG_COINBASE_ORDER_CREATE_PATH
-#endif
-
-#ifndef API_RATE_REQUESTS_PER_SECOND
-#define API_RATE_REQUESTS_PER_SECOND 30
-#endif
-
-#ifndef WEBSOCKET_RECONNECT_TIMEOUT_SECONDS
-#define WEBSOCKET_RECONNECT_TIMEOUT_SECONDS 3
-#endif
-
-#ifndef MG_POLL_WAIT_MILLIS
-#define MG_POLL_WAIT_MILLIS 30000L
-#endif
-
-#ifndef HTTP_TIMEOUT_MILLIS
-#define HTTP_TIMEOUT_MILLIS 60000L
-#endif
-
-#ifndef WEBSOCKET_STALL_MILLIS
-#define WEBSOCKET_STALL_MILLIS 3600000L
-#endif
 
 #define WCJSON_DECLARE_STRING_ITEM(_item)                                      \
   struct wcjson_value *restrict j_##_item = NULL;
@@ -393,6 +345,19 @@ extern const struct Config *restrict const cnf;
 extern const bool verbose;
 
 static const struct ExchangeConfig *restrict coinbase_cnf;
+static const char *coinbase_ws_uri;
+static const char *coinbase_rest_uri;
+static struct timespec coinbase_request_rate;
+static struct timespec coinbase_retry_rate;
+static const char *coinbase_account_path;
+static const char *coinbase_accounts_path;
+static const char *coinbase_fees_path;
+static const char *coinbase_order_path;
+static const char *coinbase_order_cancel_path;
+static const char *coinbase_order_create_path;
+static const char *coinbase_products_path;
+static unsigned long coinbase_stall_ms;
+static unsigned long coinbase_timeout_ms;
 static void *restrict coinbase_db;
 
 static struct Array *restrict markets;
@@ -413,14 +378,6 @@ static struct Queue *restrict orders;
 static struct Queue *restrict samples;
 static thrd_t mg_mgr_worker;
 static struct wcjson_document *restrict ws_doc;
-static struct timespec api_request_rate = {
-    .tv_sec = 0,
-    .tv_nsec = 1000000000L / API_RATE_REQUESTS_PER_SECOND,
-};
-static struct timespec api_reconnect_rate = {
-    .tv_sec = WEBSOCKET_RECONNECT_TIMEOUT_SECONDS,
-    .tv_nsec = 0,
-};
 
 static void coinbase_init(void);
 static void coinbase_configure(const struct ExchangeConfig *restrict const);
@@ -938,7 +895,7 @@ static int mg_mgr_worker_func(void *restrict const arg) {
   struct mg_mgr *restrict const mgr = arg;
 
   while (running)
-    mg_mgr_poll(mgr, MG_POLL_WAIT_MILLIS);
+    mg_mgr_poll(mgr, coinbase_timeout_ms / 2);
 
   mg_mgr_free(mgr);
   heap_free(mgr);
@@ -968,7 +925,7 @@ static void ws_ticker_update(const struct wcjson_document *restrict const doc,
     if (Queue_enqueue_timedout(samples)) {
       werr("coinbase: Enqueuing ticker timed out after %" PRIdMAX
            " seconds: %s\n",
-           (intmax_t)(WEBSOCKET_STALL_MILLIS / 1000),
+           (intmax_t)(coinbase_stall_ms / 1000L),
            wcjsondoc_string(errbuf, sizeof(errbuf), doc, ticker, NULL));
 
       Sample_delete(s);
@@ -1057,8 +1014,8 @@ static void ws_user_update(const struct wcjson_document *restrict const doc,
   o->dnanos = o->settled ? Numeric_copy(nanos) : NULL;
 
   if (o->status == ORDER_STATUS_UNKNOWN)
-    werr("coinbase: %s: user: %s: Order status unknown: %s\n",
-         ABAG_COINBASE_WEBSOCKET_URI, j_status->mbstring,
+    werr("coinbase: %s: user: %s: Order status unknown: %s\n", coinbase_ws_uri,
+         j_status->mbstring,
          wcjsondoc_string(errbuf, sizeof(errbuf), doc, order, NULL));
 
   if ((o->status == ORDER_STATUS_CANCELLED ||
@@ -1312,7 +1269,7 @@ static void ws_listener(struct mg_connection *restrict c, int ev,
         .ca = mg_str(""),
         .cert = mg_str(""),
         .key = mg_str(""),
-        .name = mg_url_host(ABAG_COINBASE_WEBSOCKET_URI),
+        .name = mg_url_host(coinbase_ws_uri),
     };
 
     mg_tls_init(c, &ws_tls_opts);
@@ -1320,8 +1277,8 @@ static void ws_listener(struct mg_connection *restrict c, int ev,
   }
   case MG_EV_ERROR: {
     // XXX: ev_data
-    werr("coinbase: %s: %s: %lu: %s\n", ABAG_COINBASE_WEBSOCKET_URI,
-         channel->name, c->id, (char *)ev_data);
+    werr("coinbase: %s: %s: %lu: %s\n", coinbase_ws_uri, channel->name, c->id,
+         (char *)ev_data);
     c->is_closing = 1;
     break;
   }
@@ -1351,8 +1308,8 @@ static void ws_listener(struct mg_connection *restrict c, int ev,
 #endif
         c->is_closing = 1;
       } else
-        werr("coinbase: %s: %s: %lu: %d\n", ABAG_COINBASE_WEBSOCKET_URI,
-             channel->name, c->id, type);
+        werr("coinbase: %s: %s: %lu: %d\n", coinbase_ws_uri, channel->name,
+             c->id, type);
 
     } else
       c->is_closing = 1;
@@ -1367,12 +1324,11 @@ static void ws_listener(struct mg_connection *restrict c, int ev,
       struct mg_mgr *restrict const mgr = c->mgr;
 
       do {
-        thread_sleep(&api_reconnect_rate);
-        c = mg_ws_connect(mgr, ABAG_COINBASE_WEBSOCKET_URI, ws_listener,
-                          channel, NULL);
+        thread_sleep(&coinbase_retry_rate);
+        c = mg_ws_connect(mgr, coinbase_ws_uri, ws_listener, channel, NULL);
         if (!c)
-          werr("coinbase: %s: %s: Failure reconnecting\n",
-               ABAG_COINBASE_WEBSOCKET_URI, channel->name);
+          werr("coinbase: %s: %s: Failure reconnecting\n", coinbase_ws_uri,
+               channel->name);
 
       } while (!c);
     }
@@ -1381,12 +1337,11 @@ static void ws_listener(struct mg_connection *restrict c, int ev,
   }
 
   if (channel->last_message &&
-      mg_millis() - channel->last_message > WEBSOCKET_STALL_MILLIS) {
+      mg_millis() - channel->last_message > coinbase_stall_ms) {
     channel->reconnect = true;
     channel->last_message = mg_millis();
     if (verbose)
-      wout("coinbase: %s: %s: No events\n", ABAG_COINBASE_WEBSOCKET_URI,
-           channel->name);
+      wout("coinbase: %s: %s: No events\n", coinbase_ws_uri, channel->name);
   }
 
   if (channel->reconnect) {
@@ -1402,7 +1357,7 @@ static void http_listener(struct mg_connection *restrict c, int ev,
 
   switch (ev) {
   case MG_EV_OPEN:
-    http_ctx->exp_time = mg_millis() + HTTP_TIMEOUT_MILLIS;
+    http_ctx->exp_time = mg_millis() + coinbase_timeout_ms;
     break;
   case MG_EV_CLOSE:
     http_ctx->done = true;
@@ -1415,8 +1370,8 @@ static void http_listener(struct mg_connection *restrict c, int ev,
     break;
   }
   case MG_EV_ERROR: {
+    c->is_draining = 1;
     http_ctx->success = false;
-    // XXX: ev_data
     werr("coinbase: %s\n", (char *)ev_data);
     break;
   }
@@ -1450,10 +1405,10 @@ static void http_listener(struct mg_connection *restrict c, int ev,
               "Content-Type: application/json\r\n"
               "Content-Length: %u\r\n"
               "Connection: close\r\n"
-              "User-Agent: Abagnale/0\r\n"
+              "User-Agent: Abagnale; %s\r\n"
               "\r\n",
               method, mg_url_uri(http_ctx->url), jwt, (int)host.len, host.buf,
-              http_ctx->body_len);
+              http_ctx->body_len, ABAG_REVISION);
 
     mg_send(c, http_ctx->body, http_ctx->body_len);
     heap_free(jwt);
@@ -1462,27 +1417,24 @@ static void http_listener(struct mg_connection *restrict c, int ev,
   case MG_EV_HTTP_MSG: {
     struct mg_http_message *restrict const msg = ev_data;
     http_ctx->success = mg_http_status(msg) == 200;
+    c->is_draining = 1;
 
 #ifdef ABAG_COINBASE_DEBUG
     wout("coinbase: %.*s\n", (int)msg->message.len, msg->message.buf);
 #endif
 
-    if (http_ctx->success) {
-      http_ctx->rsp_len = HTTP_RESPONSE_MAX_WCHARS;
-      http_ctx->rsp =
-          heap_calloc(HTTP_RESPONSE_MAX_WCHARS + 1, sizeof(wchar_t));
-
-      if (mg_http_message_decode(http_ctx->rsp, &http_ctx->rsp_len, msg)) {
-        http_ctx->success = false;
-        return;
-      }
-    } else {
-      mg_error(c, "%s: HTTP %d: %.*s", http_ctx->url, mg_http_status(msg),
-               (int)msg->body.len, msg->body.buf);
+    if (!http_ctx->success) {
+      werr("coinbase: %s: HTTP %d: %.*s\n", http_ctx->url, mg_http_status(msg),
+           (int)msg->body.len, msg->body.buf);
       return;
     }
 
-    c->is_draining = 1;
+    http_ctx->rsp_len = HTTP_RESPONSE_MAX_WCHARS;
+    http_ctx->rsp = heap_calloc(HTTP_RESPONSE_MAX_WCHARS + 1, sizeof(wchar_t));
+
+    if (mg_http_message_decode(http_ctx->rsp, &http_ctx->rsp_len, msg))
+      http_ctx->success = false;
+
     break;
   }
   }
@@ -1512,7 +1464,7 @@ static int http_req(struct wcjson_document *restrict const doc,
     wout("%.*s\n", (int)body_len, body);
 #endif
 
-  thread_sleep(&api_request_rate);
+  thread_sleep(&coinbase_request_rate);
 
   mg_mgr_init(&mgr);
   mg_mgr_config(&mgr);
@@ -1525,7 +1477,7 @@ static int http_req(struct wcjson_document *restrict const doc,
   }
 
   while (!http_ctx.done)
-    mg_mgr_poll(&mgr, MG_POLL_WAIT_MILLIS);
+    mg_mgr_poll(&mgr, coinbase_timeout_ms);
 
   if (!http_ctx.success)
     goto err;
@@ -1584,12 +1536,59 @@ err:
 static void coinbase_init(void) {
   exchange_coinbase.id = String_cnew(COINBASE_UUID);
   exchange_coinbase.nm = String_cnew("coinbase");
+  coinbase_rest_uri = envs("CDP_REST_URI", DEFAULT_CDP_REST_URI);
+  coinbase_ws_uri = envs("CDP_WS_URI", DEFAULT_CDP_WS_URI);
+  coinbase_account_path = envs("CDP_ACCOUNT_PATH", DEFAULT_CDP_ACCOUNT_PATH);
+  coinbase_accounts_path = envs("CDP_ACCOUNTS_PATH", DEFAULT_CDP_ACCOUNTS_PATH);
+  coinbase_fees_path = envs("CDP_FEES_PATH", DEFAULT_CDP_FEES_PATH);
+  coinbase_order_path = envs("CDP_ORDER_PATH", DEFAULT_CDP_ORDER_PATH);
+  coinbase_products_path = envs("CDP_PRODUCTS_PATH", DEFAULT_CDP_PRODUCTS_PATH);
+  coinbase_order_cancel_path =
+      envs("CDP_ORDER_CANCEL_PATH", DEFAULT_CDP_ORDER_CANCEL_PATH);
+
+  coinbase_order_create_path =
+      envs("CDP_ORDER_CREATE_PATH", DEFAULT_CDP_ORDER_CREATE_PATH);
+
+  const unsigned long req_s = envul("CDP_HTTP_REQUESTS_PER_SECOND",
+                                    DEFAULT_CDP_HTTP_REQUESTS_PER_SECOND);
+
+  coinbase_request_rate.tv_sec = 0;
+  coinbase_request_rate.tv_nsec = 1000000000L / req_s;
+
+  const unsigned long ret_s =
+      envul("CDP_HTTP_RETRY_SECONDS", DEFAULT_CDP_HTTP_RETRY_SECONDS);
+
+  coinbase_retry_rate.tv_sec = ret_s;
+  coinbase_retry_rate.tv_nsec = 0;
+
+  coinbase_stall_ms =
+      envul("CDP_HTTP_STALL_MILLIS", DEFAULT_CDP_HTTP_STALL_MILLIS);
+
+  coinbase_timeout_ms =
+      envul("CDP_HTTP_TIMEOUT_MILLIS", DEFAULT_CDP_HTTP_TIMEOUT_MILLIS);
+
+  if (verbose) {
+    wout("\tCDP_REST_URI=%s\n", coinbase_rest_uri);
+    wout("\tCDP_WS_URI=%s\n", coinbase_ws_uri);
+    wout("\tCDP_ACCOUNT_PATH=%s\n", coinbase_account_path);
+    wout("\tCDP_ACCOUNTS_PATH=%s\n", coinbase_accounts_path);
+    wout("\tCDP_FEES_PATH=%s\n", coinbase_fees_path);
+    wout("\tCDP_ORDER_PATH=%s\n", coinbase_order_path);
+    wout("\tCDP_PRODUCTS_PATH=%s\n", coinbase_products_path);
+    wout("\tCDP_ORDER_CANCEL_PATH=%s\n", coinbase_order_cancel_path);
+    wout("\tCDP_ORDER_CREATE_PATH=%s\n", coinbase_order_create_path);
+    wout("\tCDP_HTTP_REQUESTS_PER_SECOND=%lu\n", req_s);
+    wout("\tCDP_HTTP_RETRY_SECONDS=%lu\n", ret_s);
+    wout("\tCDP_HTTP_STALL_MILLIS=%lu\n", coinbase_stall_ms);
+    wout("\tCDP_HTTP_TIMEOUT_MILLIS=%lu\n", coinbase_timeout_ms);
+  }
+
   running = false;
   coinbase_cnf = NULL;
   coinbase_db = NULL;
   orders = Queue_new(128, (time_t)0);
   samples = Queue_new((MG_MAX_RECV_SIZE) / sizeof(struct Sample *),
-                      (time_t)(WEBSOCKET_STALL_MILLIS / 1000));
+                      (time_t)(coinbase_stall_ms / 1000L));
   mg_log_set(MG_LL_NONE); // NONE, ERROR, INFO, DEBUG, VERBOSE
   markets = Array_new(1024);
   markets_by_symbol = Map_new(StringMapOps, 1024);
@@ -1643,13 +1642,13 @@ static void coinbase_start(void) {
   for (size_t i = nitems(ws_channels); i-- > 0;) {
     if (ws_channels[i].items != NULL) {
       struct mg_connection *restrict const c = mg_ws_connect(
-          mgr, ABAG_COINBASE_WEBSOCKET_URI, ws_listener, &ws_channels[i], NULL);
+          mgr, coinbase_ws_uri, ws_listener, &ws_channels[i], NULL);
 
       ws_channels[i].last_message = mg_millis();
 
       if (!c)
-        fatal("%s: %s: Failure starting websocket\n",
-              ABAG_COINBASE_WEBSOCKET_URI, ws_channels[i].name);
+        fatal("%s: %s: Failure starting websocket\n", coinbase_ws_uri,
+              ws_channels[i].name);
     }
   }
 
@@ -1668,7 +1667,7 @@ static struct Sample *coinbase_sample_await(void) {
 
   if (Queue_dequeue_timedout(samples)) {
     werr("coinbase: Dequeuing ticker timed out after %" PRIdMAX " seconds\n",
-         (intmax_t)(WEBSOCKET_STALL_MILLIS / 1000));
+         (intmax_t)(coinbase_stall_ms / 1000L));
 
     for (size_t i = nitems(ws_channels); i-- > 0;)
       ws_channels[i].reconnect = true;
@@ -1855,13 +1854,13 @@ static struct Array *coinbase_markets(void) {
 
   if (markets_reload) {
     accounts_reload = true;
-    int r =
-        snprintf(url, sizeof(url), "%s", ABAG_COINBASE_PRODUCTS_RESOURCE_URL);
+    int r = snprintf(url, sizeof(url), "%s%s", coinbase_rest_uri,
+                     coinbase_products_path);
 
     if (r < 0 || (size_t)r >= sizeof(url))
       panic();
 
-    if (http_req(&doc, url, ABAG_COINBASE_PRODUCTS_PATH, NULL, 0) == 0) {
+    if (http_req(&doc, url, coinbase_products_path, NULL, 0) == 0) {
       Array_clear(markets, Market_delete);
       parse_products(markets, &doc);
       Array_shrink(markets);
@@ -1998,20 +1997,18 @@ static int accounts_with_cursor(struct Array *restrict result,
   WCJSON_DECLARE_STRING_ITEM(cursor)
 
   if (cursor)
-    r = snprintf(url, sizeof(url), "%s?limit=%d&cursor=%s",
-                 ABAG_COINBASE_ACCOUNTS_RESOURCE_URL,
-                 ABAG_COINBASE_ACCOUNTS_RESOURCE_LIMIT, cursor);
+    r = snprintf(url, sizeof(url), "%s%s?limit=%d&cursor=%s", coinbase_rest_uri,
+                 coinbase_accounts_path, 128, cursor);
 
   else
-    r = snprintf(url, sizeof(url), "%s?limit=%d",
-                 ABAG_COINBASE_ACCOUNTS_RESOURCE_URL,
-                 ABAG_COINBASE_ACCOUNTS_RESOURCE_LIMIT);
+    r = snprintf(url, sizeof(url), "%s%s?limit=%d", coinbase_rest_uri,
+                 coinbase_accounts_path, 128);
 
   if (r < 0 || (size_t)r >= sizeof(url))
     panic();
 
   r = -1;
-  if (http_req(&doc, url, ABAG_COINBASE_ACCOUNTS_PATH, NULL, 0) == 0) {
+  if (http_req(&doc, url, coinbase_accounts_path, NULL, 0) == 0) {
     r = parse_accounts(result, &doc);
 
     if (r != 0)
@@ -2102,13 +2099,12 @@ coinbase_account(const struct String *restrict const id) {
   struct Account *restrict a = NULL;
   struct wcjson_document doc = WCJSON_DOCUMENT_INITIALIZER;
   WCJSON_DECLARE_OBJECT_ITEM(account)
-  int r = snprintf(path, sizeof(path), ABAG_COINBASE_ACCOUNT_PATH,
-                   String_chars(id));
+  int r = snprintf(path, sizeof(path), coinbase_account_path, String_chars(id));
 
   if (r < 0 || (size_t)r >= sizeof(path))
     panic();
 
-  r = snprintf(url, sizeof(url), "%s%s", ABAG_COINBASE_ADVANCED_API_URI, path);
+  r = snprintf(url, sizeof(url), "%s%s", coinbase_rest_uri, path);
   if (r < 0 || (size_t)r >= sizeof(url))
     panic();
 
@@ -2229,13 +2225,12 @@ static struct Order *coinbase_order(const struct String *restrict const id) {
   struct Order *restrict o = NULL;
   struct wcjson_document doc = WCJSON_DOCUMENT_INITIALIZER;
   WCJSON_DECLARE_OBJECT_ITEM(order)
-  int r =
-      snprintf(path, sizeof(path), ABAG_COINBASE_ORDER_PATH, String_chars(id));
+  int r = snprintf(path, sizeof(path), coinbase_order_path, String_chars(id));
 
   if (r < 0 || (size_t)r >= sizeof(path))
     panic();
 
-  r = snprintf(url, sizeof(url), "%s%s", ABAG_COINBASE_ADVANCED_API_URI, path);
+  r = snprintf(url, sizeof(url), "%s%s", coinbase_rest_uri, path);
   if (r < 0 || (size_t)r >= sizeof(url))
     panic();
 
@@ -2255,6 +2250,7 @@ ret:
 static bool coinbase_order_cancel(const struct String *restrict const id) {
   bool ret = false;
   bool found = false;
+  char url[URL_MAX_LENGTH + 1] = {0};
   char errbuf[WCJSON_BODY_MAX + 1] = {0};
   WCJSON_DECLARE_ARRAY_ITEM(results)
   WCJSON_DECLARE_STRING_ITEM(order_id)
@@ -2277,8 +2273,12 @@ static bool coinbase_order_cancel(const struct String *restrict const id) {
   size_t mb_len = 0;
   wcjsondoc_string(mbbody, sizeof(mbbody), b_doc, b_doc->values, &mb_len);
 
-  if (http_req(&doc, ABAG_COINBASE_ORDER_CANCEL_RESOURCE_URL,
-               ABAG_COINBASE_ORDER_CANCEL_PATH, mbbody, mb_len) == 0) {
+  int r = snprintf(url, sizeof(url), "%s%s", coinbase_rest_uri,
+                   coinbase_order_cancel_path);
+  if (r < 0 || (size_t)r >= sizeof(url))
+    panic();
+
+  if (http_req(&doc, url, coinbase_order_cancel_path, mbbody, mb_len) == 0) {
     WCJSON_ARRAY_ITEM(&doc, doc.values, results, 7, errbuf, ret)
 
     const struct wcjson_value *restrict j_result = NULL;
@@ -2348,6 +2348,7 @@ static struct String *coinbase_order_post(
     const char *restrict const m_sym, const char *restrict const side,
     const char *restrict const base_amount, const char *restrict const price) {
   struct String *restrict o_id = NULL;
+  char url[URL_MAX_LENGTH + 1] = {0};
   char body[WCJSON_BODY_MAX + 1] = {0};
   char errbuf[WCJSON_BODY_MAX + 1] = {0};
   size_t b_len = 0;
@@ -2360,8 +2361,12 @@ static struct String *coinbase_order_post(
   order_create_body(body, sizeof(body), b_doc, m_sym, side, base_amount, price,
                     &b_len);
 
-  if (http_req(&doc, ABAG_COINBASE_ORDER_CREATE_RESOURCE_URL,
-               ABAG_COINBASE_ORDER_CREATE_PATH, body, b_len) == 0) {
+  int r = snprintf(url, sizeof(url), "%s%s", coinbase_rest_uri,
+                   coinbase_order_create_path);
+  if (r < 0 || (size_t)r >= sizeof(url))
+    panic();
+
+  if (http_req(&doc, url, coinbase_order_create_path, body, b_len) == 0) {
     WCJSON_BOOL_ITEM(&doc, doc.values, success, 7, errbuf, ret)
 
     if (j_success->is_true) {
@@ -2449,13 +2454,13 @@ static struct Pricing *coinbase_pricing(void) {
   if (pricing != NULL)
     goto ret;
 
-  int r = snprintf(url, sizeof(url), "%s?product_type=SPOT",
-                   ABAG_COINBASE_FEES_RESOURCE_URL);
+  int r = snprintf(url, sizeof(url), "%s%s?product_type=SPOT",
+                   coinbase_rest_uri, coinbase_fees_path);
 
   if (r < 0 || (size_t)r >= sizeof(url))
     panic();
 
-  if (http_req(&doc, url, ABAG_COINBASE_FEES_PATH, NULL, 0) == 0)
+  if (http_req(&doc, url, coinbase_fees_path, NULL, 0) == 0)
     pricing = parse_pricing(&doc, doc.values);
 
 ret:

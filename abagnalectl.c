@@ -44,7 +44,6 @@
 #endif
 
 extern const struct String *restrict const progname;
-extern const bool verbose;
 
 extern const struct Numeric *restrict const zero;
 
@@ -212,7 +211,6 @@ static void print_market(const struct Market *restrict const m) {
 }
 
 static _Noreturn void usage(void) {
-  werr("%s\n", ABAG_REVISION);
   werr("Usage: %s [-Dmacro=value ... ] [-f config-file] [-n] [-p plots-dir] "
        "[-v] command\n",
        String_chars(progname));
@@ -318,6 +316,7 @@ static int cmd_exchanges(int argc, char *argv[]) {
 static int cmd_markets(int argc, char *argv[]) {
   int ch, r = EXIT_FAILURE;
   struct String *restrict e_nm = NULL;
+  bool header = false;
   enum market_status status = 0;
   enum market_type type = 0;
   struct optparse options = {0};
@@ -325,10 +324,13 @@ static int cmd_markets(int argc, char *argv[]) {
 
   optparse_init(&options, argv);
 
-  while ((ch = optparse(&options, "e:s:t:")) != -1) {
+  while ((ch = optparse(&options, "e:hs:t:")) != -1) {
     switch (ch) {
     case 'e':
       e_nm = String_cnew(options.optarg);
+      break;
+    case 'h':
+      header = true;
       break;
     case 's':
       status = market_status_value(options.optarg);
@@ -359,7 +361,7 @@ static int cmd_markets(int argc, char *argv[]) {
 
   struct Array *restrict const markets = e->markets();
 
-  if (verbose)
+  if (header)
     printf("ID\tNAME\tSYMBOL\tTYPE\tSTATUS\tBASE_SYMBOL\tQUOTE_SYMBOL\tBASE_"
            "SCALE\tBASE_INCREMENT\tPRICE_SCALE\tPRICE_INCREMENT\tQUOTE_"
            "SCALE\tQUOTE_INCREMENT\tTRADEABLE\tACTIVE\n");
@@ -385,11 +387,15 @@ static int cmd_market(int argc, char *argv[]) {
   struct String *restrict e_nm = NULL;
   struct String *restrict m_id = NULL;
   struct Market *restrict m = NULL;
+  bool header = false;
   struct optparse options = {0};
   optparse_init(&options, argv);
 
-  while ((ch = optparse(&options, "e:i:")) != -1) {
+  while ((ch = optparse(&options, "e:hi:")) != -1) {
     switch (ch) {
+    case 'h':
+      header = true;
+      break;
     case 'e':
       e_nm = String_cnew(options.optarg);
       break;
@@ -421,7 +427,7 @@ static int cmd_market(int argc, char *argv[]) {
     goto ret;
   }
 
-  if (verbose)
+  if (header)
     printf("ID\tNAME\tSYMBOL\tTYPE\tSTATUS\tBASE_SYMBOL\tQUOTE_SYMBOL\tBASE_"
            "SCALE\tBASE_INCREMENT\tPRICE_SCALE\tPRICE_INCREMENT\tQUOTE_"
            "SCALE\tQUOTE_INCREMENT\tTRADEABLE\tACTIVE\n");
@@ -440,15 +446,19 @@ static int cmd_accounts(int argc, char *argv[]) {
   int ch, r = EXIT_FAILURE;
   struct String *restrict e_nm = NULL;
   enum account_type type = 0;
+  bool header = false;
   struct optparse options = {0};
   void *const *restrict items;
 
   optparse_init(&options, argv);
 
-  while ((ch = optparse(&options, "e:t:")) != -1) {
+  while ((ch = optparse(&options, "e:ht:")) != -1) {
     switch (ch) {
     case 'e':
       e_nm = String_cnew(options.optarg);
+      break;
+    case 'h':
+      header = true;
       break;
     case 't':
       type = account_type_value(options.optarg);
@@ -474,7 +484,7 @@ static int cmd_accounts(int argc, char *argv[]) {
 
   struct Array *restrict const accounts = e->accounts();
 
-  if (verbose)
+  if (header)
     printf("ID\tNAME\tSYMBOL\tTYPE\tAVAILABLE\tACTIVE\tREADY\n");
 
   items = Array_items(accounts);
@@ -497,13 +507,17 @@ static int cmd_account(int argc, char *argv[]) {
   struct String *restrict e_nm = NULL;
   struct String *restrict a_id = NULL;
   struct Account *restrict a = NULL;
+  bool header = false;
   struct optparse options = {0};
   optparse_init(&options, argv);
 
-  while ((ch = optparse(&options, "e:i:")) != -1) {
+  while ((ch = optparse(&options, "e:hi:")) != -1) {
     switch (ch) {
     case 'e':
       e_nm = String_cnew(options.optarg);
+      break;
+    case 'h':
+      header = true;
       break;
     case 'i':
       a_id = String_cnew(options.optarg);
@@ -533,7 +547,7 @@ static int cmd_account(int argc, char *argv[]) {
     goto ret;
   }
 
-  if (verbose)
+  if (header)
     printf("ID\tNAME\tSYMBOL\tTYPE\tAVAILABLE\tACTIVE\tREADY\n");
 
   print_account(a);
@@ -559,13 +573,17 @@ static int cmd_order(int argc, char *argv[]) {
   char *restrict b_filled = NULL;
   char *restrict q_filled = NULL;
   char *restrict q_fees = NULL;
+  bool header = false;
   struct optparse options = {0};
   optparse_init(&options, argv);
 
-  while ((ch = optparse(&options, "e:i:")) != -1) {
+  while ((ch = optparse(&options, "e:hi:")) != -1) {
     switch (ch) {
     case 'e':
       e_nm = String_cnew(options.optarg);
+      break;
+    case 'h':
+      header = true;
       break;
     case 'i':
       o_id = String_cnew(options.optarg);
@@ -611,7 +629,7 @@ static int cmd_order(int argc, char *argv[]) {
   q_filled = Numeric_to_char(o->q_filled, m->q_sc);
   q_fees = Numeric_to_char(o->q_fees, m->q_sc);
 
-  if (verbose)
+  if (header)
     printf("ID\tMARKET\tSTATUS\tSETTLED\tCREATED\tDONE\tBASE_ORDERED\tPRICE_"
            "ORDERED\tBASE_FILLED\tQUOTE_FILLED\tFEES\tMESSAGE\n");
 
