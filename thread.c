@@ -1,5 +1,5 @@
 /* $SchulteIT: thread.c 15189 2025-10-27 05:41:45Z schulte $ */
-/* $JDTAUS$ */
+/* $JDTAUS: thread.c 9511 2026-06-13 19:28:18Z schulte $ */
 
 /*
  * Copyright (c) 2018 - 2026 Christian Schulte <cs@schulte.it>
