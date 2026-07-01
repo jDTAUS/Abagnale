@@ -41,11 +41,21 @@ endif()
 
 include(CheckTypeSize)
 include(CheckCSourceRuns)
+include(CheckIPOSupported)
 include(GNUInstallDirs)
 include(CMakePackageConfigHelpers)
 include(FindPackageHandleStandardArgs)
 include(CheckIncludeFile)
 include(FetchContent)
+
+check_ipo_supported(RESULT ipo OUTPUT ipo_err LANGUAGES C)
+
+if(ipo)
+	message(STATUS "Building with LTO/IPO")
+	set(CMAKE_INTERPROCEDURAL_OPTIMIZATION ON)
+else()
+	message(WARNING "Building without LTO/IPO - not available" ${ipo_err})
+endif()
 
 check_include_file("threads.h" HAVE_THREADS_H)
 check_type_size("wchar_t" SIZEOF_WCHAR_T)
