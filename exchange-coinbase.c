@@ -1256,8 +1256,7 @@ static void ws_subscribe(struct mg_connection *restrict const c,
   wcjsondoc_delete(doc);
 }
 
-static void ws_listener(struct mg_connection *restrict c, int ev,
-                        void *restrict const ev_data) {
+static void ws_listener(struct mg_connection *c, int ev, void *ev_data) {
   struct ws_channel *restrict const channel = c->fn_data;
 
   switch (ev) {
@@ -1350,8 +1349,7 @@ static void ws_listener(struct mg_connection *restrict c, int ev,
   }
 }
 
-static void http_listener(struct mg_connection *restrict c, int ev,
-                          void *restrict const ev_data) {
+static void http_listener(struct mg_connection *c, int ev, void *ev_data) {
   struct http_listener_ctx *restrict const http_ctx = c->fn_data;
   const char *restrict const method = http_ctx->body_len > 0 ? "POST" : "GET";
 

@@ -50,7 +50,6 @@ struct Config {
   struct String *restrict dns_v4;
   struct String *restrict dns_v6;
   struct Numeric *restrict dns_to;
-  struct Numeric *restrict wnanos_max;
   struct Map *restrict e_cnf;
   struct Array *restrict m_cnf;
 };

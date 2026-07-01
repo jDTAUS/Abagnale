@@ -1086,9 +1086,6 @@ int config_fparse(struct Config *const x_conf,
   items = Array_items(conf->m_cnf);
   for (size_t i = Array_size(conf->m_cnf); i-- > 0;) {
     m_cnf = items[i];
-    if (conf->wnanos_max == NULL
-        || Numeric_cmp(conf->wnanos_max, m_cnf->wnanos) < 0)
-      conf->wnanos_max = m_cnf->wnanos;
 
     if (Map_get(conf->e_cnf, m_cnf->e_nm) == NULL) {
       werr("%s: %s: Exchange configuration required\n", filename,
@@ -1176,7 +1173,7 @@ struct Numeric *config_nsparse(const struct String *restrict const str) {
   if (l < 1)
     return NULL;
 
-  if (isdigit(s[l - 1])) {
+  if (isdigit((int)s[l - 1])) {
     r = Numeric_from_char(s);
 
     if (r == NULL)
@@ -1252,7 +1249,6 @@ struct Config *Config_new(void) {
   c->dns_v6 = NULL;
   c->dns_to = NULL;
   c->plts_dir = NULL;
-  c->wnanos_max = NULL;
   c->e_cnf = Map_new(StringMapOps, 4);
   c->m_cnf = Array_new(16);
   return c;
@@ -1269,7 +1265,6 @@ void Config_delete(void *restrict const c) {
   String_delete(cfg->dns_v6);
   Numeric_delete(cfg->dns_to);
   String_delete(cfg->plts_dir);
-  cfg->wnanos_max = NULL;
   Map_delete(cfg->e_cnf, ExchangeConfig_delete);
   Array_delete(cfg->m_cnf, MarketConfig_delete);
   heap_free(cfg);

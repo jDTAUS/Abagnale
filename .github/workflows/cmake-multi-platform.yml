@@ -86,7 +86,7 @@ jobs:
     - name: Install build dependencies (Windows)
       if: runner.os == 'Windows'
       run: |
-        choco install pkgconfiglite postgresql winflexbison -y --no-progress
+        choco install openssl pkgconfiglite postgresql winflexbison -y --no-progress
 
     - name: Set PostgreSQL paths for CMake (MacOS)
       if: runner.os == 'macOS'

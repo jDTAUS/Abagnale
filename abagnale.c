@@ -946,10 +946,11 @@ static void samples_load(struct Array *restrict const a,
   struct Numeric *restrict const filter = tls->samples_load.filter;
   struct db_sample_rec *restrict const sample = tls->samples_load.sample;
 
+  if (w_ctx->m_cnf == NULL || w_ctx->m_cnf->wnanos == NULL)
+    return;
+
   nanos_now(now);
-  Numeric_sub_to(now,
-                 w_ctx->m_cnf != NULL ? w_ctx->m_cnf->wnanos : cnf->wnanos_max,
-                 filter);
+  Numeric_sub_to(now, w_ctx->m_cnf->wnanos, filter);
 
   db_samples_open(w_ctx->db, String_chars(w_ctx->e->id),
                   String_chars(w_ctx->m->id), filter);
@@ -2877,9 +2878,10 @@ static struct Array *trades_load(const struct worker_ctx *restrict const w_ctx,
   for (size_t i = Array_size(trades); i-- > 0;) {
     struct Trade *restrict const t = items[i];
     trade_state_load(w_ctx->db, t);
-    trade_create(w_ctx, t, samples, sample);
     Numeric_copy_to(zero, t->p_long.pnanos);
     Numeric_copy_to(zero, t->p_short.pnanos);
+    if (w_ctx->m_cnf != NULL)
+      trade_create(w_ctx, t, samples, sample);
   }
 
   return trades;
@@ -3090,24 +3092,22 @@ static int samples_process(void *restrict const arg) {
         Market_delete(w_ctx->m);
         continue;
       }
-    }
 
-    Numeric_sub_to(sample->nanos,
-                   w_ctx->m_cnf != NULL ? w_ctx->m_cnf->wnanos
-                                        : cnf->wnanos_max,
-                   outdated_ns);
+      Numeric_sub_to(sample->nanos, w_ctx->m_cnf->wnanos, outdated_ns);
 
-    items = Array_items(samples);
-    for (size_t i = Array_size(samples); i > 0; i--) {
-      if (Numeric_cmp(((struct Sample *)items[i - 1])->nanos, outdated_ns) <
-          0) {
-        if (i == Array_size(samples))
-          Array_clear(samples, Sample_delete);
-        else
-          Array_cut(samples, i, Array_size(samples) - i, Sample_delete);
-        break;
+      items = Array_items(samples);
+      for (size_t i = Array_size(samples); i > 0; i--) {
+        if (Numeric_cmp(((struct Sample *)items[i - 1])->nanos, outdated_ns) <
+            0) {
+          if (i == Array_size(samples))
+            Array_clear(samples, Sample_delete);
+          else
+            Array_cut(samples, i, Array_size(samples) - i, Sample_delete);
+          break;
+        }
       }
-    }
+    } else
+      Array_cut(samples, 0, 2, Sample_delete);
 
     if (!w_ctx->m->is_active) {
       Array_unlock(samples);
@@ -3165,10 +3165,14 @@ static int samples_process(void *restrict const arg) {
           Numeric_dec(t->pr_samples);
           mutex_unlock(&t->mtx);
         }
-      } else
-        werr("%s: %s: %s: Configuration not available\n",
+      } else {
+        werr("%s: %s: %s: No matching market configuration - ignoring\n",
              String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
              String_chars(t->id));
+
+        Array_remove_idx(trades, i);
+        goto again;
+      }
     }
 
     if (!betting && has_config) {
@@ -3382,6 +3386,11 @@ int abagnale(int argc, char *argv[]) {
   if (verbose) {
     wout("\tABAG_TICKER_WORKERS=%lu\n", ticker_workers);
     wout("\tABAG_TRADE_WORKERS=%lu\n", trade_workers);
+  }
+
+  if (Array_size(exchanges) == 0) {
+    werr("%s: No exchange configuration\n", String_chars(progname));
+    return (EXIT_FAILURE);
   }
 
   // trade_workers + ticker_workers + 2 <= LONG_MAX

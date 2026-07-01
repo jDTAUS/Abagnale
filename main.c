@@ -133,6 +133,10 @@ int main(int argc, char *argv[]) {
     if (p_nm == NULL)
       p_nm = strrchr(argv[0], '\\');
 
+    char *restrict p_dot = strchr(argv[0], '.');
+    if (p_dot != NULL)
+      *p_dot = '\0';
+
     progname = String_cnew(p_nm != NULL ? p_nm + 1 : argv[0]);
   } else
     progname = String_cnew(".");
