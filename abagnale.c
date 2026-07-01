@@ -41,6 +41,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#ifndef DEFAULT_ABAG_ORDER_WORKERS
+#define DEFAULT_ABAG_ORDER_WORKERS 1
+#endif
+
 #ifndef DEFAULT_ABAG_TRADE_WORKERS
 #define DEFAULT_ABAG_TRADE_WORKERS 6
 #endif
@@ -3377,13 +3381,17 @@ static inline void thrd_delete(void *restrict const entry) { heap_free(entry); }
 
 int abagnale(int argc, char *argv[]) {
   void *const *restrict items;
-  const unsigned long trade_workers =
-      envul("ABAG_TRADE_WORKERS", DEFAULT_ABAG_TRADE_WORKERS);
+  unsigned long order_workers =
+      envul("ABAG_ORDER_WORKERS", DEFAULT_ABAG_ORDER_WORKERS);
 
-  const unsigned long ticker_workers =
+  unsigned long ticker_workers =
       envul("ABAG_TICKER_WORKERS", DEFAULT_ABAG_TICKER_WORKERS);
 
+  unsigned long trade_workers =
+      envul("ABAG_TRADE_WORKERS", DEFAULT_ABAG_TRADE_WORKERS);
+
   if (verbose) {
+    wout("\tABAG_ORDER_WORKERS=%lu\n", order_workers);
     wout("\tABAG_TICKER_WORKERS=%lu\n", ticker_workers);
     wout("\tABAG_TRADE_WORKERS=%lu\n", trade_workers);
   }
@@ -3393,17 +3401,20 @@ int abagnale(int argc, char *argv[]) {
     return (EXIT_FAILURE);
   }
 
-  // trade_workers + ticker_workers + 2 <= LONG_MAX
-  // => trade_workers <= LONG_MAX - ticker_workers - 2
-  // => ticker_workers <= LONG_MAX - trade_workers - 2
-  if (trade_workers > LONG_MAX - ticker_workers - 2 ||
-      ticker_workers > LONG_MAX - trade_workers - 2)
+  // order_workers + trade_workers + ticker_workers + 1 <= LONG_MAX
+  // => trade_workers <= LONG_MAX - ticker_workers - order_workers - 1
+  // => ticker_workers <= LONG_MAX - trade_workers - order_workers - 1
+  // => order_workers <= LONG_MAX - ticker_workers - trade_workers - 1
+  if (trade_workers > LONG_MAX - ticker_workers - order_workers - 1 ||
+      ticker_workers > LONG_MAX - trade_workers - order_workers - 1 ||
+      order_workers > LONG_MAX - ticker_workers - trade_workers - 1)
     panic();
 
-  const unsigned long w_cnt = trade_workers + ticker_workers + 2;
+  const unsigned long w_cnt =
+      order_workers + trade_workers + ticker_workers + 1;
 
   // w_cnt * Array_size(exchanges) <= SIZE_MAX
-  // => Array_size(exchanges) <= SIZE_MAX /w_cnt
+  // => Array_size(exchanges) <= SIZE_MAX / w_cnt
   // => w_cnt <= SIZE_MAX / Array_size(exchanges)
   if (Array_size(exchanges) > SIZE_MAX / w_cnt ||
       w_cnt > SIZE_MAX / Array_size(exchanges))
@@ -3456,12 +3467,17 @@ int abagnale(int argc, char *argv[]) {
       thrd = heap_calloc(1, sizeof(thrd_t));
       Array_add_tail(workers, thrd);
 
-      if (j == 1)
+      if (order_workers > 0) {
         thread_create(thrd, orders_process, w_ctx);
-      else if (j - 1 < trade_workers)
+        order_workers--;
+      } else if (trade_workers > 0) {
         thread_create(thrd, trades_process, w_ctx);
-      else
+        trade_workers--;
+      } else if (ticker_workers > 0) {
         thread_create(thrd, samples_process, w_ctx);
+        ticker_workers--;
+      } else
+        panic();
     }
   }
 

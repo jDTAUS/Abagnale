@@ -16,6 +16,7 @@ Environment=LC_CTYPE=C.UTF-8
 #Environment=ABAG_CONFIG_FILE=/etc/abagnale/abagnale.conf
 #Environment=ABAG_DATABASE_TARGET=ABAGNALE
 #Environment=ABAG_DATABASE_USER=abagnale
+#Environment=ABAG_ORDER_WORKERS=1
 #Environment=ABAG_TICKER_WORKERS=12
 #Environment=ABAG_TRADE_WORKERS=6
 #Environment=CDP_REST_URI=https://api.coinbase.com
