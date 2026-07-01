@@ -1550,6 +1550,9 @@ static void coinbase_init(void) {
   const unsigned long req_s = envul("CDP_HTTP_REQUESTS_PER_SECOND",
                                     DEFAULT_CDP_HTTP_REQUESTS_PER_SECOND);
 
+  if (req_s == 0)
+    fatal("%s == 0", "CDP_HTTP_REQUESTS_PER_SECOND");
+
   coinbase_request_rate.tv_sec = 0;
   coinbase_request_rate.tv_nsec = 1000000000L / req_s;
 
