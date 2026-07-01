@@ -3401,13 +3401,13 @@ int abagnale(int argc, char *argv[]) {
     return (EXIT_FAILURE);
   }
 
-  // order_workers + trade_workers + ticker_workers + 1 <= LONG_MAX
-  // => trade_workers <= LONG_MAX - ticker_workers - order_workers - 1
-  // => ticker_workers <= LONG_MAX - trade_workers - order_workers - 1
-  // => order_workers <= LONG_MAX - ticker_workers - trade_workers - 1
-  if (trade_workers > LONG_MAX - ticker_workers - order_workers - 1 ||
-      ticker_workers > LONG_MAX - trade_workers - order_workers - 1 ||
-      order_workers > LONG_MAX - ticker_workers - trade_workers - 1)
+  // order_workers + trade_workers + ticker_workers + 1 <= ULONG_MAX
+  // => trade_workers <= ULONG_MAX - ticker_workers - order_workers - 1
+  // => ticker_workers <= ULONG_MAX - trade_workers - order_workers - 1
+  // => order_workers <= ULONG_MAX - ticker_workers - trade_workers - 1
+  if (trade_workers > ULONG_MAX - ticker_workers - order_workers - 1 ||
+      ticker_workers > ULONG_MAX - trade_workers - order_workers - 1 ||
+      order_workers > ULONG_MAX - ticker_workers - trade_workers - 1)
     panic();
 
   const unsigned long w_cnt =

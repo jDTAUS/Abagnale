@@ -64,14 +64,6 @@ trade at coinbase using trend return $eur_return window 144h\
   take-profit-delay 12m take-profit-delays 1\
   take-loss-delay 72h take-loss-delays 1
 
-trade at coinbase using trend return $btc_return window 180h\
-  market CRV@BTC\
-  demand-timeout-min 5h demand-timeout-max 7.5h\
-  supply-timeout-min 5h supply-timeout-max 7.5h\
-  stop-loss-delay 75m stop-loss-delays 1\
-  take-profit-delay 15m take-profit-delays 1\
-  take-loss-delay 90h take-loss-delays 1
-
 trade at coinbase using trend return $eur_return window 180h\
   market ALGO@EUR\
   market BAT@EUR\
@@ -90,7 +82,6 @@ trade at coinbase using trend return $btc_return window 324h\
   market ADA@BTC\
   market AVAX@BTC\
   market BCH@BTC\
-  market DOGE@BTC\
   market ICP@BTC\
   market LTC@BTC\
   market XLM@BTC\
@@ -123,8 +114,9 @@ trade at coinbase using trend return $eur_return window 324h\
 trade at coinbase using trend return $btc_return window 648h\
   market AAVE@BTC\
   market ALGO@BTC\
-  market BAT@BTC\
+  market CRV@BTC\
   market DASH@BTC\
+  market DOGE@BTC\
   market ETC@BTC\
   market FIL@BTC\
   market UNI@BTC\
@@ -151,6 +143,14 @@ trade at coinbase using trend return $eur_return window 648h\
   stop-loss-delay 270m stop-loss-delays 1\
   take-profit-delay 54m take-profit-delays 1\
   take-loss-delay 324h take-loss-delays 1
+
+trade at coinbase using trend return $btc_return window 1296h\
+  market BAT@BTC\
+  demand-timeout-min 40h demand-timeout-max 60h\
+  supply-timeout-min 40h supply-timeout-max 60h\
+  stop-loss-delay 540m stop-loss-delays 1\
+  take-profit-delay 108m take-profit-delays 1\
+  take-loss-delay 648h take-loss-delays 1
 
 trade at coinbase using trend return $eur_return window 1296h\
   market MANA@EUR\
@@ -194,7 +194,8 @@ trade at coinbase using trend return $btc_return window 36h\
          not match PHA\
          not match SOFI\
          not match MIM\
-         not match J\
+         not match ^J@\
+         not match @J$\
          not match TITAN\
          not match ELON\
          not match BETA\
@@ -260,7 +261,8 @@ trade at coinbase using trend return $eth_return window 36h\
          not match PHA\
          not match SOFI\
          not match MIM\
-         not match J\
+         not match ^J@\
+         not match @J$\
          not match TITAN\
          not match ELON\
          not match BETA\
@@ -326,7 +328,8 @@ trade at coinbase using trend return $eur_return window 36h\
          not match PHA\
          not match SOFI\
          not match MIM\
-         not match J\
+         not match ^J@\
+         not match @J$\
          not match TITAN\
          not match ELON\
          not match BETA\
@@ -392,7 +395,8 @@ trade at coinbase using trend return $usdc_return window 36h\
          not match PHA\
          not match SOFI\
          not match MIM\
-         not match J\
+         not match ^J@\
+         not match J@$\
          not match TITAN\
          not match ELON\
          not match BETA\
@@ -458,7 +462,8 @@ trade at coinbase using trend return $usdt_return window 36h\
          not match PHA\
          not match SOFI\
          not match MIM\
-         not match J\
+         not match ^J@\
+         not match @J$\
          not match TITAN\
          not match ELON\
          not match BETA\
@@ -524,7 +529,8 @@ trade at coinbase using trend return $usd_return window 36h\
          not match PHA\
          not match SOFI\
          not match MIM\
-         not match J\
+         not match ^J@\
+         not match @J$\
          not match TITAN\
          not match ELON\
          not match BETA\
@@ -590,7 +596,8 @@ trade at coinbase using trend return $inr_return window 36h\
          not match PHA\
          not match SOFI\
          not match MIM\
-         not match J\
+         not match ^J@\
+         not match @J$\
          not match TITAN\
          not match ELON\
          not match BETA\
@@ -656,7 +663,8 @@ trade at coinbase using trend return $gbp_return window 36h\
          not match PHA\
          not match SOFI\
          not match MIM\
-         not match J\
+         not match ^J@\
+         not match @J$\
          not match TITAN\
          not match ELON\
          not match BETA\
