@@ -84,6 +84,7 @@ struct Numeric *restrict week_nanos;
 struct Numeric *restrict boot_nanos;
 
 struct Config *restrict cnf;
+bool ticker_exporter;
 bool verbose;
 
 struct Array *restrict exchanges;
@@ -98,8 +99,8 @@ int abagnalectl(int argc, char *argv[]);
 static void terminate(int signum) { terminated = true; }
 
 static _Noreturn void usage(void) {
-  werr("Usage: %s [-Dmacro=value ... ] [-f config-file] [-n] [-p plots-dir] "
-       "[-v]\n",
+  werr("Usage: %s [-Dmacro=value ... ] [-f config-file] [-I entity] [-n] [-p "
+       "plots-dir] [-v]\n",
        String_chars(progname));
 
   exit(EXIT_FAILURE);
@@ -109,6 +110,7 @@ int main(int argc, char *argv[]) {
   int c, r = EXIT_FAILURE;
   const char *conffile = envs("ABAG_CONFIG_FILE", DEFAULT_ABAG_CONFIG_FILE);
   char *plotsdir = NULL;
+  ticker_exporter = true;
   verbose = false;
   struct optparse options = {0};
   void *const *restrict items;
@@ -184,7 +186,7 @@ int main(int argc, char *argv[]) {
   optparse_init(&options, argv);
   options.permute = 0;
 
-  while ((c = optparse(&options, "D:f:p:vn")) != -1) {
+  while ((c = optparse(&options, "D:f:I:p:vn")) != -1) {
     switch (c) {
     case 'D':
       if (config_symset(options.optarg) < 0)
@@ -192,6 +194,15 @@ int main(int argc, char *argv[]) {
       break;
     case 'f':
       conffile = options.optarg;
+      break;
+    case 'I':
+      if (strcmp("SAMPLES", options.optarg)) {
+        werr("%s: Unsupported entity: -I %s\n", String_chars(progname),
+             options.optarg);
+        return (EXIT_FAILURE);
+      }
+
+      ticker_exporter = false;
       break;
     case 'n':
       configtest = true;

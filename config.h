@@ -25,10 +25,11 @@
 #endif
 
 #include "array.h"
-#include "exchange.h"
 #include "map.h"
 #include "math.h"
 #include "string.h"
+
+#include <stdint.h>
 
 #ifndef DEFAULT_ABAG_CONFIG_FILE
 #define DEFAULT_ABAG_CONFIG_FILE "/etc/abagnale/abagnale.conf"

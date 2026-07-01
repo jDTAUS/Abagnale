@@ -183,6 +183,7 @@ extern const struct Array *restrict const exchanges;
 extern const struct Array *restrict const volatility_windows;
 
 extern const struct Config *restrict const cnf;
+extern const bool ticker_exporter;
 extern const bool verbose;
 
 extern const struct Numeric *restrict const zero;
@@ -3045,8 +3046,10 @@ static int samples_process(void *restrict const arg) {
 
     w_ctx->m_cnf = marketconfig(w_ctx->e->nm, w_ctx->m->nm);
 
-    db_sample_create(w_ctx->db, String_chars(w_ctx->e->id),
-                     String_chars(w_ctx->m->id), sample->nanos, sample->price);
+    if (ticker_exporter)
+      db_sample_create(w_ctx->db, String_chars(w_ctx->e->id),
+                       String_chars(w_ctx->m->id), sample->nanos,
+                       sample->price);
 
     if (!w_ctx->m->is_tradeable) {
       Sample_delete(sample);

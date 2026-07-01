@@ -23,7 +23,6 @@
 
 #include "exchange.h"
 #include "heap.h"
-#include "math.h"
 
 inline struct Sample *Sample_new(void) {
   return heap_calloc(1, sizeof(struct Sample));

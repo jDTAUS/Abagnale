@@ -34,7 +34,6 @@ mtx_t stderr_mtx;
 #include <stdarg.h>
 #include <stdbool.h>
 #include <stdio.h>
-#include <stdlib.h>
 #include <string.h>
 
 bool proc_prefix_systemd = false;
