@@ -58,8 +58,8 @@ inline void thread_join(const thrd_t t, int *restrict const res) {
 
 inline void thread_sleep(const struct timespec *restrict const duration) {
   int r = thrd_sleep(duration, NULL);
-  if (r != thrd_success)
-    fatal("%s", strthrd(r));
+  if (r < 0)
+    fatal("%d", r);
 }
 
 _Noreturn void thread_exit(const int res) { thrd_exit(res); }
