@@ -319,7 +319,9 @@ static int cmd_markets(int argc, char *argv[]) {
   struct String *restrict e_nm = NULL;
   bool header = false;
   enum market_status status = 0;
+  enum market_status status_opt = 0;
   enum market_type type = 0;
+  enum market_type type_opt = 0;
   struct optparse options = {0};
   void *const *restrict items;
 
@@ -334,14 +336,16 @@ static int cmd_markets(int argc, char *argv[]) {
       header = true;
       break;
     case 's':
-      status = market_status_value(options.optarg);
-      if (!status)
+      status_opt = market_status_value(options.optarg);
+      if (!status_opt)
         usage();
+      status |= status_opt;
       break;
     case 't':
-      type = market_type_value(options.optarg);
-      if (!type)
+      type_opt = market_type_value(options.optarg);
+      if (!type_opt)
         usage();
+      type |= type_opt;
       break;
     default:
       usage();
@@ -371,8 +375,7 @@ static int cmd_markets(int argc, char *argv[]) {
   for (size_t i = Array_size(markets); i-- > 0;) {
     const struct Market *restrict const m = items[i];
 
-    if ((status && m->status == status) || (type && m->type == type) ||
-        !(status || type))
+    if ((!status || (m->status & status)) && (!type || (m->type & type)))
       print_market(m);
   }
 
@@ -447,6 +450,7 @@ static int cmd_accounts(int argc, char *argv[]) {
   int ch, r = EXIT_FAILURE;
   struct String *restrict e_nm = NULL;
   enum account_type type = 0;
+  enum account_type type_opt = 0;
   bool header = false;
   struct optparse options = {0};
   void *const *restrict items;
@@ -462,9 +466,10 @@ static int cmd_accounts(int argc, char *argv[]) {
       header = true;
       break;
     case 't':
-      type = account_type_value(options.optarg);
-      if (!type)
+      type_opt = account_type_value(options.optarg);
+      if (!type_opt)
         usage();
+      type |= type_opt;
       break;
     default:
       usage();
@@ -492,7 +497,7 @@ static int cmd_accounts(int argc, char *argv[]) {
   for (size_t i = Array_size(accounts); i-- > 0;) {
     const struct Account *restrict const a = items[i];
 
-    if ((type && a->type == type) || !type)
+    if (!type || (a->type & type))
       print_account(a);
   }
 
