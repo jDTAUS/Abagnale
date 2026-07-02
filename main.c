@@ -26,6 +26,7 @@
 #include "config.h"
 #include "database.h"
 #include "heap.h"
+#include "mongoose.h"
 #include "proc.h"
 #include "time.h"
 #include "version.h"
@@ -44,6 +45,9 @@
 #ifndef nitems
 #define nitems(a) (sizeof((a)) / sizeof((a)[0]))
 #endif
+
+// mongoose.c
+extern uint64_t mg_boot_timestamp_ms;
 
 struct String *restrict progname;
 struct String *restrict prog_abagnale;
@@ -112,9 +116,18 @@ int main(int argc, char *argv[]) {
   char *plotsdir = NULL;
   ticker_exporter = true;
   verbose = false;
+  struct timespec ts;
   struct optparse options = {0};
   void *const *restrict items;
   bool configtest = false;
+  const uint64_t mg_ms = mg_millis();
+
+  time_now(&ts);
+
+  const uint64_t epoch_ms =
+      (uint64_t)ts.tv_sec * 1000 + (uint64_t)ts.tv_nsec / 1000000;
+
+  mg_boot_timestamp_ms = (uint64_t)(epoch_ms - mg_ms);
 
   proc_init();
   string_init();

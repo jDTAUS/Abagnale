@@ -1264,12 +1264,8 @@ static void ws_listener(struct mg_connection *c, int ev, void *ev_data) {
 #ifdef ABAG_COINBASE_DEBUG
     wout("coinbase: %s: %lu: MG_EV_CONNECT\n", channel->name, c->id);
 #endif
-    struct mg_tls_opts ws_tls_opts = {
-        .ca = mg_str(""),
-        .cert = mg_str(""),
-        .key = mg_str(""),
-        .name = mg_url_host(coinbase_ws_uri),
-    };
+    struct mg_tls_opts ws_tls_opts = {0};
+    ws_tls_opts.name = mg_url_host(coinbase_ws_uri);
 
     mg_tls_init(c, &ws_tls_opts);
     break;
@@ -1377,13 +1373,8 @@ static void http_listener(struct mg_connection *c, int ev, void *ev_data) {
     struct mg_str host = mg_url_host(http_ctx->url);
 
     if (c->is_tls) {
-      struct mg_tls_opts http_tls_opts = {
-          .ca = mg_str(""),
-          .cert = mg_str(""),
-          .key = mg_str(""),
-          .name = host,
-      };
-
+      struct mg_tls_opts http_tls_opts = {0};
+      http_tls_opts.name = host;
       mg_tls_init(c, &http_tls_opts);
     }
 

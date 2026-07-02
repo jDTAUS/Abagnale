@@ -25,7 +25,7 @@ project(
 
 add_compile_definitions(MULTI_THREADED)
 add_compile_definitions(STRING_INTERNING)
-add_compile_definitions(MG_TLS=MG_TLS_OPENSSL)
+add_compile_definitions(MG_TLS=MG_TLS_BUILTIN)
 add_compile_definitions(MG_MAX_RECV_SIZE=0x40000000UL)
 
 if(MSVC)
