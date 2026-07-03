@@ -128,6 +128,7 @@ int main(int argc, char *argv[]) {
       (uint64_t)ts.tv_sec * 1000 + (uint64_t)ts.tv_nsec / 1000000;
 
   mg_boot_timestamp_ms = (uint64_t)(epoch_ms - mg_ms);
+  mg_log_set(MG_LL_NONE); // NONE, ERROR, INFO, DEBUG, VERBOSE
 
   proc_init();
   string_init();

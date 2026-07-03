@@ -21,10 +21,10 @@ Environment=LC_CTYPE=C.UTF-8
 #Environment=ABAG_TRADE_WORKERS=6
 #Environment=CDP_REST_URI=https://api.coinbase.com
 #Environment=CDP_WS_URI=wss://advanced-trade-ws.coinbase.com
-#Environment=CDP_ACCOUNT_PATH=/api/v3/brokerage/accounts/%s
+#Environment=CDP_ACCOUNT_PATH=/api/v3/brokerage/accounts/
 #Environment=CDP_ACCOUNTS_PATH=/api/v3/brokerage/accounts
 #Environment=CDP_FEES_PATH=/api/v3/brokerage/transaction_summary
-#Environemnt=CDP_ORDER_PATH=/api/v3/brokerage/orders/historical/%s
+#Environemnt=CDP_ORDER_PATH=/api/v3/brokerage/orders/historical/
 #Environemnt=CDP_ORDER_CANCEL_PATH=/api/v3/brokerage/orders/batch_cancel
 #Environemnt=CDP_ORDER_CREATE_PATH=/api/v3/brokerage/orders
 #Environment=CDP_PRODUCTS_PATH=/api/v3/brokerage/products

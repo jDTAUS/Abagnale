@@ -54,10 +54,10 @@ CONFIG=
 #CONFIG+=-DDEFAULT_ABAG_TRADE_WORKERS=6
 #CONFIG+=-DDEFAULT_CDP_REST_URI=\"https://api.coinbase.com\"
 #CONFIG+=-DDEFAULT_CDP_WS_URI=\"wss://advanced-trade-ws.coinbase.com\"
-#CONFIG+=-DDEFAULT_CDP_ACCOUNT_PATH=\"/api/v3/brokerage/accounts/%s\"
+#CONFIG+=-DDEFAULT_CDP_ACCOUNT_PATH=\"/api/v3/brokerage/accounts/\"
 #CONFIG+=-DDEFAULT_CDP_ACCOUNTS_PATH=\"/api/v3/brokerage/accounts\"
 #CONFIG+=-DDEFAULT_CDP_FEES_PATH=\"/api/v3/brokerage/transaction_summary\"
-#CONFIG+=-DDEFAULT_CDP_ORDER_PATH=\"/api/v3/brokerage/orders/historical/%s\"
+#CONFIG+=-DDEFAULT_CDP_ORDER_PATH=\"/api/v3/brokerage/orders/historical/\"
 #CONFIG+=-DDEFAULT_CDP_ORDER_CANCEL_PATH=\"/api/v3/brokerage/orders/batch_cancel\"
 #CONFIG+=-DDEFAULT_CDP_ORDER_CREATE_PATH=\"/api/v3/brokerage/orders\"
 #CONFIG+=-DDEFAULT_CDP_PRODUCTS_PATH=\"/api/v3/brokerage/products\"
@@ -92,7 +92,7 @@ CFLAGS=$(INCLUDES) $(DEBUG) $(PROFILE) $(LTO) $(CONFIG) $(WARNINGS)
 CFLAGS+=-DMULTI_THREADED
 CFLAGS+=-DSTRING_INTERNING
 CFLAGS+=-DMG_TLS=MG_TLS_BUILTIN
-CFLAGS+=-DMG_MAX_RECV_SIZE="(1024UL * 1024UL * 1024UL)"
+CFLAGS+=-DMG_MAX_RECV_SIZE=0x40000000UL
 CFLAGS+=-DWCHAR_T_UTF32
 #CFLAGS+=-DWCHAR_T_UTF16
 #CFLAGS+=-DWCHAR_T_UTF8

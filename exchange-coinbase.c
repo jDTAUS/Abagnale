@@ -50,7 +50,7 @@
 #endif
 
 #ifndef DEFAULT_CDP_ACCOUNT_PATH
-#define DEFAULT_CDP_ACCOUNT_PATH "/api/v3/brokerage/accounts/%s"
+#define DEFAULT_CDP_ACCOUNT_PATH "/api/v3/brokerage/accounts/"
 #endif
 
 #ifndef DEFAULT_CDP_ACCOUNTS_PATH
@@ -62,7 +62,7 @@
 #endif
 
 #ifndef DEFAULT_CDP_ORDER_PATH
-#define DEFAULT_CDP_ORDER_PATH "/api/v3/brokerage/orders/historical/%s"
+#define DEFAULT_CDP_ORDER_PATH "/api/v3/brokerage/orders/historical/"
 #endif
 
 #ifndef DEFAULT_CDP_ORDER_CANCEL_PATH
@@ -345,17 +345,17 @@ extern const struct Config *restrict const cnf;
 extern const bool verbose;
 
 static const struct ExchangeConfig *restrict coinbase_cnf;
-static const char *coinbase_ws_uri;
-static const char *coinbase_rest_uri;
+static char coinbase_ws_uri[URL_MAX_LENGTH + 1];
+static char coinbase_rest_uri[URL_MAX_LENGTH + 1];
 static struct timespec coinbase_request_rate;
 static struct timespec coinbase_retry_rate;
-static const char *coinbase_account_path;
-static const char *coinbase_accounts_path;
-static const char *coinbase_fees_path;
-static const char *coinbase_order_path;
-static const char *coinbase_order_cancel_path;
-static const char *coinbase_order_create_path;
-static const char *coinbase_products_path;
+static char coinbase_account_path[URL_MAX_LENGTH + 1];
+static char coinbase_accounts_path[URL_MAX_LENGTH + 1];
+static char coinbase_fees_path[URL_MAX_LENGTH + 1];
+static char coinbase_order_path[URL_MAX_LENGTH + 1];
+static char coinbase_order_cancel_path[URL_MAX_LENGTH + 1];
+static char coinbase_order_create_path[URL_MAX_LENGTH + 1];
+static char coinbase_products_path[URL_MAX_LENGTH + 1];
 static unsigned long coinbase_stall_ms;
 static unsigned long coinbase_timeout_ms;
 static void *restrict coinbase_db;
@@ -1522,21 +1522,60 @@ err:
   return r;
 }
 
+#define allowed_in_url(c)                                                      \
+  ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||                         \
+   (c >= '0' && c <= '9') || c == ':' || c == '/' || c == '?' || c == '#' ||   \
+   c == '[' || c == ']' || c == '@' || c == '!' || c == '$' || c == '&' ||     \
+   c == '\'' || c == '(' || c == ')' || c == '*' || c == '+' || c == ',' ||    \
+   c == ';' || c == '=' || c == '-' || c == '.' || c == '_' || c == '~')
+
+inline static void envurl(char *restrict d, size_t len, const char *restrict nm,
+                          const char *restrict dflt) {
+  const char *restrict env = envs(nm, dflt);
+
+  while (len-- != 0 && *env) {
+    if (!allowed_in_url(*env))
+      fatal("%s: %s", nm, env);
+
+    *d++ = *env++;
+  }
+
+  if (len == SIZE_MAX && *env)
+    panic();
+
+  *d = '\0';
+}
+
 static void coinbase_init(void) {
   exchange_coinbase.id = String_cnew(COINBASE_UUID);
   exchange_coinbase.nm = String_cnew("coinbase");
-  coinbase_rest_uri = envs("CDP_REST_URI", DEFAULT_CDP_REST_URI);
-  coinbase_ws_uri = envs("CDP_WS_URI", DEFAULT_CDP_WS_URI);
-  coinbase_account_path = envs("CDP_ACCOUNT_PATH", DEFAULT_CDP_ACCOUNT_PATH);
-  coinbase_accounts_path = envs("CDP_ACCOUNTS_PATH", DEFAULT_CDP_ACCOUNTS_PATH);
-  coinbase_fees_path = envs("CDP_FEES_PATH", DEFAULT_CDP_FEES_PATH);
-  coinbase_order_path = envs("CDP_ORDER_PATH", DEFAULT_CDP_ORDER_PATH);
-  coinbase_products_path = envs("CDP_PRODUCTS_PATH", DEFAULT_CDP_PRODUCTS_PATH);
-  coinbase_order_cancel_path =
-      envs("CDP_ORDER_CANCEL_PATH", DEFAULT_CDP_ORDER_CANCEL_PATH);
 
-  coinbase_order_create_path =
-      envs("CDP_ORDER_CREATE_PATH", DEFAULT_CDP_ORDER_CREATE_PATH);
+  envurl(coinbase_rest_uri, sizeof(coinbase_rest_uri) - 1, "CDP_REST_URI",
+         DEFAULT_CDP_REST_URI);
+
+  envurl(coinbase_ws_uri, sizeof(coinbase_ws_uri) - 1, "CDP_WS_URI",
+         DEFAULT_CDP_WS_URI);
+
+  envurl(coinbase_account_path, sizeof(coinbase_account_path) - 1,
+         "CDP_ACCOUNT_PATH", DEFAULT_CDP_ACCOUNT_PATH);
+
+  envurl(coinbase_accounts_path, sizeof(coinbase_accounts_path) - 1,
+         "CDP_ACCOUNTS_PATH", DEFAULT_CDP_ACCOUNTS_PATH);
+
+  envurl(coinbase_fees_path, sizeof(coinbase_fees_path) - 1, "CDP_FEES_PATH",
+         DEFAULT_CDP_FEES_PATH);
+
+  envurl(coinbase_order_path, sizeof(coinbase_order_path) - 1, "CDP_ORDER_PATH",
+         DEFAULT_CDP_ORDER_PATH);
+
+  envurl(coinbase_products_path, sizeof(coinbase_products_path) - 1,
+         "CDP_PRODUCTS_PATH", DEFAULT_CDP_PRODUCTS_PATH);
+
+  envurl(coinbase_order_cancel_path, sizeof(coinbase_order_cancel_path) - 1,
+         "CDP_ORDER_CANCEL_PATH", DEFAULT_CDP_ORDER_CANCEL_PATH);
+
+  envurl(coinbase_order_create_path, sizeof(coinbase_order_create_path) - 1,
+         "CDP_ORDER_CREATE_PATH", DEFAULT_CDP_ORDER_CREATE_PATH);
 
   const unsigned long req_s = envul("CDP_HTTP_REQUESTS_PER_SECOND",
                                     DEFAULT_CDP_HTTP_REQUESTS_PER_SECOND);
@@ -1581,7 +1620,6 @@ static void coinbase_init(void) {
   orders = Queue_new(128, (time_t)0);
   samples = Queue_new((MG_MAX_RECV_SIZE) / sizeof(struct Sample *),
                       (time_t)(coinbase_stall_ms / 1000L));
-  mg_log_set(MG_LL_NONE); // NONE, ERROR, INFO, DEBUG, VERBOSE
   markets = Array_new(1024);
   markets_by_symbol = Map_new(StringMapOps, 1024);
   markets_by_id = Map_new(StringMapOps, 1024);
@@ -2091,7 +2129,8 @@ coinbase_account(const struct String *restrict const id) {
   struct Account *restrict a = NULL;
   struct wcjson_document doc = WCJSON_DOCUMENT_INITIALIZER;
   WCJSON_DECLARE_OBJECT_ITEM(account)
-  int r = snprintf(path, sizeof(path), coinbase_account_path, String_chars(id));
+  int r = snprintf(path, sizeof(path), "%s%s", coinbase_account_path,
+                   String_chars(id));
 
   if (r < 0 || (size_t)r >= sizeof(path))
     panic();
@@ -2217,7 +2256,8 @@ static struct Order *coinbase_order(const struct String *restrict const id) {
   struct Order *restrict o = NULL;
   struct wcjson_document doc = WCJSON_DOCUMENT_INITIALIZER;
   WCJSON_DECLARE_OBJECT_ITEM(order)
-  int r = snprintf(path, sizeof(path), coinbase_order_path, String_chars(id));
+  int r = snprintf(path, sizeof(path), "%s%s", coinbase_order_path,
+                   String_chars(id));
 
   if (r < 0 || (size_t)r >= sizeof(path))
     panic();
