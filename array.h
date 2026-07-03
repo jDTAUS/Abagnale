@@ -1,5 +1,5 @@
 /* $SchulteIT: array.h 15189 2025-10-27 05:41:45Z schulte $ */
-/* $JDTAUS$ */
+/* $JDTAUS: array.h 9506 2026-06-12 13:10:57Z schulte $ */
 
 /*
  * Copyright (c) 2018 - 2026 Christian Schulte <cs@schulte.it>
