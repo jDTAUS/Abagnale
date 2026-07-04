@@ -2300,6 +2300,7 @@ static void trade_pricing(const struct worker_ctx *restrict const w_ctx,
   struct Numeric *restrict const ef_pc = tls->trade_pricing.ef_pc;
   struct Numeric *restrict const r0 = tls->trade_pricing.r0;
   const struct Pricing *restrict const pricing = w_ctx->e->pricing();
+  bool err = false;
 
   Numeric_copy_to(pricing->ef_pc, ef_pc);
   mutex_unlock(pricing->mtx);
@@ -2335,14 +2336,19 @@ static void trade_pricing(const struct worker_ctx *restrict const w_ctx,
     Numeric_char_free(fee);
 
     Numeric_copy_to(t->fee_pc, t->tp_pc);
+    err = true;
   }
 
-  if (verbose) {
+  if (verbose || err) {
     char *restrict const fee = Numeric_to_char(t->fee_pc, 2);
     char *restrict const v = Numeric_to_char(t->tp_pc, 4);
 
-    wout("%s: %s: Pricing: fee: %s%%, volatility: %s%%\n",
-         String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm), fee, v);
+    if (err)
+      werr("%s: %s: Pricing: fee: %s%%, volatility: %s%%\n",
+           String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm), fee, v);
+    else
+      wout("%s: %s: Pricing: fee: %s%%, volatility: %s%%\n",
+           String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm), fee, v);
 
     Numeric_char_free(fee);
     Numeric_char_free(v);
@@ -2354,7 +2360,7 @@ static void trade_pricing(const struct worker_ctx *restrict const w_ctx,
 
 static void trade_plot(const struct worker_ctx *restrict const w_ctx,
                        struct Trade *restrict const t) {
-  char plot_fn[4096] = {0};
+  char plot_fn[BUFSIZ] = {0};
   int r = snprintf(plot_fn, sizeof(plot_fn), "%s/%s/%s/%s.m",
                    String_chars(cnf->plts_dir), String_chars(w_ctx->e->nm),
                    String_chars(t->a->nm), String_chars(w_ctx->m->nm));
@@ -2536,30 +2542,29 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
   switch (p->type) {
   case POSITION_TYPE_LONG: {
     if (Numeric_cmp(q_avail, q_ordered) < 0) {
-      if (verbose) {
-        char *restrict const s_pr =
-            Numeric_to_char(sample->price, w_ctx->m->q_sc);
+      char *restrict const s_pr =
+          Numeric_to_char(sample->price, w_ctx->m->q_sc);
 
-        char *restrict const r = Numeric_to_char(q_ordered, w_ctx->m->q_sc);
-        char *restrict const a = Numeric_to_char(q_avail, w_ctx->m->q_sc);
-        char *restrict const c = candle_string(
-            &t->open_cd, String_chars(w_ctx->m->q_id), w_ctx->m->p_sc);
+      char *restrict const r = Numeric_to_char(q_ordered, w_ctx->m->q_sc);
+      char *restrict const a = Numeric_to_char(q_avail, w_ctx->m->q_sc);
+      char *restrict const c = candle_string(
+          &t->open_cd, String_chars(w_ctx->m->q_id), w_ctx->m->p_sc);
 
-        wout("%s: %s: Cannot demand %s%s@%s%s: %s%s>%s%s, %s\n",
-             String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm), b,
-             String_chars(w_ctx->m->b_id), pr, String_chars(w_ctx->m->q_id), r,
-             String_chars(w_ctx->m->q_id), a, String_chars(w_ctx->m->q_id), c);
+      werr("%s: %s: Cannot demand %s%s@%s%s: %s%s>%s%s, %s\n",
+           String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm), b,
+           String_chars(w_ctx->m->b_id), pr, String_chars(w_ctx->m->q_id), r,
+           String_chars(w_ctx->m->q_id), a, String_chars(w_ctx->m->q_id), c);
 
+      if (verbose)
         wout("%s: %s: Leaving open(%" PRIuMAX "): 1%s@%s%s\n",
              String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
              t->open_trg.cnt, String_chars(w_ctx->m->b_id), s_pr,
              String_chars(w_ctx->m->q_id));
 
-        Numeric_char_free(s_pr);
-        Numeric_char_free(r);
-        Numeric_char_free(a);
-        heap_free(c);
-      }
+      Numeric_char_free(s_pr);
+      Numeric_char_free(r);
+      Numeric_char_free(a);
+      heap_free(c);
 
       trigger_reset(&t->open_trg);
       goto ret;
@@ -2598,33 +2603,32 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
     if (Numeric_cmp(q_avail, q_fees) < 0 ||
         Numeric_cmp(b_avail, p->b_ordered) < 0) {
 
-      if (verbose) {
-        char *restrict const s_pr =
-            Numeric_to_char(sample->price, w_ctx->m->q_sc);
+      char *restrict const s_pr =
+          Numeric_to_char(sample->price, w_ctx->m->q_sc);
 
-        char *restrict const qr = Numeric_to_char(q_fees, w_ctx->m->q_sc);
-        char *restrict const qa = Numeric_to_char(q_avail, w_ctx->m->q_sc);
-        char *restrict const ba = Numeric_to_char(b_avail, w_ctx->m->b_sc);
-        char *restrict const c = candle_string(
-            &t->open_cd, String_chars(w_ctx->m->q_id), w_ctx->m->p_sc);
+      char *restrict const qr = Numeric_to_char(q_fees, w_ctx->m->q_sc);
+      char *restrict const qa = Numeric_to_char(q_avail, w_ctx->m->q_sc);
+      char *restrict const ba = Numeric_to_char(b_avail, w_ctx->m->b_sc);
+      char *restrict const c = candle_string(
+          &t->open_cd, String_chars(w_ctx->m->q_id), w_ctx->m->p_sc);
 
-        wout("%s: %s: Cannot supply %s%s@%s%s: %s%s>%s%s %s%s>%s%s, %s\n",
-             String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm), b,
-             String_chars(w_ctx->m->b_id), pr, String_chars(w_ctx->m->q_id), qr,
-             String_chars(w_ctx->m->q_id), qa, String_chars(w_ctx->m->q_id), b,
-             String_chars(w_ctx->m->b_id), ba, String_chars(w_ctx->m->b_id), c);
+      werr("%s: %s: Cannot supply %s%s@%s%s: %s%s>%s%s %s%s>%s%s, %s\n",
+           String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm), b,
+           String_chars(w_ctx->m->b_id), pr, String_chars(w_ctx->m->q_id), qr,
+           String_chars(w_ctx->m->q_id), qa, String_chars(w_ctx->m->q_id), b,
+           String_chars(w_ctx->m->b_id), ba, String_chars(w_ctx->m->b_id), c);
 
+      if (verbose)
         wout("%s: %s: Leaving open(%" PRIuMAX "): 1%s@%s%s\n",
              String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
              t->open_trg.cnt, String_chars(w_ctx->m->b_id), s_pr,
              String_chars(w_ctx->m->q_id));
 
-        Numeric_char_free(s_pr);
-        Numeric_char_free(qr);
-        Numeric_char_free(qa);
-        Numeric_char_free(ba);
-        heap_free(c);
-      }
+      Numeric_char_free(s_pr);
+      Numeric_char_free(qr);
+      Numeric_char_free(qa);
+      Numeric_char_free(ba);
+      heap_free(c);
 
       trigger_reset(&t->open_trg);
       goto ret;
@@ -3202,6 +3206,7 @@ static int trades_process(void *restrict const arg) {
   struct worker_ctx *restrict const w_ctx = arg;
   struct Numeric *restrict const tp_pc = Numeric_new();
   struct Numeric *restrict const r0 = Numeric_new();
+  bool err = false;
   void *const *restrict items;
 
   while (!terminated) {
@@ -3284,6 +3289,7 @@ static int trades_process(void *restrict const arg) {
 
       if (Numeric_cmp(tp_pc, zero) == 0) {
         Numeric_copy_to(t->fee_pc, tp_pc);
+        err = true;
 
         char *restrict const win = nanos_string(w_ctx->m_cnf->v_wnanos);
 
@@ -3307,14 +3313,19 @@ static int trades_process(void *restrict const arg) {
       Numeric_char_free(fee);
 
       Numeric_copy_to(t->fee_pc, tp_pc);
+      err = true;
     }
 
-    if (verbose) {
+    if (verbose || err) {
       char *restrict const fee = Numeric_to_char(t->fee_pc, 2);
       char *restrict const v = Numeric_to_char(tp_pc, 4);
 
-      wout("%s: %s: Pricing: fee: %s%%, volatility: %s%%\n",
-           String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm), fee, v);
+      if (err)
+        werr("%s: %s: Pricing: fee: %s%%, volatility: %s%%\n",
+             String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm), fee, v);
+      else
+        wout("%s: %s: Pricing: fee: %s%%, volatility: %s%%\n",
+             String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm), fee, v);
 
       Numeric_char_free(fee);
       Numeric_char_free(v);

@@ -1541,7 +1541,7 @@ inline static void envurl(char *restrict d, size_t len, const char *restrict nm,
   }
 
   if (len == SIZE_MAX && *env)
-    panic();
+    fatal("%s: %s", nm, env);
 
   *d = '\0';
 }
