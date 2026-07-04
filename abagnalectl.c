@@ -815,7 +815,7 @@ static int cmd_volatility(int argc, char *argv[]) {
 
   void *restrict const db = db_connect(String_chars(progname));
 
-  db_volatility_open(db, String_chars(e->id), String_chars(m->id));
+  db_volatility_open(db, String_chars(e->id), String_chars(m->id), NULL);
 
   struct Numeric *restrict const v = Numeric_new();
 

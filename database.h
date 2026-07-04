@@ -187,8 +187,8 @@ void db_samples_open(const void *const, const char *const, const char *const,
 bool db_samples_next(struct db_sample_rec *const, const void *const);
 void db_samples_close(const void *const);
 
-void db_volatility_open(const void *const, const char *const,
-                        const char *const);
+void db_volatility_open(const void *const, const char *const, const char *const,
+                        const struct Numeric *const);
 void db_volatility(struct Numeric *const, const void *const,
                    const struct Numeric *const);
 void db_volatility_close(const void *const);

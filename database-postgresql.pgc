@@ -339,15 +339,24 @@ void db_samples_close(const void *const db) {
 }
 
 void db_volatility_open(const void *const db, const char *const e_id,
-                        const char *const m_id) {
+                        const char *const m_id,
+                        const struct Numeric *const m_wnanos) {
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(1, stdout);
 #endif
+  struct Numeric *restrict nanos = NULL;
+  if (m_wnanos != NULL) {
+    struct Numeric *restrict const now = Numeric_new();
+    nanos_now(now);
+    nanos = Numeric_sub(now, m_wnanos);
+    Numeric_delete(now);
+  }
   // clang-format off
   EXEC SQL BEGIN DECLARE SECTION;
   const char *con = String_chars(db);
   const char *sql_e_id = e_id;
   const char *sql_m_id = m_id;
+  numeric *sql_nanos = Numeric_db(nanos ? nanos : zero);
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
   EXEC SQL WHENEVER SQLERROR CALL db_fatal();
@@ -367,6 +376,7 @@ void db_volatility_open(const void *const db, const char *const e_id,
           FROM "SAMPLES"
           WHERE "EXCHANGE_ID" = :sql_e_id
             AND "MARKET_ID" = :sql_m_id
+            AND "NANOS" >= :sql_nanos
         ) sub
         WHERE "PRICE" <> "PREVIOUS" OR "PREVIOUS" IS NULL
       )
@@ -380,6 +390,7 @@ void db_volatility_open(const void *const db, const char *const e_id,
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(0, stdout);
 #endif
+  Numeric_delete(nanos);
 }
 
 void db_volatility(struct Numeric *const stddev, const void *const db,
@@ -459,9 +470,9 @@ void db_vacuum_plots(const void *const db, const char *const e_id,
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(1, stdout);
 #endif
-  struct Numeric *now = Numeric_new();
+  struct Numeric *restrict const now = Numeric_new();
   nanos_now(now);
-  struct Numeric *nanos = Numeric_sub(now, wnanos);
+  struct Numeric *restrict const nanos = Numeric_sub(now, wnanos);
   Numeric_delete(now);
   int r;
   // clang-format off
@@ -561,6 +572,7 @@ void db_vacuum_plots(const void *const db, const char *const e_id,
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(0, stdout);
 #endif
+  Numeric_delete(nanos);
 }
 
 void db_vacuum_samples(const void *const db, const char *const e_id,
@@ -570,9 +582,9 @@ void db_vacuum_samples(const void *const db, const char *const e_id,
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(1, stdout);
 #endif
-  struct Numeric *now = Numeric_new();
+  struct Numeric *restrict const now = Numeric_new();
   nanos_now(now);
-  struct Numeric *nanos = Numeric_sub(now, wnanos);
+  struct Numeric *restrict const nanos = Numeric_sub(now, wnanos);
   Numeric_delete(now);
   // clang-format off
   EXEC SQL BEGIN DECLARE SECTION;
@@ -1627,8 +1639,8 @@ void db_tx_trend_plot_samples_open(const void *const db, const char *const e_id,
 #endif
 }
 
-bool db_tx_trend_plot_samples_next(
-    struct db_datapoint_rec *restrict const point, const void *const db) {
+bool db_tx_trend_plot_samples_next(struct db_datapoint_rec *const point,
+                                   const void *const db) {
   // clang-format off
   EXEC SQL BEGIN DECLARE SECTION;
   const char *con = String_chars(db);
@@ -1694,7 +1706,7 @@ void db_tx_trend_plot_candles_open(const void *const db, const char *const e_id,
 #endif
 }
 
-bool db_tx_trend_plot_candles_next(struct db_candle_rec *restrict const candle,
+bool db_tx_trend_plot_candles_next(struct db_candle_rec *const candle,
                                    const void *const db) {
   // clang-format off
   EXEC SQL BEGIN DECLARE SECTION;
@@ -1770,7 +1782,7 @@ void db_tx_trend_plot_markers_open(const void *const db, const char *const e_id,
 #endif
 }
 
-bool db_tx_trend_plot_markers_next(struct db_marker_rec *restrict const marker,
+bool db_tx_trend_plot_markers_next(struct db_marker_rec *const marker,
                                    const void *const db) {
   // clang-format off
   EXEC SQL BEGIN DECLARE SECTION;

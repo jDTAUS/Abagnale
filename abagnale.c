@@ -3257,7 +3257,7 @@ static int trades_process(void *restrict const arg) {
     }
 
     db_volatility_open(w_ctx->db, String_chars(w_ctx->e->id),
-                       String_chars(w_ctx->m->id));
+                       String_chars(w_ctx->m->id), w_ctx->m_cnf->wnanos);
 
     if (w_ctx->m_cnf->v_wnanos == NULL) {
       Numeric_copy_to(zero, tp_pc);
