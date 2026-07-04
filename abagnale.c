@@ -3206,11 +3206,11 @@ static int trades_process(void *restrict const arg) {
   struct worker_ctx *restrict const w_ctx = arg;
   struct Numeric *restrict const tp_pc = Numeric_new();
   struct Numeric *restrict const r0 = Numeric_new();
-  bool err = false;
   void *const *restrict items;
 
   while (!terminated) {
     struct Trade *restrict const t = Queue_dequeue_await(w_ctx->trades_queue);
+    bool err = false;
 
     if (t == NULL)
       continue;
