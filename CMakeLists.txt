@@ -259,7 +259,7 @@ elseif(NOT HAVE_THREADS_H)
 	FetchContent_declare(
 		static-stdthreads
 		GIT_REPOSITORY https://github.com/ChristianSchulte/libstdthreads.git
-		GIT_TAG b279390634cbdcec56d4c3d5facff3920914068f
+		GIT_TAG 170543612b704ab332e35a6b1dfbb41588ae965d
 	)
 	FetchContent_MakeAvailable(static-stdthreads)
 endif()
