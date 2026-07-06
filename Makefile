@@ -112,7 +112,6 @@ LDFLAGS+=-lpgtypes
 
 LDFLAGS+=-lm
 LDFLAGS+=-lcrypto
-LDFLAGS+=-lssl
 #LDFLAGS+=-lstdthreads
 #LDFLAGS+=-lpthread
 
