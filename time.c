@@ -157,10 +157,8 @@ bool nanos_from_iso8601(const char *restrict const iso, const size_t len,
       p++;
 
       size_t fr_len = sizeof(fr) - 3;
-      size_t r_len = p - iso;
 
-      p++;
-      while (r_len-- != 0 && fr_len-- != 0 && IS_DIGIT(*p))
+      while (fr_len-- != 0 && IS_DIGIT(*p))
         *fr_p++ = *p++;
 
       if (fr_len == SIZE_MAX)
@@ -175,30 +173,26 @@ bool nanos_from_iso8601(const char *restrict const iso, const size_t len,
         return false;
     }
 
-    if (p - iso > 0) {
-      if (*p != 'z' && *p != 'Z') {
-        if (*p == '-') {
-          neg = true;
-          p++;
-        } else if (*p == '+')
-          p++;
+    if (*p != 'z' && *p != 'Z') {
+      if (*p == '-') {
+        neg = true;
+        p++;
+      } else if (*p == '+')
+        p++;
 
-        if (p - iso < 2 || !(IS_DIGIT(*p) && IS_DIGIT(*(p + 1))))
-          return false;
+      if (!(IS_DIGIT(*p) && IS_DIGIT(*(p + 1))))
+        return false;
 
-        tz_sec = (10 * VALUE(*p) + VALUE(*(p + 1))) * 3600;
-        p += 2;
+      tz_sec = (10 * VALUE(*p) + VALUE(*(p + 1))) * 3600;
+      p += 2;
 
-        if (p - iso > 0) {
-          if (*p == ':')
-            p++;
+      if (*p == ':')
+        p++;
 
-          if (p - iso < 2 || !(IS_DIGIT(*p) && IS_DIGIT(*(p + 1))))
-            return false;
+      if (!(IS_DIGIT(*p) && IS_DIGIT(*(p + 1))))
+        return false;
 
-          tz_sec += (10 * VALUE(*p) + VALUE(*(p + 1))) * 60;
-        }
-      }
+      tz_sec += (10 * VALUE(*p) + VALUE(*(p + 1))) * 60;
     }
   }
 
