@@ -237,14 +237,6 @@ else()
 endif()
 target_info(OpenSSL::Crypto)
 
-message(CHECK_START "Checking target OpenSSL::SSL")
-if(OpenSSL_FOUND AND NOT TARGET OpenSSL:SSL)
-	message(CHECK_FAIL "not provided - ignoring")
-else()
-	message(CHECK_PASS "provided")
-endif()
-target_info(OpenSSL::SSL)
-
 pkg_check_modules(stdthreads stdthreads IMPORTED_TARGET)
 
 if(stdthreads_FOUND)
@@ -346,7 +338,6 @@ target_include_directories(objects PRIVATE
 
 target_link_libraries(objects PRIVATE
 	OpenSSL::Crypto
-	OpenSSL::SSL
 	PostgreSQL::ECPG
 	PostgreSQL::PGTYPES
 	PostgreSQL::PostgreSQL
