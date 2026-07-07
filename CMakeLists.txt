@@ -1,4 +1,4 @@
-# $JDTAUS$
+# $JDTAUS: CMakeLists.txt 9625 2026-07-06 18:22:07Z schulte $
 
 # Copyright (c) 2026 Christian Schulte <cs@schulte.it>
 #
