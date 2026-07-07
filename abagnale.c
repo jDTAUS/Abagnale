@@ -3228,11 +3228,10 @@ static int trades_process(void *restrict const arg) {
       if (TRADE_IS_DELETED(t)) {
         mutex_unlock(&t->mtx);
         trade_delete(t);
-        continue;
+      } else {
+        TRADE_UNSET_ENQUEUED(t);
+        mutex_unlock(&t->mtx);
       }
-
-      TRADE_UNSET_ENQUEUED(t);
-      mutex_unlock(&t->mtx);
       continue;
     }
 
@@ -3246,12 +3245,10 @@ static int trades_process(void *restrict const arg) {
       if (TRADE_IS_DELETED(t)) {
         mutex_unlock(&t->mtx);
         trade_delete(t);
-        Market_delete(w_ctx->m);
-        continue;
+      } else {
+        TRADE_UNSET_ENQUEUED(t);
+        mutex_unlock(&t->mtx);
       }
-
-      TRADE_UNSET_ENQUEUED(t);
-      mutex_unlock(&t->mtx);
       Market_delete(w_ctx->m);
       continue;
     }
@@ -3275,12 +3272,10 @@ static int trades_process(void *restrict const arg) {
         if (TRADE_IS_DELETED(t)) {
           mutex_unlock(&t->mtx);
           trade_delete(t);
-          Market_delete(w_ctx->m);
-          continue;
+        } else {
+          TRADE_UNSET_ENQUEUED(t);
+          mutex_unlock(&t->mtx);
         }
-
-        TRADE_UNSET_ENQUEUED(t);
-        mutex_unlock(&t->mtx);
         Market_delete(w_ctx->m);
         continue;
       }
@@ -3335,14 +3330,12 @@ static int trades_process(void *restrict const arg) {
     if (TRADE_IS_DELETED(t)) {
       mutex_unlock(&t->mtx);
       trade_delete(t);
-      Market_delete(w_ctx->m);
-      continue;
+    } else {
+      TRADE_SET_READY(t, tp_pc);
+      Numeric_div_to(t->tp_pc, hundred, r0);
+      Numeric_add_to(r0, one, t->tp_pf);
+      mutex_unlock(&t->mtx);
     }
-
-    TRADE_SET_READY(t, tp_pc);
-    Numeric_div_to(t->tp_pc, hundred, r0);
-    Numeric_add_to(r0, one, t->tp_pf);
-    mutex_unlock(&t->mtx);
     Market_delete(w_ctx->m);
   }
 
@@ -3372,18 +3365,18 @@ static inline void sample_array_delete(void *restrict const entry) {
   Array_delete(entry, Sample_delete);
 }
 
-static inline void trade_array_delete(void *restrict const entry) {
-  Array_delete(entry, trade_delete);
-}
-
-static inline void trade_queue_entry_delete(void *restrict const entry) {
+static inline void trade_array_entry_delete(void *restrict const entry) {
   struct Trade *restrict const t = entry;
-  if (t != NULL && TRADE_IS_DELETED(t))
+  if (t != NULL && !TRADE_IS_ENQUEUED(t))
     trade_delete(t);
 }
 
+static inline void trade_array_delete(void *restrict const entry) {
+  Array_delete(entry, trade_array_entry_delete);
+}
+
 static inline void trade_queue_delete(void *restrict const entry) {
-  Queue_delete(entry, trade_queue_entry_delete);
+  Queue_delete(entry, trade_delete);
 }
 
 static inline void thrd_delete(void *restrict const entry) { heap_free(entry); }
