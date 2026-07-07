@@ -57,9 +57,24 @@ inline void thread_join(const thrd_t t, int *restrict const res) {
 }
 
 inline void thread_sleep(const struct timespec *restrict const duration) {
-  int r = thrd_sleep(duration, NULL);
-  if (r < 0)
-    fatal("%d", r);
+  int r;
+  struct timespec rmng;
+  struct timespec drtn = *duration;
+
+  do {
+    rmng.tv_sec = -1;
+    rmng.tv_nsec = -1;
+
+    r = thrd_sleep(&drtn, &rmng);
+
+    if (r < 0) {
+      if (rmng.tv_sec == -1 && rmng.tv_nsec == -1)
+        fatal("%d", r);
+
+      drtn = rmng;
+    }
+
+  } while (r != 0 && (rmng.tv_sec != 0 || rmng.tv_nsec != 0));
 }
 
 _Noreturn void thread_exit(const int res) { thrd_exit(res); }
