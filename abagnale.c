@@ -1017,7 +1017,7 @@ static bool quote_return(struct Numeric *restrict const q_return,
     b_m = NULL;
     Array_unlock(markets);
 
-    if (q_m == NULL && b_m == NULL) {
+    if (q_m_id == NULL && b_m_id == NULL) {
       werr("%s: %s: Markets not available: %s@%s, %s@%s\n",
            String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
            String_chars(w_ctx->m->q_id), String_chars(w_ctx->m_cnf->r_id),
