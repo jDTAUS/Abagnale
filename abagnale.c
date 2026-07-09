@@ -995,62 +995,100 @@ static bool quote_return(struct Numeric *restrict const q_return,
 
   if (!String_equals(w_ctx->m->q_id, w_ctx->m_cnf->r_id)) {
     struct Market *restrict q_m = NULL;
+    struct Market *restrict b_m = NULL;
     struct Array *restrict const markets = w_ctx->e->markets();
 
     items = Array_items(markets);
     for (size_t i = Array_size(markets); i-- > 0;) {
       struct Market *restrict const needle = items[i];
+
       if (String_equals(needle->q_id, w_ctx->m_cnf->r_id) &&
-          String_equals(needle->b_id, w_ctx->m->q_id)) {
+          String_equals(needle->b_id, w_ctx->m->q_id))
         q_m = needle;
-        break;
-      }
+
+      if (String_equals(needle->b_id, w_ctx->m_cnf->r_id) &&
+          String_equals(needle->q_id, w_ctx->m->q_id))
+        b_m = needle;
     }
 
-    if (q_m == NULL) {
-      werr("%s: %s: Market not available: %s@%s\n", String_chars(w_ctx->e->nm),
-           String_chars(w_ctx->m->nm), String_chars(w_ctx->m->q_id),
-           String_chars(w_ctx->m_cnf->r_id));
-
-      Array_unlock(markets);
-      return false;
-    }
-
-    struct String *restrict q_m_id = String_copy(q_m->id);
+    struct String *restrict q_m_id = q_m != NULL ? String_copy(q_m->id) : NULL;
+    struct String *restrict b_m_id = b_m != NULL ? String_copy(b_m->id) : NULL;
     q_m = NULL;
+    b_m = NULL;
     Array_unlock(markets);
 
-    Map_lock(market_samples);
-    struct Array *restrict const q_samples = Map_get(market_samples, q_m_id);
-    String_delete(q_m_id);
-    q_m_id = NULL;
+    if (q_m == NULL && b_m == NULL) {
+      werr("%s: %s: Markets not available: %s@%s, %s@%s\n",
+           String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
+           String_chars(w_ctx->m->q_id), String_chars(w_ctx->m_cnf->r_id),
+           String_chars(w_ctx->m_cnf->r_id), String_chars(w_ctx->m->q_id));
 
-    if (q_samples == NULL) {
-      werr("%s: %s: Tickers not available: %s@%s\n", String_chars(w_ctx->e->nm),
-           String_chars(w_ctx->m->nm), String_chars(w_ctx->m->q_id),
-           String_chars(w_ctx->m_cnf->r_id));
-
-      Map_unlock(market_samples);
       return false;
     }
+
+    struct Array *restrict q_samples = NULL;
+    struct Array *restrict b_samples = NULL;
+
+    Map_lock(market_samples);
+
+    if (q_m_id != NULL)
+      q_samples = Map_get(market_samples, q_m_id);
+
+    if (b_m_id != NULL)
+      b_samples = Map_get(market_samples, b_m_id);
+
     Map_unlock(market_samples);
 
-    Array_lock(q_samples);
-    const struct Sample *restrict const q_sample = Array_tail(q_samples);
+    String_delete(q_m_id);
+    String_delete(b_m_id);
+    q_m_id = NULL;
+    b_m_id = NULL;
 
-    if (q_sample == NULL) {
-      werr("%s: %s: Tickers not available: %s@%s\n", String_chars(w_ctx->e->nm),
-           String_chars(w_ctx->m->nm), String_chars(w_ctx->m->q_id),
-           String_chars(w_ctx->m_cnf->r_id));
+    if (q_samples == NULL && b_samples == NULL) {
+      werr("%s: %s: Tickers not available: %s@%s, %s@%s\n",
+           String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
+           String_chars(w_ctx->m->q_id), String_chars(w_ctx->m_cnf->r_id),
+           String_chars(w_ctx->m_cnf->r_id), String_chars(w_ctx->m->q_id));
 
-      Array_unlock(q_samples);
       return false;
     }
 
-    Numeric_div_to(one, q_sample->price, r0);
-    Numeric_mul_to(r0, w_ctx->m_cnf->r_amount, q_return);
-    Numeric_scale(q_return, w_ctx->m->q_sc);
-    Array_unlock(q_samples);
+    const struct Sample *restrict q_sample = NULL;
+    const struct Sample *restrict b_sample = NULL;
+
+    if (q_samples != NULL) {
+      Array_lock(q_samples);
+      q_sample = Array_tail(q_samples);
+
+      if (q_sample != NULL) {
+        Numeric_div_to(one, q_sample->price, r0);
+        Numeric_mul_to(r0, w_ctx->m_cnf->r_amount, q_return);
+        Numeric_scale(q_return, w_ctx->m->q_sc);
+      }
+
+      Array_unlock(q_samples);
+    }
+
+    if (b_samples != NULL) {
+      Array_lock(b_samples);
+      b_sample = Array_tail(b_samples);
+
+      if (b_sample != NULL) {
+        Numeric_mul_to(w_ctx->m_cnf->r_amount, b_sample->price, q_return);
+        Numeric_scale(q_return, w_ctx->m->q_sc);
+      }
+
+      Array_unlock(b_samples);
+    }
+
+    if (q_sample == NULL && b_sample == NULL) {
+      werr("%s: %s: Tickers not available: %s@%s, %s@%s\n",
+           String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
+           String_chars(w_ctx->m->q_id), String_chars(w_ctx->m_cnf->r_id),
+           String_chars(w_ctx->m_cnf->r_id), String_chars(w_ctx->m->q_id));
+
+      return false;
+    }
   } else
     Numeric_copy_to(w_ctx->m_cnf->r_amount, q_return);
 
