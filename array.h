@@ -43,7 +43,7 @@ void Array_cut(struct Array *restrict const, const size_t, const size_t,
                void (*i_delete)(void *restrict const));
 void Array_clear(struct Array *restrict const,
                  void (*i_delete)(void *restrict const));
-void Array_shrink(struct Array *restrict const);
+void Array_compact(struct Array *restrict const);
 
 void Array_add_tail(struct Array *restrict const, void *restrict const);
 void *Array_tail(const struct Array *restrict const);

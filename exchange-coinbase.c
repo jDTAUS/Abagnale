@@ -1893,7 +1893,7 @@ static struct Array *coinbase_markets(void) {
     if (http_req(&doc, url, coinbase_products_path, NULL, 0) == 0) {
       Array_clear(markets, Market_delete);
       parse_products(markets, &doc);
-      Array_shrink(markets);
+      Array_compact(markets);
       Map_delete(markets_by_symbol, NULL);
       Map_delete(markets_by_id, NULL);
       markets_by_symbol = Map_new(StringMapOps, Array_size(markets));
@@ -2082,7 +2082,7 @@ static struct Array *coinbase_accounts(void) {
       for (size_t i = nitems(ws_channels); i > 0; i--)
         ws_channels[i - 1].reconnect = true;
 
-    Array_shrink(accounts);
+    Array_compact(accounts);
 
     accounts_by_id = Map_new(StringMapOps, Array_size(accounts));
     accounts_by_currency = Map_new(StringMapOps, Array_size(accounts));

@@ -969,7 +969,6 @@ static void samples_load(struct Array *restrict const a,
   }
 
   db_samples_close(w_ctx->db);
-  Array_shrink(a);
 
   if (verbose && !terminated && Array_size(a) > 1) {
     const struct Sample *restrict const s_head = Array_head(a);
@@ -986,8 +985,7 @@ static void samples_load(struct Array *restrict const a,
 }
 
 static bool quote_return(struct Numeric *restrict const q_return,
-                         const struct worker_ctx *restrict const w_ctx,
-                         const struct Array *restrict const samples) {
+                         const struct worker_ctx *restrict const w_ctx) {
   const struct abag_tls *restrict const tls = abag_tls();
   struct Numeric *restrict const r0 = tls->quote_return.r0;
   void *const *restrict items;
@@ -2946,7 +2944,7 @@ static int orders_process(void *restrict const arg) {
       continue;
     }
 
-    if (!(quote_return(q_return, w_ctx, samples) && w_ctx->m->is_active)) {
+    if (!(quote_return(q_return, w_ctx) && w_ctx->m->is_active)) {
       Array_unlock(samples);
       Market_delete(w_ctx->m);
       Order_delete(order);
@@ -3104,16 +3102,13 @@ static int samples_process(void *restrict const arg) {
       Numeric_sub_to(sample->nanos, w_ctx->m_cnf->wnanos, outdated_ns);
 
       items = Array_items(samples);
-      for (size_t i = Array_size(samples); i > 0; i--) {
-        if (Numeric_cmp(((struct Sample *)items[i - 1])->nanos, outdated_ns) <
-            0) {
-          if (i == Array_size(samples))
-            Array_clear(samples, Sample_delete);
-          else
-            Array_cut(samples, i, Array_size(samples) - i, Sample_delete);
+      const size_t s_items = Array_size(samples);
+      for (size_t i = 0; i < s_items; i++)
+        if (Numeric_cmp(((struct Sample *)items[i])->nanos, outdated_ns) > 0) {
+          Array_cut(samples, i, Array_size(samples) - i, Sample_delete);
           break;
         }
-      }
+
     } else
       Array_cut(samples, 0, 2, Sample_delete);
 
@@ -3123,6 +3118,8 @@ static int samples_process(void *restrict const arg) {
       continue;
     }
 
+    Array_unlock(samples);
+
     Map_lock(market_trades);
     struct Array *restrict trades = Map_get(market_trades, w_ctx->m->id);
     if (trades == NULL) {
@@ -3131,11 +3128,10 @@ static int samples_process(void *restrict const arg) {
     }
     Map_unlock(market_trades);
 
-    Array_unlock(samples);
     Array_lock(trades);
 
     bool betting = false;
-    const bool has_config = quote_return(q_return, w_ctx, samples);
+    const bool has_config = quote_return(q_return, w_ctx);
   again:
     items = Array_items(trades);
     for (size_t i = Array_size(trades); i-- > 0;) {
