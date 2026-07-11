@@ -1027,12 +1027,9 @@ static void ws_user_update(const struct wcjson_document *restrict const doc,
 
   /*
    * The user channel is lacking the last_fill_time property the REST API
-   * provides. The timestamp of the event is used instead. Sadly the events are
-   * sent out before the final settle is performed so that the timestamp of the
-   * event can be lower a few nanoseconds or microsends than the timestamp of
-   * the real settle. For orders filled immediately this can lead to the event
-   * timestamp lying before the creation timestamp. There is no other way to
-   * poll the REST API due to the channel events lacking that information.
+   * provides. The timestamp of the event could be used but may not equal the
+   * last_fill_time provided by the REST API. There is no other way than to
+   * poll the REST API for that information.
    */
   if (o->settled) {
     struct Order *restrict const tmp = o;

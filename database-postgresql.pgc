@@ -973,6 +973,7 @@ void db_trades_open(const void *const db, const char *const e_id,
            "MARKET_ID",
            "BASE_CURRENCY_ID",
            "QUOTE_CURRENCY_ID",
+           "QUOTE_RETURN",
            "STATUS",
            "BUY_ORDER_ID",
            extract(EPOCH FROM "BUY_ORDER_CREATED_AT") * 1000000000 AS "BUY_CNANOS",
@@ -1045,12 +1046,13 @@ bool db_trades_next(struct db_trade_rec *const trade, const void *const db) {
   int s_q_fees_ind[1] = {0};
   numeric *s_q_filled = Numeric_db(trade->s_q_filled);
   int s_q_filled_ind[1] = {0};
+  numeric *q_return = Numeric_db(trade->q_return);
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
   EXEC SQL WHENEVER SQLERROR CALL db_fatal();
   EXEC SQL WHENEVER NOT FOUND GOTO not_found;
   EXEC SQL AT :con FETCH FROM trades_cursor INTO
-    :id, :e_id, :m_id, :b_id, :q_id, :status,
+    :id, :e_id, :m_id, :b_id, :q_id, :q_return, :status,
     :bo_id :bo_id_ind,
     :b_cnanos :b_cnanos_ind,
     :b_dnanos :b_dnanos_ind,
@@ -1118,6 +1120,7 @@ void db_trade_bcreate(char *const t_id, const void *const db,
                       const char *const e_id, const char *const m_id,
                       const char *const b_id, const char *const q_id,
                       const char *const o_id,
+                      const struct Numeric *const q_return,
                       const struct Numeric *const o_base,
                       const struct Numeric *const o_pr) {
 #ifdef ABAG_SQL_DEBUG
@@ -1131,6 +1134,7 @@ void db_trade_bcreate(char *const t_id, const void *const db,
   const char *sql_b_id = b_id;
   const char *sql_q_id = q_id;
   const char *sql_o_id = o_id;
+  const numeric *sql_q_return = Numeric_db(q_return);
   const numeric *sql_o_base = Numeric_db(o_base);
   const numeric *sql_o_pr = Numeric_db(o_pr);
   char *sql_t_id = t_id;
@@ -1146,6 +1150,7 @@ void db_trade_bcreate(char *const t_id, const void *const db,
       "MARKET_ID",
       "BASE_CURRENCY_ID",
       "QUOTE_CURRENCY_ID",
+      "QUOTE_RETURN",
       "STATUS",
       "BUY_ORDER_ID",
       "BUY_ORDER_BASE_AMOUNT_ORDERED",
@@ -1153,8 +1158,8 @@ void db_trade_bcreate(char *const t_id, const void *const db,
       )
     VALUES
       (
-      :sql_e_id, :sql_m_id, :sql_b_id, :sql_q_id, 'BUYING', :sql_o_id,
-      :sql_o_base, :sql_o_pr
+      :sql_e_id, :sql_m_id, :sql_b_id, :sql_q_id, :sql_q_return, 'BUYING',
+      :sql_o_id, :sql_o_base, :sql_o_pr
       )
     RETURNING "TRADE_ID" INTO :sql_t_id;
   EXEC SQL AT :con COMMIT;
@@ -1204,6 +1209,7 @@ void db_trade_screate(char *const t_id, const void *const db,
                       const char *const e_id, const char *const m_id,
                       const char *const b_id, const char *const q_id,
                       const char *const o_id,
+                      const struct Numeric *const q_return,
                       const struct Numeric *const o_base,
                       const struct Numeric *const o_pr) {
 #ifdef ABAG_SQL_DEBUG
@@ -1217,6 +1223,7 @@ void db_trade_screate(char *const t_id, const void *const db,
   const char *sql_b_id = b_id;
   const char *sql_q_id = q_id;
   const char *sql_o_id = o_id;
+  const numeric *sql_q_return = Numeric_db(q_return);
   const numeric *sql_o_base = Numeric_db(o_base);
   const numeric *sql_o_pr = Numeric_db(o_pr);
   char *sql_t_id = t_id;
@@ -1232,6 +1239,7 @@ void db_trade_screate(char *const t_id, const void *const db,
       "MARKET_ID",
       "BASE_CURRENCY_ID",
       "QUOTE_CURRENCY_ID",
+      "QUOTE_RETURN",
       "STATUS",
       "SELL_ORDER_ID",
       "SELL_ORDER_BASE_AMOUNT_ORDERED",
@@ -1239,8 +1247,8 @@ void db_trade_screate(char *const t_id, const void *const db,
       )
     VALUES
       (
-      :sql_e_id, :sql_m_id, :sql_b_id, :sql_q_id, 'SELLING', :sql_o_id,
-      :sql_o_base, :sql_o_pr
+      :sql_e_id, :sql_m_id, :sql_b_id, :sql_q_id, :sql_q_return, 'SELLING',
+      :sql_o_id, :sql_o_base, :sql_o_pr
       )
     RETURNING "TRADE_ID" INTO :sql_t_id;
   EXEC SQL AT :con COMMIT;

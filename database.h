@@ -97,6 +97,7 @@ struct db_trade_rec {
   struct Numeric *s_b_filled;
   struct Numeric *s_q_fees;
   struct Numeric *s_q_filled;
+  struct Numeric *q_return;
 };
 
 struct db_position_state_rec {
@@ -210,7 +211,7 @@ void db_trades_hold(struct db_balance_rec *const, const void *const,
 void db_trade_bcreate(char *const, const void *const, const char *const,
                       const char *const, const char *const, const char *const,
                       const char *const, const struct Numeric *const,
-                      const struct Numeric *const);
+                      const struct Numeric *const, const struct Numeric *const);
 void db_trade_bupdate(const void *const, const char *const, const char *const,
                       const struct Numeric *const, const struct Numeric *const);
 void db_trade_breset(const void *const, const char *const);
@@ -225,7 +226,7 @@ void db_trade_bfill(const void *const, const char *const,
 void db_trade_screate(char *const, const void *const, const char *const,
                       const char *const, const char *const, const char *const,
                       const char *const, const struct Numeric *const,
-                      const struct Numeric *const);
+                      const struct Numeric *const, const struct Numeric *const);
 void db_trade_supdate(const void *const, const char *const, const char *const,
                       const struct Numeric *const, const struct Numeric *const);
 void db_trade_sreset(const void *const, const char *const);

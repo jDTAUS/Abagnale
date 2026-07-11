@@ -108,9 +108,6 @@ struct abag_tls {
   struct quote_return_vars {
     struct Numeric *restrict r0;
   } quote_return;
-  struct orders_process_vars {
-    struct Numeric *restrict q_return;
-  } orders_process;
   struct samples_process_vars {
     struct Numeric *restrict outdated_ns;
     struct Numeric *restrict q_return;
@@ -294,7 +291,6 @@ static struct abag_tls *const abag_tls(void) {
     tls->samples_load.now = Numeric_new();
     tls->samples_load.filter = Numeric_new();
     tls->quote_return.r0 = Numeric_new();
-    tls->orders_process.q_return = Numeric_new();
     tls->samples_process.outdated_ns = Numeric_new();
     tls->samples_process.q_return = Numeric_new();
     tls->samples_process.nanos = Numeric_new();
@@ -363,6 +359,7 @@ static struct abag_tls *const abag_tls(void) {
     tls->trades_load.trade->s_b_filled = Numeric_new();
     tls->trades_load.trade->s_q_fees = Numeric_new();
     tls->trades_load.trade->s_q_filled = Numeric_new();
+    tls->trades_load.trade->q_return = Numeric_new();
     tls_set(abag_tls_key, tls);
   }
   return tls;
@@ -416,7 +413,6 @@ static void abag_tls_dtor(void *e) {
   Numeric_delete(tls->samples_load.now);
   Numeric_delete(tls->samples_load.filter);
   Numeric_delete(tls->quote_return.r0);
-  Numeric_delete(tls->orders_process.q_return);
   Numeric_delete(tls->samples_process.outdated_ns);
   Numeric_delete(tls->samples_process.q_return);
   Numeric_delete(tls->samples_process.nanos);
@@ -484,6 +480,7 @@ static void abag_tls_dtor(void *e) {
   Numeric_delete(tls->trades_load.trade->s_b_filled);
   Numeric_delete(tls->trades_load.trade->s_q_fees);
   Numeric_delete(tls->trades_load.trade->s_q_filled);
+  Numeric_delete(tls->trades_load.trade->q_return);
   heap_free(tls->trades_load.trade);
   heap_free(tls);
   tls_set(abag_tls_key, NULL);
@@ -1317,7 +1314,7 @@ static void position_create(const struct worker_ctx *restrict const w_ctx,
       db_trade_bcreate(t_id, w_ctx->db, String_chars(w_ctx->e->id),
                        String_chars(w_ctx->m->id), String_chars(w_ctx->m->b_id),
                        String_chars(w_ctx->m->q_id), String_chars(p->id),
-                       p->b_ordered, p->price);
+                       t->q_return, p->b_ordered, p->price);
       t->id = String_cnew(t_id);
     } else
       db_trade_bupdate(w_ctx->db, String_chars(t->id), String_chars(p->id),
@@ -1330,7 +1327,7 @@ static void position_create(const struct worker_ctx *restrict const w_ctx,
       db_trade_screate(t_id, w_ctx->db, String_chars(w_ctx->e->id),
                        String_chars(w_ctx->m->id), String_chars(w_ctx->m->b_id),
                        String_chars(w_ctx->m->q_id), String_chars(p->id),
-                       p->b_ordered, p->price);
+                       t->q_return, p->b_ordered, p->price);
       t->id = String_cnew(t_id);
     } else
       db_trade_supdate(w_ctx->db, String_chars(t->id), String_chars(p->id),
@@ -2818,6 +2815,7 @@ static struct Array *trades_load(const struct worker_ctx *restrict const w_ctx,
     struct Trade *restrict const t = trade_new(w_ctx->e->id, w_ctx->m->id);
 
     t->id = String_cnew(trade->id);
+    Numeric_copy_to(trade->q_return, t->q_return);
 
     if (verbose)
       wout("%s: %s: %s: Loaded trade\n", String_chars(w_ctx->e->nm),
@@ -2932,8 +2930,6 @@ static struct Array *trades_load(const struct worker_ctx *restrict const w_ctx,
 }
 
 static int orders_process(void *restrict const arg) {
-  const struct abag_tls *restrict const tls = abag_tls();
-  struct Numeric *restrict const q_return = tls->orders_process.q_return;
   struct worker_ctx *restrict const w_ctx = arg;
 
   while (!terminated) {
@@ -2982,13 +2978,6 @@ static int orders_process(void *restrict const arg) {
       continue;
     }
 
-    if (!(quote_return(q_return, w_ctx) && w_ctx->m->is_active)) {
-      Array_unlock(samples);
-      Market_delete(w_ctx->m);
-      Order_delete(order);
-      continue;
-    }
-
     Map_lock(market_trades);
     trades = Map_get(market_trades, order->m_id);
     Map_unlock(market_trades);
@@ -3025,7 +3014,6 @@ static int orders_process(void *restrict const arg) {
       if (t->status == TRADE_STATUS_BUYING ||
           t->status == TRADE_STATUS_SELLING) {
         t->a = algorithm(w_ctx->m_cnf->a_nm);
-        Numeric_copy_to(q_return, t->q_return);
         Array_lock(samples);
         if (Array_size(samples) > 1) {
           const struct Sample *restrict const s = Array_tail(samples);
@@ -3177,7 +3165,9 @@ static int samples_process(void *restrict const arg) {
 
       if (has_config) {
         t->a = algorithm(w_ctx->m_cnf->a_nm);
-        Numeric_copy_to(q_return, t->q_return);
+
+        if (t->status == TRADE_STATUS_NEW)
+          Numeric_copy_to(q_return, t->q_return);
 
         Array_lock(samples);
         if (Array_size(samples) > 1) {
