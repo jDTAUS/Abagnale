@@ -724,8 +724,8 @@ static char *position_string(const struct worker_ctx *restrict const w_ctx,
 
   const int r = snprintf(
       res, POSITION_STRING_MAX_LENGTH + 1,
-      "%s %s%s@%s%s %s->%s, b: %s%s, q: %s%s, f: %s%s, sl: %s%s@%s%s, tp: "
-      "%s%s@%s%s",
+      "%s %s%s@%s%s %s->%s, base: %s%s, quote: %s%s, fee: %s%s, stop-loss: "
+      "%s%s@%s%s, take-profit: %s%s@%s%s",
       side, b_o, String_chars(w_ctx->m->b_id), pr, String_chars(w_ctx->m->q_id),
       c, d, b_f, String_chars(w_ctx->m->b_id), q_f,
       String_chars(w_ctx->m->q_id), q_fee, String_chars(w_ctx->m->q_id), b_o,
@@ -2578,15 +2578,20 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
       char *restrict const s_pr =
           Numeric_to_char(sample->price, w_ctx->m->q_sc);
 
+      char *restrict const q_return =
+          Numeric_to_char(t->q_return, w_ctx->m->q_sc);
+
       char *restrict const r = Numeric_to_char(q_ordered, w_ctx->m->q_sc);
       char *restrict const a = Numeric_to_char(q_avail, w_ctx->m->q_sc);
       char *restrict const c = candle_string(
           &t->open_cd, String_chars(w_ctx->m->q_id), w_ctx->m->p_sc);
 
-      werr("%s: %s: Cannot demand %s%s@%s%s: %s%s>%s%s, %s\n",
+      werr("%s: %s: Cannot demand %s%s@%s%s: %s%s>%s%s, return: %s%s, candle: "
+           "%s\n",
            String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm), b,
            String_chars(w_ctx->m->b_id), pr, String_chars(w_ctx->m->q_id), r,
-           String_chars(w_ctx->m->q_id), a, String_chars(w_ctx->m->q_id), c);
+           String_chars(w_ctx->m->q_id), a, String_chars(w_ctx->m->q_id),
+           q_return, String_chars(w_ctx->m->q_id), c);
 
       if (verbose)
         wout("%s: %s: Leaving open(%" PRIuMAX "): 1%s@%s%s\n",
@@ -2595,6 +2600,7 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
              String_chars(w_ctx->m->q_id));
 
       Numeric_char_free(s_pr);
+      Numeric_char_free(q_return);
       Numeric_char_free(r);
       Numeric_char_free(a);
       heap_free(c);
@@ -2610,7 +2616,7 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
       char *restrict const c = candle_string(
           &t->open_cd, String_chars(w_ctx->m->q_id), w_ctx->m->p_sc);
 
-      wout("%s: %s: Demanding %s%s@%s%s: return: %s%s, %s\n",
+      wout("%s: %s: Demanding %s%s@%s%s: return: %s%s, candle: %s\n",
            String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm), b,
            String_chars(w_ctx->m->b_id), pr, String_chars(w_ctx->m->q_id),
            q_return, String_chars(w_ctx->m->q_id), c);
@@ -2639,17 +2645,22 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
       char *restrict const s_pr =
           Numeric_to_char(sample->price, w_ctx->m->q_sc);
 
+      char *restrict const q_return =
+          Numeric_to_char(t->q_return, w_ctx->m->q_sc);
+
       char *restrict const qr = Numeric_to_char(q_fees, w_ctx->m->q_sc);
       char *restrict const qa = Numeric_to_char(q_avail, w_ctx->m->q_sc);
       char *restrict const ba = Numeric_to_char(b_avail, w_ctx->m->b_sc);
       char *restrict const c = candle_string(
           &t->open_cd, String_chars(w_ctx->m->q_id), w_ctx->m->p_sc);
 
-      werr("%s: %s: Cannot supply %s%s@%s%s: %s%s>%s%s %s%s>%s%s, %s\n",
+      werr("%s: %s: Cannot supply %s%s@%s%s: %s%s>%s%s %s%s>%s%s, return: "
+           "%s%s, candle: %s\n",
            String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm), b,
            String_chars(w_ctx->m->b_id), pr, String_chars(w_ctx->m->q_id), qr,
            String_chars(w_ctx->m->q_id), qa, String_chars(w_ctx->m->q_id), b,
-           String_chars(w_ctx->m->b_id), ba, String_chars(w_ctx->m->b_id), c);
+           String_chars(w_ctx->m->b_id), ba, String_chars(w_ctx->m->b_id),
+           q_return, String_chars(w_ctx->m->q_id), c);
 
       if (verbose)
         wout("%s: %s: Leaving open(%" PRIuMAX "): 1%s@%s%s\n",
@@ -2658,6 +2669,7 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
              String_chars(w_ctx->m->q_id));
 
       Numeric_char_free(s_pr);
+      Numeric_char_free(q_return);
       Numeric_char_free(qr);
       Numeric_char_free(qa);
       Numeric_char_free(ba);
@@ -2674,7 +2686,7 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
       char *restrict const c = candle_string(
           &t->open_cd, String_chars(w_ctx->m->q_id), w_ctx->m->p_sc);
 
-      wout("%s: %s: Supplying %s%s@%s%s: return: %s%s, %s\n",
+      wout("%s: %s: Supplying %s%s@%s%s: return: %s%s, candle: %s\n",
            String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm), b,
            String_chars(w_ctx->m->b_id), pr, String_chars(w_ctx->m->q_id),
            q_return, String_chars(w_ctx->m->q_id), c);
@@ -3303,21 +3315,8 @@ static int trades_process(void *restrict const arg) {
         Market_delete(w_ctx->m);
         continue;
       }
-    } else {
+    } else
       db_volatility(tp_pc, w_ctx->db, w_ctx->m_cnf->v_wnanos);
-
-      if (Numeric_cmp(tp_pc, zero) == 0) {
-        Numeric_copy_to(t->fee_pc, tp_pc);
-        err = true;
-
-        char *restrict const win = nanos_string(w_ctx->m_cnf->v_wnanos);
-
-        werr("%s: %s: Volatility not available: %s\n",
-             String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm), win);
-
-        heap_free(win);
-      }
-    }
 
     db_volatility_close(w_ctx->db);
 
@@ -3508,6 +3507,9 @@ int abagnale(int argc, char *argv[]) {
         panic();
     }
   }
+
+  Array_compact(trade_queues);
+  Array_compact(workers);
 
   if (!terminated) {
     items = Array_items(workers);

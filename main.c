@@ -201,6 +201,8 @@ int main(int argc, char *argv[]) {
 
   Array_add_tail(volatility_windows, Numeric_from_long(24 * 36e11));
 
+  Array_compact(volatility_windows);
+
   optparse_init(&options, argv);
   options.permute = 0;
 
@@ -283,6 +285,9 @@ int main(int argc, char *argv[]) {
       Array_add_tail(exchanges, all_exchanges[i]);
     }
   }
+
+  Array_compact(algorithms);
+  Array_compact(exchanges);
 
   if (!configtest) {
     if (String_equals(progname, prog_abagnale)) {

@@ -1083,6 +1083,8 @@ int config_fparse(struct Config *const x_conf,
   if (errors)
     return (-1);
 
+  Array_compact(conf->m_cnf);
+
   items = Array_items(conf->m_cnf);
   for (size_t i = Array_size(conf->m_cnf); i-- > 0;) {
     m_cnf = items[i];
