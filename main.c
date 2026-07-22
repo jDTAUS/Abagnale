@@ -26,6 +26,7 @@
 #include "config.h"
 #include "database.h"
 #include "heap.h"
+#include "http.h"
 #include "mongoose.h"
 #include "proc.h"
 #include "time.h"
@@ -134,6 +135,7 @@ int main(int argc, char *argv[]) {
   string_init();
   time_init();
   config_init();
+  json_init();
 
   if (signal(SIGTERM, terminate) == SIG_ERR)
     fatal("%s", strerror(errno));
@@ -245,6 +247,8 @@ int main(int argc, char *argv[]) {
     wout("\tABAG_CONFIG_FILE=%s\n", conffile);
   }
 
+  http_init();
+
   for (size_t i = nitems(all_algorithms); i-- > 0;)
     all_algorithms[i]->init();
 
@@ -333,6 +337,8 @@ int main(int argc, char *argv[]) {
   String_delete(progname);
   String_delete(prog_abagnale);
   String_delete(prog_abagnalectl);
+  json_destroy();
+  http_destroy();
   config_destroy();
   time_destroy();
   string_destroy();

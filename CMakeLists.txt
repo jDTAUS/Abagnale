@@ -27,6 +27,7 @@ add_compile_definitions(MULTI_THREADED)
 add_compile_definitions(STRING_INTERNING)
 add_compile_definitions(MG_TLS=MG_TLS_BUILTIN)
 add_compile_definitions(MG_MAX_RECV_SIZE=0x40000000UL)
+add_compile_definitions(MG_UECC_OPTIMIZATION_LEVEL=4)
 
 if(MSVC)
 	set(CMAKE_C_STANDARD	23)
@@ -104,7 +105,6 @@ if(WCHAR_T_UTF8)
 	add_compile_definitions(WCHAR_T_UTF8)
 endif()
 
-find_package(OpenSSL REQUIRED)
 find_package(PostgreSQL REQUIRED)
 find_package(PkgConfig REQUIRED)
 
@@ -229,14 +229,6 @@ else()
 endif()
 target_info(PostgreSQL::PGTYPES)
 
-message(CHECK_START "Checking target OpenSSL::Crypto")
-if(OpenSSL_FOUND AND NOT TARGET OpenSSL::Crypto)
-	message(CHECK_FAIL "not provided - ignoring")
-else()
-	message(CHECK_PASS "provided")
-endif()
-target_info(OpenSSL::Crypto)
-
 pkg_check_modules(stdthreads stdthreads IMPORTED_TARGET)
 
 if(stdthreads_FOUND)
@@ -296,9 +288,12 @@ add_library(objects OBJECT
 	abagnalectl.c
 	algorithm-trend.c
 	array.c
+	charset.c
 	exchange-coinbase.c
 	exchange.c
 	heap.c
+	http.c
+	json.c
 	main.c
 	map.c
 	math-postgresql.c
@@ -337,7 +332,6 @@ target_include_directories(objects PRIVATE
 )
 
 target_link_libraries(objects PRIVATE
-	OpenSSL::Crypto
 	PostgreSQL::ECPG
 	PostgreSQL::PGTYPES
 	PostgreSQL::PostgreSQL

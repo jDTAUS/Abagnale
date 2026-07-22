@@ -86,14 +86,13 @@ jobs:
     - name: Install build dependencies (Windows)
       if: runner.os == 'Windows'
       run: |
-        choco install openssl pkgconfiglite postgresql winflexbison -y --no-progress
+        choco install pkgconfiglite postgresql winflexbison -y --no-progress
 
     - name: Set PostgreSQL paths for CMake (MacOS)
       if: runner.os == 'macOS'
       run: |
         PG_PREFIX=$(brew --prefix postgresql)
         BISON_PREFIX=$(brew --prefix bison)
-        OSSL_PREFIX=$(brew --prefix openssl)
 
         if [ -z "$PG_PREFIX" ] || [ ! -d "$PG_PREFIX" ]; then
           echo "PostgreSQL not found."
@@ -105,11 +104,6 @@ jobs:
           exit 1
         fi
 
-        if [ -z "$OSSL_PREFIX" ] || [ ! -d "$OSSL_PREFIX" ];then
-          echo "OpenSSL not found."
-          exit 1
-        fi
-
         echo "PostgreSQL_ROOT=$PG_PREFIX" >> $GITHUB_ENV
         echo "PostgreSQL_INCLUDE_DIR=$PG_PREFIX/include" >> $GITHUB_ENV
         echo "PostgreSQL_LIBRARY=$PG_PREFIX/lib/postgresql/libpq.dylib" >> $GITHUB_ENV
@@ -117,7 +111,6 @@ jobs:
         echo "PostgreSQL_PGTYPES_LIBRARY=$PG_PREFIX/lib/postgresql/libpgtypes.dylib" >> $GITHUB_ENV
         echo "BISON_ROOT=$BISON_PREFIX" >> $GITHUB_ENV
         echo "YACC_EXECUTABLE=$BISON_PREFIX/bin/bison" >> $GITHUB_ENV
-        echo "OPENSSL_ROOT=$OSSL_PREFIX" >> $GITHUB_ENV
 #        ls -lHR $PG_PREFIX
 #        ls -lHR $BISON_PREFIX
     - name: Set PostgreSQL paths for CMake (Windows)
@@ -217,7 +210,7 @@ jobs:
         otool -L ${{ steps.strings.outputs.build-output-dir }}/abagnalectl | cat
         echo "=== Path Entries ==="
         otool -l ${{ steps.strings.outputs.build-output-dir }}/abagnale || true
-        otool -l ${{ steps.strings.outputs.build-output-dir }}/abagnalectl || true 
+        otool -l ${{ steps.strings.outputs.build-output-dir }}/abagnalectl || true
 
     - name: Upload build artifacts
       if: success()

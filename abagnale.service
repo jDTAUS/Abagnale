@@ -16,6 +16,7 @@ Environment=LC_CTYPE=C.UTF-8
 #Environment=ABAG_CONFIG_FILE=/etc/abagnale/abagnale.conf
 #Environment=ABAG_DATABASE_TARGET=ABAGNALE
 #Environment=ABAG_DATABASE_USER=abagnale
+#Environment=ABAG_HTTP_TIMEOUT_MILLIS=60000
 #Environment=ABAG_ORDER_WORKERS=1
 #Environment=ABAG_TICKER_WORKERS=12
 #Environment=ABAG_TRADE_WORKERS=6
@@ -31,7 +32,6 @@ Environment=LC_CTYPE=C.UTF-8
 #Environment=CDP_HTTP_REQUESTS_PER_SECOND=30
 #Environment=CDP_HTTP_RETRY_SECONDS=3
 #Environment=CDP_HTTP_STALL_MILLIS=3600000
-#Environment=CDP_HTTP_TIMEOUT_MILLIS=60000
 WorkingDirectory=/tmp
 KillMode=process
 TimeoutSec=600

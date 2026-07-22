@@ -257,7 +257,7 @@ char *nanos_to_iso8601(const struct Numeric *restrict const nanos) {
 #endif
 
   char *restrict const r = heap_malloc(TIME_ISO8601_MAX_LENGTH + 1);
-  if (strftime(r, TIME_ISO8601_MAX_LENGTH + 1, "%Y-%m-%dT%H:%M:%S%Z", &t) == 0)
+  if (strftime(r, TIME_ISO8601_MAX_LENGTH + 1, "%Y-%m-%dT%H:%M:%S%z", &t) == 0)
     panic();
 
   return r;

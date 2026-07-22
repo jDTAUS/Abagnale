@@ -17,9 +17,9 @@
 //
 // SPDX-License-Identifier: GPL-2.0-only or commercial
 
-// $SchulteIT: mongoose.h 15199 2025-10-27 07:48:03Z schulte $
 // $JDTAUS$
-// Origin: https://github.com/cesanta/mongoose 7.22
+// Origin: https://github.com/cesanta/mongoose
+//  cdd957572e1047ae72a8ce19a65913cbf71a40c9
 // Modifications: None.
 
 #ifndef MONGOOSE_H
@@ -319,6 +319,11 @@ extern "C" {
 #include <esp_timer.h>     // amalgamation ditching them
 #include <esp_system.h>
 #include <esp_mac.h>
+#include <esp_idf_version.h>
+#include <esp_ota_ops.h>
+#include <esp_task_wdt.h>
+#include <soc/soc.h>
+#include <soc/rtc_cntl_reg.h>
 
 #define MG_PATH_MAX 128
 
@@ -328,6 +333,57 @@ extern "C" {
 
 #ifndef MG_ENABLE_DIRLIST
 #define MG_ENABLE_DIRLIST 1
+#endif
+
+#ifndef MG_OTA_ESP32_WDT_TIMEOUT_MS
+#define MG_OTA_ESP32_WDT_TIMEOUT_MS 10000U
+#endif
+
+static inline void mg_ota_esp32_timer_start(void) {
+#if ESP_IDF_VERSION_MAJOR >= 5
+  esp_task_wdt_config_t cfg = {0};
+  esp_err_t err;
+
+  cfg.timeout_ms = MG_OTA_ESP32_WDT_TIMEOUT_MS;
+  cfg.idle_core_mask = 0;
+  cfg.trigger_panic = true;
+
+  err = esp_task_wdt_init(&cfg);
+  if (err == ESP_ERR_INVALID_STATE) esp_task_wdt_reconfigure(&cfg);
+#else
+  esp_task_wdt_init(MG_OTA_ESP32_WDT_TIMEOUT_MS / 1000U, true);
+#endif
+  esp_task_wdt_add(NULL);
+  esp_task_wdt_reset();
+}
+
+static inline uint32_t mg_ota_esp32_state_set(uint32_t state) {
+  if (state == 0) esp_ota_mark_app_valid_cancel_rollback();
+  REG_WRITE(RTC_CNTL_STORE0_REG, state);
+  return REG_READ(RTC_CNTL_STORE0_REG);
+}
+
+#define MG_OTA_STATE_GET() \
+  REG_READ(RTC_CNTL_STORE0_REG)
+
+#define MG_OTA_STATE_SET(v) mg_ota_esp32_state_set((uint32_t) (v))
+
+#ifndef MG_OTA_ROLLBACK_TIMER_START
+#define MG_OTA_ROLLBACK_TIMER_START() mg_ota_esp32_timer_start()
+#endif
+
+#ifndef MG_OTA_ROLLBACK_TIMER_FEED
+#define MG_OTA_ROLLBACK_TIMER_FEED() \
+  do {                               \
+    (void) esp_task_wdt_reset();     \
+  } while (0)
+#endif
+
+#ifndef MG_OTA_ROLLBACK
+#define MG_OTA_ROLLBACK()                                  \
+  do {                                                     \
+    (void) esp_ota_mark_app_invalid_rollback_and_reboot(); \
+  } while (0)
 #endif
 
 #endif
@@ -783,6 +839,7 @@ typedef int socklen_t;
 #define realpath(a, b) _fullpath((b), (a), MG_PATH_MAX)
 #define sleep(x) Sleep((x) *1000)
 #define mkdir(a, b) _mkdir(a)
+#define rmdir(a) _rmdir(a)
 #define timegm(x) _mkgmtime(x)
 
 #ifndef S_ISDIR
@@ -1736,6 +1793,9 @@ void mg_free(void *ptr);
 // sensitive data (keys, passwords).
 void mg_bzero(volatile unsigned char *buf, size_t len);
 
+// Fixed-length constant-time byte equality. Use for MACs, tags, signatures.
+bool mg_memeq(const void *a, const void *b, size_t n);
+
 // Fills buf with len cryptographically random bytes. Uses the best available
 // hardware or OS source (hardware RNG, /dev/urandom, CryptGenRandom, etc.).
 // Falls back to rand() with an error log if no strong source is available.
@@ -1759,6 +1819,9 @@ bool mg_path_is_sane(const struct mg_str path);
 // Busy-waits for at least ms milliseconds using mg_millis(). Blocks the
 // calling context; avoid in event handlers.
 void mg_delayms(unsigned int ms);
+
+uint64_t mg_timegm(unsigned int year, unsigned int month, unsigned int day,
+                   unsigned int hour, unsigned int min, unsigned int sec);
 
 // Packs four byte values into a uint32_t in big-endian order.
 // MG_U32(1, 2, 3, 4) == 0x01020304
@@ -1980,6 +2043,9 @@ size_t mg_base64_update(unsigned char input_byte, char *buf, size_t len);
 size_t mg_base64_final(char *buf, size_t len);
 size_t mg_base64_encode(const unsigned char *p, size_t n, char *buf, size_t);
 size_t mg_base64_decode(const char *src, size_t n, char *dst, size_t);
+size_t mg_base64url_encode(const unsigned char *p, size_t n, char *buf,
+                           size_t);
+size_t mg_base64url_decode(const char *src, size_t n, char *dst, size_t);
 
 
 
@@ -2613,6 +2679,12 @@ void mg_tls_ctx_init(struct mg_mgr *);
 void mg_tls_ctx_free(struct mg_mgr *);
 #define MG_IS_DER(buf) (((uint8_t *) (buf))[0] == 0x30)  // DER begins with 0x30
 
+#if MG_TLS == MG_TLS_BUILTIN
+// Extracts a 32-byte P-256 private scalar from EC PRIVATE KEY or PKCS#8 PRIVATE
+// KEY input. Accepts PEM or DER. Returns key size, or 0 on error.
+size_t mg_uecc_parse_private_key(struct mg_str key, uint8_t *buf, size_t len);
+#endif
+
 // Low-level IO primitives used by TLS layer
 enum { MG_IO_ERR = -1, MG_IO_WAIT = -2 };
 long mg_io_send(struct mg_connection *c, const void *buf, size_t len);
@@ -2813,28 +2885,28 @@ if 'dest' was filled with random data, or 0 if the random data could not be
 generated. The filled-in values should be either truly random, or from a
 cryptographically-secure PRNG.
 
-A correctly functioning RNG function must be set (using mg_uecc_set_rng())
-before calling mg_uecc_make_key() or mg_uecc_sign().
+A correctly functioning RNG is required before calling mg_uecc_make_key() or
+mg_uecc_sign().
 
 Setting a correctly functioning RNG function improves the resistance to
 side-channel attacks for mg_uecc_shared_secret() and
 mg_uecc_sign_deterministic().
-
-A correct RNG function is set by default when building for Windows, Linux, or OS
-X. If you are building on another POSIX-compliant system that supports
-/dev/random or /dev/urandom, you can define MG_UECC_POSIX to use the predefined
-RNG. For embedded platforms there is no predefined RNG function; you must
-provide your own.
 */
 typedef int (*MG_UECC_RNG_Function)(uint8_t *dest, unsigned size);
+
+// Mongoose: mg_uecc_make_key() and mg_uecc_sign() use mg_random() when no
+// explicit uECC RNG is installed. If mg_random() cannot provide a strong source,
+// those operations fail. Deterministic signing works without RNG, but only an
+// explicit uECC RNG enables its optional side-channel blinding.
 
 /* mg_uecc_set_rng() function.
 Set the function that will be used to generate random bytes. The RNG function
 should return 1 if the random data was generated, or 0 if the random data could
 not be generated.
 
-On platforms where there is no predefined RNG function (eg embedded platforms),
-this must be called before mg_uecc_make_key() or mg_uecc_sign() are used.
+Mongoose: this overrides the default mg_random() fallback used by
+mg_uecc_make_key() and mg_uecc_sign(). Do not call mg_uecc_set_rng() unless the
+application must provide its own cryptographic RNG.
 
 Inputs:
     rng_function - The function that will be used to generate random bytes.
@@ -3367,7 +3439,7 @@ int mg_uecc_generate_random_int(mg_uecc_word_t *random,
 
 
 
-#if MG_TLS == MG_TLS_BUILTIN
+#if MG_TLS == MG_TLS_BUILTIN && MG_ENABLE_CHACHA20
 #ifndef __PORTABLE_8439_H
 #define __PORTABLE_8439_H
 #if defined(__cplusplus)
@@ -3483,6 +3555,8 @@ int mg_rsa_crt_sign(const uint8_t *em, size_t em_len,
                     const uint8_t *q, size_t q_len,
                     const uint8_t *qInv, size_t qInv_len,
                     uint8_t *signature, size_t sig_len);
+bool mg_rsa_pkcs_verify(const uint8_t *em, size_t nlen, const uint8_t *hash,
+                        size_t hashlen);
 bool mg_rsa_verify(const uint8_t *em, size_t nlen, const uint8_t *mhash);
 #endif // TLS_RSA_H
 
@@ -3511,13 +3585,14 @@ struct mg_tls {
   mbedtls_x509_crt cert;    // Parsed certificate
   mbedtls_pk_context pk;    // Private key context
   mbedtls_ssl_context ssl;  // SSL/TLS context
-  mbedtls_ssl_config conf;  // SSL-TLS config
+  mbedtls_ssl_config conf;  // SSL/TLS config
 #ifdef MBEDTLS_SSL_SESSION_TICKETS
   mbedtls_ssl_ticket_context ticket;  // Session tickets context
 #endif
   // https://github.com/Mbed-TLS/mbedtls/blob/3b3c652d/include/mbedtls/ssl.h#L5071C18-L5076C29
   unsigned char *throttled_buf;  // see #3074
   size_t throttled_len;
+  bool check_name;  // set when hostname was set, but no CA certificate given
 };
 #endif
 
@@ -3526,11 +3601,14 @@ struct mg_tls {
 
 #include <openssl/err.h>
 #include <openssl/ssl.h>
+#include <openssl/x509v3.h>
 
 struct mg_tls {
   BIO_METHOD *bm;
   SSL_CTX *ctx;
   SSL *ssl;
+  char *name;       // matching hostname
+  bool check_name;  // set when hostname was set, but no CA certificate given
 };
 #endif
 
@@ -4138,6 +4216,33 @@ size_t mg_json_next(struct mg_str obj, size_t ofs, struct mg_str *key,
 
 
 
+
+
+struct mg_jwt_opts {
+  struct mg_str claims;  // JSON payload
+  struct mg_str header;  // Extra header members, no braces; alg/typ are set
+  struct mg_str kid;     // Key ID protected header
+  struct mg_str secret;  // HS256 secret
+  const uint8_t *private_key;  // ES256 private key (MG_TLS_BUILTIN only)
+  const uint8_t *public_key;   // ES256 public key (MG_TLS_BUILTIN only)
+};
+
+// Signs JSON claims as a compact JWT. Returns JWT length, or 0 on error.
+size_t mg_jwt_sign_hs256(const struct mg_jwt_opts *opts, char *buf,
+                         size_t len);
+
+// Verifies JWT and decodes JSON claims into buf. Returns claims length, or 0.
+size_t mg_jwt_verify_hs256(struct mg_str jwt, const struct mg_jwt_opts *opts,
+                           char *buf, size_t len);
+
+size_t mg_jwt_sign_es256(const struct mg_jwt_opts *opts, char *buf,
+                         size_t len);
+size_t mg_jwt_verify_es256(struct mg_str jwt, const struct mg_jwt_opts *opts,
+                           char *buf, size_t len);
+
+
+
+
 // In-flight JSON-RPC request. Populate and pass to mg_rpc_process() to
 // dispatch, or receive one pre-filled in a handler registered with mg_rpc_add().
 struct mg_rpc_req {
@@ -4629,7 +4734,7 @@ bool mg_wifi_ap_stop(void);
 #if MG_ENABLE_TCPIP
 
 // no config defaults to 0 => Ethernet
-enum mg_l2type { MG_TCPIP_L2_ETH = 0, MG_TCPIP_L2_PPP, MG_TCPIP_L2_PPPoE };
+enum mg_l2type { MG_TCPIP_L2_ETH = 0, MG_TCPIP_L2_PPP, MG_TCPIP_L2_PPPoE, MG_TCPIP_L2_USER };
 
 #if defined(__DCC__)
 #pragma pack(1)

@@ -22,6 +22,8 @@ did it go and why? No one knows. It's just abagnaling again."
 ./algorithm-trend.c       - Trend algorithm source code
 ./array.h                 - Array API header file
 ./array.c                 - Array implementation source code
+./charset.h               - Charset API header file
+./charset.c               - Charset implementation source code
 ./config.h                - Configuration API header file
 ./config.y                - Configuration implementation source code
 ./database.h              - Database API header file
@@ -32,13 +34,19 @@ did it go and why? No one knows. It's just abagnaling again."
 ./exchange-coinbase.c     - Coinbase exchange implementation source code
 ./heap.h                  - Heap API header file
 ./heap.c                  - Heap implementation source code
+./http.h                  - HTTP API header file
+./http.c                  - HTTP implementation source code
+./json.h                  - JSON API header file
+./json.c                  - JSON implementation source code
 ./main.c                  - Application main entry point source code
 ./map.h                   - Map API header file
 ./map.c                   - Map implementation source code
 ./math.h                  - Math API header file
 ./math-postgresql.c       - PostgreSQL math implementation source code
 ./mongoose.h              - Mongoose.WS API header file
+./mongoose-ext.h          - Mongoose.WS extensions API header file
 ./mongoose.c              - Mongoose.WS implementation source code
+./mongoose-ext.c          - Mongoose.WS extensions implementation source code
 ./optparse.h              - Optparse API and implementation source code
 ./patterns.h              - Lua Patterns API header file
 ./patterns.c              - Lua Patterns implementation source code

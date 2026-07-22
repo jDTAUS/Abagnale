@@ -3370,7 +3370,7 @@ static int trades_process(void *restrict const arg) {
 }
 
 static int exchange_stop(void *restrict const arg) {
-  const struct worker_ctx *restrict const e_ctx = arg;
+  struct worker_ctx *restrict const e_ctx = arg;
   struct timespec sleep_rate = {
       .tv_sec = 15,
       .tv_nsec = 0L,
@@ -3381,6 +3381,7 @@ static int exchange_stop(void *restrict const arg) {
 
   e_ctx->e->stop();
   Queue_stop(e_ctx->trades_queue);
+  heap_free(e_ctx);
   thread_exit(EXIT_SUCCESS);
 }
 

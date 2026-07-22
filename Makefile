@@ -41,6 +41,7 @@ INCLUDES+=-I/usr/local/include/postgresql
 DEBUG=
 #DEBUG+=-g
 #DEBUG+=-O0
+#DEBUG+=-DABAG_HTTP_DEBUG
 #DEBUG+=-DABAG_MATH_DEBUG
 #DEBUG+=-DABAG_SQL_DEBUG
 #DEBUG+=-DABAG_COINBASE_DEBUG
@@ -49,6 +50,7 @@ CONFIG=
 #CONFIG+=-DDEFAULT_ABAG_CONFIG_FILE=\"/etc/abagnale/abagnale.conf\"
 #CONFIG+=-DDEFAULT_ABAG_DATABASE_TARGET=\"ABAGNALE\"
 #CONFIG+=-DDEFAULT_ABAG_DATABASE_USER=\"abagnale\"
+#CONFIG+=-DDEFAULT_ABAG_HTTP_TIMEOUT_MILLIS=60000L
 #CONFIG+=-DDEFAULT_ABAG_ORDER_WORKERS=1
 #CONFIG+=-DDEFAULT_ABAG_TICKER_WORKERS=12
 #CONFIG+=-DDEFAULT_ABAG_TRADE_WORKERS=6
@@ -64,7 +66,6 @@ CONFIG=
 #CONFIG+=-DDEFAULT_CDP_HTTP_REQUESTS_PER_SECOND=30
 #CONFIG+=-DDEFAULT_CDP_HTTP_RETRY_SECONDS=3
 #CONFIG+=-DDEFAULT_CDP_HTTP_STALL_MILLIS=3600000L
-#CONFIG+=-DDEFAULT_CDP_HTTP_TIMEOUT_MILLIS=60000L
 
 PROFILE=
 #PROFILE+=-pg
@@ -93,6 +94,7 @@ CFLAGS+=-DMULTI_THREADED
 CFLAGS+=-DSTRING_INTERNING
 CFLAGS+=-DMG_TLS=MG_TLS_BUILTIN
 CFLAGS+=-DMG_MAX_RECV_SIZE=0x40000000UL
+CFLAGS+=-DMG_UECC_OPTIMIZATION_LEVEL=4
 CFLAGS+=-DWCHAR_T_UTF32
 #CFLAGS+=-DWCHAR_T_UTF16
 #CFLAGS+=-DWCHAR_T_UTF8
@@ -111,7 +113,6 @@ LDFLAGS+=-lecpg
 LDFLAGS+=-lpgtypes
 
 LDFLAGS+=-lm
-LDFLAGS+=-lcrypto
 #LDFLAGS+=-lstdthreads
 #LDFLAGS+=-lpthread
 
@@ -120,31 +121,37 @@ YACCFLAGS+=-o
 
 HEADERS=abagnale.h
 HEADERS+=array.h
+HEADERS+=charset.h
 HEADERS+=config.h
 HEADERS+=database.h
 HEADERS+=exchange.h
 HEADERS+=heap.h
 HEADERS+=host.h
+HEADERS+=http.h
+HEADERS+=json.h
 HEADERS+=map.h
 HEADERS+=math.h
+HEADERS+=mongoose-ext.h
 HEADERS+=proc.h
 HEADERS+=queue.h
 HEADERS+=string.h
 HEADERS+=thread.h
 HEADERS+=time.h
-HEADERS+=wcjson.h
-HEADERS+=wcjson-document.h
 
 OBJS=abagnale.o
 OBJS+=abagnalectl.o
 OBJS+=algorithm-trend.o
 OBJS+=array.o
+OBJS+=charset.o
 OBJS+=config.o
 OBJS+=exchange.o
 OBJS+=exchange-coinbase.o
 OBJS+=heap.o
+OBJS+=http.o
+OBJS+=json.o
 OBJS+=main.o
 OBJS+=map.o
+OBJS+=mongoose-ext.o
 OBJS+=patterns.o
 OBJS+=proc.o
 OBJS+=queue.o
@@ -163,18 +170,20 @@ FORMATSRC=abagnale.c
 FORMATSRC+=abagnalectl.c
 FORMATSRC+=algorithm-trend.c
 FORMATSRC+=array.c
+FORMATSRC+=charset.c
 FORMATSRC+=exchange.c
 FORMATSRC+=exchange-coinbase.c
 FORMATSRC+=heap.c
+FORMATSRC+=http.c
+FORMATSRC+=json.c
 FORMATSRC+=main.c
+FORMATSRC+=mongoose-ext.c
 FORMATSRC+=map.c
 FORMATSRC+=proc.c
 FORMATSRC+=queue.c
 FORMATSRC+=string.c
 FORMATSRC+=thread.c
 FORMATSRC+=time.c
-FORMATSRC+=wcjson.c
-FORMATSRC+=wcjson-document.c
 
 FORMATSRC+=database-postgresql.pgc
 FORMATSRC+=math-postgresql.c
