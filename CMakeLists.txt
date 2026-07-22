@@ -292,6 +292,7 @@ add_library(objects OBJECT
 	exchange-coinbase.c
 	exchange.c
 	heap.c
+	heap_reallocarray.c
 	http.c
 	json.c
 	main.c

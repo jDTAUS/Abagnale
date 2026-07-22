@@ -121,7 +121,7 @@ inline void Array_compact(struct Array *restrict const a) {
     a->offset = 0;
   }
   a->capacity = ((a->size | !a->size) + 1) & ~1U;
-  a->items = heap_realloc(a->items, sizeof(void *) * a->capacity);
+  a->items = heap_reallocarray(a->items, a->capacity, sizeof(void *));
   heap_trim(0);
 }
 
@@ -132,7 +132,7 @@ inline void Array_shrink(struct Array *restrict const a) {
       a->offset = 0;
     }
     a->capacity = (((a->capacity >> 1) | !(a->capacity >> 1)) + 1) & ~1U;
-    a->items = heap_realloc(a->items, sizeof(void *) * a->capacity);
+    a->items = heap_reallocarray(a->items, a->capacity, sizeof(void *));
     heap_trim(0);
   }
 }
@@ -144,7 +144,7 @@ inline void Array_grow(struct Array *restrict const a) {
       a->offset = 0;
     } else {
       a->capacity <<= 1;
-      a->items = heap_realloc(a->items, sizeof(void *) * a->capacity);
+      a->items = heap_reallocarray(a->items, a->capacity, sizeof(void *));
       heap_trim(0);
     }
   }

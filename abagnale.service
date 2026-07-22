@@ -1,7 +1,7 @@
 # $JDTAUS$
 
 [Unit]
-Description=Abagnale Algorithmic Trading
+Description=Abagnale Algorithmic Trading System
 Requires=postgresql.service
 After=postgresql.service
 

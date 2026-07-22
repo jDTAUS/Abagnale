@@ -29,6 +29,7 @@
 void *heap_malloc(const size_t);
 void *heap_calloc(const size_t nmemb, const size_t size);
 void *heap_realloc(void *restrict const, const size_t);
+void *heap_reallocarray(void *restrict const, const size_t, const size_t);
 void heap_free(void *restrict const);
 void heap_trim(const size_t);
 #endif

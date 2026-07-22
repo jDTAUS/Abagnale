@@ -137,7 +137,8 @@ wcjson_document_grow_strings(struct wcjson_document *restrict const doc) {
     }
   }
 
-  doc->strings = heap_realloc(doc->strings, doc->s_nitems * sizeof(wchar_t));
+  doc->strings =
+      heap_reallocarray(doc->strings, doc->s_nitems, sizeof(wchar_t));
 
   for (size_t i = 0; i < doc->v_next; i++) {
     struct wcjson_value *restrict wc_value = &doc->values[i];
@@ -167,7 +168,8 @@ wcjson_document_grow_mbstrings(struct wcjson_document *restrict const doc) {
     }
   }
 
-  doc->mbstrings = heap_realloc(doc->mbstrings, doc->mb_nitems * sizeof(char));
+  doc->mbstrings =
+      heap_reallocarray(doc->mbstrings, doc->mb_nitems, sizeof(char));
 
   for (size_t i = 0; i < doc->v_next; i++) {
     struct wcjson_value *restrict wc_value = &doc->values[i];
@@ -191,7 +193,7 @@ wcjson_document_mbstowcs(struct wcjson_document *restrict const wc_doc,
   size_t wc_len = s_len + 1;
 
   if (wc_len > wc->len) {
-    wc->base = heap_realloc(wc->base, wc_len * sizeof(wchar_t));
+    wc->base = heap_reallocarray(wc->base, wc_len, sizeof(wchar_t));
     wc->len = wc_len;
   }
 
@@ -288,7 +290,8 @@ int wcjson_document_build(struct wcjson *restrict wc_json,
 
   if (wc_doc->e_nitems_cnt > wc_doc->e_nitems) {
     wc_doc->e_nitems = wc_doc->e_nitems_cnt;
-    wc_doc->esc = heap_realloc(wc_doc->esc, wc_doc->e_nitems * sizeof(wchar_t));
+    wc_doc->esc =
+        heap_reallocarray(wc_doc->esc, wc_doc->e_nitems, sizeof(wchar_t));
   }
 
   if (wcjsondocmbstrings(wc_json, wc_doc) < 0)
@@ -322,7 +325,7 @@ int json_mbparse(struct wcjson_document *restrict wc_doc,
   struct wcjson wc_json = WCJSON_INITIALIZER;
 
   if (wc_len > wc->len) {
-    wc->base = heap_realloc(wc->base, wc_len * sizeof(wchar_t));
+    wc->base = heap_reallocarray(wc->base, wc_len, sizeof(wchar_t));
     wc->len = wc_len;
   }
 
@@ -377,7 +380,8 @@ int json_mbparse(struct wcjson_document *restrict wc_doc,
 
   if (wc_doc->e_nitems_cnt > wc_doc->e_nitems) {
     wc_doc->e_nitems = wc_doc->e_nitems_cnt;
-    wc_doc->esc = heap_realloc(wc_doc->esc, wc_doc->e_nitems * sizeof(wchar_t));
+    wc_doc->esc =
+        heap_reallocarray(wc_doc->esc, wc_doc->e_nitems, sizeof(wchar_t));
   }
 
   if (wcjsondocmbstrings(&wc_json, wc_doc) < 0)
@@ -406,7 +410,7 @@ int json_mbsprint(char *restrict const dst, size_t *restrict const dst_lenp,
   size_t wc_len = *dst_lenp + 1;
 
   if (wc_len > wc->len) {
-    wc->base = heap_realloc(wc->base, wc_len * sizeof(wchar_t));
+    wc->base = heap_reallocarray(wc->base, wc_len, sizeof(wchar_t));
     wc->len = wc_len;
   }
 
@@ -638,8 +642,8 @@ json_heap_ops_grow_document(struct wcjson_document *restrict wc_doc) {
       panic();
 
     wc_doc->v_nitems++;
-    wc_doc->values = heap_realloc(
-        wc_doc->values, wc_doc->v_nitems * sizeof(struct wcjson_value));
+    wc_doc->values = heap_reallocarray(wc_doc->values, wc_doc->v_nitems,
+                                       sizeof(struct wcjson_value));
   }
 }
 

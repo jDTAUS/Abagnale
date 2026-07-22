@@ -147,6 +147,7 @@ OBJS+=config.o
 OBJS+=exchange.o
 OBJS+=exchange-coinbase.o
 OBJS+=heap.o
+OBJS+=heap_reallocarray.o
 OBJS+=http.o
 OBJS+=json.o
 OBJS+=main.o
