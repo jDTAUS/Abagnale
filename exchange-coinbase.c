@@ -632,7 +632,7 @@ static void ws_user_update(const struct wcjson_document *restrict const doc,
 
   o = Order_new();
   o->id = j_order_id;
-  o->m_id = String_copy(m->id);
+  o->m_id = m_id;
   o->status = status;
   o->cnanos = j_creation_time;
   o->b_ordered = Numeric_add(j_cumulative_quantity, j_leaves_quantity);
