@@ -17,7 +17,7 @@
 
 /*
  * $JDTAUS$
- * Origin: OpenBSD 7.9 lib/libc/stdlib/reallocarray.h
+ * Origin: OpenBSD 7.9 lib/libc/stdlib/reallocarray.c
  * Modifications: Instead of returning NULL the function panics.
  */
 
