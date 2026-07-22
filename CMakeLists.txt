@@ -298,6 +298,7 @@ add_library(objects OBJECT
 	map.c
 	math-postgresql.c
 	mongoose.c
+	mongoose-ext.c
 	patterns.c
 	proc.c
 	queue.c
