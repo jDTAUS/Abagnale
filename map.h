@@ -1,5 +1,5 @@
 /* $SchulteIT: map.h 15189 2025-10-27 05:41:45Z schulte $ */
-/* $JDTAUS$ */
+/* $JDTAUS: map.h 9641 2026-07-23 02:23:22Z schulte $ */
 
 /*
  * Copyright (c) 2018 - 2026 Christian Schulte <cs@schulte.it>
