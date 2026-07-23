@@ -113,6 +113,16 @@ inline void *Map_put(struct Map *restrict const m, void *const k,
   return value;
 }
 
+inline bool Map_exists(const struct Map *restrict const m,
+                       const void *restrict const k) {
+  struct Entry *restrict e = m->buckets[m->ops->k_hash(k) % m->capacity];
+
+  while (e != NULL && !m->ops->k_equals(e->key, k))
+    e = e->next;
+
+  return e != NULL;
+}
+
 inline void *Map_get(const struct Map *restrict const m,
                      const void *restrict const k) {
   struct Entry *restrict e = m->buckets[m->ops->k_hash(k) % m->capacity];

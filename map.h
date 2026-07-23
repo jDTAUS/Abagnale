@@ -43,6 +43,7 @@ void Map_delete(struct Map *restrict const,
                 void (*v_delete)(void *restrict const));
 
 void *Map_put(struct Map *restrict const, void *const, void *const);
+bool Map_exists(const struct Map *restrict const, const void *restrict const);
 void *Map_get(const struct Map *restrict const, const void *restrict const);
 void *Map_remove(struct Map *restrict const, void *const);
 

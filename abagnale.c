@@ -200,6 +200,7 @@ extern const struct Numeric *restrict const minute_nanos;
 static struct Map *restrict market_samples;
 static struct Map *restrict market_prices;
 static struct Map *restrict market_trades;
+static struct Map *restrict market_configs;
 static tss_t abag_tls_key;
 
 static struct Numeric *restrict ninety_percent_factor;
@@ -224,17 +225,74 @@ const struct Exchange *exchange(const struct String *restrict const nm) {
   return NULL;
 }
 
-const struct MarketConfig *
-marketconfig(const struct String *restrict const e_nm,
-             const struct String *restrict const m_nm) {
-  void *const *restrict items = Array_items(cnf->m_cnf);
+struct MarketConfigKey {
+  struct String *restrict e_nm;
+  struct String *restrict m_nm;
+  size_t hc;
+};
 
-  for (size_t i = Array_size(cnf->m_cnf); i-- > 0;)
-    if (String_equals(e_nm, ((const struct MarketConfig *)items[i])->e_nm) &&
-        MarketConfig_matches(items[i], m_nm))
-      return items[i];
+inline static void *MarketConfigKey_copy(void *restrict const o) {
+  struct MarketConfigKey *restrict const k = o;
+  struct MarketConfigKey *restrict const c =
+      heap_malloc(sizeof(struct MarketConfigKey));
 
-  return NULL;
+  c->e_nm = String_copy(k->e_nm);
+  c->m_nm = String_copy(k->m_nm);
+  c->hc = k->hc;
+  return c;
+}
+
+inline static void MarketConfigKey_delete(void *restrict const o) {
+  struct MarketConfigKey *restrict const k = o;
+  String_delete(k->e_nm);
+  String_delete(k->m_nm);
+  heap_free(k);
+}
+
+inline static size_t MarketConfigKey_hash(const void *restrict const o) {
+  return ((const struct MarketConfigKey *)o)->hc;
+}
+
+inline static bool MarketConfigKey_equals(const void *restrict const o1,
+                                          const void *restrict const o2) {
+  const struct MarketConfigKey *restrict const k1 = o1;
+  const struct MarketConfigKey *restrict const k2 = o2;
+  return String_equals(k1->e_nm, k2->e_nm) && String_equals(k1->m_nm, k2->m_nm);
+}
+
+const struct MapOps *restrict const MarketConfigKeyMapOps = &(struct MapOps){
+    .k_copy = MarketConfigKey_copy,
+    .k_delete = MarketConfigKey_delete,
+    .k_hash = MarketConfigKey_hash,
+    .k_equals = MarketConfigKey_equals,
+};
+
+const struct MarketConfig *marketconfig(struct String *restrict const e_nm,
+                                        struct String *restrict const m_nm) {
+  struct MarketConfigKey k = {
+      .e_nm = e_nm,
+      .m_nm = m_nm,
+      .hc = String_hash(e_nm) ^ String_hash(m_nm),
+  };
+
+  Map_lock(market_configs);
+  struct MarketConfig *restrict m_cnf = Map_get(market_configs, &k);
+
+  if (m_cnf == NULL && !Map_exists(market_configs, &k)) {
+    void *const *restrict items = Array_items(cnf->m_cnf);
+
+    for (size_t i = Array_size(cnf->m_cnf); i-- > 0;)
+      if (String_equals(e_nm, ((const struct MarketConfig *)items[i])->e_nm) &&
+          MarketConfig_matches(items[i], m_nm)) {
+        m_cnf = items[i];
+        break;
+      }
+
+    Map_put(market_configs, &k, m_cnf);
+  }
+  Map_unlock(market_configs);
+
+  return m_cnf;
 }
 
 static struct abag_tls *const abag_tls(void) {
@@ -3453,6 +3511,7 @@ int abagnale(int argc, char *argv[]) {
   market_samples = Map_new(StringMapOps, AVG_PRODUCTS);
   market_prices = Map_new(StringMapOps, AVG_PRODUCTS);
   market_trades = Map_new(StringMapOps, AVG_PRODUCTS);
+  market_configs = Map_new(MarketConfigKeyMapOps, AVG_PRODUCTS);
 
   tls_create(&abag_tls_key, abag_tls_dtor);
 
@@ -3534,6 +3593,7 @@ int abagnale(int argc, char *argv[]) {
   Map_delete(market_samples, sample_array_delete);
   Map_delete(market_prices, Numeric_delete);
   Map_delete(market_trades, trade_array_delete);
+  Map_delete(market_configs, NULL);
   Array_delete(trade_queues, trade_queue_delete);
   Array_delete(workers, thrd_delete);
   tls_delete(abag_tls_key);
