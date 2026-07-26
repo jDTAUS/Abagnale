@@ -139,6 +139,9 @@ struct Algorithm {
                       const char *restrict const);
 };
 
+void abagnale_init(void);
+void abagnale_destroy(void);
+
 struct Candle *Candle_new(void);
 void Candle_delete(void *restrict const);
 void Candle_copy_to(const struct Candle *restrict const,

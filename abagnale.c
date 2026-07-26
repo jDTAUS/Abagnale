@@ -65,6 +65,9 @@
 #define TRADE_SET_ENQUEUED(t) (Numeric_copy_to(n_two, (t)->tp_pc))
 #define TRADE_UNSET_ENQUEUED(t) (Numeric_copy_to(zero, (t)->tp_pc))
 
+#define PRODUCTS_MAP_CAPACITY 2048
+#define PRODUCTS_QUEUE_CAPACITY 2048
+
 struct worker_ctx {
   void *restrict db;
   const struct Exchange *restrict e;
@@ -543,6 +546,12 @@ static void abag_tls_dtor(void *e) {
   heap_free(tls);
   tls_set(abag_tls_key, NULL);
 }
+
+void abagnale_init(void) {
+  market_configs = Map_new(MarketConfigKeyMapOps, PRODUCTS_MAP_CAPACITY);
+}
+
+void abagnale_destroy(void) { Map_delete(market_configs, NULL); }
 
 static inline void trigger_init(struct Trigger *restrict const t) {
   t->cnt = 0;
@@ -2394,11 +2403,12 @@ static void trade_pricing(const struct worker_ctx *restrict const w_ctx,
   bool err = false;
 
   Numeric_copy_to(pricing->ef_pc, ef_pc);
+  struct String *restrict const pr_nm = String_copy(pricing->nm);
   mutex_unlock(pricing->mtx);
 
   if (Numeric_cmp(t->fee_pc, ef_pc) >= 0 &&
       Numeric_cmp(t->pr_samples, zero) > 0 && TRADE_IS_READY(t))
-    return;
+    goto ret;
 
   if (!TRADE_IS_ENQUEUED(t) && !TRADE_IS_DELETED(t))
     trade_timeout(w_ctx, t, samples, sample);
@@ -2412,7 +2422,7 @@ static void trade_pricing(const struct worker_ctx *restrict const w_ctx,
       TRADE_SET_ENQUEUED(t);
       Queue_enqueue_await(w_ctx->trades_queue, t);
     }
-    return;
+    goto ret;
   } else
     Numeric_copy_to(w_ctx->m_cnf->v_pc, t->tp_pc);
 
@@ -2435,11 +2445,13 @@ static void trade_pricing(const struct worker_ctx *restrict const w_ctx,
     char *restrict const v = Numeric_to_char(t->tp_pc, 4);
 
     if (err)
-      werr("%s: %s: Pricing: fee: %s%%, volatility: %s%%\n",
-           String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm), fee, v);
+      werr("%s: %s: Pricing: name: %s, fee: %s%%, volatility: %s%%\n",
+           String_chars(pr_nm), String_chars(w_ctx->e->nm),
+           String_chars(w_ctx->m->nm), fee, v);
     else
-      wout("%s: %s: Pricing: fee: %s%%, volatility: %s%%\n",
-           String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm), fee, v);
+      wout("%s: %s: Pricing: name: %s, fee: %s%%, volatility: %s%%\n",
+           String_chars(pr_nm), String_chars(w_ctx->e->nm),
+           String_chars(w_ctx->m->nm), fee, v);
 
     Numeric_char_free(fee);
     Numeric_char_free(v);
@@ -2447,6 +2459,8 @@ static void trade_pricing(const struct worker_ctx *restrict const w_ctx,
 
   Numeric_div_to(t->tp_pc, hundred, r0);
   Numeric_add_to(r0, one, t->tp_pf);
+ret:
+  String_delete(pr_nm);
 }
 
 static void trade_plot(const struct worker_ctx *restrict const w_ctx,
@@ -3463,8 +3477,6 @@ static inline void trade_queue_delete(void *restrict const entry) {
 
 static inline void thrd_delete(void *restrict const entry) { heap_free(entry); }
 
-#define AVG_PRODUCTS 2048
-
 int abagnale(int argc, char *argv[]) {
   void *const *restrict items;
   unsigned long order_workers =
@@ -3508,10 +3520,9 @@ int abagnale(int argc, char *argv[]) {
 
   ninety_percent_factor = Numeric_from_char("0.9");
 
-  market_samples = Map_new(StringMapOps, AVG_PRODUCTS);
-  market_prices = Map_new(StringMapOps, AVG_PRODUCTS);
-  market_trades = Map_new(StringMapOps, AVG_PRODUCTS);
-  market_configs = Map_new(MarketConfigKeyMapOps, AVG_PRODUCTS);
+  market_samples = Map_new(StringMapOps, PRODUCTS_MAP_CAPACITY);
+  market_prices = Map_new(StringMapOps, PRODUCTS_MAP_CAPACITY);
+  market_trades = Map_new(StringMapOps, PRODUCTS_MAP_CAPACITY);
 
   tls_create(&abag_tls_key, abag_tls_dtor);
 
@@ -3526,7 +3537,7 @@ int abagnale(int argc, char *argv[]) {
         heap_calloc(1, sizeof(struct worker_ctx));
 
     e_ctx->e = e;
-    e_ctx->trades_queue = Queue_new(AVG_PRODUCTS, (time_t)0);
+    e_ctx->trades_queue = Queue_new(PRODUCTS_QUEUE_CAPACITY, (time_t)0);
     e_ctx->e->start();
     Queue_start(e_ctx->trades_queue);
     Array_add_tail(trade_queues, e_ctx->trades_queue);
@@ -3593,7 +3604,6 @@ int abagnale(int argc, char *argv[]) {
   Map_delete(market_samples, sample_array_delete);
   Map_delete(market_prices, Numeric_delete);
   Map_delete(market_trades, trade_array_delete);
-  Map_delete(market_configs, NULL);
   Array_delete(trade_queues, trade_queue_delete);
   Array_delete(workers, thrd_delete);
   tls_delete(abag_tls_key);

@@ -136,6 +136,7 @@ int main(int argc, char *argv[]) {
   time_init();
   config_init();
   json_init();
+  abagnale_init();
 
   if (signal(SIGTERM, terminate) == SIG_ERR)
     fatal("%s", strerror(errno));
@@ -337,6 +338,7 @@ int main(int argc, char *argv[]) {
   String_delete(progname);
   String_delete(prog_abagnale);
   String_delete(prog_abagnalectl);
+  abagnale_destroy();
   json_destroy();
   http_destroy();
   config_destroy();
