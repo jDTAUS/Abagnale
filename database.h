@@ -1,5 +1,5 @@
 /* $SchulteIT: database.h 15189 2025-10-27 05:41:45Z schulte $ */
-/* $JDTAUS$ */
+/* $JDTAUS: database.h 9632 2026-07-11 00:17:42Z schulte $ */
 
 /*
  * Copyright (c) 2018 - 2026 Christian Schulte <cs@schulte.it>

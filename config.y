@@ -1,6 +1,6 @@
 /*	$OpenBSD: parse.y,v 1.299 2024/02/19 21:00:19 gilles Exp $	*/
 /* $SchulteIT: config.y 15277 2025-11-05 02:51:30Z schulte $ */
-/* $JDTAUS$ */
+/* $JDTAUS: config.y 9633 2026-07-11 23:11:53Z schulte $ */
 
 /*
  * Copyright (c) 2025 - 2026 Christian Schulte <cs@schulte.it>

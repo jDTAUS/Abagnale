@@ -1,5 +1,5 @@
 /* $SchulteIT: exchange.c 15189 2025-10-27 05:41:45Z schulte $ */
-/* $JDTAUS$ */
+/* $JDTAUS: exchange.c 9608 2026-07-01 06:17:27Z schulte $ */
 
 /*
  * Copyright (c) 2018 - 2026 Christian Schulte <cs@schulte.it>
