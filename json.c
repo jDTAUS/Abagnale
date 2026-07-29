@@ -636,7 +636,7 @@ bool json_obj_get_bool(const struct wcjson_document *restrict const wc_doc,
   if (v == NULL || !v->is_boolean) {
     json_werr(wc_doc, wc_obj, "No '%ls' bool item", key);
     errno = EILSEQ;
-    return NULL;
+    return false;
   }
 
   return v->is_true;

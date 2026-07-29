@@ -1964,7 +1964,7 @@ ret:
   return o;
 }
 
-static struct Order *coinbase_order(const struct Market *restrict const,
+static struct Order *coinbase_order(const struct Market *restrict const m,
                                     const struct String *restrict const id) {
   const struct coinbase_tls *restrict const tls = coinbase_tls();
   struct wcjson_document *restrict rsp_doc = tls->coinbase_order.rsp_doc;
@@ -2004,7 +2004,7 @@ ret:
   return o;
 }
 
-static bool coinbase_order_cancel(const struct Market *restrict const,
+static bool coinbase_order_cancel(const struct Market *restrict const m,
                                   const struct String *restrict const id) {
   const struct coinbase_tls *restrict const tls = coinbase_tls();
   struct wcjson_document *restrict rsp_doc = tls->coinbase_order_cancel.rsp_doc;

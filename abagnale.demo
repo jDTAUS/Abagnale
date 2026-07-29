@@ -13,6 +13,8 @@ dns-v4 udp://127.0.0.1:53
 dns-v6 udp://::1:53
 dns-timeout 3s
 exchange coinbase cdp-api-key /etc/abagnale/cdp_api_key.json
+exchange bitvavo api-key 9b124e565...
+exchange bitvavo api-secret 313deedf...
 
 eur_return="0.0005 EUR"
 btc_return="0.0005 BTC"
@@ -22,6 +24,14 @@ usdc_return="0.25 USDC"
 usdt_return="0.25 USDT"
 inr_return="0.25 INR"
 gbp_return="0.25 GBP"
+
+trade at bitvavo using trend return 0.0001 EUR window 36h\
+  market match @EUR\
+  demand-timeout-min 1h demand-timeout-max 1.5h\
+  supply-timeout-min 1h supply-timeout-max 1.5h\
+  stop-loss-delay 15m stop-loss-delays 2\
+  take-profit-delay 3m take-profit-delays 1\
+  take-loss-delay 18h take-loss-delays 1
 
 trade at coinbase using trend return $eur_return window 72h\
   market USDC@EUR\
@@ -33,21 +43,11 @@ trade at coinbase using trend return $eur_return window 72h\
 
 trade at coinbase using trend return $eur_return window 108h\
   market ADA@EUR\
-  market LTC@EUR\
   demand-timeout-min 3h demand-timeout-max 4.5h\
   supply-timeout-min 3h supply-timeout-max 4.5h\
   stop-loss-delay 45m stop-loss-delays 2\
   take-profit-delay 9m take-profit-delays 1\
   take-loss-delay 54h take-loss-delays 1
-
-trade at coinbase using trend return $btc_return window 144h\
-  market ETH@BTC\
-  market SOL@BTC\
-  demand-timeout-min 4h demand-timeout-max 6h\
-  supply-timeout-min 4h supply-timeout-max 6h\
-  stop-loss-delay 1h stop-loss-delays 2\
-  take-profit-delay 12m take-profit-delays 1\
-  take-loss-delay 72h take-loss-delays 1
 
 trade at coinbase using trend return $eur_return window 144h\
   market AAVE@EUR\
@@ -61,9 +61,7 @@ trade at coinbase using trend return $eur_return window 144h\
 
 trade at coinbase using trend return $eur_return window 180h\
   market BAT@EUR\
-  market BTC@EUR\
   market ETH@EUR\
-  market SOL@EUR\
   market UNI@EUR\
   demand-timeout-min 5h demand-timeout-max 7.5h\
   supply-timeout-min 5h supply-timeout-max 7.5h\
@@ -72,18 +70,8 @@ trade at coinbase using trend return $eur_return window 180h\
   take-loss-delay 90h take-loss-delays 1
 
 trade at coinbase using trend return $btc_return window 324h\
-  market ADA@BTC\
-  market AVAX@BTC\
   market BCH@BTC\
-  market SHIB@EUR\
-  demand-timeout-min 10h demand-timeout-max 15h\
-  supply-timeout-min 10h supply-timeout-max 15h\
-  stop-loss-delay 135m stop-loss-delays 2\
-  take-profit-delay 27m take-profit-delays 1\
-  take-loss-delay 162h take-loss-delays 1
-
-trade at coinbase using trend return $eth_return window 324h\
-  market SOL@ETH\
+  market ETH@BTC\
   demand-timeout-min 10h demand-timeout-max 15h\
   supply-timeout-min 10h supply-timeout-max 15h\
   stop-loss-delay 135m stop-loss-delays 2\
@@ -91,8 +79,9 @@ trade at coinbase using trend return $eth_return window 324h\
   take-loss-delay 162h take-loss-delays 1
 
 trade at coinbase using trend return $eur_return window 324h\
-  market AVAX@EUR\
   market ALGO@EUR\
+  market BTC@EUR\
+  market LTC@EUR\
   market XLM@EUR\
   demand-timeout-min 10h demand-timeout-max 15h\
   supply-timeout-min 10h supply-timeout-max 15h\
@@ -111,8 +100,9 @@ trade at coinbase using trend return 10 DOGE window 324h\
 trade at coinbase using trend return $btc_return window 648h\
   market AAVE@BTC\
   market ALGO@BTC\
-  market CRV@BTC\
+  market AVAX@BTC\
   market LTC@BTC\
+  market SOL@BTC\
   market XLM@BTC\
   demand-timeout-min 20h demand-timeout-max 30h\
   supply-timeout-min 20h supply-timeout-max 30h\
@@ -130,9 +120,12 @@ trade at coinbase using trend return 30 DOGE window 648h\
 
 trade at coinbase using trend return $eur_return window 648h\
   market APE@EUR\
+  market AVAX@EUR\
   market CRV@EUR\
   market ETC@EUR\
+  market SHIB@EUR\
   market SNX@EUR\
+  market SOL@EUR\
   demand-timeout-min 20h demand-timeout-max 30h\
   supply-timeout-min 20h supply-timeout-max 30h\
   stop-loss-delay 270m stop-loss-delays 2\
@@ -140,7 +133,8 @@ trade at coinbase using trend return $eur_return window 648h\
   take-loss-delay 324h take-loss-delays 1
 
 trade at coinbase using trend return $btc_return window 1296h\
-  market BAT@BTC\
+  market ADA@BTC\
+  market CRV@BTC\
   market DASH@BTC\
   market ETC@BTC\
   market FIL@BTC\
@@ -173,6 +167,22 @@ trade at coinbase using trend return $eur_return window 1296h\
   stop-loss-delay 540m stop-loss-delays 2\
   take-profit-delay 108m take-profit-delays 1\
   take-loss-delay 648h take-loss-delays 1
+
+trade at coinbase using trend return $btc_return window 2592h\
+  market BAT@BTC\
+  demand-timeout-min 80h demand-timeout-max 120h\
+  supply-timeout-min 80h supply-timeout-max 120h\
+  stop-loss-delay 1080m stop-loss-delays 2\
+  take-profit-delay 216m take-profit-delays 1\
+  take-loss-delay 1296h take-loss-delays 1
+
+trade at coinbase using trend return $eth_return window 2592h\
+  market SOL@ETH\
+  demand-timeout-min 80h demand-timeout-max 120h\
+  supply-timeout-min 80h supply-timeout-max 120h\
+  stop-loss-delay 1080m stop-loss-delays 2\
+  take-profit-delay 216m take-profit-delays 1\
+  take-loss-delay 1296h take-loss-delays 1
 
 trade at coinbase using trend return $btc_return window 36h\
   market not match CGLD\
