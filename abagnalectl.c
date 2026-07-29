@@ -47,11 +47,11 @@ extern const struct String *restrict const progname;
 
 extern const struct Numeric *restrict const zero;
 
-extern const struct Algorithm *restrict const all_algorithms;
+extern const struct Algorithm *restrict const all_algorithms[];
 extern const size_t all_algorithms_nitems;
 extern const struct Array *restrict const algorithms;
 
-extern const struct Exchange *restrict const all_exchanges;
+extern const struct Exchange *restrict const all_exchanges[];
 extern const size_t all_exchanges_nitems;
 extern const struct Array *restrict const exchanges;
 
@@ -73,6 +73,7 @@ static const struct {
   const char *const name;
 } market_status[] = {{MARKET_STATUS_UNKNOWN, "UNKNOWN"},
                      {MARKET_STATUS_ONLINE, "ONLINE"},
+                     {MARKET_STATUS_OFFLINE, "OFFLINE"},
                      {MARKET_STATUS_DELISTED, "DELISTED"}};
 
 static const struct {
@@ -117,10 +118,11 @@ static const struct {
     {"volatility", "-e exchange -m market [-w nanos]", cmd_volatility},
     {"vacuum", "[-b backup-dir] [-a analyze]", cmd_vacuum},
     {"plot", "-e exchange -m market -a algorithm [-f file]", cmd_plot},
-    {"order", "-e exchange [-h] -i id", cmd_order},
+    {"order", "-e exchange [-h] -m market -i id", cmd_order},
     {"market", "-e exchange [-h] -i id", cmd_market},
     {"markets",
-     "-e exchange [-h] [-s UNKNOWN|ONLINE|DELISTED] [-t UNKNOWN|SPOT|FUTURE]",
+     "-e exchange [-h] [-s UNKNOWN|ONLINE|OFFLINE|DELISTED] [-t "
+     "UNKNOWN|SPOT|FUTURE]",
      cmd_markets},
     {"account", "-e exchange [-h] -i id", cmd_account},
     {"accounts",
@@ -189,7 +191,7 @@ static const char *order_status_name(const enum order_status status) {
 
 static void print_account(const struct Account *restrict const a) {
   printf("%s\t%s\t%s\t%s\t%lf\t%d\t%d\n", String_chars(a->id),
-         String_chars(a->nm), String_chars(a->c_id), account_type_name(a->type),
+         String_chars(a->nm), String_chars(a->sym), account_type_name(a->type),
          Numeric_to_double(a->avail), a->is_active ? 1 : 0,
          a->is_ready ? 1 : 0);
 }
@@ -299,7 +301,7 @@ static int cmd_algorithms(int argc, char *argv[]) {
     usage();
 
   for (size_t i = all_algorithms_nitems; i-- > 0;)
-    printf("%s\n", String_chars(all_algorithms[i].nm));
+    printf("%s\n", String_chars(all_algorithms[i]->nm));
 
   return EXIT_SUCCESS;
 }
@@ -309,7 +311,7 @@ static int cmd_exchanges(int argc, char *argv[]) {
     usage();
 
   for (size_t i = all_exchanges_nitems; i-- > 0;)
-    printf("%s\n", String_chars(all_exchanges[i].nm));
+    printf("%s\n", String_chars(all_exchanges[i]->nm));
 
   return EXIT_SUCCESS;
 }
@@ -568,7 +570,9 @@ ret:
 
 static int cmd_order(int argc, char *argv[]) {
   int ch, r = EXIT_FAILURE;
+  void *const *restrict items;
   struct String *restrict e_nm = NULL;
+  struct String *restrict m_nm = NULL;
   struct String *restrict o_id = NULL;
   struct Order *restrict o = NULL;
   struct Market *restrict m = NULL;
@@ -583,13 +587,16 @@ static int cmd_order(int argc, char *argv[]) {
   struct optparse options = {0};
   optparse_init(&options, argv);
 
-  while ((ch = optparse(&options, "e:hi:")) != -1) {
+  while ((ch = optparse(&options, "e:hm:i:")) != -1) {
     switch (ch) {
     case 'e':
       e_nm = String_cnew(options.optarg);
       break;
     case 'h':
       header = true;
+      break;
+    case 'm':
+      m_nm = String_cnew(options.optarg);
       break;
     case 'i':
       o_id = String_cnew(options.optarg);
@@ -600,7 +607,7 @@ static int cmd_order(int argc, char *argv[]) {
   }
   argc -= options.optind;
 
-  if (argc > 0 || e_nm == NULL || o_id == NULL)
+  if (argc > 0 || e_nm == NULL || m_nm == NULL || o_id == NULL)
     usage();
 
   const struct Exchange *restrict const e = exchange(e_nm);
@@ -611,20 +618,29 @@ static int cmd_order(int argc, char *argv[]) {
     goto ret;
   }
 
-  o = e->order(o_id);
+  struct Array *restrict const markets = e->markets();
 
-  if (o == NULL) {
-    werr("%s: %s: %s: Order not available\n", String_chars(progname),
-         String_chars(e_nm), String_chars(o_id));
-    goto ret;
+  items = Array_items(markets);
+  for (size_t i = Array_size(markets); i-- > 0;) {
+    struct Market *restrict const needle = items[i];
+    if (String_equals(needle->nm, m_nm)) {
+      m = needle;
+      break;
+    }
   }
 
-  m = e->market(o->m_id);
-
   if (m == NULL) {
-    werr("%s: %s: %s: %s: Market not available\n", String_chars(progname),
-         String_chars(e_nm), String_chars(o_id), String_chars(o->m_id));
-    goto ret;
+    werr("%s: %s: %s: Market not available\n", String_chars(progname),
+         String_chars(e_nm), String_chars(m_nm));
+    goto unlock;
+  }
+
+  o = e->order(m, o_id);
+
+  if (o == NULL) {
+    werr("%s: %s: %s: %s: Order not available\n", String_chars(progname),
+         String_chars(e_nm), String_chars(m_nm), String_chars(o_id));
+    goto unlock;
   }
 
   c_iso8601 = nanos_to_iso8601(o->cnanos);
@@ -646,11 +662,12 @@ static int cmd_order(int argc, char *argv[]) {
          String_chars(m->b_id), q_filled, String_chars(m->q_id), q_fees,
          String_chars(m->q_id), o->msg ? String_chars(o->msg) : "");
 
-  mutex_unlock(m->mtx);
-
   r = EXIT_SUCCESS;
+unlock:
+  Array_unlock(markets);
 ret:
   String_delete(e_nm);
+  String_delete(m_nm);
   String_delete(o_id);
   Order_delete(o);
   Numeric_char_free(b_ordered);

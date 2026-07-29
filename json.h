@@ -60,6 +60,11 @@ json_obj_get_optional_string(const struct wcjson_document *restrict const,
                              const wchar_t *restrict const, const size_t);
 
 struct Numeric *
+json_obj_get_number(const struct wcjson_document *restrict const,
+                    const struct wcjson_value *restrict const,
+                    const wchar_t *restrict const, const size_t);
+
+struct Numeric *
 json_obj_get_string_number(const struct wcjson_document *restrict const,
                            const struct wcjson_value *restrict const,
                            const wchar_t *restrict const, const size_t);

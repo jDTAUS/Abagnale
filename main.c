@@ -55,9 +55,11 @@ struct String *restrict prog_abagnale;
 struct String *restrict prog_abagnalectl;
 _Atomic bool terminated;
 
+extern struct Exchange exchange_bitvavo;
 extern struct Exchange exchange_coinbase;
 struct Exchange *restrict all_exchanges[] = {
     &exchange_coinbase,
+    &exchange_bitvavo,
 };
 const size_t all_exchanges_nitems = nitems(all_exchanges);
 

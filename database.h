@@ -214,14 +214,17 @@ void db_trade_bcreate(char *const, const void *const, const char *const,
                       const struct Numeric *const, const struct Numeric *const);
 void db_trade_bupdate(const void *const, const char *const, const char *const,
                       const struct Numeric *const, const struct Numeric *const);
-void db_trade_breset(const void *const, const char *const);
-void db_trade_bopen(const void *const, const char *const,
+void db_trade_breset(const void *const, const char *const, const char *const,
+                     const char *const);
+void db_trade_bopen(const void *const, const char *const, const char *const,
+                    const char *const, const struct Numeric *const,
                     const struct Numeric *const, const struct Numeric *const,
-                    const struct Numeric *const, const struct Numeric *const);
-void db_trade_bfill(const void *const, const char *const,
+                    const struct Numeric *const);
+void db_trade_bfill(const void *const, const char *const, const char *const,
+                    const char *const, const struct Numeric *const,
                     const struct Numeric *const, const struct Numeric *const,
                     const struct Numeric *const, const struct Numeric *const,
-                    const struct Numeric *const, const bool);
+                    const bool);
 
 void db_trade_screate(char *const, const void *const, const char *const,
                       const char *const, const char *const, const char *const,
@@ -229,14 +232,17 @@ void db_trade_screate(char *const, const void *const, const char *const,
                       const struct Numeric *const, const struct Numeric *const);
 void db_trade_supdate(const void *const, const char *const, const char *const,
                       const struct Numeric *const, const struct Numeric *const);
-void db_trade_sreset(const void *const, const char *const);
-void db_trade_sopen(const void *const, const char *const,
+void db_trade_sreset(const void *const, const char *const, const char *const,
+                     const char *const);
+void db_trade_sopen(const void *const, const char *const, const char *const,
+                    const char *const, const struct Numeric *const,
                     const struct Numeric *const, const struct Numeric *const,
-                    const struct Numeric *const, const struct Numeric *const);
-void db_trade_sfill(const void *const, const char *const,
+                    const struct Numeric *const);
+void db_trade_sfill(const void *const, const char *const, const char *const,
+                    const char *const, const struct Numeric *const,
                     const struct Numeric *const, const struct Numeric *const,
                     const struct Numeric *const, const struct Numeric *const,
-                    const struct Numeric *const, const bool);
+                    const bool);
 
 void db_trade_delete(const void *const, const char *const);
 

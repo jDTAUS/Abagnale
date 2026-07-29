@@ -18,7 +18,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict GuJsfVCMlyseJazx6zX1hVCETudYLTurBuPML1Z2rYEVfbY64LfncqrgB7FLl38
+\restrict ZVyyzf0qtfKdDhXof8IiJZhlDudTG64wM1oqpx12WA1XHoU9dZ5dG8Tc7wc34yY
 
 -- Dumped from database version 17.10 (Debian 17.10-0+deb13u1)
 -- Dumped by pg_dump version 17.10 (Debian 17.10-0+deb13u1)
@@ -44,9 +44,9 @@ CREATE DATABASE "ABAGNALE" WITH TEMPLATE = template0 ENCODING = 'UTF8' LOCALE_PR
 
 ALTER DATABASE "ABAGNALE" OWNER TO abagnale;
 
-\unrestrict GuJsfVCMlyseJazx6zX1hVCETudYLTurBuPML1Z2rYEVfbY64LfncqrgB7FLl38
+\unrestrict ZVyyzf0qtfKdDhXof8IiJZhlDudTG64wM1oqpx12WA1XHoU9dZ5dG8Tc7wc34yY
 \connect "ABAGNALE"
-\restrict GuJsfVCMlyseJazx6zX1hVCETudYLTurBuPML1Z2rYEVfbY64LfncqrgB7FLl38
+\restrict ZVyyzf0qtfKdDhXof8IiJZhlDudTG64wM1oqpx12WA1XHoU9dZ5dG8Tc7wc34yY
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -652,13 +652,6 @@ CREATE INDEX "SAMPLES_EXCHANGE_ID_MARKET_ID_NANOS_idx" ON public."SAMPLES" USING
 
 
 --
--- Name: TRADES_BUY_ORDER_ID_idx; Type: INDEX; Schema: public; Owner: abagnale
---
-
-CREATE INDEX "TRADES_BUY_ORDER_ID_idx" ON public."TRADES" USING btree ("BUY_ORDER_ID");
-
-
---
 -- Name: TRADES_EXCHANGE_ID_BASE_CURRENCY_ID_STATUS_idx; Type: INDEX; Schema: public; Owner: abagnale
 --
 
@@ -666,10 +659,17 @@ CREATE INDEX "TRADES_EXCHANGE_ID_BASE_CURRENCY_ID_STATUS_idx" ON public."TRADES"
 
 
 --
--- Name: TRADES_EXCHANGE_ID_BASE_CURRENCY_ID_idx; Type: INDEX; Schema: public; Owner: abagnale
+-- Name: TRADES_EXCHANGE_ID_MARKET_ID_BUY_ORDER_ID_idx; Type: INDEX; Schema: public; Owner: abagnale
 --
 
-CREATE INDEX "TRADES_EXCHANGE_ID_BASE_CURRENCY_ID_idx" ON public."TRADES" USING btree ("EXCHANGE_ID", "BASE_CURRENCY_ID");
+CREATE UNIQUE INDEX "TRADES_EXCHANGE_ID_MARKET_ID_BUY_ORDER_ID_idx" ON public."TRADES" USING btree ("EXCHANGE_ID", "MARKET_ID", "BUY_ORDER_ID");
+
+
+--
+-- Name: TRADES_EXCHANGE_ID_MARKET_ID_SELL_ORDER_ID_idx; Type: INDEX; Schema: public; Owner: abagnale
+--
+
+CREATE UNIQUE INDEX "TRADES_EXCHANGE_ID_MARKET_ID_SELL_ORDER_ID_idx" ON public."TRADES" USING btree ("EXCHANGE_ID", "MARKET_ID", "SELL_ORDER_ID");
 
 
 --
@@ -680,17 +680,10 @@ CREATE INDEX "TRADES_EXCHANGE_ID_MARKET_ID_STATUS_idx" ON public."TRADES" USING 
 
 
 --
--- Name: TRADES_EXCHANGE_ID_QUOTE_CURRENCY_ID_idx; Type: INDEX; Schema: public; Owner: abagnale
+-- Name: TRADES_EXCHANGE_ID_QUOTE_CURRENCY_ID_STATUS_idx; Type: INDEX; Schema: public; Owner: abagnale
 --
 
-CREATE INDEX "TRADES_EXCHANGE_ID_QUOTE_CURRENCY_ID_idx" ON public."TRADES" USING btree ("EXCHANGE_ID", "QUOTE_CURRENCY_ID");
-
-
---
--- Name: TRADES_SELL_ORDER_ID_idx; Type: INDEX; Schema: public; Owner: abagnale
---
-
-CREATE INDEX "TRADES_SELL_ORDER_ID_idx" ON public."TRADES" USING btree ("SELL_ORDER_ID");
+CREATE INDEX "TRADES_EXCHANGE_ID_QUOTE_CURRENCY_ID_STATUS_idx" ON public."TRADES" USING btree ("EXCHANGE_ID", "QUOTE_CURRENCY_ID", "STATUS");
 
 
 --
@@ -765,5 +758,5 @@ ALTER TABLE ONLY public."TREND_PLOTS"
 -- PostgreSQL database dump complete
 --
 
-\unrestrict GuJsfVCMlyseJazx6zX1hVCETudYLTurBuPML1Z2rYEVfbY64LfncqrgB7FLl38
+\unrestrict ZVyyzf0qtfKdDhXof8IiJZhlDudTG64wM1oqpx12WA1XHoU9dZ5dG8Tc7wc34yY
 

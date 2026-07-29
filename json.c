@@ -448,7 +448,7 @@ static void json_werr(const struct wcjson_document *restrict const wc_doc,
   char err[JSON_ERR_MAX + 1] = {0};
   size_t ser_nitems = nitems(err);
 
-  if (json_mbsprint(ser, &ser_nitems, wc_doc, wc_val)) {
+  if (json_mbsprint(ser, &ser_nitems, wc_doc, wc_val) < 0) {
     r = snprintf(ser, ser_nitems, "%s", strerror(errno));
     if (r < 0 || (size_t)r >= ser_nitems)
       panic();
@@ -497,6 +497,30 @@ struct String *json_obj_get_optional_string(
 }
 
 struct Numeric *
+json_obj_get_number(const struct wcjson_document *restrict const wc_doc,
+                    const struct wcjson_value *restrict const wc_obj,
+                    const wchar_t *restrict const key, const size_t key_len) {
+  struct wcjson_value *restrict const v =
+      wcjson_object_get(wc_doc, wc_obj, key, key_len);
+
+  if (v == NULL || !v->is_number) {
+    json_werr(wc_doc, wc_obj, "No '%ls' numeric item", key);
+    errno = EILSEQ;
+    return NULL;
+  }
+
+  struct Numeric *restrict const n = Numeric_from_char(v->mbstring);
+
+  if (n == NULL) {
+    json_werr(wc_doc, wc_obj, "Invalid '%ls' numeric item", key);
+    errno = EILSEQ;
+    return NULL;
+  }
+
+  return n;
+}
+
+struct Numeric *
 json_obj_get_string_number(const struct wcjson_document *restrict const wc_doc,
                            const struct wcjson_value *restrict const wc_obj,
                            const wchar_t *restrict const key,
@@ -534,7 +558,7 @@ struct Numeric *json_obj_get_optional_string_number(
     return NULL;
   }
 
-  if (v == NULL || v->is_null)
+  if (v == NULL || v->is_null || v->s_len == 0)
     return NULL;
 
   struct Numeric *restrict const n = Numeric_from_char(v->mbstring);
@@ -587,7 +611,7 @@ struct Numeric *json_obj_get_optional_string_iso8601(
     return NULL;
   }
 
-  if (v == NULL || v->is_null)
+  if (v == NULL || v->is_null || v->s_len == 0)
     return NULL;
 
   struct Numeric *restrict const n = Numeric_new();

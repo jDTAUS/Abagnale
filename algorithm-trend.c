@@ -332,11 +332,6 @@ static struct Position *trend_position_open(
 
     Numeric_copy_to(cd_cur->o, pr_cur);
 
-    // (100 / open * close) - 100
-    Numeric_div_to(hundred, cd_cur->o, r0);
-    Numeric_mul_to(r0, sample->price, r1);
-    Numeric_sub_to(r1, hundred, cd_cur->pc);
-
     if (Numeric_cmp(cd_cur->o, cd_cur->h) >= 0) {
       Numeric_copy_to(cd_cur->o, cd_cur->h);
       Numeric_copy_to(cd_cur->onanos, cd_cur->hnanos);
@@ -348,6 +343,11 @@ static struct Position *trend_position_open(
       Numeric_copy_to(cd_cur->onanos, cd_cur->lnanos);
       continue;
     }
+
+    // (100 / open * close) - 100
+    Numeric_div_to(hundred, cd_cur->o, r0);
+    Numeric_mul_to(r0, sample->price, r1);
+    Numeric_sub_to(r1, hundred, cd_cur->pc);
 
     if (Numeric_cmp(cd_cur->pc, cd_n_pc) <= 0) {
       cd_cur->t = CANDLE_DOWN;

@@ -19,7 +19,7 @@
 
 // $JDTAUS$
 // Origin: https://github.com/cesanta/mongoose
-//  cdd957572e1047ae72a8ce19a65913cbf71a40c9
+//  61638caeae46d6bd91bfd6d61d9673b7549890ff
 // Modifications: None.
 
 #ifndef MONGOOSE_H
@@ -4037,11 +4037,12 @@ struct mg_mdns_req {
   bool is_unicast;  // True if the client requested a unicast (QU) response
 };
 
-// ev_data for MG_EV_MDNS_RESP, carrying the resolved address from an mDNS response.
+// ev_data for MG_EV_MDNS_RESP, carrying address/data from a mDNS response
 struct mg_mdns_resp {
-  struct mg_dns_rr *rr;  // Resource record from the response
+  struct mg_dns_rr *rr;  // Resource record from the response (1st in chain)
   struct mg_str name;    // Resolved hostname, without the .local suffix
   struct mg_addr addr;   // Resolved IP address
+  struct mg_dnssd_record sd; // Service Discovery data
 };
 
 // Parses a DNS query or response from buf/len into dm. Returns true on success.
@@ -4180,7 +4181,7 @@ char *mg_json_get_str(struct mg_str json, const char *path);
 
 // Decodes a hex-encoded JSON string at path into a heap-allocated byte array.
 // Sets *len to the decoded byte count. Caller must mg_free() the result.
-// Returns NULL if not found or not a string.
+// Returns NULL if not found, not a string, or not valid hexadecimal.
 char *mg_json_get_hex(struct mg_str json, const char *path, int *len);
 
 // Decodes a base64-encoded JSON string at path into a heap-allocated byte

@@ -37,6 +37,7 @@ void wout(const char *, ...) __attribute__((__format__(printf, 1, 2)));
 void werr(const char *, ...) __attribute__((__format__(printf, 1, 2)));
 
 const char *envs(const char *restrict const, const char *restrict const);
+const char *envuri(const char *restrict const, const char *restrict const);
 unsigned long envul(const char *restrict const, const unsigned long);
 
 #ifdef MULTI_THREADED

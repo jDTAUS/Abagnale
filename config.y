@@ -45,10 +45,12 @@
 
 extern const bool verbose;
 
-extern const struct Exchange *restrict const all_exchanges;
+extern const struct Exchange exchange_bitvavo;
+extern const struct Exchange exchange_coinbase;
+extern const struct Exchange *restrict const all_exchanges[];
 extern const size_t all_exchanges_nitems;
 
-extern const struct Algorithm *restrict const all_algorithms;
+extern const struct Algorithm *restrict const all_algorithms[];
 extern const size_t all_algorithms_nitems;
 
 extern const struct Numeric *restrict const zero;
@@ -98,10 +100,10 @@ struct sym {
 int symset(struct String *restrict const, struct String *restrict const, int);
 struct String *symget(const struct String *);
 
-static struct Config *conf = NULL;
-static struct ExchangeConfig *e_cnf = NULL;
-static struct MarketConfig *m_cnf = NULL;
-static struct Array *m_pats = NULL;
+static struct Config *restrict conf = NULL;
+static struct ExchangeConfig *restrict e_cnf = NULL;
+static struct MarketConfig *restrict m_cnf = NULL;
+static struct Array *restrict m_pats = NULL;
 
 static int errors = 0;
 
@@ -132,10 +134,11 @@ static void sym_delete(void *restrict const v) {
 }
 %}
 
-%token AT CDP DATABASE DEMANDDURMAX DEMANDDURMIN DNSTO DNSV4 DNSV6 ERROR
-%token EXCHANGE INCLUDE MARKET MATCH NOT RETURN STOPLOSSDELAY STOPLOSSDELAYS
-%token SUPPLYDURMAX SUPPLYDURMIN TAKELOSSDELAY TAKELOSSDELAYS TAKEPROFITDELAY
-%token TAKEPROFITDELAYS TARGET TRADE USER USING VOLATILITY WINDOW
+%token AT APIKEY APISECRET CDP DATABASE DEMANDDURMAX DEMANDDURMIN DNSTO
+%token DNSV4 DNSV6 ERROR EXCHANGE INCLUDE MARKET MATCH NOT RETURN
+%token STOPLOSSDELAY STOPLOSSDELAYS SUPPLYDURMAX SUPPLYDURMIN TAKELOSSDELAY
+%token TAKELOSSDELAYS TAKEPROFITDELAY TAKEPROFITDELAYS TARGET TRADE USER
+%token USING VOLATILITY WINDOW
 
 %token <v.string> STRING
 %token <v.number> NUMBER
@@ -422,12 +425,38 @@ conf_exchange : CDP STRING {
                 heap_free(doc.mbstrings);
                 heap_free(doc.esc);
               }
+              | APIKEY STRING {
+                if (e_cnf->jwt_kid != NULL || e_cnf->jwt_key != NULL) {
+                  yyerror("cdp-api-key already specified\n");
+                  String_delete($2);
+                  YYERROR;
+                }
+                if (e_cnf->api_key != NULL) {
+                  yyerror("api-key already specified\n");
+                  String_delete($2);
+                  YYERROR;
+                }
+                e_cnf->api_key = $2;
+              }
+              | APISECRET STRING {
+                if (e_cnf->jwt_kid != NULL || e_cnf->jwt_key != NULL) {
+                  yyerror("cdp-api-key already specified\n");
+                  String_delete($2);
+                  YYERROR;
+                }
+                if (e_cnf->api_secret != NULL) {
+                  yyerror("api-secret already specified\n");
+                  String_delete($2);
+                  YYERROR;
+                }
+                e_cnf->api_secret = $2;
+              }
               ;
 
 exchange  : EXCHANGE STRING {
             bool e_found = false;
             for (size_t i = all_exchanges_nitems; i-- > 0;)
-              if (String_equals($2, all_exchanges[i].nm)) {
+              if (String_equals($2, all_exchanges[i]->nm)) {
                 e_found = true;
                 break;
               }
@@ -646,7 +675,7 @@ conf_trade  : RETURN NUMBER STRING {
 
               bool a_found = false;
               for (size_t i = all_algorithms_nitems; i-- > 0;)
-                if (String_equals(m_cnf->a_nm, all_algorithms[i].nm)) {
+                if (String_equals(m_cnf->a_nm, all_algorithms[i]->nm)) {
                   a_found = true;
                   break;
                 }
@@ -670,7 +699,7 @@ trade : TRADE AT STRING {
 
         bool e_found = false;
         for (size_t i = all_exchanges_nitems; i-- > 0;)
-          if (String_equals(m_cnf->e_nm, all_exchanges[i].nm)) {
+          if (String_equals(m_cnf->e_nm, all_exchanges[i]->nm)) {
             e_found = true;
             break;
           }
@@ -728,6 +757,8 @@ int kw_cmp(const void *k, const void *e) {
 int lookup(char *s) {
   /* this has to be sorted always */
   static const struct keywords keywords[] = {
+      {"api-key", APIKEY},
+      {"api-secret", APISECRET},
       {"at", AT},
       {"cdp-api-key", CDP},
       {"database", DATABASE},
@@ -740,7 +771,7 @@ int lookup(char *s) {
       {"include", INCLUDE},
       {"market", MARKET},
       {"match", MATCH},
-      {"not", NOT}, 
+      {"not", NOT},
       {"return", RETURN},
       {"stop-loss-delay", STOPLOSSDELAY},
       {"stop-loss-delays", STOPLOSSDELAYS},
@@ -1058,6 +1089,7 @@ int config_fparse(struct Config *const x_conf,
                   const char *restrict const filename) {
   conf = x_conf;
   errors = 0;
+  struct MapIterator *restrict it;
   struct String *restrict const f_nm = String_cnew(filename);
   void *const *items;
 
@@ -1070,7 +1102,7 @@ int config_fparse(struct Config *const x_conf,
   errors = file->errors;
   popfile();
 
-  struct MapIterator *restrict const it = MapIterator_new(symbols);
+  it = MapIterator_new(symbols);
   while(MapIterator_next(it)) {
     const struct sym *restrict const sym = MapIterator_value(it);
     if (!sym->used)
@@ -1084,6 +1116,25 @@ int config_fparse(struct Config *const x_conf,
     return (-1);
 
   Array_compact(conf->m_cnf);
+
+  it = MapIterator_new(conf->e_cnf);
+  while(MapIterator_next(it)) {
+    const struct String *restrict const nm = MapIterator_key(it);
+    const struct ExchangeConfig *restrict const cnf = MapIterator_value(it);
+    if(String_equals(nm, exchange_bitvavo.nm) &&
+       (cnf->api_key == NULL || cnf->api_secret == NULL)) {
+       werr("%s: %s: api-key and api-secret required\n", filename,
+            String_chars(nm));
+       errors++;
+    }
+    if(String_equals(nm, exchange_coinbase.nm) &&
+       (cnf->jwt_kid == NULL || cnf->jwt_key == NULL)) {
+       werr("%s: %s: cdp-api-key required\n", filename,
+            String_chars(nm));
+       errors++;
+    }
+  }
+  MapIterator_delete(it);
 
   items = Array_items(conf->m_cnf);
   for (size_t i = Array_size(conf->m_cnf); i-- > 0;) {

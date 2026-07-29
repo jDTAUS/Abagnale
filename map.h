@@ -24,6 +24,10 @@
 #include "host.h"
 #endif
 
+#ifdef MULTI_THREADED
+#include <threads.h>
+#endif
+
 #include <stdbool.h>
 #include <stddef.h>
 
@@ -57,6 +61,7 @@ const void *const MapIterator_key(const struct MapIterator *restrict const);
 const void *const MapIterator_value(const struct MapIterator *restrict const);
 
 #ifdef MULTI_THREADED
+mtx_t *Map_mutex(struct Map *restrict const);
 void Map_lock(struct Map *restrict const);
 bool Map_trylock(struct Map *restrict const);
 void Map_unlock(struct Map *restrict const);

@@ -32,6 +32,7 @@
 #include "queue.h"
 #include "thread.h"
 #include "time.h"
+#include "version.h"
 
 #include <errno.h>
 #include <inttypes.h>
@@ -94,7 +95,6 @@
 
 #define URL_MAX_LENGTH (size_t)512
 #define JSON_BODY_MAX (size_t)32767
-#define HTTP_RESPONSE_MAX_WCHARS (size_t)5242880
 
 #ifndef nitems
 #define nitems(_a) (sizeof((_a)) / sizeof((_a)[0]))
@@ -188,15 +188,16 @@ static char coinbase_order_create_path[URL_MAX_LENGTH + 1];
 static char coinbase_products_path[URL_MAX_LENGTH + 1];
 static unsigned long coinbase_stall_ms;
 static void *restrict coinbase_db;
+static struct String *restrict coinbase_authorization;
 
 static struct Array *restrict markets;
-static struct Map *restrict markets_by_symbol;
 static struct Map *restrict markets_by_id;
+static struct Map *restrict markets_by_symbol;
 static _Atomic bool markets_reload;
 
 static struct Array *restrict accounts;
 static struct Map *restrict accounts_by_id;
-static struct Map *restrict accounts_by_currency;
+static struct Map *restrict accounts_by_symbol;
 static _Atomic bool accounts_reload;
 
 static struct Pricing *restrict pricing;
@@ -215,21 +216,23 @@ static void coinbase_start(void);
 static void coinbase_stop(void);
 static struct Order *coinbase_order_await(void);
 static struct Sample *coinbase_sample_await(void);
-static struct Pricing *coinbase_pricing(void);
+static struct Pricing *coinbase_pricing(const struct Market *restrict const);
 static struct Array *coinbase_markets(void);
 static struct Market *coinbase_market(const struct String *restrict const);
 static struct Market *
 coinbase_market_by_symbol(const struct String *restrict const);
 static struct Array *coinbase_accounts(void);
 static struct Account *
-coinbase_account_currency(const struct String *restrict const);
+coinbase_account_by_symbol(const struct String *restrict const);
 static struct Account *coinbase_account(const struct String *restrict const);
-static struct Order *coinbase_order(const struct String *restrict const);
-static bool coinbase_order_cancel(const struct String *restrict const);
-static struct String *coinbase_order_demand(const char *restrict const,
+static struct Order *coinbase_order(const struct Market *restrict const,
+                                    const struct String *restrict const);
+static bool coinbase_order_cancel(const struct Market *restrict const,
+                                  const struct String *restrict const);
+static struct String *coinbase_order_demand(const struct Market *restrict const,
                                             const char *restrict const,
                                             const char *restrict const);
-static struct String *coinbase_order_supply(const char *restrict const,
+static struct String *coinbase_order_supply(const struct Market *restrict const,
                                             const char *restrict const,
                                             const char *restrict const);
 
@@ -532,7 +535,7 @@ ret:
   String_delete(j_product_id);
 
   if (errno)
-    werr("%s: user: %s\n", coinbase_ws_uri, strerror(errno));
+    werr("%s: ticker: %s\n", coinbase_ws_uri, strerror(errno));
 
   errno = saved_errno;
 }
@@ -818,9 +821,12 @@ static void ws_subscribe(struct mg_connection *restrict const c,
   if (ch_doc.v_nitems > SIZE_MAX - Array_size(m_array))
     panic();
 
-  hb_doc.values = heap_malloc(hb_doc.v_nitems * sizeof(struct wcjson_value));
+  hb_doc.values = heap_reallocarray(hb_doc.values, hb_doc.v_nitems,
+                                    sizeof(struct wcjson_value));
+
   ch_doc.v_nitems += Array_size(m_array);
-  ch_doc.values = heap_malloc(ch_doc.v_nitems * sizeof(struct wcjson_value));
+  ch_doc.values = heap_reallocarray(ch_doc.values, ch_doc.v_nitems,
+                                    sizeof(struct wcjson_value));
 
   errno = 0;
 
@@ -974,7 +980,9 @@ static void ws_evt_handler(struct mg_connection *c, int ev, void *ev_data) {
 
       do {
         thread_sleep(&coinbase_retry_rate);
-        c = mg_ws_connect(mgr, coinbase_ws_uri, ws_evt_handler, channel, NULL);
+        c = mg_ws_connect(mgr, coinbase_ws_uri, ws_evt_handler, channel,
+                          "User-Agent: Abagnale; %s\r\n", ABAG_REVISION);
+
         if (!c)
           werr("%s: %s: Failure reconnecting\n", coinbase_ws_uri,
                channel->name);
@@ -1001,6 +1009,7 @@ static void ws_evt_handler(struct mg_connection *c, int ev, void *ev_data) {
 
 static int coinbase_rest_query(struct wcjson_document *restrict rsp_doc,
                                const char *restrict const url,
+                               const char *restrict const method,
                                const char *restrict const path,
                                const char *restrict const body,
                                const size_t body_len) {
@@ -1009,8 +1018,8 @@ static int coinbase_rest_query(struct wcjson_document *restrict rsp_doc,
   char auth[HTTP_HEADER_MAX + 1] = {0};
   char jwt[JSON_BODY_MAX + 1] = {0};
   size_t jwt_len = nitems(jwt);
-  int r = snprintf(uri, sizeof(uri), "%s %.*s%s", body_len > 0 ? "POST" : "GET",
-                   (int)host.len, host.buf, path);
+  int r = snprintf(uri, sizeof(uri), "%s %.*s%s", method, (int)host.len,
+                   host.buf, path);
 
   if (r < 0 || (size_t)r >= sizeof(uri))
     panic();
@@ -1024,9 +1033,7 @@ static int coinbase_rest_query(struct wcjson_document *restrict rsp_doc,
     panic();
 
   struct Map *restrict const headers = Map_new(StringMapOps, 4);
-  struct String *restrict const k_auth = String_cnew("Authorization");
-  struct String *restrict const v_auth = String_cnew(auth);
-  Map_put(headers, k_auth, v_auth);
+  Map_put(headers, coinbase_authorization, auth);
 
   thread_sleep(&coinbase_request_rate);
 
@@ -1034,32 +1041,19 @@ static int coinbase_rest_query(struct wcjson_document *restrict rsp_doc,
   rsp_doc->s_next = 0;
   rsp_doc->mb_next = 0;
 
-  r = http_request_json(rsp_doc, url, headers, body, body_len);
+  r = http_request_json(rsp_doc, url, method, headers, body, body_len);
 
   Map_delete(headers, NULL);
-  String_delete(k_auth);
-  String_delete(v_auth);
 
   return r;
 }
 
-#define allowed_in_url(c)                                                      \
-  ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||                         \
-   (c >= '0' && c <= '9') || c == ':' || c == '/' || c == '?' || c == '#' ||   \
-   c == '[' || c == ']' || c == '@' || c == '!' || c == '$' || c == '&' ||     \
-   c == '\'' || c == '(' || c == ')' || c == '*' || c == '+' || c == ',' ||    \
-   c == ';' || c == '=' || c == '-' || c == '.' || c == '_' || c == '~')
-
 inline static void envurl(char *restrict d, size_t len, const char *restrict nm,
                           const char *restrict dflt) {
-  const char *restrict env = envs(nm, dflt);
+  const char *restrict env = envuri(nm, dflt);
 
-  while (len-- != 0 && *env) {
-    if (!allowed_in_url(*env))
-      fatal("%s: %s", nm, env);
-
+  while (len-- != 0 && *env)
     *d++ = *env++;
-  }
 
   if (len == SIZE_MAX && *env)
     fatal("%s: %s", nm, env);
@@ -1070,6 +1064,7 @@ inline static void envurl(char *restrict d, size_t len, const char *restrict nm,
 static void coinbase_init(void) {
   exchange_coinbase.id = String_cnew(COINBASE_UUID);
   exchange_coinbase.nm = String_cnew("coinbase");
+  coinbase_authorization = String_cnew("Authorization");
 
   envurl(coinbase_rest_uri, sizeof(coinbase_rest_uri) - 1, "CDP_REST_URI",
          DEFAULT_CDP_REST_URI);
@@ -1138,13 +1133,13 @@ static void coinbase_init(void) {
   samples = Queue_new((MG_MAX_RECV_SIZE) / sizeof(struct Sample *),
                       (time_t)(coinbase_stall_ms / 1000L));
   markets = Array_new(1024);
-  markets_by_symbol = Map_new(StringMapOps, 1024);
   markets_by_id = Map_new(StringMapOps, 1024);
+  markets_by_symbol = Map_new(StringMapOps, 1024);
 
   markets_reload = true;
   accounts = Array_new(256);
   accounts_by_id = Map_new(StringMapOps, 256);
-  accounts_by_currency = Map_new(StringMapOps, 256);
+  accounts_by_symbol = Map_new(StringMapOps, 256);
 
   accounts_reload = true;
   pricing = NULL;
@@ -1164,14 +1159,15 @@ static void coinbase_destroy(void) {
   coinbase_cnf = NULL;
   String_delete(exchange_coinbase.id);
   String_delete(exchange_coinbase.nm);
+  String_delete(coinbase_authorization);
   Queue_delete(orders, Order_delete);
   Queue_delete(samples, Sample_delete);
   Array_delete(markets, Market_delete);
-  Map_delete(markets_by_symbol, NULL);
   Map_delete(markets_by_id, NULL);
+  Map_delete(markets_by_symbol, NULL);
   Array_delete(accounts, Account_delete);
   Map_delete(accounts_by_id, NULL);
-  Map_delete(accounts_by_currency, NULL);
+  Map_delete(accounts_by_symbol, NULL);
   Pricing_delete(pricing);
   mutex_destroy(&pricing_mutex);
   tls_delete(coinbase_tls_key);
@@ -1188,8 +1184,9 @@ static void coinbase_start(void) {
   running = true;
   for (size_t i = nitems(ws_channels); i-- > 0;) {
     if (ws_channels[i].items != NULL) {
-      struct mg_connection *restrict const c = mg_ws_connect(
-          mgr, coinbase_ws_uri, ws_evt_handler, &ws_channels[i], NULL);
+      struct mg_connection *restrict const c =
+          mg_ws_connect(mgr, coinbase_ws_uri, ws_evt_handler, &ws_channels[i],
+                        "User-Agent: Abagnale; %s\r\n", ABAG_REVISION);
 
       ws_channels[i].last_message = mg_millis();
 
@@ -1309,10 +1306,10 @@ parse_product(const struct wcjson_document *restrict const doc,
 
   // Find matching accounts required for trading.
   const struct Account *restrict qa =
-      coinbase_account_currency(j_quote_currency_id);
+      coinbase_account_by_symbol(j_quote_currency_id);
 
   const struct Account *restrict ba =
-      coinbase_account_currency(j_base_currency_id);
+      coinbase_account_by_symbol(j_base_currency_id);
 
   struct String *restrict qa_id = NULL;
   struct String *restrict ba_id = NULL;
@@ -1424,7 +1421,7 @@ parse_products(struct Array *restrict const p,
       wcjson_object_get(doc, doc->values, L"products", 8);
 
   if (j_products == NULL || !j_products->is_array) {
-    if (json_mbsprint(err, &err_nitems, doc, doc->values)) {
+    if (json_mbsprint(err, &err_nitems, doc, doc->values) < 0) {
       int r = snprintf(err, err_nitems, "%s", strerror(errno));
       if (r < 0 || (size_t)r >= err_nitems)
         panic();
@@ -1469,8 +1466,8 @@ static struct Array *coinbase_markets(void) {
     if (r < 0 || (size_t)r >= sizeof(url))
       panic();
 
-    if (coinbase_rest_query(rsp_doc, url, coinbase_products_path, NULL, 0) <
-        0) {
+    if (coinbase_rest_query(rsp_doc, url, "GET", coinbase_products_path, NULL,
+                            0) < 0) {
 
       for (size_t i = nitems(ws_channels); i-- > 0;)
         ws_channels[i].reconnect = true;
@@ -1490,11 +1487,11 @@ static struct Array *coinbase_markets(void) {
     for (size_t i = Array_size(markets); i-- > 0;) {
       if (Map_put(markets_by_symbol, ((struct Market *)items[i])->sym,
                   items[i]))
-        fatal("%s: Market symbol uniqueness constraint: %s", url,
+        fatal("%s: products: Market symbol uniqueness constraint: %s", url,
               String_chars(((struct Market *)items[i])->sym));
 
       if (Map_put(markets_by_id, ((struct Market *)items[i])->id, items[i]))
-        fatal("%s: Market id uniqueness constraint: %s", url,
+        fatal("%s: products: Market id uniqueness constraint: %s", url,
               String_chars(((struct Market *)items[i])->id));
     }
 
@@ -1518,9 +1515,9 @@ static struct Market *coinbase_market(const struct String *restrict const id) {
 }
 
 static struct Market *
-coinbase_market_by_symbol(const struct String *restrict const name) {
+coinbase_market_by_symbol(const struct String *restrict const sym) {
   struct Array *restrict const m_array = coinbase_markets();
-  struct Market *restrict const m = Map_get(markets_by_symbol, name);
+  struct Market *restrict const m = Map_get(markets_by_symbol, sym);
 
   if (m != NULL) {
     m->mtx = Array_mutex(m_array);
@@ -1565,7 +1562,7 @@ parse_account(const struct wcjson_document *restrict const doc,
   struct Numeric *restrict j_value = NULL;
 
   if (j_available_balance == NULL || !j_available_balance->is_object) {
-    if (json_mbsprint(err, &err_nitems, doc, acct)) {
+    if (json_mbsprint(err, &err_nitems, doc, acct) < 0) {
       int r = snprintf(err, err_nitems, "%s", strerror(errno));
       if (r < 0 || (size_t)r >= err_nitems)
         panic();
@@ -1583,7 +1580,7 @@ parse_account(const struct wcjson_document *restrict const doc,
   a = Account_new();
   a->id = j_uuid;
   a->nm = j_name;
-  a->c_id = j_currency;
+  a->sym = j_currency;
   a->type = account_type(String_chars(j_type));
   a->avail = j_value;
   a->is_active = j_active && j_active->is_true;
@@ -1621,7 +1618,7 @@ static int parse_accounts(struct Array *restrict const a,
       wcjson_object_get(doc, doc->values, L"accounts", 8);
 
   if (j_accounts == NULL || !j_accounts->is_array) {
-    if (json_mbsprint(err, &err_nitems, doc, doc->values)) {
+    if (json_mbsprint(err, &err_nitems, doc, doc->values) < 0) {
       int s = snprintf(err, err_nitems, "%s", strerror(errno));
       if (s < 0 || (size_t)s >= err_nitems)
         panic();
@@ -1678,7 +1675,8 @@ static int accounts_with_cursor(struct Array *restrict result,
   r = -1;
   errno = 0;
 
-  if (coinbase_rest_query(rsp_doc, url, coinbase_accounts_path, NULL, 0) < 0)
+  if (coinbase_rest_query(rsp_doc, url, "GET", coinbase_accounts_path, NULL,
+                          0) < 0)
     goto ret;
 
   r = parse_accounts(result, rsp_doc);
@@ -1725,8 +1723,6 @@ static struct Array *coinbase_accounts(void) {
 
   if (accounts_reload) {
     Array_clear(accounts, Account_delete);
-    Map_delete(accounts_by_id, NULL);
-    Map_delete(accounts_by_currency, NULL);
 
     if (accounts_with_cursor(accounts, NULL) == 0)
       accounts_reload = false;
@@ -1736,16 +1732,19 @@ static struct Array *coinbase_accounts(void) {
 
     Array_compact(accounts);
 
+    Map_delete(accounts_by_id, NULL);
+    Map_delete(accounts_by_symbol, NULL);
+
     accounts_by_id = Map_new(StringMapOps, Array_size(accounts));
-    accounts_by_currency = Map_new(StringMapOps, Array_size(accounts));
+    accounts_by_symbol = Map_new(StringMapOps, Array_size(accounts));
 
     items = Array_items(accounts);
     for (size_t i = Array_size(accounts); i-- > 0;) {
-      if (Map_put(accounts_by_currency, ((struct Account *)items[i])->c_id,
+      if (Map_put(accounts_by_symbol, ((struct Account *)items[i])->sym,
                   items[i]) != NULL)
-        fatal("%s: accounts: Account currency uniqueness constraint: %s",
+        fatal("%s: accounts: Account symbol uniqueness constraint: %s",
               coinbase_rest_uri,
-              String_chars(((struct Account *)items[i])->c_id));
+              String_chars(((struct Account *)items[i])->sym));
 
       if (Map_put(accounts_by_id, ((struct Account *)items[i])->id, items[i]) !=
           NULL)
@@ -1759,19 +1758,16 @@ static struct Array *coinbase_accounts(void) {
 }
 
 static struct Account *
-coinbase_account_currency(const struct String *restrict const currency) {
-  struct Array *restrict const haystack = coinbase_accounts();
-  struct Account *restrict needle = NULL;
-  void *const *restrict items = Array_items(haystack);
+coinbase_account_by_symbol(const struct String *restrict const sym) {
+  struct Array *restrict const a_array = coinbase_accounts();
+  struct Account *restrict const a = Map_get(accounts_by_symbol, sym);
 
-  for (size_t i = Array_size(haystack); i-- > 0;)
-    if (String_equals(((struct Account *)items[i])->c_id, currency)) {
-      needle = items[i];
-      needle->mtx = Array_mutex(accounts);
-      return needle;
-    }
+  if (a != NULL) {
+    a->mtx = Array_mutex(a_array);
+    return a;
+  }
 
-  Array_unlock(haystack);
+  Array_unlock(a_array);
   return NULL;
 }
 
@@ -1794,14 +1790,14 @@ coinbase_account(const struct String *restrict const id) {
   if (r < 0 || (size_t)r >= sizeof(url))
     panic();
 
-  if (coinbase_rest_query(rsp_doc, url, path, NULL, 0) < 0)
+  if (coinbase_rest_query(rsp_doc, url, "GET", path, NULL, 0) < 0)
     goto ret;
 
   const struct wcjson_value *restrict const j_account =
       wcjson_object_get(rsp_doc, rsp_doc->values, L"account", 7);
 
   if (j_account == NULL || !j_account->is_object) {
-    if (json_mbsprint(err, &err_nitems, rsp_doc, rsp_doc->values)) {
+    if (json_mbsprint(err, &err_nitems, rsp_doc, rsp_doc->values) < 0) {
       r = snprintf(err, err_nitems, "%s", strerror(errno));
       if (r < 0 || (size_t)r >= err_nitems)
         panic();
@@ -1871,7 +1867,7 @@ parse_order(const struct wcjson_document *restrict const doc,
       wcjson_object_get(doc, order, L"order_configuration", 19);
 
   if (j_order_configuration == NULL || !j_order_configuration->is_object) {
-    if (json_mbsprint(err, &err_nitems, doc, order)) {
+    if (json_mbsprint(err, &err_nitems, doc, order) < 0) {
       int r = snprintf(err, err_nitems, "%s", strerror(errno));
       if (r < 0 || (size_t)r >= err_nitems)
         panic();
@@ -1968,7 +1964,8 @@ ret:
   return o;
 }
 
-static struct Order *coinbase_order(const struct String *restrict const id) {
+static struct Order *coinbase_order(const struct Market *restrict const,
+                                    const struct String *restrict const id) {
   const struct coinbase_tls *restrict const tls = coinbase_tls();
   struct wcjson_document *restrict rsp_doc = tls->coinbase_order.rsp_doc;
   char path[URL_MAX_LENGTH + 1] = {0};
@@ -1986,14 +1983,14 @@ static struct Order *coinbase_order(const struct String *restrict const id) {
   if (r < 0 || (size_t)r >= sizeof(url))
     panic();
 
-  if (coinbase_rest_query(rsp_doc, url, path, NULL, 0) < 0)
+  if (coinbase_rest_query(rsp_doc, url, "GET", path, NULL, 0) < 0)
     goto ret;
 
   const struct wcjson_value *restrict const j_order =
       wcjson_object_get(rsp_doc, rsp_doc->values, L"order", 5);
 
   if (j_order == NULL || !j_order->is_object) {
-    if (json_mbsprint(err, &err_nitems, rsp_doc, rsp_doc->values)) {
+    if (json_mbsprint(err, &err_nitems, rsp_doc, rsp_doc->values) < 0) {
       r = snprintf(err, err_nitems, "%s", strerror(errno));
       if (r < 0 || (size_t)r >= err_nitems)
         panic();
@@ -2007,7 +2004,8 @@ ret:
   return o;
 }
 
-static bool coinbase_order_cancel(const struct String *restrict const id) {
+static bool coinbase_order_cancel(const struct Market *restrict const,
+                                  const struct String *restrict const id) {
   const struct coinbase_tls *restrict const tls = coinbase_tls();
   struct wcjson_document *restrict rsp_doc = tls->coinbase_order_cancel.rsp_doc;
   bool success = false;
@@ -2057,7 +2055,7 @@ static bool coinbase_order_cancel(const struct String *restrict const id) {
 
   errno = 0;
 
-  if (coinbase_rest_query(rsp_doc, url, coinbase_order_cancel_path, mb,
+  if (coinbase_rest_query(rsp_doc, url, "POST", coinbase_order_cancel_path, mb,
                           mb_len) < 0)
     goto ret;
 
@@ -2065,7 +2063,7 @@ static bool coinbase_order_cancel(const struct String *restrict const id) {
       wcjson_object_get(rsp_doc, rsp_doc->values, L"results", 7);
 
   if (j_results == NULL || !j_results->is_array) {
-    if (json_mbsprint(err, &err_nitems, rsp_doc, rsp_doc->values)) {
+    if (json_mbsprint(err, &err_nitems, rsp_doc, rsp_doc->values) < 0) {
       r = snprintf(err, err_nitems, "%s", strerror(errno));
       if (r < 0 || (size_t)r >= err_nitems)
         panic();
@@ -2094,7 +2092,7 @@ static bool coinbase_order_cancel(const struct String *restrict const id) {
 
   if (!(found && success)) {
     err_nitems = nitems(err);
-    if (json_mbsprint(err, &err_nitems, rsp_doc, rsp_doc->values)) {
+    if (json_mbsprint(err, &err_nitems, rsp_doc, rsp_doc->values) < 0) {
       r = snprintf(err, err_nitems, "%s", strerror(errno));
       if (r < 0 || (size_t)r >= err_nitems)
         panic();
@@ -2176,6 +2174,10 @@ order_create_body(char *restrict const mb, size_t *restrict const mb_len,
   r = 0;
   errno = 0;
 ret:
+  heap_free(doc.strings);
+  heap_free(doc.mbstrings);
+  heap_free(doc.esc);
+
   if (errno)
     werr("%s: %s\n", url, strerror(errno));
 
@@ -2209,12 +2211,9 @@ static struct String *coinbase_order_post(
                         strlen(base_amount), price, strlen(price)) < 0)
     goto ret;
 
-  String_delete(sym);
-  String_delete(sd);
-
   errno = 0;
 
-  if (coinbase_rest_query(rsp_doc, url, coinbase_order_create_path, mb,
+  if (coinbase_rest_query(rsp_doc, url, "POST", coinbase_order_create_path, mb,
                           mb_len) < 0)
     goto ret;
 
@@ -2229,7 +2228,7 @@ static struct String *coinbase_order_post(
         wcjson_object_get(rsp_doc, rsp_doc->values, L"success_response", 16);
 
     if (j_success_response == NULL || !j_success_response->is_object) {
-      if (json_mbsprint(err, &err_nitems, rsp_doc, rsp_doc->values)) {
+      if (json_mbsprint(err, &err_nitems, rsp_doc, rsp_doc->values) < 0) {
         r = snprintf(err, err_nitems, "%s", strerror(errno));
         if (r < 0 || (size_t)r >= err_nitems)
           panic();
@@ -2250,7 +2249,7 @@ static struct String *coinbase_order_post(
     pricing = NULL;
     mutex_unlock(&pricing_mutex);
   } else {
-    if (json_mbsprint(err, &err_nitems, rsp_doc, rsp_doc->values)) {
+    if (json_mbsprint(err, &err_nitems, rsp_doc, rsp_doc->values) < 0) {
       r = snprintf(err, err_nitems, "%s", strerror(errno));
       if (r < 0 || (size_t)r >= err_nitems)
         panic();
@@ -2260,6 +2259,9 @@ static struct String *coinbase_order_post(
 
   errno = 0;
 ret:
+  String_delete(sym);
+  String_delete(sd);
+
   if (errno)
     werr("%s: %s\n", url, strerror(errno));
 
@@ -2268,17 +2270,17 @@ ret:
 }
 
 static inline struct String *
-coinbase_order_demand(const char *restrict const m_sym,
+coinbase_order_demand(const struct Market *restrict const m,
                       const char *restrict const base_amount,
                       const char *restrict const price) {
-  return coinbase_order_post(m_sym, "BUY", base_amount, price);
+  return coinbase_order_post(String_chars(m->sym), "BUY", base_amount, price);
 }
 
 static inline struct String *
-coinbase_order_supply(const char *restrict const m_sym,
+coinbase_order_supply(const struct Market *restrict const m,
                       const char *restrict const base_amount,
                       const char *restrict const price) {
-  return coinbase_order_post(m_sym, "SELL", base_amount, price);
+  return coinbase_order_post(String_chars(m->sym), "SELL", base_amount, price);
 }
 
 static struct Pricing *
@@ -2295,7 +2297,7 @@ parse_pricing(const struct wcjson_document *restrict const doc,
       wcjson_object_get(doc, pr, L"fee_tier", 8);
 
   if (j_fee_tier == NULL || !j_fee_tier->is_object) {
-    if (json_mbsprint(err, &err_nitems, doc, pr)) {
+    if (json_mbsprint(err, &err_nitems, doc, pr) < 0) {
       int r = snprintf(err, err_nitems, "%s", strerror(errno));
       if (r < 0 || (size_t)r >= err_nitems)
         panic();
@@ -2352,7 +2354,7 @@ ret:
   return p;
 }
 
-static struct Pricing *coinbase_pricing(void) {
+static struct Pricing *coinbase_pricing(const struct Market *restrict const m) {
   const struct coinbase_tls *restrict const tls = coinbase_tls();
   struct wcjson_document *restrict rsp_doc = tls->coinbase_pricing.rsp_doc;
   char url[URL_MAX_LENGTH + 1] = {0};
@@ -2370,7 +2372,7 @@ static struct Pricing *coinbase_pricing(void) {
   if (r < 0 || (size_t)r >= sizeof(url))
     panic();
 
-  if (coinbase_rest_query(rsp_doc, url, coinbase_fees_path, NULL, 0) < 0)
+  if (coinbase_rest_query(rsp_doc, url, "GET", coinbase_fees_path, NULL, 0) < 0)
     goto ret;
 
   pricing = parse_pricing(rsp_doc, rsp_doc->values);

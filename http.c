@@ -37,6 +37,7 @@ static unsigned long http_timeout_ms;
 
 struct http_ctx {
   const char *restrict url;
+  const char *restrict method;
   const struct Map *restrict headers;
   const char *restrict body;
   const size_t body_len;
@@ -59,7 +60,6 @@ void http_destroy(void) {}
 
 static void http_evt_handler(struct mg_connection *c, int ev, void *ev_data) {
   struct http_ctx *restrict const http_ctx = c->fn_data;
-  const char *restrict const method = http_ctx->body_len > 0 ? "POST" : "GET";
 
   switch (ev) {
   case MG_EV_OPEN:
@@ -90,7 +90,8 @@ static void http_evt_handler(struct mg_connection *c, int ev, void *ev_data) {
       mg_tls_init(c, &http_tls_opts);
     }
 
-    mg_printf(c, "%s %s HTTP/1.0\r\n", method, mg_url_uri(http_ctx->url));
+    mg_printf(c, "%s %s HTTP/1.0\r\n", http_ctx->method,
+              mg_url_uri(http_ctx->url));
 
     if (http_ctx->headers != NULL) {
       struct MapIterator *restrict const it =
@@ -98,7 +99,7 @@ static void http_evt_handler(struct mg_connection *c, int ev, void *ev_data) {
 
       while (MapIterator_next(it))
         mg_printf(c, "%s: %s\r\n", String_chars(MapIterator_key(it)),
-                  String_chars(MapIterator_value(it)));
+                  MapIterator_value(it));
 
       MapIterator_delete(it);
     }
@@ -142,6 +143,7 @@ static void http_evt_handler(struct mg_connection *c, int ev, void *ev_data) {
 
 int http_request_json(struct wcjson_document *restrict rsp_doc,
                       const char *restrict const url,
+                      const char *restrict const method,
                       const struct Map *restrict const headers,
                       const char *restrict const body, const size_t body_len) {
   int r = -1;
@@ -152,6 +154,7 @@ int http_request_json(struct wcjson_document *restrict rsp_doc,
       .success = false,
       .done = false,
       .url = url,
+      .method = method,
       .body = body,
       .body_len = body_len,
       .rsp = NULL,
@@ -160,7 +163,7 @@ int http_request_json(struct wcjson_document *restrict rsp_doc,
   };
 
 #ifdef ABAG_HTTP_DEBUG
-  wout("HTTP %s %s\n", body != NULL ? "POST" : "GET", url);
+  wout("HTTP %s %s\n", method, url);
   if (body != NULL)
     wout("%.*s\n", (int)body_len, body);
 #endif

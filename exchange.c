@@ -95,7 +95,7 @@ inline void Account_delete(void *restrict const a) {
   struct Account *restrict const account = a;
   String_delete(account->id);
   String_delete(account->nm);
-  String_delete(account->c_id);
+  String_delete(account->sym);
   Numeric_delete(account->avail);
   heap_free(account);
 }
@@ -147,6 +147,8 @@ inline void ExchangeConfig_delete(void *restrict const e) {
     return;
 
   struct ExchangeConfig *restrict const cnf = e;
+  String_delete(cnf->api_key);
+  String_delete(cnf->api_secret);
   String_delete(cnf->jwt_kid);
   String_delete(cnf->jwt_key);
   heap_free(cnf);

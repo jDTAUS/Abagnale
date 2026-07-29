@@ -1429,12 +1429,14 @@ static void position_open(const struct worker_ctx *restrict const w_ctx,
 
   switch (p->type) {
   case POSITION_TYPE_LONG:
-    db_trade_bopen(w_ctx->db, String_chars(order->id), csecs, order->b_filled,
-                   order->q_filled, order->q_fees);
+    db_trade_bopen(w_ctx->db, String_chars(w_ctx->e->id),
+                   String_chars(w_ctx->m->id), String_chars(order->id), csecs,
+                   order->b_filled, order->q_filled, order->q_fees);
     break;
   case POSITION_TYPE_SHORT:
-    db_trade_sopen(w_ctx->db, String_chars(order->id), csecs, order->b_filled,
-                   order->q_filled, order->q_fees);
+    db_trade_sopen(w_ctx->db, String_chars(w_ctx->e->id),
+                   String_chars(w_ctx->m->id), String_chars(order->id), csecs,
+                   order->b_filled, order->q_filled, order->q_fees);
     break;
   default:
     panic();
@@ -1471,7 +1473,8 @@ static void position_fill(const struct worker_ctx *restrict const w_ctx,
 
   switch (p->type) {
   case POSITION_TYPE_LONG:
-    db_trade_bfill(w_ctx->db, String_chars(order->id), csecs,
+    db_trade_bfill(w_ctx->db, String_chars(w_ctx->e->id),
+                   String_chars(w_ctx->m->id), String_chars(order->id), csecs,
                    order->settled ? dsecs : NULL, order->b_filled,
                    order->q_filled, order->q_fees, t_done);
 
@@ -1486,7 +1489,8 @@ static void position_fill(const struct worker_ctx *restrict const w_ctx,
 
     break;
   case POSITION_TYPE_SHORT:
-    db_trade_sfill(w_ctx->db, String_chars(order->id), csecs,
+    db_trade_sfill(w_ctx->db, String_chars(w_ctx->e->id),
+                   String_chars(w_ctx->m->id), String_chars(order->id), csecs,
                    order->settled ? dsecs : NULL, order->b_filled,
                    order->q_filled, order->q_fees, t_done);
 
@@ -1517,7 +1521,8 @@ static void position_cancel(const struct worker_ctx *restrict const w_ctx,
   switch (p->type) {
   case POSITION_TYPE_LONG:
     if (t->p_short.id != NULL) {
-      db_trade_breset(w_ctx->db, String_chars(p->id));
+      db_trade_breset(w_ctx->db, String_chars(w_ctx->e->id),
+                      String_chars(w_ctx->m->id), String_chars(p->id));
       t->status = TRADE_STATUS_SOLD;
     }
 
@@ -1527,7 +1532,8 @@ static void position_cancel(const struct worker_ctx *restrict const w_ctx,
     break;
   case POSITION_TYPE_SHORT:
     if (t->p_long.id != NULL) {
-      db_trade_sreset(w_ctx->db, String_chars(p->id));
+      db_trade_sreset(w_ctx->db, String_chars(w_ctx->e->id),
+                      String_chars(w_ctx->m->id), String_chars(p->id));
       t->status = TRADE_STATUS_BOUGHT;
     }
 
@@ -1673,7 +1679,7 @@ static void position_maintain(const struct worker_ctx *restrict const w_ctx,
 
   if (cancel || poll || order != NULL) {
     if (order == NULL)
-      order = w_ctx->e->order(p->id);
+      order = w_ctx->e->order(w_ctx->m, p->id);
 
     if (order == NULL) {
       position_timeout(w_ctx, t, p, samples, sample);
@@ -1799,7 +1805,7 @@ static void position_maintain(const struct worker_ctx *restrict const w_ctx,
 
     // Recheck after reload.
     if (cancel && p->id != NULL && !(p->done || p->filled)) {
-      const bool cancelled = w_ctx->e->order_cancel(p->id);
+      const bool cancelled = w_ctx->e->order_cancel(w_ctx->m, p->id);
       char *restrict const p_info = position_string(w_ctx, t, p);
 
       if (!cancelled) {
@@ -2294,7 +2300,7 @@ trade:
   struct Position *restrict o_p;
   switch (p->type) {
   case POSITION_TYPE_LONG:
-    o_id = w_ctx->e->order_supply(String_chars(w_ctx->m->sym), b, pr);
+    o_id = w_ctx->e->order_supply(w_ctx->m, b, pr);
     if (o_id == NULL) {
       werr("%s: %s: %s: Failure creating sell order\n",
            String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
@@ -2310,7 +2316,7 @@ trade:
     o_p = &t->p_short;
     break;
   case POSITION_TYPE_SHORT:
-    o_id = w_ctx->e->order_demand(String_chars(w_ctx->m->sym), b, pr);
+    o_id = w_ctx->e->order_demand(w_ctx->m, b, pr);
     if (o_id == NULL) {
       werr("%s: %s: %s: Failure creating buy order\n",
            String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
@@ -2399,7 +2405,7 @@ static void trade_pricing(const struct worker_ctx *restrict const w_ctx,
   const struct abag_tls *restrict const tls = abag_tls();
   struct Numeric *restrict const ef_pc = tls->trade_pricing.ef_pc;
   struct Numeric *restrict const r0 = tls->trade_pricing.r0;
-  const struct Pricing *restrict const pricing = w_ctx->e->pricing();
+  const struct Pricing *restrict const pricing = w_ctx->e->pricing(w_ctx->m);
   bool err = false;
 
   Numeric_copy_to(pricing->ef_pc, ef_pc);
@@ -2698,7 +2704,7 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
     }
 
     struct String *restrict const o_id =
-        w_ctx->e->order_demand(String_chars(w_ctx->m->sym), b, pr);
+        w_ctx->e->order_demand(w_ctx->m, b, pr);
 
     if (o_id == NULL) {
       werr("%s: %s: Failure creating buy order\n", String_chars(w_ctx->e->nm),
@@ -2768,7 +2774,7 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
     }
 
     struct String *restrict const o_id =
-        w_ctx->e->order_supply(String_chars(w_ctx->m->sym), b, pr);
+        w_ctx->e->order_supply(w_ctx->m, b, pr);
 
     if (o_id == NULL) {
       werr("%s: %s: Failure creating sell order\n", String_chars(w_ctx->e->nm),
@@ -3409,14 +3415,19 @@ static int trades_process(void *restrict const arg) {
     if (verbose || err) {
       char *restrict const fee = Numeric_to_char(t->fee_pc, 2);
       char *restrict const v = Numeric_to_char(tp_pc, 4);
+      const struct Pricing *restrict const pricing =
+          w_ctx->e->pricing(w_ctx->m);
 
       if (err)
-        werr("%s: %s: Pricing: fee: %s%%, volatility: %s%%\n",
-             String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm), fee, v);
+        werr("%s: %s: Pricing: name: %s, fee: %s%%, volatility: %s%%\n",
+             String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
+             String_chars(pricing->nm), fee, v);
       else
-        wout("%s: %s: Pricing: fee: %s%%, volatility: %s%%\n",
-             String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm), fee, v);
+        wout("%s: %s: Pricing: name: %s, fee: %s%%, volatility: %s%%\n",
+             String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
+             String_chars(pricing->nm), fee, v);
 
+      mutex_unlock(pricing->mtx);
       Numeric_char_free(fee);
       Numeric_char_free(v);
     }
@@ -3479,13 +3490,13 @@ static inline void thrd_delete(void *restrict const entry) { heap_free(entry); }
 
 int abagnale(int argc, char *argv[]) {
   void *const *restrict items;
-  unsigned long order_workers =
+  const unsigned long order_workers =
       envul("ABAG_ORDER_WORKERS", DEFAULT_ABAG_ORDER_WORKERS);
 
-  unsigned long ticker_workers =
+  const unsigned long ticker_workers =
       envul("ABAG_TICKER_WORKERS", DEFAULT_ABAG_TICKER_WORKERS);
 
-  unsigned long trade_workers =
+  const unsigned long trade_workers =
       envul("ABAG_TRADE_WORKERS", DEFAULT_ABAG_TRADE_WORKERS);
 
   if (verbose) {
@@ -3546,6 +3557,10 @@ int abagnale(int argc, char *argv[]) {
     thread_create(thrd, exchange_stop, e_ctx);
     Array_add_tail(workers, thrd);
 
+    size_t e_order_workers = order_workers;
+    size_t e_trade_workers = trade_workers;
+    size_t e_ticker_workers = ticker_workers;
+
     for (size_t j = 1; j < w_cnt && !terminated; j++) {
       char cname[DATABASE_CONNECTION_NAME_MAX_LENGTH + 1] = {0};
       struct worker_ctx *restrict const w_ctx =
@@ -3565,15 +3580,15 @@ int abagnale(int argc, char *argv[]) {
       thrd = heap_calloc(1, sizeof(thrd_t));
       Array_add_tail(workers, thrd);
 
-      if (order_workers > 0) {
+      if (e_order_workers > 0) {
         thread_create(thrd, orders_process, w_ctx);
-        order_workers--;
-      } else if (trade_workers > 0) {
+        e_order_workers--;
+      } else if (e_trade_workers > 0) {
         thread_create(thrd, trades_process, w_ctx);
-        trade_workers--;
-      } else if (ticker_workers > 0) {
+        e_trade_workers--;
+      } else if (e_ticker_workers > 0) {
         thread_create(thrd, samples_process, w_ctx);
-        ticker_workers--;
+        e_ticker_workers--;
       } else
         panic();
     }

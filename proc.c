@@ -99,6 +99,23 @@ inline unsigned long envul(const char *restrict const nm,
   return v;
 }
 
+#define allowed_in_uri(c)                                                      \
+  ((c >= 'a' && c <= 'z') || (c >= 'A' && c <= 'Z') ||                         \
+   (c >= '0' && c <= '9') || c == ':' || c == '/' || c == '?' || c == '#' ||   \
+   c == '[' || c == ']' || c == '@' || c == '!' || c == '$' || c == '&' ||     \
+   c == '\'' || c == '(' || c == ')' || c == '*' || c == '+' || c == ',' ||    \
+   c == ';' || c == '=' || c == '-' || c == '.' || c == '_' || c == '~')
+
+inline const char *envuri(const char *restrict nm, const char *restrict dflt) {
+  const char *restrict env = envs(nm, dflt);
+
+  for (const char *restrict p = env; *p; p++)
+    if (!allowed_in_uri(*p))
+      fatal("%s: %s", nm, env);
+
+  return env;
+}
+
 #ifdef MULTI_THREADED
 void proc_init(void) {
   mutex_init(&stdout_mtx);

@@ -39,7 +39,8 @@ enum market_type {
 enum market_status {
   MARKET_STATUS_UNKNOWN = 1 << 0,
   MARKET_STATUS_ONLINE = 1 << 1,
-  MARKET_STATUS_DELISTED = 1 << 2,
+  MARKET_STATUS_OFFLINE = 1 << 2,
+  MARKET_STATUS_DELISTED = 1 << 3,
 };
 
 struct Market {
@@ -74,7 +75,7 @@ enum account_type {
 struct Account {
   struct String *restrict id;
   struct String *restrict nm;
-  struct String *restrict c_id;
+  struct String *restrict sym;
   struct Numeric *restrict avail;
   mtx_t *restrict mtx;
   enum account_type type;
@@ -124,6 +125,8 @@ struct Pricing {
 };
 
 struct ExchangeConfig {
+  struct String *restrict api_key;
+  struct String *restrict api_secret;
   struct String *restrict jwt_kid;
   struct String *restrict jwt_key;
 };
@@ -140,15 +143,17 @@ struct Exchange {
   struct Market *(*market)(const struct String *restrict const);
   struct Array *(*accounts)(void);
   struct Account *(*account)(const struct String *restrict const);
-  struct Order *(*order)(const struct String *restrict const);
-  struct Pricing *(*pricing)(void);
+  struct Order *(*order)(const struct Market *restrict const,
+                         const struct String *restrict const);
+  struct Pricing *(*pricing)(const struct Market *restrict const);
   struct Sample *(*sample_await)(void);
   struct Order *(*order_await)(void);
-  bool (*order_cancel)(const struct String *restrict const);
-  struct String *(*order_demand)(const char *restrict const,
+  bool (*order_cancel)(const struct Market *restrict const,
+                       const struct String *restrict const);
+  struct String *(*order_demand)(const struct Market *restrict const,
                                  const char *restrict const,
                                  const char *restrict const);
-  struct String *(*order_supply)(const char *restrict const,
+  struct String *(*order_supply)(const struct Market *restrict const,
                                  const char *restrict const,
                                  const char *restrict const);
 };

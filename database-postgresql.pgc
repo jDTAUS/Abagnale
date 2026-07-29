@@ -777,7 +777,8 @@ not_found:
 #endif
 }
 
-void db_trade_bfill(const void *const db, const char *const o_id,
+void db_trade_bfill(const void *const db, const char *const e_id,
+                    const char *const m_id, const char *const o_id,
                     const struct Numeric *const csecs,
                     const struct Numeric *const dsecs,
                     const struct Numeric *const b_filled,
@@ -789,6 +790,8 @@ void db_trade_bfill(const void *const db, const char *const o_id,
   // clang-format off
   EXEC SQL BEGIN DECLARE SECTION;
   const char *con = String_chars(db);
+  const char *sql_e_id = e_id;
+  const char *sql_m_id = m_id;
   const char *sql_o_id = o_id;
   const numeric *sql_csecs = Numeric_db(csecs);
   const numeric *sql_dsecs = dsecs != NULL ? Numeric_db(dsecs) : NULL;
@@ -807,7 +810,9 @@ void db_trade_bfill(const void *const db, const char *const o_id,
       "BUY_ORDER_BASE_AMOUNT_FILLED" = :sql_b_filled,
       "BUY_ORDER_QUOTE_AMOUNT_FILLED" = :sql_q_filled,
       "BUY_ORDER_QUOTE_FEES" = :sql_q_fees
-    WHERE "BUY_ORDER_ID" = :sql_o_id;
+    WHERE "EXCHANGE_ID" = :sql_e_id
+      AND "MARKET_ID" = :sql_m_id
+      AND "BUY_ORDER_ID" = :sql_o_id;
   // clang-format on
   if (t_done || dsecs != NULL) {
     // clang-format off
@@ -819,7 +824,9 @@ void db_trade_bfill(const void *const db, const char *const o_id,
         SET "STATUS" = :sql_status,
           "BUY_ORDER_CREATED_AT" = to_timestamp(:sql_csecs),
           "BUY_ORDER_DONE_AT" = to_timestamp(:sql_dsecs)
-      WHERE "BUY_ORDER_ID" = :sql_o_id;
+      WHERE "EXCHANGE_ID" = :sql_e_id
+        AND "MARKET_ID" = :sql_m_id
+        AND "BUY_ORDER_ID" = :sql_o_id;
     // clang-format on
   }
   // clang-format off
@@ -830,7 +837,8 @@ void db_trade_bfill(const void *const db, const char *const o_id,
 #endif
 }
 
-void db_trade_bopen(const void *const db, const char *const o_id,
+void db_trade_bopen(const void *const db, const char *const e_id,
+                    const char *const m_id, const char *const o_id,
                     const struct Numeric *const csecs,
                     const struct Numeric *const b_filled,
                     const struct Numeric *const q_filled,
@@ -841,6 +849,8 @@ void db_trade_bopen(const void *const db, const char *const o_id,
   // clang-format off
   EXEC SQL BEGIN DECLARE SECTION;
   const char *con = String_chars(db);
+  const char *sql_e_id = e_id;
+  const char *sql_m_id = m_id;
   const char *sql_o_id = o_id;
   const numeric *sql_csecs = Numeric_db(csecs);
   const numeric *sql_b_filled = Numeric_db(b_filled);
@@ -857,7 +867,9 @@ void db_trade_bopen(const void *const db, const char *const o_id,
       "BUY_ORDER_BASE_AMOUNT_FILLED" = :sql_b_filled,
       "BUY_ORDER_QUOTE_AMOUNT_FILLED" = :sql_q_filled,
       "BUY_ORDER_QUOTE_FEES" = :sql_q_fees
-    WHERE "BUY_ORDER_ID" = :sql_o_id;
+    WHERE "EXCHANGE_ID" = :sql_e_id
+      AND "MARKET_ID" = :sql_m_id
+      AND "BUY_ORDER_ID" = :sql_o_id;
   EXEC SQL AT :con COMMIT;
   // clang-format on
 #ifdef ABAG_SQL_DEBUG
@@ -865,7 +877,8 @@ void db_trade_bopen(const void *const db, const char *const o_id,
 #endif
 }
 
-void db_trade_sfill(const void *const db, const char *const o_id,
+void db_trade_sfill(const void *const db, const char *const e_id,
+                    const char *const m_id, const char *const o_id,
                     const struct Numeric *const csecs,
                     const struct Numeric *const dsecs,
                     const struct Numeric *const b_filled,
@@ -877,6 +890,8 @@ void db_trade_sfill(const void *const db, const char *const o_id,
   // clang-format off
   EXEC SQL BEGIN DECLARE SECTION;
   const char *con = String_chars(db);
+  const char *sql_e_id = e_id;
+  const char *sql_m_id = m_id;
   const char *sql_o_id = o_id;
   const numeric *sql_csecs = Numeric_db(csecs);
   const numeric *sql_dsecs = dsecs != NULL ? Numeric_db(dsecs) : NULL;
@@ -895,7 +910,9 @@ void db_trade_sfill(const void *const db, const char *const o_id,
       "SELL_ORDER_BASE_AMOUNT_FILLED" = :sql_b_filled,
       "SELL_ORDER_QUOTE_AMOUNT_FILLED" = :sql_q_filled,
       "SELL_ORDER_QUOTE_FEES" = :sql_q_fees
-    WHERE "SELL_ORDER_ID" = :sql_o_id;
+    WHERE "EXCHANGE_ID" = :sql_e_id
+      AND "MARKET_ID" = :sql_m_id
+      AND "SELL_ORDER_ID" = :sql_o_id;
   // clang-format on
   if (t_done || dsecs != NULL) {
     // clang-format off
@@ -907,7 +924,9 @@ void db_trade_sfill(const void *const db, const char *const o_id,
         SET "STATUS" = :sql_status,
           "SELL_ORDER_CREATED_AT" = to_timestamp(:sql_csecs),
           "SELL_ORDER_DONE_AT" = to_timestamp(:sql_dsecs)
-      WHERE "SELL_ORDER_ID" = :sql_o_id;
+      WHERE "EXCHANGE_ID" = :sql_e_id
+        AND "MARKET_ID" = :sql_m_id
+        AND "SELL_ORDER_ID" = :sql_o_id;
     // clang-format on
   }
   // clang-format off
@@ -918,7 +937,8 @@ void db_trade_sfill(const void *const db, const char *const o_id,
 #endif
 }
 
-void db_trade_sopen(const void *const db, const char *const o_id,
+void db_trade_sopen(const void *const db, const char *const e_id,
+                    const char *const m_id, const char *const o_id,
                     const struct Numeric *const csecs,
                     const struct Numeric *const b_filled,
                     const struct Numeric *const q_filled,
@@ -929,6 +949,8 @@ void db_trade_sopen(const void *const db, const char *const o_id,
   // clang-format off
   EXEC SQL BEGIN DECLARE SECTION;
   const char *con = String_chars(db);
+  const char *sql_e_id = e_id;
+  const char *sql_m_id = m_id;
   const char *sql_o_id = o_id;
   const numeric *sql_csecs = Numeric_db(csecs);
   const numeric *sql_b_filled = Numeric_db(b_filled);
@@ -945,7 +967,9 @@ void db_trade_sopen(const void *const db, const char *const o_id,
       "SELL_ORDER_BASE_AMOUNT_FILLED" = :sql_b_filled,
       "SELL_ORDER_QUOTE_AMOUNT_FILLED" = :sql_q_filled,
       "SELL_ORDER_QUOTE_FEES" = :sql_q_fees
-    WHERE "SELL_ORDER_ID" = :sql_o_id;
+    WHERE "EXCHANGE_ID" = :sql_e_id
+      AND "MARKET_ID" = :sql_m_id
+      AND "SELL_ORDER_ID" = :sql_o_id;
   EXEC SQL AT :con COMMIT;
   // clang-format on
 #ifdef ABAG_SQL_DEBUG
@@ -1317,13 +1341,16 @@ void db_trade_delete(const void *const db, const char *const t_id) {
 #endif
 }
 
-void db_trade_breset(const void *const db, const char *const o_id) {
+void db_trade_breset(const void *const db, const char *const e_id,
+                     const char *const m_id, const char *const o_id) {
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(1, stdout);
 #endif
   // clang-format off
   EXEC SQL BEGIN DECLARE SECTION;
   const char *con = String_chars(db);
+  const char *sql_e_id = e_id;
+  const char *sql_m_id = m_id;
   const char *sql_o_id = o_id;
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
@@ -1341,7 +1368,9 @@ void db_trade_breset(const void *const db, const char *const o_id) {
       "BUY_ORDER_QUOTE_AMOUNT_FILLED" = NULL,
       "BUY_ORDER_QUOTE_FEES" = NULL,
       "STATUS" = 'SOLD'
-    WHERE "BUY_ORDER_ID" = :sql_o_id;
+    WHERE "EXCHANGE_ID" = :sql_e_id
+      AND "MARKET_ID" = :sql_m_id
+      AND "BUY_ORDER_ID" = :sql_o_id;
   EXEC SQL AT :con COMMIT;
   // clang-format on
 #ifdef ABAG_SQL_DEBUG
@@ -1349,13 +1378,16 @@ void db_trade_breset(const void *const db, const char *const o_id) {
 #endif
 }
 
-void db_trade_sreset(const void *const db, const char *const o_id) {
+void db_trade_sreset(const void *const db, const char *const e_id,
+                     const char *const m_id, const char *const o_id) {
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(1, stdout);
 #endif
   // clang-format off
   EXEC SQL BEGIN DECLARE SECTION;
   const char *con = String_chars(db);
+  const char *sql_e_id = e_id;
+  const char *sql_m_id = m_id;
   const char *sql_o_id = o_id;
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
@@ -1373,7 +1405,9 @@ void db_trade_sreset(const void *const db, const char *const o_id) {
       "SELL_ORDER_QUOTE_AMOUNT_FILLED" = NULL,
       "SELL_ORDER_QUOTE_FEES" = NULL,
       "STATUS" = 'BOUGHT'
-    WHERE "SELL_ORDER_ID" = :sql_o_id;
+    WHERE "EXCHANGE_ID" = :sql_e_id
+      AND "MARKET_ID" = :sql_m_id
+      AND "SELL_ORDER_ID" = :sql_o_id;
   EXEC SQL AT :con COMMIT;
   // clang-format on
 #ifdef ABAG_SQL_DEBUG

@@ -54,8 +54,8 @@ inline struct Map *Map_new(const struct MapOps *restrict const ops,
                            const size_t capacity) {
   struct Map *restrict const m = heap_malloc(sizeof(struct Map));
   m->ops = ops;
-  m->capacity = capacity;
-  m->buckets = heap_calloc(capacity, sizeof(struct Entry *));
+  m->capacity = ((capacity | !capacity) + 1) & ~1U;
+  m->buckets = heap_calloc(m->capacity, sizeof(struct Entry *));
 #ifdef MULTI_THREADED
   mutex_init(&m->mtx);
 #endif
@@ -217,6 +217,7 @@ MapIterator_value(const struct MapIterator *restrict const it) {
 }
 
 #ifdef MULTI_THREADED
+inline mtx_t *Map_mutex(struct Map *restrict const m) { return &m->mtx; }
 inline void Map_lock(struct Map *restrict const m) { mutex_lock(&m->mtx); }
 inline bool Map_trylock(struct Map *restrict const m) {
   return mutex_trylock(&m->mtx);
