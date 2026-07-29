@@ -31,9 +31,11 @@ did it go and why? No one knows. It's just abagnaling again."
 ./database-postgresql.pgc - PostgreSQL implememtation source code
 ./exchange.h              - Exchange API header file
 ./exchange.c              - Common exchange implementation source code
+./exchange-bitvavo.c      - Bitvavo exchange implementation source code
 ./exchange-coinbase.c     - Coinbase exchange implementation source code
 ./heap.h                  - Heap API header file
 ./heap.c                  - Heap implementation source code
+./heap-reallocarray.c     - OpenBSD reallocarray heap implementation source code
 ./http.h                  - HTTP API header file
 ./http.c                  - HTTP implementation source code
 ./json.h                  - JSON API header file

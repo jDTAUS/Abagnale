@@ -1368,6 +1368,18 @@ static void position_pricing(const struct worker_ctx *restrict const w_ctx,
   default:
     panic();
   }
+
+  Numeric_div_to(p->sl_price, w_ctx->m->p_inc, r0);
+  Numeric_scale(r0, 0);
+  if (Numeric_cmp(r0, zero) == 0)
+    Numeric_copy_to(one, r0);
+  Numeric_mul_to(r0, w_ctx->m->p_inc, p->sl_price);
+
+  Numeric_div_to(p->tp_price, w_ctx->m->p_inc, r0);
+  Numeric_scale(r0, 0);
+  if (Numeric_cmp(r0, zero) == 0)
+    Numeric_copy_to(one, r0);
+  Numeric_mul_to(r0, w_ctx->m->p_inc, p->tp_price);
 }
 
 static void position_create(const struct worker_ctx *restrict const w_ctx,
