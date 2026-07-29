@@ -289,6 +289,7 @@ add_library(objects OBJECT
 	algorithm-trend.c
 	array.c
 	charset.c
+	exchange-bitvavo.c
 	exchange-coinbase.c
 	exchange.c
 	heap.c
