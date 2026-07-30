@@ -1,3 +1,5 @@
+`$JDTAUS$`
+
 # Abagnale - Algorithmic Trading System
 
 > **A high-performance algorithmic trading platform built in ISO C for traders and engineering teams that value deterministic execution, transparency, and operational control.**
@@ -131,9 +133,9 @@ This modular design simplifies maintenance and future expansion.
 
 # Technical Highlights
 
-## Modern Native Implementation
+## Portable Native Implementation
 
-Abagnale is written in modern ISO C with emphasis on efficiency, portability, and low runtime overhead.
+Abagnale is written in ISO C, emphasizing standards compliance, portability, efficiency, and low runtime overhead. By avoiding unnecessary compiler-specific extensions where practical, the platform remains maintainable across diverse environments while delivering the predictable performance expected of native applications.
 
 ## Modular Exchange Layer
 
@@ -198,6 +200,14 @@ Abagnale includes infrastructure expected from long-running production services:
 | Data Format       | JSON                     |
 | Deployment        | Linux services (systemd) |
 | Concurrency       | Multithreaded            |
+
+---
+
+# Why ISO C?
+
+Abagnale is implemented in **portable ISO C**, reflecting a deliberate engineering philosophy rather than a language preference. By adhering closely to the ISO C standard, the platform remains lightweight, portable, and easy to build across a wide range of environments using conforming compilers.
+
+This standards-based approach minimizes unnecessary dependencies, promotes long-term maintainability, and ensures the codebase remains accessible to developers familiar with one of the industry's most enduring programming languages.
 
 ---
 
