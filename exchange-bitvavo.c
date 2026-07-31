@@ -1,4 +1,4 @@
-/* $JDTAUS$ */
+/* $JDTAUS: exchange-bitvavo.c 9652 2026-07-31 17:20:24Z schulte $ */
 
 /*
  * Copyright (c) 2026 Christian Schulte <cs@schulte.it>
