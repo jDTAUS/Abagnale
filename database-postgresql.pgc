@@ -1945,13 +1945,16 @@ void db_trend_state_update(const void *const db, const char *const e_id,
 }
 
 bool db_position_state_restore(struct db_position_state_rec *const state,
-                               const void *const db, const char *const p_id) {
+                               const void *const db, const char *const e_id,
+                               const char *const m_id, const char *const p_id) {
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(1, stdout);
 #endif
   // clang-format off
   EXEC SQL BEGIN DECLARE SECTION;
   const char *con = String_chars(db);
+  const char *sql_e_id = e_id;
+  const char *sql_m_id = m_id;
   const char *sql_p_id = p_id;
   numeric *sql_sl_cnt = Numeric_db(state->sl_cnt);
   numeric *sql_sl_price = Numeric_db(state->sl_price);
@@ -1996,9 +1999,16 @@ bool db_position_state_restore(struct db_position_state_rec *const state,
       :sql_tp, :sql_tp_cnt, :sql_tp_price, :sql_tp_nanos, :sql_tp_samples
     FROM
       "POSITION_STATES"
-    WHERE
-      "POSITION_ID" = :sql_p_id;
-  EXEC SQL AT :con DELETE FROM "POSITION_STATES" WHERE "POSITION_ID" = :sql_p_id;
+    WHERE "EXCHANGE_ID" = :sql_e_id
+      AND ("MARKET_ID" = :sql_m_id
+        OR "MARKET_ID" = '00000000-0000-0000-0000-000000000000')
+      AND "POSITION_ID" = :sql_p_id;
+  EXEC SQL AT :con
+    DELETE FROM "POSITION_STATES"
+    WHERE "EXCHANGE_ID" = :sql_e_id
+      AND ("MARKET_ID" = :sql_m_id
+        OR "MARKET_ID" = '00000000-0000-0000-0000-000000000000')
+      AND "POSITION_ID" = :sql_p_id;
   EXEC SQL AT :con COMMIT;
   // clang-format on
 #ifdef ABAG_SQL_DEBUG
@@ -2019,14 +2029,16 @@ not_found:
 }
 
 void db_position_state_persist(
-    const void *const db, const char *const p_id,
-    const struct db_position_state_rec *const state) {
+    const void *const db, const char *const e_id, const char *const m_id,
+    const char *const p_id, const struct db_position_state_rec *const state) {
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(1, stdout);
 #endif
   // clang-format off
   EXEC SQL BEGIN DECLARE SECTION;
   const char *con = String_chars(db);
+  const char *sql_e_id = e_id;
+  const char *sql_m_id = m_id;
   const char *sql_p_id = p_id;
   numeric *sql_sl_cnt = Numeric_db(state->sl_cnt);
   numeric *sql_sl_price = Numeric_db(state->sl_price);
@@ -2049,6 +2061,8 @@ void db_position_state_persist(
   EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
   EXEC SQL AT :con
     INSERT INTO "POSITION_STATES" (
+      "EXCHANGE_ID",
+      "MARKET_ID",
       "POSITION_ID",
       "STOP_LOSS",
       "STOP_LOSS_COUNT",
@@ -2066,11 +2080,11 @@ void db_position_state_persist(
       "TAKE_PROFIT_NANOS",
       "TAKE_PROFIT_SAMPLES"
     ) VALUES (
-      :sql_p_id,
+      :sql_e_id, :sql_m_id, :sql_p_id,
       :sql_sl, :sql_sl_cnt, :sql_sl_price, :sql_sl_nanos, :sql_sl_samples,
       :sql_tl, :sql_tl_cnt, :sql_tl_price, :sql_tl_nanos, :sql_tl_samples,
       :sql_tp, :sql_tp_cnt, :sql_tp_price, :sql_tp_nanos, :sql_tp_samples
-    ) ON CONFLICT ("POSITION_ID")
+    ) ON CONFLICT ("EXCHANGE_ID", "MARKET_ID", "POSITION_ID")
       DO UPDATE SET
         "STOP_LOSS" = :sql_sl,
         "STOP_LOSS_COUNT" = :sql_sl_cnt,

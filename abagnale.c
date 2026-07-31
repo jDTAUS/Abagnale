@@ -814,14 +814,15 @@ static char *position_string(const struct worker_ctx *restrict const w_ctx,
   return res;
 }
 
-static void position_state_load(const void *restrict const db,
+static void position_state_load(const struct worker_ctx *restrict const w_ctx,
                                 struct Position *restrict const p) {
   const struct abag_tls *restrict const tls = abag_tls();
   struct db_position_state_rec *restrict const p_state =
       tls->position_state_load.p_state;
 
-  if (p->id != NULL &&
-      db_position_state_restore(p_state, db, String_chars(p->id))) {
+  if (p->id != NULL && db_position_state_restore(
+                           p_state, w_ctx->db, String_chars(w_ctx->e->id),
+                           String_chars(w_ctx->m->id), String_chars(p->id))) {
 
     Numeric_copy_to(p_state->sl_price, p->sl_trg.price);
     Numeric_copy_to(p_state->sl_nanos, p->sl_trg.nanos);
@@ -847,6 +848,7 @@ static void position_state_load(const void *restrict const db,
 }
 
 static void position_state_save(const void *restrict const db,
+                                const struct Trade *restrict const t,
                                 const struct Position *restrict const p) {
   const struct abag_tls *restrict const tls = abag_tls();
   struct db_position_state_rec *restrict const p_state =
@@ -874,11 +876,12 @@ static void position_state_save(const void *restrict const db,
     Numeric_copy_to(p->tp_samples, p_state->tp_samples);
     p_state->tp = p->tp_trg.set;
 
-    db_position_state_persist(db, String_chars(p->id), p_state);
+    db_position_state_persist(db, String_chars(t->e_id), String_chars(t->m_id),
+                              String_chars(p->id), p_state);
   }
 }
 
-static void trade_state_load(const void *restrict const db,
+static void trade_state_load(const struct worker_ctx *restrict const w_ctx,
                              struct Trade *restrict const t) {
   const struct abag_tls *restrict const tls = abag_tls();
   struct Numeric *restrict const r0 = tls->trade_state_load.r0;
@@ -886,7 +889,7 @@ static void trade_state_load(const void *restrict const db,
       tls->trade_state_load.t_state;
 
   if (t->id != NULL &&
-      db_trade_state_restore(t_state, db, String_chars(t->id))) {
+      db_trade_state_restore(t_state, w_ctx->db, String_chars(t->id))) {
 
     Numeric_copy_to(t_state->fee_pc, t->fee_pc);
     Numeric_copy_to(t_state->tp_pc, t->tp_pc);
@@ -898,8 +901,8 @@ static void trade_state_load(const void *restrict const db,
     Numeric_add_to(r0, one, t->tp_pf);
   }
 
-  position_state_load(db, &t->p_long);
-  position_state_load(db, &t->p_short);
+  position_state_load(w_ctx, &t->p_long);
+  position_state_load(w_ctx, &t->p_short);
 }
 
 static void trade_state_save(const void *restrict const db,
@@ -916,8 +919,8 @@ static void trade_state_save(const void *restrict const db,
     db_trade_state_persist(db, String_chars(t->id), t_state);
   }
 
-  position_state_save(db, &t->p_long);
-  position_state_save(db, &t->p_short);
+  position_state_save(db, t, &t->p_long);
+  position_state_save(db, t, &t->p_short);
 }
 
 static inline struct Trade *trade_new(struct String *restrict const e_id,
@@ -1040,8 +1043,8 @@ static void samples_load(struct Array *restrict const a,
     char *restrict const b = nanos_to_iso8601(s_head->nanos);
     char *restrict const e = nanos_to_iso8601(s_tail->nanos);
 
-    wout("%s: %s: Loaded %zu tickers: %s->%s\n", String_chars(w_ctx->e->nm),
-         String_chars(w_ctx->m->nm), Array_size(a), b, e);
+    wout("%s: %s: Tickers: %s->%s (%zu)\n", String_chars(w_ctx->e->nm),
+         String_chars(w_ctx->m->nm), b, e, Array_size(a));
 
     heap_free(b);
     heap_free(e);
@@ -1311,6 +1314,23 @@ static void position_pricing(const struct worker_ctx *restrict const w_ctx,
       Numeric_copy_to(r0, p->b_ordered);
       Numeric_scale(p->b_ordered, w_ctx->m->b_sc);
     }
+
+    if (w_ctx->m->b_min_opt != NULL &&
+        Numeric_cmp(p->b_ordered, w_ctx->m->b_min_opt) < 0)
+      Numeric_copy_to(w_ctx->m->b_min_opt, p->b_ordered);
+
+    if (w_ctx->m->b_max_opt != NULL &&
+        Numeric_cmp(p->b_ordered, w_ctx->m->b_max_opt) > 0)
+      Numeric_copy_to(w_ctx->m->b_max_opt, p->b_ordered);
+
+    Numeric_mul_to(p->b_ordered, p->price, r0);
+    Numeric_scale(r0, w_ctx->m->q_sc);
+
+    if (w_ctx->m->q_min_opt != NULL && Numeric_cmp(r0, w_ctx->m->q_min_opt) < 0)
+      Numeric_div_to(w_ctx->m->q_min_opt, p->price, p->b_ordered);
+
+    if (w_ctx->m->q_max_opt != NULL && Numeric_cmp(r0, w_ctx->m->q_max_opt) > 0)
+      Numeric_div_to(w_ctx->m->q_max_opt, p->price, p->b_ordered);
   }
 
   Numeric_mul_to(t->fee_pf, two, r1);
@@ -2920,7 +2940,7 @@ static struct Array *trades_load(const struct worker_ctx *restrict const w_ctx,
     Numeric_copy_to(trade->q_return, t->q_return);
 
     if (verbose)
-      wout("%s: %s: %s: Loaded trade\n", String_chars(w_ctx->e->nm),
+      wout("%s: %s: Trade: %s\n", String_chars(w_ctx->e->nm),
            String_chars(w_ctx->m->nm), String_chars(t->id));
 
     t->p_long.id = trade->bo_id_null ? NULL : String_cnew(trade->bo_id);
@@ -3021,7 +3041,7 @@ static struct Array *trades_load(const struct worker_ctx *restrict const w_ctx,
   items = Array_items(trades);
   for (size_t i = Array_size(trades); i-- > 0;) {
     struct Trade *restrict const t = items[i];
-    trade_state_load(w_ctx->db, t);
+    trade_state_load(w_ctx, t);
     Numeric_copy_to(zero, t->p_long.pnanos);
     Numeric_copy_to(zero, t->p_short.pnanos);
     if (w_ctx->m_cnf != NULL)

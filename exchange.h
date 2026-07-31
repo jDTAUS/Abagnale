@@ -54,6 +54,10 @@ struct Market {
   struct Numeric *restrict b_inc;
   struct Numeric *restrict p_inc;
   struct Numeric *restrict q_inc;
+  struct Numeric *restrict b_min_opt;
+  struct Numeric *restrict b_max_opt;
+  struct Numeric *restrict q_min_opt;
+  struct Numeric *restrict q_max_opt;
   mtx_t *restrict mtx;
   enum market_type type;
   enum market_status status;
@@ -163,6 +167,7 @@ struct Market *Market_copy(const struct Market *restrict const);
 void Market_delete(void *restrict const);
 
 struct Account *Account_new(void);
+struct Account *Account_copy(const struct Account *restrict const);
 void Account_delete(void *restrict const);
 
 struct Sample *Sample_new(void);

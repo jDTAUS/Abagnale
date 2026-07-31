@@ -101,6 +101,7 @@
 
 extern const bool verbose;
 
+extern const struct Numeric *restrict const zero;
 extern const struct Numeric *restrict const one;
 extern const struct Numeric *restrict const hundred;
 
@@ -111,12 +112,10 @@ static void bitvavo_start(void);
 static void bitvavo_stop(void);
 static struct Array *bitvavo_markets(void);
 static struct Market *bitvavo_market(const struct String *restrict const);
-static struct Market *
-bitvavo_market_by_symbol(const struct String *restrict const);
+static struct Market *bitvavo_market_by_symbol(struct String *restrict const);
 static struct Array *bitvavo_accounts(void);
 static struct Account *bitvavo_account(const struct String *restrict const);
-static struct Account *
-bitvavo_account_by_symbol(const struct String *restrict const);
+static struct Account *bitvavo_account_by_symbol(struct String *restrict const);
 static struct Pricing *bitvavo_pricing(const struct Market *restrict const);
 static struct Order *bitvavo_order(const struct Market *restrict const,
                                    const struct String *restrict const);
@@ -707,6 +706,18 @@ bitvavo_parse_market(const struct wcjson_document *restrict const doc,
   struct String *restrict const j_tickSize_s =
       json_obj_get_string(doc, market, L"tickSize", 8);
 
+  struct Numeric *restrict const j_minOrderInBaseAsset =
+      json_obj_get_string_number(doc, market, L"minOrderInBaseAsset", 19);
+
+  struct Numeric *restrict const j_maxOrderInBaseAsset =
+      json_obj_get_string_number(doc, market, L"maxOrderInBaseAsset", 19);
+
+  struct Numeric *restrict const j_minOrderInQuoteAsset =
+      json_obj_get_string_number(doc, market, L"minOrderInQuoteAsset", 20);
+
+  struct Numeric *restrict const j_maxOrderInQuoteAsset =
+      json_obj_get_string_number(doc, market, L"maxOrderInQuoteAsset", 20);
+
   if (errno)
     goto ret;
 
@@ -860,6 +871,10 @@ bitvavo_parse_market(const struct wcjson_document *restrict const doc,
   m->b_inc = baseIncrement;
   m->q_sc = Numeric_to_long(j_notionalDecimals);
   m->q_inc = quoteIncrement;
+  m->b_min_opt = j_minOrderInBaseAsset;
+  m->b_max_opt = j_maxOrderInBaseAsset;
+  m->q_min_opt = j_minOrderInQuoteAsset;
+  m->q_max_opt = j_maxOrderInQuoteAsset;
   m->is_tradeable = qa_id != NULL && ba_id != NULL && order_type_limit;
   m->is_active = m->status == MARKET_STATUS_ONLINE;
 
@@ -882,6 +897,10 @@ ret:
     String_delete(j_base);
     String_delete(j_quote);
     Numeric_delete(j_tickSize);
+    Numeric_delete(j_minOrderInBaseAsset);
+    Numeric_delete(j_maxOrderInBaseAsset);
+    Numeric_delete(j_minOrderInQuoteAsset);
+    Numeric_delete(j_maxOrderInQuoteAsset);
   }
 
   String_delete(j_status);
@@ -926,7 +945,7 @@ bitvavo_parse_order(const struct wcjson_document *restrict const doc,
       json_obj_get_string_number(doc, order, L"price", 5);
 
   struct Numeric *restrict const j_feePaid =
-      json_obj_get_string_number(doc, order, L"feePaid", 10);
+      json_obj_get_string_number(doc, order, L"feePaid", 7);
 
   struct String *restrict const j_feeCurrency =
       json_obj_get_string(doc, order, L"feeCurrency", 11);
@@ -1066,8 +1085,7 @@ static int bitvavo_rest_query_accounts(struct Array *restrict const a,
   thread_sleep(&bitvavo_request_rate);
   thread_sleep(&bitvavo_request_rate);
 
-  if (bitvavo_rest_query(rsp_doc, url, "GET", bitvavo_rest_accounts_path, NULL,
-                         0) < 0)
+  if (bitvavo_rest_query(rsp_doc, url, "GET", mg_url_uri(url), NULL, 0) < 0)
     return -1;
 
   if (bitvavo_rest_parse_entities(a, "accounts", rsp_doc,
@@ -1090,8 +1108,7 @@ static int bitvavo_rest_query_markets(struct Array *restrict const m) {
   // Rate limit weight points: 1
   thread_sleep(&bitvavo_request_rate);
 
-  if (bitvavo_rest_query(rsp_doc, url, "GET", bitvavo_rest_markets_path, NULL,
-                         0) < 0)
+  if (bitvavo_rest_query(rsp_doc, url, "GET", mg_url_uri(url), NULL, 0) < 0)
     return -1;
 
   if (bitvavo_rest_parse_entities(m, "markets", rsp_doc, bitvavo_parse_market) <
@@ -1154,7 +1171,7 @@ static struct Market *bitvavo_market(const struct String *restrict const m_id) {
 }
 
 static struct Market *
-bitvavo_market_by_symbol(const struct String *restrict const m_sym) {
+bitvavo_market_by_symbol(struct String *restrict const m_sym) {
   struct Array *restrict const m_array = bitvavo_markets();
   struct Market *restrict const m = Map_get(markets_by_symbol, m_sym);
 
@@ -1223,6 +1240,11 @@ bitvavo_account(const struct String *restrict const a_id) {
     panic();
 
   a = Array_head(a_array);
+
+  // See comment in bitvavo_account_by_symbol
+  if (a == NULL)
+    a = Account_copy(bitvavo_acct);
+
 ret:
   Array_unlock(bitvavo_accts);
   Array_delete(a_array, NULL);
@@ -1230,17 +1252,41 @@ ret:
 }
 
 static struct Account *
-bitvavo_account_by_symbol(const struct String *restrict const sym) {
+bitvavo_account_by_symbol(struct String *restrict const sym) {
+  char a_id[DATABASE_UUID_MAX_LENGTH + 1] = {0};
   struct Array *restrict const a_array = bitvavo_accounts();
-  struct Account *restrict const a = Map_get(accounts_by_symbol, sym);
+  struct Account *restrict a = Map_get(accounts_by_symbol, sym);
 
-  if (a != NULL) {
-    a->mtx = Array_mutex(a_array);
-    return a;
+  /*
+   * There does not seem to be any endpoint providing a way to query an
+   * account exists, is ready and active. The balance endpoint "returns the
+   * balance for all assets above zero". An assumption is made that Bitvavo
+   * never provides market symbols the user cannot trade due to account
+   * restrictions.
+   */
+
+  if (a == NULL) {
+    db_symbol_to_id(a_id, bitvavo_db, BITVAVO_UUID, String_chars(sym));
+
+    a = Account_new();
+    a->id = String_cnew(a_id);
+    a->nm = String_copy(sym);
+    a->sym = String_copy(sym);
+    a->type = ACCOUNT_TYPE_UNSPECIFIED;
+    a->avail = Numeric_copy(zero);
+    a->is_active = true;
+    a->is_ready = true;
+
+    Array_add_tail(a_array, a);
+    Map_put(accounts_by_symbol, a->sym, a);
+
+    if (Map_put(accounts_by_id, a->id, a) != NULL)
+      fatal("%s: account: Account id uniqueness constraint: %s",
+            bitvavo_rest_uri, String_chars(a->id));
   }
 
-  Array_unlock(a_array);
-  return NULL;
+  a->mtx = Array_mutex(a_array);
+  return a;
 }
 
 static struct Pricing *bitvavo_pricing(const struct Market *restrict const m) {
@@ -1265,8 +1311,7 @@ static struct Pricing *bitvavo_pricing(const struct Market *restrict const m) {
   // Rate limit weight points: 1
   thread_sleep(&bitvavo_request_rate);
 
-  if (bitvavo_rest_query(rsp_doc, url, "GET", bitvavo_rest_fees_path, NULL, 0) <
-      0)
+  if (bitvavo_rest_query(rsp_doc, url, "GET", mg_url_uri(url), NULL, 0) < 0)
     goto ret;
 
   p = bitvavo_parse_fee(rsp_doc);
@@ -1299,8 +1344,7 @@ static struct Order *bitvavo_order(const struct Market *restrict const m,
   // Rate limit weight points: 1
   thread_sleep(&bitvavo_request_rate);
 
-  if (bitvavo_rest_query(rsp_doc, url, "GET", bitvavo_rest_order_path, NULL,
-                         0) < 0)
+  if (bitvavo_rest_query(rsp_doc, url, "GET", mg_url_uri(url), NULL, 0) < 0)
     return NULL;
 
   return bitvavo_parse_order(rsp_doc, rsp_doc->values);
@@ -1403,8 +1447,7 @@ static struct String *bitvavo_order_post(const char *restrict const m_sym,
 
   errno = 0;
 
-  if (bitvavo_rest_query(rsp_doc, url, "POST", bitvavo_rest_order_create_path,
-                         mb, mb_len) < 0)
+  if (bitvavo_rest_query(rsp_doc, url, "POST", mg_url_uri(url), mb, mb_len) < 0)
     goto ret;
 
   j_orderId = json_obj_get_string(rsp_doc, rsp_doc->values, L"orderId", 7);
@@ -1455,8 +1498,7 @@ static bool bitvavo_order_cancel(const struct Market *restrict const m,
   if (r < 0 || (size_t)r >= sizeof(url))
     panic();
 
-  if (bitvavo_rest_query(rsp_doc, url, "DELETE", bitvavo_rest_order_cancel_path,
-                         NULL, 0) < 0)
+  if (bitvavo_rest_query(rsp_doc, url, "DELETE", mg_url_uri(url), NULL, 0) < 0)
     goto ret;
 
   errno = 0;
@@ -1872,7 +1914,7 @@ bitvavo_ws_ticker_evt_handler(struct mg_connection *restrict const c,
   if (errno)
     goto ret;
 
-  if (j_lastPrice == NULL)
+  if (j_lastPrice == NULL || Numeric_cmp(j_lastPrice, zero) == 0)
     goto ok;
 
   struct Market *restrict const m = bitvavo_market_by_symbol(j_market);

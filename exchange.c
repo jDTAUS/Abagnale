@@ -63,6 +63,10 @@ inline struct Market *Market_copy(const struct Market *restrict const m) {
   mc->q_inc = Numeric_copy(m->q_inc);
   mc->is_tradeable = m->is_tradeable;
   mc->is_active = m->is_active;
+  mc->b_min_opt = m->b_min_opt != NULL ? Numeric_copy(m->b_min_opt) : NULL;
+  mc->b_max_opt = m->b_max_opt != NULL ? Numeric_copy(m->b_max_opt) : NULL;
+  mc->q_min_opt = m->q_min_opt != NULL ? Numeric_copy(m->q_min_opt) : NULL;
+  mc->q_max_opt = m->q_max_opt != NULL ? Numeric_copy(m->q_max_opt) : NULL;
   return mc;
 }
 
@@ -81,11 +85,28 @@ inline void Market_delete(void *restrict const m) {
   Numeric_delete(market->b_inc);
   Numeric_delete(market->p_inc);
   Numeric_delete(market->q_inc);
+  Numeric_delete(market->b_min_opt);
+  Numeric_delete(market->b_max_opt);
+  Numeric_delete(market->q_min_opt);
+  Numeric_delete(market->q_max_opt);
   heap_free(market);
 }
 
 inline struct Account *Account_new(void) {
   return heap_calloc(1, sizeof(struct Account));
+}
+
+inline struct Account *Account_copy(const struct Account *restrict const a) {
+  struct Account *restrict ma = Account_new();
+  ma->id = String_copy(a->id);
+  ma->nm = String_copy(a->nm);
+  ma->sym = String_copy(a->sym);
+  ma->avail = Numeric_copy(a->avail);
+  ma->is_active = a->is_active;
+  ma->is_ready = a->is_ready;
+  ma->type = a->type;
+  ma->mtx = NULL;
+  return ma;
 }
 
 inline void Account_delete(void *restrict const a) {

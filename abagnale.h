@@ -32,10 +32,10 @@ struct Algorithm;
 struct Trade;
 
 struct Trigger {
-  bool set;
-  uintmax_t cnt;
   struct Numeric *restrict nanos;
   struct Numeric *restrict price;
+  uintmax_t cnt;
+  bool set;
 };
 
 enum candle_trend {
@@ -45,7 +45,6 @@ enum candle_trend {
 };
 
 struct Candle {
-  enum candle_trend t;
   struct Numeric *restrict o;
   struct Numeric *restrict h;
   struct Numeric *restrict l;
@@ -56,6 +55,7 @@ struct Candle {
   struct Numeric *restrict hnanos;
   struct Numeric *restrict lnanos;
   struct Numeric *restrict cnanos;
+  enum candle_trend t;
 };
 
 enum position_type {
@@ -64,9 +64,6 @@ enum position_type {
 };
 
 struct Position {
-  bool done;
-  bool filled;
-  enum position_type type;
   struct String *restrict id;
   struct Numeric *restrict cnanos;
   struct Numeric *restrict dnanos;
@@ -86,6 +83,9 @@ struct Position {
   struct Trigger sl_trg;
   struct Trigger tl_trg;
   struct Trigger tp_trg;
+  enum position_type type;
+  bool done;
+  bool filled;
 };
 
 enum trade_status {
@@ -110,11 +110,11 @@ struct Trade {
   struct Numeric *restrict pr_samples;
   const struct Algorithm *restrict a;
   mtx_t mtx;
-  enum trade_status status;
   struct Position p_long;
   struct Position p_short;
   struct Candle open_cd;
   struct Trigger open_trg;
+  enum trade_status status;
 };
 
 struct Algorithm {

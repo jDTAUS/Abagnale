@@ -18,7 +18,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict ZVyyzf0qtfKdDhXof8IiJZhlDudTG64wM1oqpx12WA1XHoU9dZ5dG8Tc7wc34yY
+\restrict fnxvNrrlj2bOfeyEjqcArkXIQkmcLIR1615iBBla0CdzdWtsYIiQpFaJye3tcT1
 
 -- Dumped from database version 17.10 (Debian 17.10-0+deb13u1)
 -- Dumped by pg_dump version 17.10 (Debian 17.10-0+deb13u1)
@@ -44,9 +44,9 @@ CREATE DATABASE "ABAGNALE" WITH TEMPLATE = template0 ENCODING = 'UTF8' LOCALE_PR
 
 ALTER DATABASE "ABAGNALE" OWNER TO abagnale;
 
-\unrestrict ZVyyzf0qtfKdDhXof8IiJZhlDudTG64wM1oqpx12WA1XHoU9dZ5dG8Tc7wc34yY
+\unrestrict fnxvNrrlj2bOfeyEjqcArkXIQkmcLIR1615iBBla0CdzdWtsYIiQpFaJye3tcT1
 \connect "ABAGNALE"
-\restrict ZVyyzf0qtfKdDhXof8IiJZhlDudTG64wM1oqpx12WA1XHoU9dZ5dG8Tc7wc34yY
+\restrict fnxvNrrlj2bOfeyEjqcArkXIQkmcLIR1615iBBla0CdzdWtsYIiQpFaJye3tcT1
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -274,6 +274,8 @@ COMMENT ON TABLE public."PLOTS_DATAPOINTS" IS 'Datapoints of two dimensional plo
 --
 
 CREATE TABLE public."POSITION_STATES" (
+    "EXCHANGE_ID" uuid NOT NULL,
+    "MARKET_ID" uuid NOT NULL,
     "POSITION_ID" uuid NOT NULL,
     "STOP_LOSS" boolean NOT NULL,
     "STOP_LOSS_COUNT" numeric NOT NULL,
@@ -565,7 +567,7 @@ ALTER TABLE ONLY public."PLOTS"
 --
 
 ALTER TABLE ONLY public."POSITION_STATES"
-    ADD CONSTRAINT "POSITION_STATES_pkey" PRIMARY KEY ("POSITION_ID");
+    ADD CONSTRAINT "POSITION_STATES_pkey" PRIMARY KEY ("EXCHANGE_ID", "MARKET_ID", "POSITION_ID");
 
 
 --
@@ -758,5 +760,5 @@ ALTER TABLE ONLY public."TREND_PLOTS"
 -- PostgreSQL database dump complete
 --
 
-\unrestrict ZVyyzf0qtfKdDhXof8IiJZhlDudTG64wM1oqpx12WA1XHoU9dZ5dG8Tc7wc34yY
+\unrestrict fnxvNrrlj2bOfeyEjqcArkXIQkmcLIR1615iBBla0CdzdWtsYIiQpFaJye3tcT1
 
