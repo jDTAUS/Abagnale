@@ -33,7 +33,7 @@ Environment=LC_CTYPE=C.UTF-8
 #Environment=CDP_HTTP_RETRY_SECONDS=3
 #Environment=CDP_HTTP_STALL_MILLIS=3600000
 #Environment=BITVAVO_REST_URI=https://api.bitvavo.com
-#Environment=BITVAVO_WS_URI=https://ws.bitvavo.com
+#Environment=BITVAVO_WS_URI=wss://ws.bitvavo.com
 #Environment=BITVAVO_WS_PATH=/v2
 #Environment=BITVAVO_WS_AUTHENTICATE_PATH=/v2/websocket
 #Environment=BITVAVO_ACCOUNTS_PATH=/v2/balance

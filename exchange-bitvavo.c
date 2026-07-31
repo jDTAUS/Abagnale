@@ -47,7 +47,7 @@
 #endif
 
 #ifndef DEFAULT_BITVAVO_WS_URI
-#define DEFAULT_BITVAVO_WS_URI "https://ws.bitvavo.com"
+#define DEFAULT_BITVAVO_WS_URI "wss://ws.bitvavo.com"
 #endif
 
 #ifndef DEFAULT_BITVAVO_WS_PATH
