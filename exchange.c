@@ -97,16 +97,16 @@ inline struct Account *Account_new(void) {
 }
 
 inline struct Account *Account_copy(const struct Account *restrict const a) {
-  struct Account *restrict ma = Account_new();
-  ma->id = String_copy(a->id);
-  ma->nm = String_copy(a->nm);
-  ma->sym = String_copy(a->sym);
-  ma->avail = Numeric_copy(a->avail);
-  ma->is_active = a->is_active;
-  ma->is_ready = a->is_ready;
-  ma->type = a->type;
-  ma->mtx = NULL;
-  return ma;
+  struct Account *restrict ac = Account_new();
+  ac->id = String_copy(a->id);
+  ac->nm = String_copy(a->nm);
+  ac->sym = String_copy(a->sym);
+  ac->avail = Numeric_copy(a->avail);
+  ac->is_active = a->is_active;
+  ac->is_ready = a->is_ready;
+  ac->type = a->type;
+  ac->mtx = NULL;
+  return ac;
 }
 
 inline void Account_delete(void *restrict const a) {
