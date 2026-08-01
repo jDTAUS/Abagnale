@@ -3195,6 +3195,7 @@ static int samples_process(void *restrict const arg) {
   void *const *restrict items;
 
   while (!terminated) {
+    bool market_ready = true;
     struct Sample *restrict const sample = w_ctx->e->sample_await();
 
     if (sample == NULL)
@@ -3254,11 +3255,8 @@ static int samples_process(void *restrict const arg) {
       struct Sample *restrict const youngest = Array_tail(samples);
 
       Numeric_sub_to(youngest->nanos, oldest->nanos, nanos);
-      if (Numeric_cmp(nanos, w_ctx->m_cnf->wnanos) < 0) {
-        Array_unlock(samples);
-        Market_delete(w_ctx->m);
-        continue;
-      }
+      if (Numeric_cmp(nanos, w_ctx->m_cnf->wnanos) < 0)
+        market_ready = false;
 
       Numeric_sub_to(sample->nanos, w_ctx->m_cnf->wnanos, outdated_ns);
 
@@ -3342,7 +3340,7 @@ static int samples_process(void *restrict const arg) {
       }
     }
 
-    if (!betting && has_config) {
+    if (!betting && has_config && market_ready) {
       Array_lock(samples);
       if (Array_size(samples) > 1) {
         struct Trade *restrict const t = trade_new(w_ctx->e->id, w_ctx->m->id);
