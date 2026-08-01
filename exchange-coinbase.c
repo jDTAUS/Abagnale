@@ -1900,7 +1900,7 @@ parse_order(const struct wcjson_document *restrict const doc,
          coinbase_rest_uri, String_chars(j_order_id));
 
   if (j_size_in_quote && j_size_in_quote->is_true)
-    werr("%s: order: Unsupporetd 'size_in_quote' boolean item: %s\n",
+    werr("%s: order: Unsupported 'size_in_quote' boolean item: %s\n",
          coinbase_rest_uri, String_chars(j_order_id));
 
   struct String *restrict msg = NULL;
