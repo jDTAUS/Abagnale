@@ -777,6 +777,7 @@ static char *position_string(const struct worker_ctx *restrict const w_ctx,
   char *restrict const d = nanos_to_iso8601(p->dnanos);
   char *restrict const res = heap_malloc(POSITION_STRING_MAX_LENGTH + 1);
   const char *restrict side;
+  int r;
 
   switch (p->type) {
   case POSITION_TYPE_LONG:
@@ -789,15 +790,26 @@ static char *position_string(const struct worker_ctx *restrict const w_ctx,
     panic();
   }
 
-  const int r = snprintf(
-      res, POSITION_STRING_MAX_LENGTH + 1,
-      "%s %s%s@%s%s %s->%s, base: %s%s, quote: %s%s, fee: %s%s, stop-loss: "
-      "%s%s@%s%s, take-profit: %s%s@%s%s",
-      side, b_o, String_chars(w_ctx->m->b_id), pr, String_chars(w_ctx->m->q_id),
-      c, d, b_f, String_chars(w_ctx->m->b_id), q_f,
-      String_chars(w_ctx->m->q_id), q_fee, String_chars(w_ctx->m->q_id), b_o,
-      String_chars(w_ctx->m->b_id), sl_pr, String_chars(w_ctx->m->q_id), b_o,
-      String_chars(w_ctx->m->b_id), tp_pr, String_chars(w_ctx->m->q_id));
+  if (p->id != NULL)
+    r = snprintf(
+        res, POSITION_STRING_MAX_LENGTH + 1,
+        "%s: %s %s%s@%s%s %s->%s, base: %s%s, quote: %s%s, fee: %s%s, "
+        "stop-loss: %s%s@%s%s, take-profit: %s%s@%s%s",
+        side, String_chars(p->id), b_o, String_chars(w_ctx->m->b_id), pr,
+        String_chars(w_ctx->m->q_id), c, d, b_f, String_chars(w_ctx->m->b_id),
+        q_f, String_chars(w_ctx->m->q_id), q_fee, String_chars(w_ctx->m->q_id),
+        b_o, String_chars(w_ctx->m->b_id), sl_pr, String_chars(w_ctx->m->q_id),
+        b_o, String_chars(w_ctx->m->b_id), tp_pr, String_chars(w_ctx->m->q_id));
+  else
+    r = snprintf(
+        res, POSITION_STRING_MAX_LENGTH + 1,
+        "%s: %s%s@%s%s %s->%s, base: %s%s, quote: %s%s, fee: %s%s, stop-loss: "
+        "%s%s@%s%s, take-profit: %s%s@%s%s",
+        side, b_o, String_chars(w_ctx->m->b_id), pr,
+        String_chars(w_ctx->m->q_id), c, d, b_f, String_chars(w_ctx->m->b_id),
+        q_f, String_chars(w_ctx->m->q_id), q_fee, String_chars(w_ctx->m->q_id),
+        b_o, String_chars(w_ctx->m->b_id), sl_pr, String_chars(w_ctx->m->q_id),
+        b_o, String_chars(w_ctx->m->b_id), tp_pr, String_chars(w_ctx->m->q_id));
 
   if (r < 0 || (size_t)r >= POSITION_STRING_MAX_LENGTH + 1)
     panic();
@@ -1086,7 +1098,7 @@ static bool quote_return(struct Numeric *restrict const q_return,
     Array_unlock(markets);
 
     if (q_m_id == NULL && b_m_id == NULL) {
-      werr("%s: %s: Markets not available: %s@%s, %s@%s\n",
+      werr("%s: %s: Markets not available: %s@%s %s@%s\n",
            String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
            String_chars(w_ctx->m->q_id), String_chars(w_ctx->m_cnf->r_id),
            String_chars(w_ctx->m_cnf->r_id), String_chars(w_ctx->m->q_id));
@@ -1113,7 +1125,7 @@ static bool quote_return(struct Numeric *restrict const q_return,
     b_m_id = NULL;
 
     if (q_samples == NULL && b_samples == NULL) {
-      werr("%s: %s: Tickers not available: %s@%s, %s@%s\n",
+      werr("%s: %s: Tickers not available: %s@%s %s@%s\n",
            String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
            String_chars(w_ctx->m->q_id), String_chars(w_ctx->m_cnf->r_id),
            String_chars(w_ctx->m_cnf->r_id), String_chars(w_ctx->m->q_id));
@@ -1150,7 +1162,7 @@ static bool quote_return(struct Numeric *restrict const q_return,
     }
 
     if (q_sample == NULL && b_sample == NULL) {
-      werr("%s: %s: Tickers not available: %s@%s, %s@%s\n",
+      werr("%s: %s: Tickers not available: %s@%s %s@%s\n",
            String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
            String_chars(w_ctx->m->q_id), String_chars(w_ctx->m_cnf->r_id),
            String_chars(w_ctx->m_cnf->r_id), String_chars(w_ctx->m->q_id));
@@ -1584,7 +1596,7 @@ static void position_cancel(const struct worker_ctx *restrict const w_ctx,
     db_trade_delete(w_ctx->db, String_chars(t->id));
 
     if (verbose)
-      wout("%s: %s: %s: Trade cancelled\n", String_chars(w_ctx->e->nm),
+      wout("%s: %s: Trade cancelled: %s\n", String_chars(w_ctx->e->nm),
            String_chars(w_ctx->m->nm), String_chars(t->id));
 
     String_delete(t->id);
@@ -1699,11 +1711,11 @@ static void position_maintain(const struct worker_ctx *restrict const w_ctx,
 
       if (verbose) {
         char *restrict const p_info = position_string(w_ctx, t, p);
-        wout("%s: %s: %s: Order timed out\n", String_chars(w_ctx->e->nm),
+        wout("%s: %s: Order timed out: %s\n", String_chars(w_ctx->e->nm),
              String_chars(w_ctx->m->nm), String_chars(t->id));
 
-        wout("%s: %s: %s: %s\n", String_chars(w_ctx->e->nm),
-             String_chars(w_ctx->m->nm), String_chars(p->id), p_info);
+        wout("%s: %s: %s\n", String_chars(w_ctx->e->nm),
+             String_chars(w_ctx->m->nm), p_info);
 
         heap_free(p_info);
       }
@@ -1718,11 +1730,11 @@ static void position_maintain(const struct worker_ctx *restrict const w_ctx,
       position_timeout(w_ctx, t, p, samples, sample);
       char *restrict const p_info = position_string(w_ctx, t, p);
 
-      werr("%s: %s: %s: Failure syncing order\n", String_chars(w_ctx->e->nm),
+      werr("%s: %s: Failure syncing order: %s\n", String_chars(w_ctx->e->nm),
            String_chars(w_ctx->m->nm), String_chars(t->id));
 
-      werr("%s: %s: %s: %s\n", String_chars(w_ctx->e->nm),
-           String_chars(w_ctx->m->nm), String_chars(p->id), p_info);
+      werr("%s: %s: %s\n", String_chars(w_ctx->e->nm),
+           String_chars(w_ctx->m->nm), p_info);
 
       heap_free(p_info);
       return;
@@ -1736,20 +1748,20 @@ static void position_maintain(const struct worker_ctx *restrict const w_ctx,
         char *restrict const p_info = position_string(w_ctx, t, p);
 
         if (order->settled)
-          wout("%s: %s: %s: Order done\n", String_chars(w_ctx->e->nm),
+          wout("%s: %s: Order done: %s\n", String_chars(w_ctx->e->nm),
                String_chars(w_ctx->m->nm), String_chars(t->id));
         else
-          wout("%s: %s: %s: Order filled\n", String_chars(w_ctx->e->nm),
+          wout("%s: %s: Order filled: %s\n", String_chars(w_ctx->e->nm),
                String_chars(w_ctx->m->nm), String_chars(t->id));
 
         if (order->msg && String_length(order->msg) > 0) {
           wout("%s: %s: %s: %s\n", String_chars(w_ctx->e->nm),
-               String_chars(w_ctx->m->nm), String_chars(p->id),
-               String_chars(order->msg));
+               String_chars(w_ctx->m->nm), String_chars(order->msg),
+               String_chars(p->id));
         }
 
-        wout("%s: %s: %s: %s\n", String_chars(w_ctx->e->nm),
-             String_chars(w_ctx->m->nm), String_chars(p->id), p_info);
+        wout("%s: %s: %s\n", String_chars(w_ctx->e->nm),
+             String_chars(w_ctx->m->nm), p_info);
 
         heap_free(p_info);
       }
@@ -1764,18 +1776,18 @@ static void position_maintain(const struct worker_ctx *restrict const w_ctx,
         char *restrict const m_asc = Numeric_to_char(m, 2);
         char *restrict const p_info = position_string(w_ctx, t, p);
 
-        wout("%s: %s: %s: Order open: timeout: %s %s %s\n",
+        wout("%s: %s: Order open: %s, timeout: %s %s %s\n",
              String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
              String_chars(t->id), f_asc, s_asc, m_asc);
 
         if (order->msg && String_length(order->msg) > 0) {
           wout("%s: %s: %s: %s\n", String_chars(w_ctx->e->nm),
-               String_chars(w_ctx->m->nm), String_chars(p->id),
-               String_chars(order->msg));
+               String_chars(w_ctx->m->nm), String_chars(order->msg),
+               String_chars(p->id));
         }
 
-        wout("%s: %s: %s: %s\n", String_chars(w_ctx->e->nm),
-             String_chars(w_ctx->m->nm), String_chars(p->id), p_info);
+        wout("%s: %s: %s\n", String_chars(w_ctx->e->nm),
+             String_chars(w_ctx->m->nm), p_info);
 
         Numeric_char_free(f_asc);
         Numeric_char_free(s_asc);
@@ -1787,18 +1799,18 @@ static void position_maintain(const struct worker_ctx *restrict const w_ctx,
                order->status == ORDER_STATUS_EXPIRED) {
       if (verbose) {
         char *restrict const p_info = position_string(w_ctx, t, p);
-        wout("%s: %s: %s: Order failed, cancelled or expired\n",
+        wout("%s: %s: Order failed, cancelled or expired: %s\n",
              String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
              String_chars(t->id));
 
         if (order->msg && String_length(order->msg) > 0) {
           wout("%s: %s: %s: %s\n", String_chars(w_ctx->e->nm),
-               String_chars(w_ctx->m->nm), String_chars(p->id),
-               String_chars(order->msg));
+               String_chars(w_ctx->m->nm), String_chars(order->msg),
+               String_chars(p->id));
         }
 
-        wout("%s: %s: %s: %s\n", String_chars(w_ctx->e->nm),
-             String_chars(w_ctx->m->nm), String_chars(p->id), p_info);
+        wout("%s: %s: %s\n", String_chars(w_ctx->e->nm),
+             String_chars(w_ctx->m->nm), p_info);
 
         heap_free(p_info);
       }
@@ -1812,24 +1824,24 @@ static void position_maintain(const struct worker_ctx *restrict const w_ctx,
 
       if (verbose) {
         char *restrict const p_info = position_string(w_ctx, t, p);
-        wout("%s: %s: %s: Order pending or queued\n",
+        wout("%s: %s: Order pending or queued: %s\n",
              String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
              String_chars(t->id));
 
         if (order->msg && String_length(order->msg) > 0) {
           wout("%s: %s: %s: %s\n", String_chars(w_ctx->e->nm),
-               String_chars(w_ctx->m->nm), String_chars(t->id),
-               String_chars(order->msg));
+               String_chars(w_ctx->m->nm), String_chars(order->msg),
+               String_chars(p->id));
         }
 
-        wout("%s: %s: %s: %s\n", String_chars(w_ctx->e->nm),
-             String_chars(w_ctx->m->nm), String_chars(p->id), p_info);
+        wout("%s: %s: %s\n", String_chars(w_ctx->e->nm),
+             String_chars(w_ctx->m->nm), p_info);
 
         heap_free(p_info);
       }
       goto free;
     } else {
-      werr("%s: %s: %s: %u: Order status unknown\n", String_chars(w_ctx->e->nm),
+      werr("%s: %s: Order status unknown: %s %u\n", String_chars(w_ctx->e->nm),
            String_chars(w_ctx->m->nm), String_chars(t->id), order->status);
 
       position_timeout(w_ctx, t, p, samples, sample);
@@ -1842,19 +1854,19 @@ static void position_maintain(const struct worker_ctx *restrict const w_ctx,
       char *restrict const p_info = position_string(w_ctx, t, p);
 
       if (!cancelled) {
-        werr("%s: %s: %s: Failure cancelling order\n",
+        werr("%s: %s: Failure cancelling order: %s\n",
              String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
              String_chars(t->id));
 
-        werr("%s: %s: %s: %s\n", String_chars(w_ctx->e->nm),
-             String_chars(w_ctx->m->nm), String_chars(p->id), p_info);
+        werr("%s: %s: %s\n", String_chars(w_ctx->e->nm),
+             String_chars(w_ctx->m->nm), p_info);
 
       } else if (verbose) {
-        wout("%s: %s: %s: Order cancelled\n", String_chars(w_ctx->e->nm),
+        wout("%s: %s: Order cancelled: %s\n", String_chars(w_ctx->e->nm),
              String_chars(w_ctx->m->nm), String_chars(t->id));
 
-        wout("%s: %s: %s: %s\n", String_chars(w_ctx->e->nm),
-             String_chars(w_ctx->m->nm), String_chars(p->id), p_info);
+        wout("%s: %s: %s\n", String_chars(w_ctx->e->nm),
+             String_chars(w_ctx->m->nm), p_info);
       }
 
       heap_free(p_info);
@@ -1921,15 +1933,15 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
         char *restrict const s_pr =
             Numeric_to_char(sample->price, w_ctx->m->q_sc);
 
-        wout("%s: %s: %s: Entering stop loss(%" PRIuMAX
-             "): 1%s@%s%s: stop-loss-delay: %s tickers, stop-loss-delays: "
+        wout("%s: %s: Entering stop loss(%" PRIuMAX
+             "): %s 1%s@%s%s, stop-loss-delay: %s tickers, stop-loss-delays: "
              "%" PRIuMAX "\n",
              String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
-             String_chars(t->id), p->sl_trg.cnt, String_chars(w_ctx->m->b_id),
+             p->sl_trg.cnt, String_chars(t->id), String_chars(w_ctx->m->b_id),
              s_pr, String_chars(w_ctx->m->q_id), delay, w_ctx->m_cnf->sl_dlcnt);
 
-        wout("%s: %s: %s: %s\n", String_chars(w_ctx->e->nm),
-             String_chars(w_ctx->m->nm), String_chars(p->id), p_info);
+        wout("%s: %s: %s\n", String_chars(w_ctx->e->nm),
+             String_chars(w_ctx->m->nm), p_info);
 
         heap_free(p_info);
         Numeric_char_free(delay);
@@ -1950,15 +1962,15 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
       char *restrict const s_pr =
           Numeric_to_char(sample->price, w_ctx->m->q_sc);
 
-      wout("%s: %s: %s: Leaving stop loss(%" PRIuMAX
-           "): 1%s@%s%s: stop-loss-delay: %s tickers, stop-loss-delays: "
+      wout("%s: %s: Leaving stop loss(%" PRIuMAX
+           "): %s 1%s@%s%s, stop-loss-delay: %s tickers, stop-loss-delays: "
            "%" PRIuMAX "\n",
            String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
-           String_chars(t->id), p->sl_trg.cnt, String_chars(w_ctx->m->b_id),
+           p->sl_trg.cnt, String_chars(t->id), String_chars(w_ctx->m->b_id),
            s_pr, String_chars(w_ctx->m->q_id), delay, w_ctx->m_cnf->sl_dlcnt);
 
-      wout("%s: %s: %s: %s\n", String_chars(w_ctx->e->nm),
-           String_chars(w_ctx->m->nm), String_chars(p->id), p_info);
+      wout("%s: %s: %s\n", String_chars(w_ctx->e->nm),
+           String_chars(w_ctx->m->nm), p_info);
 
       heap_free(p_info);
       Numeric_char_free(delay);
@@ -1985,15 +1997,15 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
         char *restrict const s_pr =
             Numeric_to_char(sample->price, w_ctx->m->q_sc);
 
-        wout("%s: %s: %s: Entering take profit(%" PRIuMAX
-             "): 1%s@%s%s: take-profit-delay: %s tickers, take-profit-delays: "
-             "%" PRIuMAX "\n",
+        wout("%s: %s: Entering take profit(%" PRIuMAX
+             "): %s 1%s@%s%s, take-profit-delay: %s tickers, "
+             "take-profit-delays: %" PRIuMAX "\n",
              String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
-             String_chars(t->id), p->tp_trg.cnt, String_chars(w_ctx->m->b_id),
+             p->tp_trg.cnt, String_chars(t->id), String_chars(w_ctx->m->b_id),
              s_pr, String_chars(w_ctx->m->q_id), delay, w_ctx->m_cnf->tp_dlcnt);
 
-        wout("%s: %s: %s: %s\n", String_chars(w_ctx->e->nm),
-             String_chars(w_ctx->m->nm), String_chars(p->id), p_info);
+        wout("%s: %s: %s\n", String_chars(w_ctx->e->nm),
+             String_chars(w_ctx->m->nm), p_info);
 
         heap_free(p_info);
         Numeric_char_free(delay);
@@ -2014,15 +2026,15 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
       char *restrict const s_pr =
           Numeric_to_char(sample->price, w_ctx->m->q_sc);
 
-      wout("%s: %s: %s: Leaving take profit(%" PRIuMAX
-           "): 1%s@%s%s: take-profit-delay: %s tickers, take-profit-delays: "
+      wout("%s: %s: Leaving take profit(%" PRIuMAX
+           "): %s 1%s@%s%s, take-profit-delay: %s tickers, take-profit-delays: "
            "%" PRIuMAX "\n",
            String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
-           String_chars(t->id), p->tp_trg.cnt, String_chars(w_ctx->m->b_id),
+           p->tp_trg.cnt, String_chars(t->id), String_chars(w_ctx->m->b_id),
            s_pr, String_chars(w_ctx->m->q_id), delay, w_ctx->m_cnf->tp_dlcnt);
 
-      wout("%s: %s: %s: %s\n", String_chars(w_ctx->e->nm),
-           String_chars(w_ctx->m->nm), String_chars(p->id), p_info);
+      wout("%s: %s: %s\n", String_chars(w_ctx->e->nm),
+           String_chars(w_ctx->m->nm), p_info);
 
       heap_free(p_info);
       Numeric_char_free(delay);
@@ -2046,15 +2058,15 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
         char *restrict const s_pr =
             Numeric_to_char(sample->price, w_ctx->m->q_sc);
 
-        wout("%s: %s: %s: Reentering stop loss(%" PRIuMAX
-             "): 1%s@%s%s: stop-loss-delay: %s tickers, stop-loss-delays: "
+        wout("%s: %s: Reentering stop loss(%" PRIuMAX
+             "): %s 1%s@%s%s, stop-loss-delay: %s tickers, stop-loss-delays: "
              "%" PRIuMAX "\n",
              String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
-             String_chars(t->id), p->sl_trg.cnt, String_chars(w_ctx->m->b_id),
+             p->sl_trg.cnt, String_chars(t->id), String_chars(w_ctx->m->b_id),
              s_pr, String_chars(w_ctx->m->q_id), delay, w_ctx->m_cnf->sl_dlcnt);
 
-        wout("%s: %s: %s: %s\n", String_chars(w_ctx->e->nm),
-             String_chars(w_ctx->m->nm), String_chars(p->id), p_info);
+        wout("%s: %s: %s\n", String_chars(w_ctx->e->nm),
+             String_chars(w_ctx->m->nm), p_info);
 
         heap_free(p_info);
         Numeric_char_free(delay);
@@ -2082,15 +2094,15 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
         char *restrict const s_pr =
             Numeric_to_char(sample->price, w_ctx->m->q_sc);
 
-        wout("%s: %s: %s: Entering take loss(%" PRIuMAX
-             "): 1%s@%s%s: take-loss-delay: %s tickers, take-loss-delays: "
+        wout("%s: %s: Entering take loss(%" PRIuMAX
+             "): %s 1%s@%s%s, take-loss-delay: %s tickers, take-loss-delays: "
              "%" PRIuMAX "\n",
              String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
-             String_chars(t->id), p->tl_trg.cnt, String_chars(w_ctx->m->b_id),
+             p->tl_trg.cnt, String_chars(t->id), String_chars(w_ctx->m->b_id),
              s_pr, String_chars(w_ctx->m->q_id), delay, w_ctx->m_cnf->tl_dlcnt);
 
-        wout("%s: %s: %s: %s\n", String_chars(w_ctx->e->nm),
-             String_chars(w_ctx->m->nm), String_chars(p->id), p_info);
+        wout("%s: %s: %s\n", String_chars(w_ctx->e->nm),
+             String_chars(w_ctx->m->nm), p_info);
 
         heap_free(p_info);
         Numeric_char_free(s_pr);
@@ -2111,15 +2123,15 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
       char *restrict const s_pr =
           Numeric_to_char(sample->price, w_ctx->m->q_sc);
 
-      wout("%s: %s: %s: Leaving take loss(%" PRIuMAX
-           "): 1%s@%s%s: take-loss-delay: %s tickers, take-loss-delays: "
+      wout("%s: %s: Leaving take loss(%" PRIuMAX
+           "): %s 1%s@%s%s, take-loss-delay: %s tickers, take-loss-delays: "
            "%" PRIuMAX "\n",
            String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
-           String_chars(t->id), p->tl_trg.cnt, String_chars(w_ctx->m->b_id),
+           p->tl_trg.cnt, String_chars(t->id), String_chars(w_ctx->m->b_id),
            s_pr, String_chars(w_ctx->m->q_id), delay, w_ctx->m_cnf->tl_dlcnt);
 
-      wout("%s: %s: %s: %s\n", String_chars(w_ctx->e->nm),
-           String_chars(w_ctx->m->nm), String_chars(p->id), p_info);
+      wout("%s: %s: %s\n", String_chars(w_ctx->e->nm),
+           String_chars(w_ctx->m->nm), p_info);
 
       heap_free(p_info);
       Numeric_char_free(s_pr);
@@ -2143,15 +2155,15 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
         char *restrict const s_pr =
             Numeric_to_char(sample->price, w_ctx->m->q_sc);
 
-        wout("%s: %s: %s: Reentering stop loss(%" PRIuMAX
-             "): 1%s@%s%s: stop-loss-delay: %s tickers, stop-loss-delays: "
+        wout("%s: %s: Reentering stop loss(%" PRIuMAX
+             "): %s 1%s@%s%s, stop-loss-delay: %s tickers, stop-loss-delays: "
              "%" PRIuMAX "\n",
              String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
-             String_chars(t->id), p->sl_trg.cnt, String_chars(w_ctx->m->b_id),
+             p->sl_trg.cnt, String_chars(t->id), String_chars(w_ctx->m->b_id),
              s_pr, String_chars(w_ctx->m->q_id), delay, w_ctx->m_cnf->sl_dlcnt);
 
-        wout("%s: %s: %s: %s\n", String_chars(w_ctx->e->nm),
-             String_chars(w_ctx->m->nm), String_chars(p->id), p_info);
+        wout("%s: %s: %s\n", String_chars(w_ctx->e->nm),
+             String_chars(w_ctx->m->nm), p_info);
 
         heap_free(p_info);
         Numeric_char_free(delay);
@@ -2176,15 +2188,15 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
         char *restrict const s_pr =
             Numeric_to_char(sample->price, w_ctx->m->q_sc);
 
-        wout("%s: %s: %s: Reentering take profit(%" PRIuMAX
-             "): 1%s@%s%s: take-profit-delay: %s tickers, take-profit-delays: "
-             "%" PRIuMAX "\n",
+        wout("%s: %s: Reentering take profit(%" PRIuMAX
+             "): %s 1%s@%s%s, take-profit-delay: %s tickers, "
+             "take-profit-delays: %" PRIuMAX "\n",
              String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
-             String_chars(t->id), p->tp_trg.cnt, String_chars(w_ctx->m->b_id),
+             p->tp_trg.cnt, String_chars(t->id), String_chars(w_ctx->m->b_id),
              s_pr, String_chars(w_ctx->m->q_id), delay, w_ctx->m_cnf->tp_dlcnt);
 
-        wout("%s: %s: %s: %s\n", String_chars(w_ctx->e->nm),
-             String_chars(w_ctx->m->nm), String_chars(p->id), p_info);
+        wout("%s: %s: %s\n", String_chars(w_ctx->e->nm),
+             String_chars(w_ctx->m->nm), p_info);
 
         heap_free(p_info);
         Numeric_char_free(delay);
@@ -2281,7 +2293,7 @@ trade:
   struct Account *restrict const qa = w_ctx->e->account(w_ctx->m->qa_id);
 
   if (qa == NULL) {
-    werr("%s: %s: %s: Failure syncing quote account\n",
+    werr("%s: %s: Failure syncing quote account: %s\n",
          String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
          String_chars(w_ctx->m->qa_id));
 
@@ -2291,7 +2303,7 @@ trade:
   struct Account *restrict const ba = w_ctx->e->account(w_ctx->m->ba_id);
 
   if (ba == NULL) {
-    werr("%s: %s: %s: Failure syncing base account\n",
+    werr("%s: %s: Failure syncing base account: %s\n",
          String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
          String_chars(w_ctx->m->ba_id));
 
@@ -2316,14 +2328,13 @@ trade:
     char *restrict const q_return =
         Numeric_to_char(t->q_return, w_ctx->m->q_sc);
 
-    wout("%s: %s: %s: %s %s: %s%s@%s%s, return: %s%s\n",
-         String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
-         String_chars(t->id), ac_info, tr_info, b, String_chars(w_ctx->m->b_id),
-         pr, String_chars(w_ctx->m->q_id), q_return,
-         String_chars(w_ctx->m->q_id));
+    wout("%s: %s: %s %s: %s %s%s@%s%s, return: %s%s\n",
+         String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm), ac_info,
+         tr_info, String_chars(t->id), b, String_chars(w_ctx->m->b_id), pr,
+         String_chars(w_ctx->m->q_id), q_return, String_chars(w_ctx->m->q_id));
 
-    wout("%s: %s: %s: %s\n", String_chars(w_ctx->e->nm),
-         String_chars(w_ctx->m->nm), String_chars(p->id), p_info);
+    wout("%s: %s: %s\n", String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
+         p_info);
 
     Numeric_char_free(q_return);
     heap_free(p_info);
@@ -2335,7 +2346,7 @@ trade:
   case POSITION_TYPE_LONG:
     o_id = w_ctx->e->order_supply(w_ctx->m, b, pr);
     if (o_id == NULL) {
-      werr("%s: %s: %s: Failure creating sell order\n",
+      werr("%s: %s: Failure creating sell order: %s\n",
            String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
            String_chars(t->id));
 
@@ -2351,7 +2362,7 @@ trade:
   case POSITION_TYPE_SHORT:
     o_id = w_ctx->e->order_demand(w_ctx->m, b, pr);
     if (o_id == NULL) {
-      werr("%s: %s: %s: Failure creating buy order\n",
+      werr("%s: %s: Failure creating buy order: %s\n",
            String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
            String_chars(t->id));
 
@@ -2370,8 +2381,8 @@ trade:
 
   if (verbose) {
     char *restrict const o_info = position_string(w_ctx, t, o_p);
-    wout("%s: %s: %s: %s\n", String_chars(w_ctx->e->nm),
-         String_chars(w_ctx->m->nm), String_chars(o_p->id), o_info);
+    wout("%s: %s: %s\n", String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
+         o_info);
     heap_free(o_info);
   }
 ret:
@@ -2595,7 +2606,7 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
   struct Account *restrict const q_acct = w_ctx->e->account(w_ctx->m->qa_id);
 
   if (q_acct == NULL) {
-    werr("%s: %s: %s: Failure syncing quote account\n",
+    werr("%s: %s: Failure syncing quote account: %s\n",
          String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
          String_chars(w_ctx->m->qa_id));
 
@@ -2605,7 +2616,7 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
   struct Account *restrict const b_acct = w_ctx->e->account(w_ctx->m->ba_id);
 
   if (b_acct == NULL) {
-    werr("%s: %s: %s: Failure syncing base account\n",
+    werr("%s: %s: Failure syncing base account: %s\n",
          String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
          String_chars(w_ctx->m->ba_id));
 
@@ -2697,8 +2708,8 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
       char *restrict const c = candle_string(
           &t->open_cd, String_chars(w_ctx->m->q_id), w_ctx->m->p_sc);
 
-      werr("%s: %s: Cannot demand %s%s@%s%s: %s%s>%s%s, return: %s%s, candle: "
-           "%s\n",
+      werr("%s: %s: Insufficient funds demanding: %s%s@%s%s %s%s>%s%s, return: "
+           "%s%s, candle: %s\n",
            String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm), b,
            String_chars(w_ctx->m->b_id), pr, String_chars(w_ctx->m->q_id), r,
            String_chars(w_ctx->m->q_id), a, String_chars(w_ctx->m->q_id),
@@ -2727,7 +2738,8 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
       char *restrict const c = candle_string(
           &t->open_cd, String_chars(w_ctx->m->q_id), w_ctx->m->p_sc);
 
-      wout("%s: %s: Demanding %s%s@%s%s: return: %s%s, candle: %s\n",
+      wout("%s: %s: Demand: Insufficient funds: %s%s@%s%s, return: %s%s, "
+           "candle: %s\n",
            String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm), b,
            String_chars(w_ctx->m->b_id), pr, String_chars(w_ctx->m->q_id),
            q_return, String_chars(w_ctx->m->q_id), c);
@@ -2765,8 +2777,8 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
       char *restrict const c = candle_string(
           &t->open_cd, String_chars(w_ctx->m->q_id), w_ctx->m->p_sc);
 
-      werr("%s: %s: Cannot supply %s%s@%s%s: %s%s>%s%s %s%s>%s%s, return: "
-           "%s%s, candle: %s\n",
+      werr("%s: %s: Supply: Insufficient funds: %s%s@%s%s %s%s>%s%s %s%s>%s%s, "
+           "return: %s%s, candle: %s\n",
            String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm), b,
            String_chars(w_ctx->m->b_id), pr, String_chars(w_ctx->m->q_id), qr,
            String_chars(w_ctx->m->q_id), qa, String_chars(w_ctx->m->q_id), b,
@@ -2797,7 +2809,7 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
       char *restrict const c = candle_string(
           &t->open_cd, String_chars(w_ctx->m->q_id), w_ctx->m->p_sc);
 
-      wout("%s: %s: Supplying %s%s@%s%s: return: %s%s, candle: %s\n",
+      wout("%s: %s: Supplying: %s%s@%s%s, return: %s%s, candle: %s\n",
            String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm), b,
            String_chars(w_ctx->m->b_id), pr, String_chars(w_ctx->m->q_id),
            q_return, String_chars(w_ctx->m->q_id), c);
@@ -2828,8 +2840,8 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
 
   if (verbose) {
     char *restrict const p_info = position_string(w_ctx, t, p);
-    wout("%s: %s: %s: %s\n", String_chars(w_ctx->e->nm),
-         String_chars(w_ctx->m->nm), String_chars(p->id), p_info);
+    wout("%s: %s: %s\n", String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
+         p_info);
 
     heap_free(p_info);
   }
@@ -2886,7 +2898,7 @@ static void trade_maintain(const struct worker_ctx *restrict const w_ctx,
     char *restrict const s_b =
         Numeric_to_char(t->p_short.b_filled, w_ctx->m->b_sc);
 
-    wout("%s: %s: %s: Trade done: %s%s@%s%s->%s%s@%s%s, return: %s%s, "
+    wout("%s: %s: Trade done: %s %s%s@%s%s->%s%s@%s%s, return: %s%s, "
          "volatility: %s%%, fees: %s%s, outcome: %s%s\n",
          String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
          String_chars(t->id), l_b, String_chars(w_ctx->m->b_id), l_p,
@@ -2895,11 +2907,11 @@ static void trade_maintain(const struct worker_ctx *restrict const w_ctx,
          v, costs, String_chars(w_ctx->m->q_id), profit,
          String_chars(w_ctx->m->q_id));
 
-    wout("%s: %s: %s: %s\n", String_chars(w_ctx->e->nm),
-         String_chars(w_ctx->m->nm), String_chars(t->p_long.id), b_info);
+    wout("%s: %s: %s\n", String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
+         b_info);
 
-    wout("%s: %s: %s: %s\n", String_chars(w_ctx->e->nm),
-         String_chars(w_ctx->m->nm), String_chars(t->p_short.id), q_info);
+    wout("%s: %s: %s\n", String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
+         q_info);
 
     Numeric_char_free(l_p);
     Numeric_char_free(l_b);
@@ -3014,8 +3026,8 @@ static struct Array *trades_load(const struct worker_ctx *restrict const w_ctx,
       if (verbose) {
         char *restrict const p_info = position_string(w_ctx, t, &t->p_long);
 
-        wout("%s: %s: %s: %s\n", String_chars(w_ctx->e->nm),
-             String_chars(w_ctx->m->nm), String_chars(t->p_long.id), p_info);
+        wout("%s: %s: %s\n", String_chars(w_ctx->e->nm),
+             String_chars(w_ctx->m->nm), p_info);
 
         heap_free(p_info);
       }
@@ -3027,8 +3039,8 @@ static struct Array *trades_load(const struct worker_ctx *restrict const w_ctx,
       if (verbose) {
         char *restrict const p_info = position_string(w_ctx, t, &t->p_short);
 
-        wout("%s: %s: %s: %s\n", String_chars(w_ctx->e->nm),
-             String_chars(w_ctx->m->nm), String_chars(t->p_short.id), p_info);
+        wout("%s: %s: %s\n", String_chars(w_ctx->e->nm),
+             String_chars(w_ctx->m->nm), p_info);
 
         heap_free(p_info);
       }
@@ -3321,7 +3333,7 @@ static int samples_process(void *restrict const arg) {
           mutex_unlock(&t->mtx);
         }
       } else {
-        werr("%s: %s: %s: No matching market configuration - ignoring\n",
+        werr("%s: %s: No matching market configuration - ignoring: %s\n",
              String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
              String_chars(t->id));
 

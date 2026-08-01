@@ -533,7 +533,7 @@ static bool trend_position_close(const void *restrict const db,
   }
 
   if (close && verbose && !p->tl_trg.set) {
-    wout("%s: %s: %s: Trend not confirmed\n", String_chars(e->nm),
+    wout("%s: %s: Trend not confirmed: %s\n", String_chars(e->nm),
          String_chars(m->nm), String_chars(t->id));
   }
 
@@ -555,7 +555,8 @@ static bool trend_market_plot(const void *restrict const db,
   FILE *restrict const f = fopen(fn, "w");
 
   if (f == NULL) {
-    werr("%s: %s: %s\n", String_chars(e->nm), fn, strerror(errno));
+    werr("%s: %s: %s: %s\n", String_chars(e->nm), String_chars(m->nm), fn,
+         strerror(errno));
     return false;
   }
 
@@ -653,7 +654,8 @@ static bool trend_market_plot(const void *restrict const db,
           String_chars(m->nm), String_chars(m->q_id));
 
   if (fclose(f) == EOF) {
-    werr("%s: %s: %s\n", String_chars(e->nm), fn, strerror(errno));
+    werr("%s: %s: %s: %s\n", String_chars(e->nm), String_chars(m->nm), fn,
+         strerror(errno));
     return false;
   }
 

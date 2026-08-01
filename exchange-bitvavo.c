@@ -212,9 +212,9 @@ bitvavo_ws_ticker_evt_handler(struct mg_connection *restrict const,
                               const struct wcjson_value *restrict const);
 
 static int
-bitvavo_ws_order_evt_handler(struct mg_connection *restrict const,
-                             const struct wcjson_document *restrict const,
-                             const struct wcjson_value *restrict const);
+bitvavo_ws_account_evt_handler(struct mg_connection *restrict const,
+                               const struct wcjson_document *restrict const,
+                               const struct wcjson_value *restrict const);
 
 static int
 bitvavo_ws_subscribed_evt_handler(struct mg_connection *restrict const,
@@ -244,7 +244,13 @@ static struct {
     {
         .evt = "order",
         .evt_ms = 0,
-        .evt_handler = bitvavo_ws_order_evt_handler,
+        .evt_handler = bitvavo_ws_account_evt_handler,
+        .may_stall = true,
+    },
+    {
+        .evt = "fill",
+        .evt_ms = 0,
+        .evt_handler = bitvavo_ws_account_evt_handler,
         .may_stall = true,
     },
     {
@@ -808,8 +814,8 @@ bitvavo_parse_market(const struct wcjson_document *restrict const doc,
       if (r < 0 || (size_t)r >= err_nitems)
         panic();
     }
-    werr("%s: %s: %s: No 'orderTypes' array item: %s\n", bitvavo_rest_uri, nm,
-         m_id, err);
+    werr("%s: %s: market: No 'orderTypes' array item: %s %s\n",
+         bitvavo_rest_uri, nm, m_id, err);
     goto ret;
   }
 
@@ -821,8 +827,8 @@ bitvavo_parse_market(const struct wcjson_document *restrict const doc,
         if (r < 0 || (size_t)r >= err_nitems)
           panic();
       }
-      werr("%s: %s: %s: No 'orderType' string item: %s\n", bitvavo_rest_uri, nm,
-           m_id, err);
+      werr("%s: %s: market: No 'orderType' string item: %s %s\n",
+           bitvavo_rest_uri, nm, m_id, err);
       goto ret;
     }
 
@@ -851,8 +857,8 @@ bitvavo_parse_market(const struct wcjson_document *restrict const doc,
       continue;
     }
 
-    werr("%s: %s: %s: Unsupported order type: %s\n", bitvavo_rest_uri, nm, m_id,
-         j_orderType->mbstring);
+    werr("%s: %s: market: Unsupported type: %s %s\n", bitvavo_rest_uri, nm,
+         m_id, j_orderType->mbstring);
   }
 
   m = Market_new();
@@ -879,7 +885,7 @@ bitvavo_parse_market(const struct wcjson_document *restrict const doc,
   m->is_active = m->status == MARKET_STATUS_ONLINE;
 
   if (m->status == MARKET_STATUS_UNKNOWN)
-    werr("%s: %s: %s: Unsupported market status: %s\n", bitvavo_rest_uri, nm,
+    werr("%s: %s: market: Unsupported status: %s %s\n", bitvavo_rest_uri, nm,
          m_id, String_chars(j_status));
 
   m->is_tradeable = m->is_tradeable && qa_active_and_ready;
@@ -887,7 +893,7 @@ bitvavo_parse_market(const struct wcjson_document *restrict const doc,
 
 #ifdef ABAG_BITVAVO_DEBUG
   if (!m->is_active)
-    wout("%s: %s: %s: Market not active\n", bitvavo_rest_uri, nm, m_id);
+    wout("%s: %s: Market not active: %s\n", bitvavo_rest_uri, nm, m_id);
 #endif
 
   errno = 0;
@@ -962,13 +968,13 @@ bitvavo_parse_order(const struct wcjson_document *restrict const doc,
   m = bitvavo_market_by_symbol(j_market);
 
   if (m == NULL) {
-    werr("%s: %s: %s: Market not available\n", bitvavo_rest_uri,
+    werr("%s: %s: order: Market not available: %s\n", bitvavo_rest_uri,
          String_chars(j_market), String_chars(j_orderId));
     goto ret;
   }
 
   if (!String_equals(j_feeCurrency, m->q_id)) {
-    werr("%s: %s: %s: %s: Fee currency not supported\n", bitvavo_rest_uri,
+    werr("%s: %s: order: Unsupported fee currency: %s %s\n", bitvavo_rest_uri,
          String_chars(j_market), String_chars(j_orderId),
          String_chars(j_feeCurrency));
     mutex_unlock(m->mtx);
@@ -992,7 +998,7 @@ bitvavo_parse_order(const struct wcjson_document *restrict const doc,
   mutex_unlock(m->mtx);
 
   if (o->status == ORDER_STATUS_UNKNOWN)
-    werr("%s: %s: %s: %s: Status not supported\n", bitvavo_rest_uri,
+    werr("%s: %s: order: Unsupported status: %s %s\n", bitvavo_rest_uri,
          String_chars(j_market), String_chars(j_orderId),
          String_chars(j_status));
 
@@ -1036,7 +1042,7 @@ static int bitvavo_rest_parse_entities(
       if (r < 0 || (size_t)r >= err_nitems)
         panic();
     }
-    werr("%s: %s: No array item: %s\n", bitvavo_rest_uri, nm, err);
+    werr("%s: %s: event: No array item: %s\n", bitvavo_rest_uri, nm, err);
     goto ret;
   }
 
@@ -1054,7 +1060,7 @@ static int bitvavo_rest_parse_entities(
   ret = 0;
 ret:
   if (errno)
-    werr("%s: %s: %s\n", bitvavo_rest_uri, nm, strerror(errno));
+    werr("%s: %s: event: %s\n", bitvavo_rest_uri, nm, strerror(errno));
 
   errno = saved_errno;
   return ret;
@@ -1278,11 +1284,12 @@ bitvavo_account_by_symbol(struct String *restrict const sym) {
     a->is_ready = true;
 
     Array_add_tail(a_array, a);
-    Map_put(accounts_by_symbol, a->sym, a);
+
+    if (Map_put(accounts_by_symbol, a->sym, a) != NULL)
+      panic();
 
     if (Map_put(accounts_by_id, a->id, a) != NULL)
-      fatal("%s: account: Account id uniqueness constraint: %s",
-            bitvavo_rest_uri, String_chars(a->id));
+      panic();
   }
 
   a->mtx = Array_mutex(a_array);
@@ -1410,7 +1417,7 @@ ret:
   heap_free(doc.esc);
 
   if (errno)
-    werr("%s: %s\n", url, strerror(errno));
+    werr("%s: create: %s\n", url, strerror(errno));
 
   errno = saved_errno;
   return r;
@@ -1461,7 +1468,7 @@ ret:
   String_delete(sd);
 
   if (errno)
-    werr("%s: %s\n", url, strerror(errno));
+    werr("%s: create: %s\n", url, strerror(errno));
 
   errno = saved_errno;
   return j_orderId;
@@ -1589,7 +1596,7 @@ static int bitvavo_ws_authenticate(struct mg_connection *restrict const c) {
     goto ret;
 
   if (wcjson_document_build(&wc_json, &req_doc) < 0) {
-    werr("%s: authenticate: %lu: %s\n", String_chars(c->mgr->userdata), c->id,
+    werr("%s: authenticate: %lu %s\n", String_chars(c->mgr->userdata), c->id,
          json_mbserror(&wc_json));
     goto ret;
   }
@@ -1616,7 +1623,7 @@ ret:
   heap_free(req_doc.esc);
 
   if (errno)
-    werr("%s: authenticate: %lu: %s\n", String_chars(c->mgr->userdata), c->id,
+    werr("%s: authenticate: %lu %s\n", String_chars(c->mgr->userdata), c->id,
          strerror(errno));
 
   errno = saved_errno;
@@ -1682,7 +1689,7 @@ static int bitvavo_ws_subscribe(struct mg_connection *restrict const c) {
     goto ret;
 
   if (wcjson_document_build(&wc_json, &req_doc)) {
-    werr("%s: subscribe: %lu: %s\n", String_chars(c->mgr->userdata), c->id,
+    werr("%s: subscribe: %lu %s\n", String_chars(c->mgr->userdata), c->id,
          json_mbserror(&wc_json));
     goto ret;
   }
@@ -1709,7 +1716,7 @@ ret:
   heap_free(req_doc.esc);
 
   if (errno)
-    werr("%s: subscribe: %lu: %s\n", String_chars(c->mgr->userdata), c->id,
+    werr("%s: subscribe: %lu %s\n", String_chars(c->mgr->userdata), c->id,
          strerror(errno));
 
   errno = saved_errno;
@@ -1752,7 +1759,7 @@ bitvavo_ws_msg_handler(struct mg_connection *restrict const c,
     }
 
   if (!handled)
-    werr("%s: %lu: %.*s\n", String_chars(c->mgr->userdata), c->id,
+    werr("%s: event: %lu %.*s\n", String_chars(c->mgr->userdata), c->id,
          (int)msg->data.len, msg->data.buf);
 
   errno = 0;
@@ -1761,7 +1768,7 @@ ret:
   String_delete(j_event);
 
   if (errno)
-    werr("%s: event: %lu: %s\n", String_chars(c->mgr->userdata), c->id,
+    werr("%s: event: %lu %s\n", String_chars(c->mgr->userdata), c->id,
          strerror(errno));
 
   errno = saved_errno;
@@ -1773,7 +1780,7 @@ static void bitvavo_ws_evt_handler(struct mg_connection *c, int ev,
   switch (ev) {
   case MG_EV_CONNECT: {
 #ifdef ABAG_BITVAVO_DEBUG
-    wout("%s: %lu: MG_EV_CONNECT\n", String_chars(c->mgr->userdata), c->id);
+    wout("%s: %lu MG_EV_CONNECT\n", String_chars(c->mgr->userdata), c->id);
 #endif
     struct mg_tls_opts ws_tls_opts = {0};
     ws_tls_opts.name = mg_url_host(bitvavo_ws_uri);
@@ -1781,14 +1788,14 @@ static void bitvavo_ws_evt_handler(struct mg_connection *c, int ev,
     break;
   }
   case MG_EV_ERROR: {
-    werr("%s: %lu: %s\n", String_chars(c->mgr->userdata), c->id,
+    werr("%s: event: %lu %s\n", String_chars(c->mgr->userdata), c->id,
          (char *)ev_data);
     c->is_closing = 1;
     break;
   }
   case MG_EV_WS_OPEN: {
 #ifdef ABAG_BITVAVO_DEBUG
-    wout("%s: %lu: MG_EV_WS_OPEN\n", String_chars(c->mgr->userdata), c->id);
+    wout("%s: %lu MG_EV_WS_OPEN\n", String_chars(c->mgr->userdata), c->id);
 #endif
     if (running) {
       if (bitvavo_ws_authenticate(c) < 0)
@@ -1809,12 +1816,13 @@ static void bitvavo_ws_evt_handler(struct mg_connection *c, int ev,
 
       } else if (type == WEBSOCKET_OP_CLOSE) {
 #ifdef ABAG_BITVAVO_DEBUG
-        wout("%s: %lu: WEBSOCKET_OP_CLOSE\n", String_chars(c->mgr->userdata),
+        wout("%s: %lu WEBSOCKET_OP_CLOSE\n", String_chars(c->mgr->userdata),
              c->id);
 #endif
         c->is_closing = 1;
       } else
-        werr("%s: %lu: %d\n", String_chars(c->mgr->userdata), c->id, type);
+        werr("%s: event: %lu %d\n", String_chars(c->mgr->userdata), c->id,
+             type);
 
     } else
       c->is_closing = 1;
@@ -1823,7 +1831,7 @@ static void bitvavo_ws_evt_handler(struct mg_connection *c, int ev,
   }
   case MG_EV_CLOSE: {
 #ifdef ABAG_BITVAVO_DEBUG
-    wout("%s: %lu: MG_EV_CLOSE\n", String_chars(c->mgr->userdata), c->id);
+    wout("%s: %lu MG_EV_CLOSE\n", String_chars(c->mgr->userdata), c->id);
 #endif
     heap_free(c->fn_data);
 
@@ -1877,7 +1885,7 @@ bitvavo_ws_auth_evt_handler(struct mg_connection *restrict const c,
 
   if (!j_authenticated) {
     c->is_closing = 1;
-    werr("%s: Not authenticated\n", String_chars(c->mgr->userdata));
+    werr("%s: Failure authenticating\n", String_chars(c->mgr->userdata));
     goto ret;
   }
 
@@ -1920,8 +1928,8 @@ bitvavo_ws_ticker_evt_handler(struct mg_connection *restrict const c,
   struct Market *restrict const m = bitvavo_market_by_symbol(j_market);
 
   if (m == NULL) {
-    werr("%s: %s: Market not available\n", String_chars(c->mgr->userdata),
-         String_chars(j_market));
+    werr("%s: %s: ticker: Market not available\n",
+         String_chars(c->mgr->userdata), String_chars(j_market));
     goto ret;
   }
 
@@ -1961,9 +1969,9 @@ ret:
 }
 
 static int
-bitvavo_ws_order_evt_handler(struct mg_connection *restrict const c,
-                             const struct wcjson_document *restrict const doc,
-                             const struct wcjson_value *restrict const evt) {
+bitvavo_ws_account_evt_handler(struct mg_connection *restrict const c,
+                               const struct wcjson_document *restrict const doc,
+                               const struct wcjson_value *restrict const evt) {
   const int saved_errno = errno;
   struct Order *restrict o = NULL;
   struct Market *restrict m = NULL;
@@ -1986,8 +1994,9 @@ bitvavo_ws_order_evt_handler(struct mg_connection *restrict const c,
   m = bitvavo_market_by_symbol(j_market);
 
   if (m == NULL) {
-    werr("%s: %s: %s: Market not available\n", String_chars(c->mgr->userdata),
-         String_chars(j_market), String_chars(j_orderId));
+    werr("%s: %s: account: Market not available: %s\n",
+         String_chars(c->mgr->userdata), String_chars(j_market),
+         String_chars(j_orderId));
     goto ret;
   }
 
@@ -2011,7 +2020,7 @@ ret:
   String_delete(j_market);
 
   if (errno)
-    werr("%s: order: %s\n", String_chars(c->mgr->userdata), strerror(errno));
+    werr("%s: account: %s\n", String_chars(c->mgr->userdata), strerror(errno));
 
   errno = saved_errno;
   return ret;
@@ -2042,7 +2051,7 @@ static int bitvavo_ws_subscribed_evt_handler(
   if (verbose) {
     struct wcjson_value *restrict j_subscription = NULL;
     wcjson_value_foreach(j_subscription, doc, j_subscriptions) {
-      wout("%s: subscribed: %ls\n", String_chars(c->mgr->userdata),
+      wout("%s: Subscription: %ls\n", String_chars(c->mgr->userdata),
            j_subscription->string);
     }
   }

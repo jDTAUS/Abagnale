@@ -431,7 +431,7 @@ static int jwt_encode_cdp(char *restrict const jwt, size_t *restrict jwt_lenp,
       mg_uecc_parse_private_key(cnf_key, ec_key, sizeof(ec_key));
 
   if (key_len == 0) {
-    werr("coinbase: cdp-api-key: Unsupported private key\n");
+    werr("%s: cdp-api-key: Unsupported private key\n", coinbase_rest_uri);
     return -1;
   }
 
@@ -606,7 +606,7 @@ static void ws_user_update(const struct wcjson_document *restrict const doc,
   m = coinbase_market_by_symbol(j_product_id);
 
   if (m == NULL) {
-    werr("%s: user: %s: Market not available: %s\n", coinbase_ws_uri,
+    werr("%s: user: Market not available: %s %s\n", coinbase_ws_uri,
          String_chars(j_order_id), String_chars(j_product_id));
 
     for (size_t i = nitems(ws_channels); i-- > 0;)
@@ -629,7 +629,7 @@ static void ws_user_update(const struct wcjson_document *restrict const doc,
   }
 
   if (status == ORDER_STATUS_UNKNOWN) {
-    werr("%s: user: %s: Order status unknown: %s\n", coinbase_ws_uri,
+    werr("%s: user: Status unsupported: %s %s\n", coinbase_ws_uri,
          String_chars(j_order_id), String_chars(j_status));
   }
 
@@ -695,7 +695,8 @@ static void ws_handle_message(const struct mg_ws_message *restrict const msg) {
     goto ret;
 
   if (j_type != NULL) {
-    werr("%s: %.*s\n", coinbase_ws_uri, (int)msg->data.len, msg->data.buf);
+    werr("%s: event: %.*s\n", coinbase_ws_uri, (int)msg->data.len,
+         msg->data.buf);
     String_delete(j_type);
     goto ret;
   }
@@ -710,7 +711,7 @@ static void ws_handle_message(const struct mg_ws_message *restrict const msg) {
       ws_channel(String_chars(j_channel));
 
   if (channel == NULL) {
-    werr("%s: %s: %.*s\n", coinbase_ws_uri, String_chars(j_channel),
+    werr("%s: %s: event: %.*s\n", coinbase_ws_uri, String_chars(j_channel),
          (int)msg->data.len, msg->data.buf);
 
     String_delete(j_channel);
@@ -740,7 +741,7 @@ static void ws_handle_message(const struct mg_ws_message *restrict const msg) {
       wcjson_object_get(ws_doc, ws_doc->values, L"events", 6);
 
   if (j_events == NULL || !j_events->is_array) {
-    werr("%s: %s: No 'events' array item: %.*s\n", coinbase_ws_uri,
+    werr("%s: %s: event: No 'events' array item: %.*s\n", coinbase_ws_uri,
          channel->name, (int)msg->data.len, msg->data.buf);
     Numeric_delete(j_timestamp);
     goto ret;
@@ -752,7 +753,7 @@ static void ws_handle_message(const struct mg_ws_message *restrict const msg) {
         wcjson_object_get(ws_doc, j_evt, channel->items, channel->items_len);
 
     if (j_evt_items == NULL || !j_evt_items->is_array) {
-      werr("%s: %s: No '%ls' array item: %.*s\n", coinbase_ws_uri,
+      werr("%s: %s: event: No '%ls' array item: %.*s\n", coinbase_ws_uri,
            channel->name, channel->items, (int)msg->data.len, msg->data.buf);
 
       Numeric_delete(j_timestamp);
@@ -788,7 +789,7 @@ static void ws_handle_message(const struct mg_ws_message *restrict const msg) {
         }
       }
     } else
-      werr("%s: %s: %s: %.*s\n", coinbase_ws_uri, channel->name,
+      werr("%s: %s: event: %s %.*s\n", coinbase_ws_uri, channel->name,
            String_chars(j_evt_type), (int)msg->data.len, msg->data.buf);
 
     String_delete(j_evt_type);
@@ -798,8 +799,8 @@ static void ws_handle_message(const struct mg_ws_message *restrict const msg) {
   errno = 0;
 ret:
   if (errno)
-    werr("%s: %s: %.*s\n", coinbase_ws_uri, strerror(errno), (int)msg->data.len,
-         msg->data.buf);
+    werr("%s: %s: event: %.*s\n", coinbase_ws_uri, strerror(errno),
+         (int)msg->data.len, msg->data.buf);
 
   errno = saved_errno;
 }
@@ -923,7 +924,7 @@ static void ws_evt_handler(struct mg_connection *c, int ev, void *ev_data) {
   switch (ev) {
   case MG_EV_CONNECT: {
 #ifdef ABAG_COINBASE_DEBUG
-    wout("%s: %s: %lu: MG_EV_CONNECT\n", coinbase_ws_uri, channel->name, c->id);
+    wout("%s: %s: %lu MG_EV_CONNECT\n", coinbase_ws_uri, channel->name, c->id);
 #endif
     struct mg_tls_opts ws_tls_opts = {0};
     ws_tls_opts.name = mg_url_host(coinbase_ws_uri);
@@ -932,14 +933,14 @@ static void ws_evt_handler(struct mg_connection *c, int ev, void *ev_data) {
     break;
   }
   case MG_EV_ERROR: {
-    werr("%s: %s: %lu: %s\n", coinbase_ws_uri, channel->name, c->id,
+    werr("%s: %s: event: %lu %s\n", coinbase_ws_uri, channel->name, c->id,
          (char *)ev_data);
     c->is_closing = 1;
     break;
   }
   case MG_EV_WS_OPEN: {
 #ifdef ABAG_COINBASE_DEBUG
-    wout("%s: %s: %lu: MG_EV_WS_OPEN\n", coinbase_ws_uri, channel->name, c->id);
+    wout("%s: %s: %lu MG_EV_WS_OPEN\n", coinbase_ws_uri, channel->name, c->id);
 #endif
     if (running) {
       markets_reload = true;
@@ -959,12 +960,13 @@ static void ws_evt_handler(struct mg_connection *c, int ev, void *ev_data) {
         ws_handle_message(wm);
       } else if (type == WEBSOCKET_OP_CLOSE) {
 #ifdef ABAG_COINBASE_DEBUG
-        wout("%s: %s: %lu: WEBSOCKET_OP_CLOSE\n", coinbase_ws_uri,
-             channel->name, c->id);
+        wout("%s: %s: %lu WEBSOCKET_OP_CLOSE\n", coinbase_ws_uri, channel->name,
+             c->id);
 #endif
         c->is_closing = 1;
       } else
-        werr("%s: %s: %lu: %d\n", coinbase_ws_uri, channel->name, c->id, type);
+        werr("%s: %s: event: %lu %d\n", coinbase_ws_uri, channel->name, c->id,
+             type);
 
     } else
       c->is_closing = 1;
@@ -973,7 +975,7 @@ static void ws_evt_handler(struct mg_connection *c, int ev, void *ev_data) {
   }
   case MG_EV_CLOSE: {
 #ifdef ABAG_COINBASE_DEBUG
-    wout("%s: %s: %lu: MG_EV_CLOSE\n", coinbase_ws_uri, channel->name, c->id);
+    wout("%s: %s: %lu MG_EV_CLOSE\n", coinbase_ws_uri, channel->name, c->id);
 #endif
     if (running) {
       struct mg_mgr *restrict const mgr = c->mgr;
@@ -1365,12 +1367,12 @@ parse_product(const struct wcjson_document *restrict const doc,
                  status_value == MARKET_STATUS_ONLINE;
 
   if (m->type == MARKET_TYPE_UNKNOWN)
-    werr("%s: product: %s: %s: Unsupported market type: %s\n",
-         coinbase_rest_uri, nm, m_id, String_chars(j_product_type));
+    werr("%s: product: %s: %s: Unsupported type: %s\n", coinbase_rest_uri, nm,
+         m_id, String_chars(j_product_type));
 
   if (m->status == MARKET_STATUS_UNKNOWN)
-    werr("%s: product: %s: %s: Unsupported market status: %s\n",
-         coinbase_rest_uri, nm, m_id, String_chars(j_status));
+    werr("%s: %s: product: Unsupported status: %s %s\n", coinbase_rest_uri, nm,
+         m_id, String_chars(j_status));
 
   /*
    * Coinbase account active and ready flags change very infrequently - if at
@@ -1384,7 +1386,7 @@ parse_product(const struct wcjson_document *restrict const doc,
 
 #ifdef ABAG_COINBASE_DEBUG
   if (!m->is_active)
-    wout("%s: product: %s: %s: Market not active\n", coinbase_rest_uri, nm,
+    wout("%s: %s: product: Market not active: %s\n", coinbase_rest_uri, nm,
          m_id);
 #endif
 
@@ -1587,7 +1589,7 @@ parse_account(const struct wcjson_document *restrict const doc,
   a->is_ready = j_ready && j_ready->is_true;
 
   if (a->type == ACCOUNT_TYPE_UNSPECIFIED)
-    werr("%s: account: %s: %s: Account type unsupported\n", coinbase_rest_uri,
+    werr("%s: account: Unsupported type: %s %s\n", coinbase_rest_uri,
          String_chars(j_uuid), String_chars(j_type));
 
   errno = 0;
@@ -1710,7 +1712,7 @@ ret:
   String_delete(j_cursor);
 
   if (errno)
-    werr("%s: %s\n", url, strerror(errno));
+    werr("%s: accounts: %s\n", url, strerror(errno));
 
   errno = saved_errno;
   return r;
@@ -1802,7 +1804,7 @@ coinbase_account(const struct String *restrict const id) {
       if (r < 0 || (size_t)r >= err_nitems)
         panic();
     }
-    werr("%s: No 'account' object item: %s\n", url, err);
+    werr("%s: account: No 'account' object item: %s\n", url, err);
     goto ret;
   }
 
@@ -1894,12 +1896,12 @@ parse_order(const struct wcjson_document *restrict const doc,
   // XXX:   Not available at product level and via user channel events.
 
   if (j_size_inclusive_of_fees && j_size_inclusive_of_fees->is_true)
-    werr("%s: order: %s: 'size_inclusive_of_fees' unsupported\n",
+    werr("%s: order: Unsupported 'size_inclusive_of_fees' boolean item: %s\n",
          coinbase_rest_uri, String_chars(j_order_id));
 
   if (j_size_in_quote && j_size_in_quote->is_true)
-    werr("%s: order: %s: 'size_in_quote' unsupported\n", coinbase_rest_uri,
-         String_chars(j_order_id));
+    werr("%s: order: Unsupporetd 'size_in_quote' boolean item: %s\n",
+         coinbase_rest_uri, String_chars(j_order_id));
 
   struct String *restrict msg = NULL;
 
@@ -1914,7 +1916,7 @@ parse_order(const struct wcjson_document *restrict const doc,
   m = coinbase_market_by_symbol(j_product_id);
 
   if (m == NULL) {
-    werr("%s: order: %s: Market not available: %s\n", coinbase_rest_uri,
+    werr("%s: order: Market not available: %s %s\n", coinbase_rest_uri,
          String_chars(j_order_id), String_chars(j_product_id));
     goto ret;
   }
@@ -1936,7 +1938,7 @@ parse_order(const struct wcjson_document *restrict const doc,
   mutex_unlock(m->mtx);
 
   if (o->status == ORDER_STATUS_UNKNOWN)
-    werr("%s: order: %s: Status unsupported: %s\n", coinbase_rest_uri,
+    werr("%s: order: Unsupported status: %s %s\n", coinbase_rest_uri,
          String_chars(j_order_id), String_chars(j_status));
 
   errno = 0;
@@ -1995,7 +1997,8 @@ static struct Order *coinbase_order(const struct Market *restrict const m,
       if (r < 0 || (size_t)r >= err_nitems)
         panic();
     }
-    werr("%s: %s: No 'order' object item: %s\n", url, String_chars(id), err);
+    werr("%s: order: No 'order' object item: %s %s\n", url, String_chars(id),
+         err);
     goto ret;
   }
 
@@ -2068,7 +2071,7 @@ static bool coinbase_order_cancel(const struct Market *restrict const m,
       if (r < 0 || (size_t)r >= err_nitems)
         panic();
     }
-    werr("%s: No 'results' array item: %s\n", url, err);
+    werr("%s: cancel: No 'results' array item: %s\n", url, err);
     goto ret;
   }
 
@@ -2098,14 +2101,14 @@ static bool coinbase_order_cancel(const struct Market *restrict const m,
         panic();
     }
 
-    werr("%s: %s: %s\n", url, String_chars(id), err);
+    werr("%s: cancel: %s %s\n", url, String_chars(id), err);
     goto ret;
   }
 
   errno = 0;
 ret:
   if (errno)
-    werr("%s: %s\n", url, strerror(errno));
+    werr("%s: cancel: %s\n", url, strerror(errno));
 
   errno = saved_errno;
   return success;
@@ -2179,7 +2182,7 @@ ret:
   heap_free(doc.esc);
 
   if (errno)
-    werr("%s: %s\n", url, strerror(errno));
+    werr("%s: create: %s\n", url, strerror(errno));
 
   errno = saved_errno;
   return r;
@@ -2234,7 +2237,7 @@ static struct String *coinbase_order_post(
           panic();
       }
 
-      werr("%s: No 'success_response' object item: %s\n", url, err);
+      werr("%s: create: No 'success_response' object item: %s\n", url, err);
       goto ret;
     }
 
@@ -2254,7 +2257,7 @@ static struct String *coinbase_order_post(
       if (r < 0 || (size_t)r >= err_nitems)
         panic();
     }
-    werr("%s: %s\n", url, err);
+    werr("%s: create: %s\n", url, err);
   }
 
   errno = 0;
@@ -2263,7 +2266,7 @@ ret:
   String_delete(sd);
 
   if (errno)
-    werr("%s: %s\n", url, strerror(errno));
+    werr("%s: create: %s\n", url, strerror(errno));
 
   errno = saved_errno;
   return j_order_id;
@@ -2311,6 +2314,7 @@ parse_pricing(const struct wcjson_document *restrict const doc,
   errno = 0;
 
   j_pricing_tier = json_obj_get_string(doc, j_fee_tier, L"pricing_tier", 12);
+
   j_taker_fee_rate =
       json_obj_get_string_number(doc, j_fee_tier, L"taker_fee_rate", 14);
 
