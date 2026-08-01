@@ -18,7 +18,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict fnxvNrrlj2bOfeyEjqcArkXIQkmcLIR1615iBBla0CdzdWtsYIiQpFaJye3tcT1
+\restrict iusshNKWwBJ39OimWi2UYOxRfOevUfrurfvYylKcGQJFgEpY7z7wxSveLruhi8k
 
 -- Dumped from database version 17.10 (Debian 17.10-0+deb13u1)
 -- Dumped by pg_dump version 17.10 (Debian 17.10-0+deb13u1)
@@ -44,9 +44,9 @@ CREATE DATABASE "ABAGNALE" WITH TEMPLATE = template0 ENCODING = 'UTF8' LOCALE_PR
 
 ALTER DATABASE "ABAGNALE" OWNER TO abagnale;
 
-\unrestrict fnxvNrrlj2bOfeyEjqcArkXIQkmcLIR1615iBBla0CdzdWtsYIiQpFaJye3tcT1
+\unrestrict iusshNKWwBJ39OimWi2UYOxRfOevUfrurfvYylKcGQJFgEpY7z7wxSveLruhi8k
 \connect "ABAGNALE"
-\restrict fnxvNrrlj2bOfeyEjqcArkXIQkmcLIR1615iBBla0CdzdWtsYIiQpFaJye3tcT1
+\restrict iusshNKWwBJ39OimWi2UYOxRfOevUfrurfvYylKcGQJFgEpY7z7wxSveLruhi8k
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -384,6 +384,7 @@ CREATE TABLE public."TRADES" (
     "BASE_CURRENCY_ID" text NOT NULL,
     "QUOTE_CURRENCY_ID" text NOT NULL,
     "STATUS" public.trade_status NOT NULL,
+    "QUOTE_RETURN" numeric NOT NULL,
     "BUY_ORDER_ID" uuid,
     "BUY_ORDER_CREATED_AT" timestamp with time zone,
     "BUY_ORDER_DONE_AT" timestamp with time zone,
@@ -391,6 +392,7 @@ CREATE TABLE public."TRADES" (
     "BUY_ORDER_BASE_AMOUNT_FILLED" numeric,
     "BUY_ORDER_QUOTE_AMOUNT_FILLED" numeric,
     "BUY_ORDER_QUOTE_FEES" numeric,
+    "BUY_ORDER_PRICE_ORDERED" numeric,
     "SELL_ORDER_ID" uuid,
     "SELL_ORDER_CREATED_AT" timestamp with time zone,
     "SELL_ORDER_DONE_AT" timestamp with time zone,
@@ -398,9 +400,7 @@ CREATE TABLE public."TRADES" (
     "SELL_ORDER_BASE_AMOUNT_FILLED" numeric,
     "SELL_ORDER_QUOTE_AMOUNT_FILLED" numeric,
     "SELL_ORDER_QUOTE_FEES" numeric,
-    "BUY_ORDER_PRICE_ORDERED" numeric,
     "SELL_ORDER_PRICE_ORDERED" numeric,
-    "QUOTE_RETURN" numeric NOT NULL,
     CONSTRAINT "TRADES_BUY_ORDER_BASE_AMOUNT_FILLED_check" CHECK ((("BUY_ORDER_BASE_AMOUNT_FILLED" IS NULL) OR ("BUY_ORDER_BASE_AMOUNT_FILLED" >= (0)::numeric))),
     CONSTRAINT "TRADES_BUY_ORDER_BASE_AMOUNT_ORDERED_GE_FILLED_check" CHECK ((("BUY_ORDER_BASE_AMOUNT_ORDERED" IS NULL) OR ("BUY_ORDER_BASE_AMOUNT_FILLED" IS NULL) OR ("BUY_ORDER_BASE_AMOUNT_ORDERED" >= "BUY_ORDER_BASE_AMOUNT_FILLED"))),
     CONSTRAINT "TRADES_BUY_ORDER_BASE_AMOUNT_ORDERED_check" CHECK ((("BUY_ORDER_BASE_AMOUNT_ORDERED" IS NULL) OR ("BUY_ORDER_BASE_AMOUNT_ORDERED" >= (0)::numeric))),
@@ -760,5 +760,5 @@ ALTER TABLE ONLY public."TREND_PLOTS"
 -- PostgreSQL database dump complete
 --
 
-\unrestrict fnxvNrrlj2bOfeyEjqcArkXIQkmcLIR1615iBBla0CdzdWtsYIiQpFaJye3tcT1
+\unrestrict iusshNKWwBJ39OimWi2UYOxRfOevUfrurfvYylKcGQJFgEpY7z7wxSveLruhi8k
 
