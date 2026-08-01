@@ -555,6 +555,19 @@ static void ws_user_update(const struct wcjson_document *restrict const doc,
   struct Market *restrict m = NULL;
   struct String *restrict m_id = NULL;
 
+#ifdef ABAG_COINBASE_DEBUG
+  char buf[JSON_BODY_MAX + 1] = {0};
+  size_t buf_nitems = nitems(buf);
+
+  if (json_mbsprint(buf, &buf_nitems, doc, order) < 0) {
+    int r = snprintf(buf, buf_nitems, "%s", strerror(errno));
+    if (r < 0 || (size_t)r >= buf_nitems)
+      panic();
+  }
+
+  wout("%s: user: %s\n", coinbase_ws_uri, buf);
+#endif
+
   errno = 0;
 
   struct String *restrict const j_order_id =
@@ -650,6 +663,7 @@ static void ws_user_update(const struct wcjson_document *restrict const doc,
   o->dnanos = o->settled ? Numeric_copy(nanos) : NULL;
 
   Queue_enqueue_await(orders, o);
+
   errno = 0;
 ret:
   if (o == NULL) {

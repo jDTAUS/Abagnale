@@ -1497,6 +1497,7 @@ static bool bitvavo_order_cancel(const struct Market *restrict const m,
   struct String *restrict j_orderId = NULL;
   struct wcjson_document *restrict const rsp_doc =
       tls->bitvavo_order_cancel.rsp_doc;
+
   int r =
       snprintf(url, sizeof(url), "%s%s?market=%s&orderId=%s&operatorId=%ls",
                bitvavo_rest_uri, bitvavo_rest_order_cancel_path,
@@ -1749,8 +1750,9 @@ bitvavo_ws_msg_handler(struct mg_connection *restrict const c,
     goto ret;
 
   bool handled = false;
+  const char *restrict const evt = String_chars(j_event);
   for (size_t i = nitems(bitvavo_ws_msg_handlers); i-- > 0;)
-    if (strcmp(String_chars(j_event), bitvavo_ws_msg_handlers[i].evt) == 0) {
+    if (strcmp(evt, bitvavo_ws_msg_handlers[i].evt) == 0) {
       handled = true;
       bitvavo_ws_msg_handlers[i].evt_ms = mg_millis();
       if (bitvavo_ws_msg_handlers[i].evt_handler(c, msg_doc, msg_doc->values) <
@@ -1977,6 +1979,19 @@ bitvavo_ws_account_evt_handler(struct mg_connection *restrict const c,
   struct Market *restrict m = NULL;
   int ret = -1;
 
+#ifdef ABAG_BITVAVO_DEBUG
+  char buf[JSON_BODY_MAX + 1] = {0};
+  size_t buf_nitems = nitems(buf);
+
+  if (json_mbsprint(buf, &buf_nitems, doc, evt) < 0) {
+    int r = snprintf(buf, buf_nitems, "%s", strerror(errno));
+    if (r < 0 || (size_t)r >= buf_nitems)
+      panic();
+  }
+
+  wout("%s: account: %s\n", String_chars(c->mgr->userdata), buf);
+#endif
+
   errno = 0;
 
   struct String *restrict const j_orderId =
@@ -2010,6 +2025,7 @@ bitvavo_ws_account_evt_handler(struct mg_connection *restrict const c,
   o->msg = j_restatementReason;
 
   Queue_enqueue_await(orders, o);
+
   errno = 0;
   ret = 0;
 ret:
