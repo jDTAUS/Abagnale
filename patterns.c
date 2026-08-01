@@ -33,7 +33,7 @@
 
 /*
  * $SchulteIT: patterns.c 15221 2025-10-28 07:11:14Z schulte $
- * $JDTAUS$
+ * $JDTAUS: patterns.c 9502 2026-06-11 04:46:18Z schulte $
  * Origin: OpenBSD 7.8 httpd/patterns.c
  * Modifications: Use standard C int64_t instead of POSIX off_t
  *                Use struct String instead of char
