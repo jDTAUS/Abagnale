@@ -233,7 +233,7 @@ static struct {
         .evt = "authenticate",
         .evt_ms = 0,
         .evt_handler = bitvavo_ws_auth_evt_handler,
-        .may_stall = true,
+        .may_stall = false,
     },
     {
         .evt = "ticker",
@@ -251,7 +251,7 @@ static struct {
         .evt = "fill",
         .evt_ms = 0,
         .evt_handler = bitvavo_ws_account_evt_handler,
-        .may_stall = true,
+        .may_stall = false,
     },
     {
         .evt = "subscribed",
