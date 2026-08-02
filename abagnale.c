@@ -1934,7 +1934,7 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
         char *restrict const p_info = position_string(w_ctx, t, p);
         char *restrict const delay = Numeric_to_char(p->sl_samples, 0);
         char *restrict const s_pr =
-            Numeric_to_char(sample->price, w_ctx->m->q_sc);
+            Numeric_to_char(sample->price, w_ctx->m->p_sc);
 
         wout("%s: %s: Trade: Entering stop loss(%" PRIuMAX
              "): %s 1%s@%s%s, stop-loss-delay: %s tickers, stop-loss-delays: "
@@ -1963,7 +1963,7 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
       char *restrict const p_info = position_string(w_ctx, t, p);
       char *restrict const delay = Numeric_to_char(p->sl_samples, 0);
       char *restrict const s_pr =
-          Numeric_to_char(sample->price, w_ctx->m->q_sc);
+          Numeric_to_char(sample->price, w_ctx->m->p_sc);
 
       wout("%s: %s: Trade: Leaving stop loss(%" PRIuMAX
            "): %s 1%s@%s%s, stop-loss-delay: %s tickers, stop-loss-delays: "
@@ -1998,7 +1998,7 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
         char *restrict const p_info = position_string(w_ctx, t, p);
         char *restrict const delay = Numeric_to_char(p->tp_samples, 0);
         char *restrict const s_pr =
-            Numeric_to_char(sample->price, w_ctx->m->q_sc);
+            Numeric_to_char(sample->price, w_ctx->m->p_sc);
 
         wout("%s: %s: Trade: Entering take profit(%" PRIuMAX
              "): %s 1%s@%s%s, take-profit-delay: %s tickers, "
@@ -2027,7 +2027,7 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
       char *restrict const p_info = position_string(w_ctx, t, p);
       char *restrict const delay = Numeric_to_char(p->tp_samples, 0);
       char *restrict const s_pr =
-          Numeric_to_char(sample->price, w_ctx->m->q_sc);
+          Numeric_to_char(sample->price, w_ctx->m->p_sc);
 
       wout("%s: %s: Trade: Leaving take profit(%" PRIuMAX
            "): %s 1%s@%s%s, take-profit-delay: %s tickers, take-profit-delays: "
@@ -2059,7 +2059,7 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
         char *restrict const p_info = position_string(w_ctx, t, p);
         char *restrict const delay = Numeric_to_char(p->sl_samples, 0);
         char *restrict const s_pr =
-            Numeric_to_char(sample->price, w_ctx->m->q_sc);
+            Numeric_to_char(sample->price, w_ctx->m->p_sc);
 
         wout("%s: %s: Trade: Reentering stop loss(%" PRIuMAX
              "): %s 1%s@%s%s, stop-loss-delay: %s tickers, stop-loss-delays: "
@@ -2095,7 +2095,7 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
         char *restrict const p_info = position_string(w_ctx, t, p);
         char *restrict const delay = Numeric_to_char(p->tl_samples, 0);
         char *restrict const s_pr =
-            Numeric_to_char(sample->price, w_ctx->m->q_sc);
+            Numeric_to_char(sample->price, w_ctx->m->p_sc);
 
         wout("%s: %s: Trade: Entering take loss(%" PRIuMAX
              "): %s 1%s@%s%s, take-loss-delay: %s tickers, take-loss-delays: "
@@ -2124,7 +2124,7 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
       char *restrict const p_info = position_string(w_ctx, t, p);
       char *restrict const delay = Numeric_to_char(p->tl_samples, 0);
       char *restrict const s_pr =
-          Numeric_to_char(sample->price, w_ctx->m->q_sc);
+          Numeric_to_char(sample->price, w_ctx->m->p_sc);
 
       wout("%s: %s: Trade: Leaving take loss(%" PRIuMAX
            "): %s 1%s@%s%s, take-loss-delay: %s tickers, take-loss-delays: "
@@ -2156,7 +2156,7 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
         char *restrict const p_info = position_string(w_ctx, t, p);
         char *restrict const delay = Numeric_to_char(p->sl_samples, 0);
         char *restrict const s_pr =
-            Numeric_to_char(sample->price, w_ctx->m->q_sc);
+            Numeric_to_char(sample->price, w_ctx->m->p_sc);
 
         wout("%s: %s: Trade: Reentering stop loss(%" PRIuMAX
              "): %s 1%s@%s%s, stop-loss-delay: %s tickers, stop-loss-delays: "
@@ -2189,7 +2189,7 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
         char *restrict const p_info = position_string(w_ctx, t, p);
         char *restrict const delay = Numeric_to_char(p->tp_samples, 0);
         char *restrict const s_pr =
-            Numeric_to_char(sample->price, w_ctx->m->q_sc);
+            Numeric_to_char(sample->price, w_ctx->m->p_sc);
 
         wout("%s: %s: Trade: Reentering take profit(%" PRIuMAX
              "): %s 1%s@%s%s, take-profit-delay: %s tickers, "
@@ -2572,7 +2572,7 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
 
       if (verbose) {
         char *restrict const s_pr =
-            Numeric_to_char(sample->price, w_ctx->m->q_sc);
+            Numeric_to_char(sample->price, w_ctx->m->p_sc);
 
         wout("%s: %s: Market: Entering open(%" PRIuMAX "): 1%s@%s%s\n",
              String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
@@ -2589,7 +2589,7 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
 
     if (verbose) {
       char *restrict const s_pr =
-          Numeric_to_char(sample->price, w_ctx->m->q_sc);
+          Numeric_to_char(sample->price, w_ctx->m->p_sc);
 
       wout("%s: %s: Market: Leaving open(%" PRIuMAX "): 1%s@%s%s\n",
            String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
@@ -2632,7 +2632,7 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
 
     if (verbose) {
       char *restrict const s_pr =
-          Numeric_to_char(sample->price, w_ctx->m->q_sc);
+          Numeric_to_char(sample->price, w_ctx->m->p_sc);
 
       wout("%s: %s: Market: Leaving open(%" PRIuMAX "): 1%s@%s%s\n",
            String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
@@ -2701,7 +2701,7 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
   case POSITION_TYPE_LONG: {
     if (Numeric_cmp(q_avail, q_ordered) < 0) {
       char *restrict const s_pr =
-          Numeric_to_char(sample->price, w_ctx->m->q_sc);
+          Numeric_to_char(sample->price, w_ctx->m->p_sc);
 
       char *restrict const q_return =
           Numeric_to_char(t->q_return, w_ctx->m->q_sc);
@@ -2769,7 +2769,7 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
         Numeric_cmp(b_avail, p->b_ordered) < 0) {
 
       char *restrict const s_pr =
-          Numeric_to_char(sample->price, w_ctx->m->q_sc);
+          Numeric_to_char(sample->price, w_ctx->m->p_sc);
 
       char *restrict const q_return =
           Numeric_to_char(t->q_return, w_ctx->m->q_sc);
