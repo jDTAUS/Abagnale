@@ -1,5 +1,5 @@
 /* $SchulteIT: algorithm-trend.c 15268 2025-11-04 21:48:33Z schulte $ */
-/* $JDTAUS$ */
+/* $JDTAUS: algorithm-trend.c 9656 2026-08-01 14:34:53Z schulte $ */
 
 /*
  * Copyright (c) 2018 - 2026 Christian Schulte <cs@schulte.it>
