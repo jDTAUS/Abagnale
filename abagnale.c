@@ -1099,7 +1099,7 @@ static bool quote_return(struct Numeric *restrict const q_return,
     Array_unlock(markets);
 
     if (q_m_id == NULL && b_m_id == NULL) {
-      werr("%s: %s: Markets not available: %s@%s %s@%s\n",
+      werr("%s: %s: Markets: Not available: %s@%s %s@%s\n",
            String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
            String_chars(w_ctx->m->q_id), String_chars(w_ctx->m_cnf->r_id),
            String_chars(w_ctx->m_cnf->r_id), String_chars(w_ctx->m->q_id));
@@ -1126,7 +1126,7 @@ static bool quote_return(struct Numeric *restrict const q_return,
     b_m_id = NULL;
 
     if (q_samples == NULL && b_samples == NULL) {
-      werr("%s: %s: Tickers not available: %s@%s %s@%s\n",
+      werr("%s: %s: Tickers: Not available: %s@%s %s@%s\n",
            String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
            String_chars(w_ctx->m->q_id), String_chars(w_ctx->m_cnf->r_id),
            String_chars(w_ctx->m_cnf->r_id), String_chars(w_ctx->m->q_id));
@@ -1163,7 +1163,7 @@ static bool quote_return(struct Numeric *restrict const q_return,
     }
 
     if (q_sample == NULL && b_sample == NULL) {
-      werr("%s: %s: Tickers not available: %s@%s %s@%s\n",
+      werr("%s: %s: Tickers: Not available: %s@%s %s@%s\n",
            String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
            String_chars(w_ctx->m->q_id), String_chars(w_ctx->m_cnf->r_id),
            String_chars(w_ctx->m_cnf->r_id), String_chars(w_ctx->m->q_id));
@@ -2296,7 +2296,7 @@ trade:
   struct Account *restrict const qa = w_ctx->e->account(w_ctx->m->qa_id);
 
   if (qa == NULL) {
-    werr("%s: %s: Failure syncing quote account: %s\n",
+    werr("%s: %s: Account: Failure syncing quote account: %s\n",
          String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
          String_chars(w_ctx->m->qa_id));
 
@@ -2306,7 +2306,7 @@ trade:
   struct Account *restrict const ba = w_ctx->e->account(w_ctx->m->ba_id);
 
   if (ba == NULL) {
-    werr("%s: %s: Failure syncing base account: %s\n",
+    werr("%s: %s: Account: Failure syncing base account: %s\n",
          String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
          String_chars(w_ctx->m->ba_id));
 
@@ -2483,7 +2483,7 @@ static void trade_pricing(const struct worker_ctx *restrict const w_ctx,
     char *restrict const stddev = Numeric_to_char(t->tp_pc, 4);
     char *restrict const fee = Numeric_to_char(t->fee_pc, 2);
 
-    werr("%s: %s: Volatility fee constraint: %s%%<%s%%\n",
+    werr("%s: %s: Volatility: Fee constraint: %s%%<%s%%\n",
          String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm), stddev, fee);
 
     Numeric_char_free(stddev);
@@ -2609,7 +2609,7 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
   struct Account *restrict const q_acct = w_ctx->e->account(w_ctx->m->qa_id);
 
   if (q_acct == NULL) {
-    werr("%s: %s: Failure syncing quote account: %s\n",
+    werr("%s: %s: Account: Failure syncing quote account: %s\n",
          String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
          String_chars(w_ctx->m->qa_id));
 
@@ -2619,7 +2619,7 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
   struct Account *restrict const b_acct = w_ctx->e->account(w_ctx->m->ba_id);
 
   if (b_acct == NULL) {
-    werr("%s: %s: Failure syncing base account: %s\n",
+    werr("%s: %s: Account: Failure syncing base account: %s\n",
          String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
          String_chars(w_ctx->m->ba_id));
 
@@ -2712,8 +2712,7 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
           &t->open_cd, String_chars(w_ctx->m->q_id), w_ctx->m->p_sc);
 
       werr("%s: %s: Position: Buy: Insufficient funds: %s%s@%s%s %s%s>%s%s, "
-           "return: "
-           "%s%s, candle: %s\n",
+           "return: %s%s, candle: %s\n",
            String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm), b,
            String_chars(w_ctx->m->b_id), pr, String_chars(w_ctx->m->q_id), r,
            String_chars(w_ctx->m->q_id), a, String_chars(w_ctx->m->q_id),
@@ -2755,8 +2754,8 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
         w_ctx->e->order_demand(w_ctx->m, b, pr);
 
     if (o_id == NULL) {
-      werr("%s: %s: Failure creating buy order\n", String_chars(w_ctx->e->nm),
-           String_chars(w_ctx->m->nm));
+      werr("%s: %s: Market: Failure creating buy order\n",
+           String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm));
 
       goto ret;
     }
@@ -2781,8 +2780,7 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
           &t->open_cd, String_chars(w_ctx->m->q_id), w_ctx->m->p_sc);
 
       werr("%s: %s: Position: Sell: Insufficient funds: %s%s@%s%s %s%s>%s%s "
-           "%s%s>%s%s, "
-           "return: %s%s, candle: %s\n",
+           "%s%s>%s%s, return: %s%s, candle: %s\n",
            String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm), b,
            String_chars(w_ctx->m->b_id), pr, String_chars(w_ctx->m->q_id), qr,
            String_chars(w_ctx->m->q_id), qa, String_chars(w_ctx->m->q_id), b,
@@ -2826,8 +2824,8 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
         w_ctx->e->order_supply(w_ctx->m, b, pr);
 
     if (o_id == NULL) {
-      werr("%s: %s: Failure creating sell order\n", String_chars(w_ctx->e->nm),
-           String_chars(w_ctx->m->nm));
+      werr("%s: %s: Market: Failure creating sell order\n",
+           String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm));
 
       goto ret;
     }
@@ -3087,7 +3085,7 @@ static int orders_process(void *restrict const arg) {
     struct Market *restrict const market = w_ctx->e->market(order->m_id);
 
     if (market == NULL) {
-      werr("%s: %s: Market not available\n", String_chars(w_ctx->e->nm),
+      werr("%s: Market: Not available: %s\n", String_chars(w_ctx->e->nm),
            String_chars(order->m_id));
 
       Order_delete(order);
@@ -3209,7 +3207,7 @@ static int samples_process(void *restrict const arg) {
     struct Market *restrict const m = w_ctx->e->market(sample->m_id);
 
     if (m == NULL) {
-      werr("%s: %s: Market not available\n", String_chars(w_ctx->e->nm),
+      werr("%s: %s: Market: Not available\n", String_chars(w_ctx->e->nm),
            String_chars(sample->m_id));
 
       Sample_delete(sample);
@@ -3336,7 +3334,7 @@ static int samples_process(void *restrict const arg) {
           mutex_unlock(&t->mtx);
         }
       } else {
-        werr("%s: %s: No matching market configuration - ignoring: %s\n",
+        werr("%s: %s: Trade: No matching market configuration - ignoring: %s\n",
              String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
              String_chars(t->id));
 
@@ -3383,7 +3381,7 @@ static int trades_process(void *restrict const arg) {
     struct Market *restrict const m = w_ctx->e->market(t->m_id);
 
     if (m == NULL) {
-      werr("%s: %s: Market not available\n", String_chars(w_ctx->e->nm),
+      werr("%s: %s: Market: Not available\n", String_chars(w_ctx->e->nm),
            String_chars(t->m_id));
 
       mutex_lock(&t->mtx);
@@ -3450,7 +3448,7 @@ static int trades_process(void *restrict const arg) {
       char *restrict const stddev = Numeric_to_char(tp_pc, 4);
       char *restrict const fee = Numeric_to_char(t->fee_pc, 2);
 
-      werr("%s: %s: Volatility fee constraint: %s%%<%s%%\n",
+      werr("%s: %s: Volatility: Fee constraint: %s%%<%s%%\n",
            String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm), stddev, fee);
 
       Numeric_char_free(stddev);
@@ -3554,7 +3552,7 @@ int abagnale(int argc, char *argv[]) {
   }
 
   if (Array_size(exchanges) == 0) {
-    werr("%s: No exchange configuration\n", String_chars(progname));
+    werr("%s: No exchanges configured\n", String_chars(progname));
     return (EXIT_FAILURE);
   }
 
