@@ -614,7 +614,7 @@ bitvavo_parse_account(const struct wcjson_document *restrict const doc,
   a->id = String_cnew(a_id);
   a->nm = String_copy(j_symbol);
   a->sym = j_symbol;
-  a->type = ACCOUNT_TYPE_UNSPECIFIED;
+  a->type = ACCOUNT_TYPE_NONE;
   a->avail = j_available;
   a->is_active = true;
   a->is_ready = true;
@@ -869,7 +869,7 @@ bitvavo_parse_market(const struct wcjson_document *restrict const doc,
   m->qa_id = qa_id;
   m->nm = String_cnew(nm);
   m->sym = j_market;
-  m->type = MARKET_TYPE_SPOT;
+  m->type = MARKET_TYPE_NONE;
   m->status = market_status(String_chars(j_status));
   m->p_sc = p_sc;
   m->p_inc = j_tickSize;
@@ -1278,7 +1278,7 @@ bitvavo_account_by_symbol(struct String *restrict const sym) {
     a->id = String_cnew(a_id);
     a->nm = String_copy(sym);
     a->sym = String_copy(sym);
-    a->type = ACCOUNT_TYPE_UNSPECIFIED;
+    a->type = ACCOUNT_TYPE_NONE;
     a->avail = Numeric_copy(zero);
     a->is_active = true;
     a->is_ready = true;

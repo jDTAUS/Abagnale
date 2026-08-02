@@ -146,7 +146,7 @@ static const struct {
   const char *restrict json;
   const enum account_type type;
 } account_type_map[] = {
-    {"ACCOUNT_TYPE_UNSPECIFIED", ACCOUNT_TYPE_UNSPECIFIED},
+    {"ACCOUNT_TYPE_UNSPECIFIED", ACCOUNT_TYPE_UNKNOWN},
     {"ACCOUNT_TYPE_CRYPTO", ACCOUNT_TYPE_CRYPTO},
     {"ACCOUNT_TYPE_FIAT", ACCOUNT_TYPE_FIAT},
     {"ACCOUNT_TYPE_VAULT", ACCOUNT_TYPE_VAULT},
@@ -410,7 +410,7 @@ static enum account_type account_type(const char *restrict const type) {
     if (!strcmp(account_type_map[i].json, type))
       return account_type_map[i].type;
 
-  return ACCOUNT_TYPE_UNSPECIFIED;
+  return ACCOUNT_TYPE_UNKNOWN;
 }
 
 static struct ws_channel *ws_channel(const char *restrict const name) {
@@ -642,8 +642,8 @@ static void ws_user_update(const struct wcjson_document *restrict const doc,
   }
 
   if (status == ORDER_STATUS_UNKNOWN) {
-    werr("%s: user: Status unsupported: %s %s\n", coinbase_ws_uri,
-         String_chars(j_order_id), String_chars(j_status));
+    werr("%s: user: %s %s\n", coinbase_ws_uri, String_chars(j_order_id),
+         String_chars(j_status));
   }
 
   o = Order_new();
@@ -1381,12 +1381,12 @@ parse_product(const struct wcjson_document *restrict const doc,
                  status_value == MARKET_STATUS_ONLINE;
 
   if (m->type == MARKET_TYPE_UNKNOWN)
-    werr("%s: product: %s: %s: Unsupported type: %s\n", coinbase_rest_uri, nm,
-         m_id, String_chars(j_product_type));
+    werr("%s: product: %s: %s: %s\n", coinbase_rest_uri, nm, m_id,
+         String_chars(j_product_type));
 
   if (m->status == MARKET_STATUS_UNKNOWN)
-    werr("%s: %s: product: Unsupported status: %s %s\n", coinbase_rest_uri, nm,
-         m_id, String_chars(j_status));
+    werr("%s: %s: product: %s %s\n", coinbase_rest_uri, nm, m_id,
+         String_chars(j_status));
 
   /*
    * Coinbase account active and ready flags change very infrequently - if at
@@ -1602,9 +1602,9 @@ parse_account(const struct wcjson_document *restrict const doc,
   a->is_active = j_active && j_active->is_true;
   a->is_ready = j_ready && j_ready->is_true;
 
-  if (a->type == ACCOUNT_TYPE_UNSPECIFIED)
-    werr("%s: account: Unsupported type: %s %s\n", coinbase_rest_uri,
-         String_chars(j_uuid), String_chars(j_type));
+  if (a->type == ACCOUNT_TYPE_UNKNOWN)
+    werr("%s: account: %s %s\n", coinbase_rest_uri, String_chars(j_uuid),
+         String_chars(j_type));
 
   errno = 0;
 ret:
@@ -1952,8 +1952,8 @@ parse_order(const struct wcjson_document *restrict const doc,
   mutex_unlock(m->mtx);
 
   if (o->status == ORDER_STATUS_UNKNOWN)
-    werr("%s: order: Unsupported status: %s %s\n", coinbase_rest_uri,
-         String_chars(j_order_id), String_chars(j_status));
+    werr("%s: order: %s %s\n", coinbase_rest_uri, String_chars(j_order_id),
+         String_chars(j_status));
 
   errno = 0;
 ret:

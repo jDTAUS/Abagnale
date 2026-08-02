@@ -64,14 +64,16 @@ extern const struct Config *restrict const cnf;
 static const struct {
   const enum market_type type;
   const char *const name;
-} market_types[] = {{MARKET_TYPE_UNKNOWN, "UNKNOWN"},
+} market_types[] = {{MARKET_TYPE_NONE, ""},
+                    {MARKET_TYPE_UNKNOWN, "UNKNOWN"},
                     {MARKET_TYPE_SPOT, "SPOT"},
                     {MARKET_TYPE_FUTURE, "FUTURE"}};
 
 static const struct {
   const enum market_status status;
   const char *const name;
-} market_status[] = {{MARKET_STATUS_UNKNOWN, "UNKNOWN"},
+} market_status[] = {{MARKET_STATUS_NONE, ""},
+                     {MARKET_STATUS_UNKNOWN, "UNKNOWN"},
                      {MARKET_STATUS_ONLINE, "ONLINE"},
                      {MARKET_STATUS_OFFLINE, "OFFLINE"},
                      {MARKET_STATUS_DELISTED, "DELISTED"}};
@@ -79,7 +81,8 @@ static const struct {
 static const struct {
   const enum account_type type;
   const char *const name;
-} account_types[] = {{ACCOUNT_TYPE_UNSPECIFIED, "UNSPECIFIED"},
+} account_types[] = {{ACCOUNT_TYPE_NONE, ""},
+                     {ACCOUNT_TYPE_UNKNOWN, "UNKNOWN"},
                      {ACCOUNT_TYPE_CRYPTO, "CRYPTO"},
                      {ACCOUNT_TYPE_FIAT, "FIAT"},
                      {ACCOUNT_TYPE_VAULT, "VAULT"},
@@ -125,8 +128,7 @@ static const struct {
      "UNKNOWN|SPOT|FUTURE]",
      cmd_markets},
     {"account", "-e exchange [-h] -i id", cmd_account},
-    {"accounts",
-     "-e exchange [-h] [-t UNSPECIFIED|CRYPTO|FIAT|VAULT|PERP_FUTURES]",
+    {"accounts", "-e exchange [-h] [-t UNKNOWN|CRYPTO|FIAT|PERP_FUTURES|VAULT]",
      cmd_accounts},
     {"algorithms", "", cmd_algorithms},
     {"exchanges", "", cmd_exchanges},

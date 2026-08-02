@@ -31,16 +31,18 @@
 #include <stdint.h>
 
 enum market_type {
-  MARKET_TYPE_UNKNOWN = 1 << 0,
-  MARKET_TYPE_SPOT = 1 << 1,
-  MARKET_TYPE_FUTURE = 1 << 2,
+  MARKET_TYPE_NONE = 1 << 0,
+  MARKET_TYPE_UNKNOWN = 1 << 1,
+  MARKET_TYPE_SPOT = 1 << 2,
+  MARKET_TYPE_FUTURE = 1 << 3,
 };
 
 enum market_status {
-  MARKET_STATUS_UNKNOWN = 1 << 0,
-  MARKET_STATUS_ONLINE = 1 << 1,
-  MARKET_STATUS_OFFLINE = 1 << 2,
-  MARKET_STATUS_DELISTED = 1 << 3,
+  MARKET_STATUS_NONE = 1 << 0,
+  MARKET_STATUS_UNKNOWN = 1 << 1,
+  MARKET_STATUS_ONLINE = 1 << 2,
+  MARKET_STATUS_OFFLINE = 1 << 3,
+  MARKET_STATUS_DELISTED = 1 << 4,
 };
 
 struct Market {
@@ -69,11 +71,12 @@ struct Market {
 };
 
 enum account_type {
-  ACCOUNT_TYPE_UNSPECIFIED = 1 << 0,
-  ACCOUNT_TYPE_CRYPTO = 1 << 1,
-  ACCOUNT_TYPE_FIAT = 1 << 2,
-  ACCOUNT_TYPE_VAULT = 1 << 3,
-  ACCOUNT_TYPE_PERP_FUTURES = 1 << 4,
+  ACCOUNT_TYPE_NONE = 1 << 0,
+  ACCOUNT_TYPE_UNKNOWN = 1 << 1,
+  ACCOUNT_TYPE_CRYPTO = 1 << 2,
+  ACCOUNT_TYPE_FIAT = 1 << 3,
+  ACCOUNT_TYPE_VAULT = 1 << 4,
+  ACCOUNT_TYPE_PERP_FUTURES = 1 << 5,
 };
 
 struct Account {
