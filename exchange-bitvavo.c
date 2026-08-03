@@ -42,6 +42,14 @@
 #define URI_MAX (size_t)512
 #define JSON_BODY_MAX (size_t)32767
 
+#ifndef BITVAVO_TICKER_SIZE
+#define BITVAVO_TICKER_SIZE (2 ^ 8)
+#endif
+
+#ifndef BITVAVO_TICKERS_DAY
+#define BITVAVO_TICKERS_DAY (2 ^ 18)
+#endif
+
 #ifndef DEFAULT_BITVAVO_REST_URI
 #define DEFAULT_BITVAVO_REST_URI "https://api.bitvavo.com"
 #endif
@@ -462,8 +470,8 @@ static void bitvavo_init(void) {
   pricings_by_id = Map_new(StringMapOps, 1024);
 
   orders = Queue_new(128, (time_t)0);
-  samples = Queue_new((MG_MAX_RECV_SIZE) / sizeof(struct Sample *),
-                      (time_t)(bitvavo_ws_stall_ms / 1000L));
+  samples = Queue_new(BITVAVO_TICKERS_DAY,
+                      (time_t)(bitvavo_ws_stall_ms / 1000L)); // 1MB/2MB
 
   for (size_t i = nitems(bitvavo_ws_msg_handlers); i-- > 0;)
     bitvavo_ws_msg_handlers[i].evt_ms = mg_millis();

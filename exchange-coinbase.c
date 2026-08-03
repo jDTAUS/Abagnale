@@ -38,6 +38,20 @@
 #include <inttypes.h>
 #include <string.h>
 
+#define COINBASE_UUID "74cc13c5-4835-491b-95f2-6af672ad141a"
+#define COINBASE_DBCON "coinbase"
+
+#define URL_MAX_LENGTH (size_t)512
+#define JSON_BODY_MAX (size_t)32767
+
+#ifndef COINBASE_TICKER_SIZE
+#define COINBASE_TICKER_SIZE (2 ^ 10)
+#endif
+
+#ifndef COINBASE_TICKERS_DAY
+#define COINBASE_TICKERS_DAY (2 ^ 24)
+#endif
+
 #ifndef DEFAULT_CDP_WS_URI
 #define DEFAULT_CDP_WS_URI "wss://advanced-trade-ws.coinbase.com"
 #endif
@@ -89,12 +103,6 @@
 #ifndef DEFAULT_CDP_HTTP_TIMEOUT_MILLIS
 #define DEFAULT_CDP_HTTP_TIMEOUT_MILLIS 60000L
 #endif
-
-#define COINBASE_UUID "74cc13c5-4835-491b-95f2-6af672ad141a"
-#define COINBASE_DBCON "coinbase"
-
-#define URL_MAX_LENGTH (size_t)512
-#define JSON_BODY_MAX (size_t)32767
 
 #ifndef nitems
 #define nitems(_a) (sizeof((_a)) / sizeof((_a)[0]))
@@ -1146,8 +1154,9 @@ static void coinbase_init(void) {
   coinbase_cnf = NULL;
   coinbase_db = NULL;
   orders = Queue_new(128, (time_t)0);
-  samples = Queue_new((MG_MAX_RECV_SIZE) / sizeof(struct Sample *),
-                      (time_t)(coinbase_stall_ms / 1000L));
+  samples = Queue_new(COINBASE_TICKERS_DAY,
+                      (time_t)(coinbase_stall_ms / 1000L)); // 64MB/128MB
+
   markets = Array_new(1024);
   markets_by_id = Map_new(StringMapOps, 1024);
   markets_by_symbol = Map_new(StringMapOps, 1024);
