@@ -566,7 +566,7 @@ static bool trend_market_plot(const void *restrict const db,
   db_tx_trend_plot_samples_open(db, String_chars(e->id), String_chars(m->id));
   while (!terminated && db_tx_trend_plot_samples_next(db_pt, db)) {
     char *restrict const x = Numeric_to_char(db_pt->x, 0);
-    char *restrict const y = Numeric_to_char(db_pt->y, m->q_sc);
+    char *restrict const y = Numeric_to_char(db_pt->y, m->p_sc);
     fprintf(f, "\t%s, %s;\n", x, y);
     Numeric_char_free(x);
     Numeric_char_free(y);
@@ -605,7 +605,7 @@ static bool trend_market_plot(const void *restrict const db,
   db_tx_trend_plot_markers_open(db, String_chars(e->id), String_chars(m->id));
   while (!terminated && db_tx_trend_plot_markers_next(db_mk, db)) {
     char *restrict const x = Numeric_to_char(db_mk->dp.x, 0);
-    char *restrict const y = Numeric_to_char(db_mk->dp.y, m->q_sc);
+    char *restrict const y = Numeric_to_char(db_mk->dp.y, m->p_sc);
 
     if (!strcmp("UP", db_mk->type))
       fprintf(f, "candle%zu_high = [\t%s, %s;\t];\n", up_cnt++, x, y);
