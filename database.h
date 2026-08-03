@@ -289,12 +289,15 @@ void db_trend_state_update(const void *const, const char *const,
 
 bool db_position_state_restore(struct db_position_state_rec *const,
                                const void *const, const char *const,
-                               const char *const, const char *const);
+                               const char *const, const char *const,
+                               const char *const);
 void db_position_state_persist(const void *const, const char *const,
                                const char *const, const char *const,
+                               const char *const,
                                const struct db_position_state_rec *const);
 bool db_trade_state_restore(struct db_trade_state_rec *const, const void *const,
-                            const char *const);
+                            const char *const, const char *const);
 void db_trade_state_persist(const void *const, const char *const,
+                            const char *const,
                             const struct db_trade_state_rec *const);
 #endif

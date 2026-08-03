@@ -187,6 +187,7 @@ extern const struct Array *restrict const exchanges;
 extern const struct Array *restrict const volatility_windows;
 
 extern const struct Config *restrict const cnf;
+extern const struct String *restrict const process_id;
 extern const bool ticker_exporter;
 extern const bool verbose;
 
@@ -835,8 +836,9 @@ static void position_state_load(const void *restrict const db,
       tls->position_state_load.p_state;
 
   if (p->id != NULL &&
-      db_position_state_restore(p_state, db, String_chars(t->e_id),
-                                String_chars(t->m_id), String_chars(p->id))) {
+      db_position_state_restore(p_state, db, String_chars(process_id),
+                                String_chars(t->e_id), String_chars(t->m_id),
+                                String_chars(p->id))) {
 
     Numeric_copy_to(p_state->sl_price, p->sl_trg.price);
     Numeric_copy_to(p_state->sl_nanos, p->sl_trg.nanos);
@@ -890,7 +892,8 @@ static void position_state_save(const void *restrict const db,
     Numeric_copy_to(p->tp_samples, p_state->tp_samples);
     p_state->tp = p->tp_trg.set;
 
-    db_position_state_persist(db, String_chars(t->e_id), String_chars(t->m_id),
+    db_position_state_persist(db, String_chars(process_id),
+                              String_chars(t->e_id), String_chars(t->m_id),
                               String_chars(p->id), p_state);
   }
 }
@@ -903,7 +906,8 @@ static void trade_state_load(const void *restrict const db,
       tls->trade_state_load.t_state;
 
   if (t->id != NULL &&
-      db_trade_state_restore(t_state, db, String_chars(t->id))) {
+      db_trade_state_restore(t_state, db, String_chars(process_id),
+                             String_chars(t->id))) {
 
     Numeric_copy_to(t_state->fee_pc, t->fee_pc);
     Numeric_copy_to(t_state->tp_pc, t->tp_pc);
@@ -930,7 +934,8 @@ static void trade_state_save(const void *restrict const db,
     Numeric_copy_to(TRADE_IS_READY(t) ? t->tp_pc : zero, t_state->tp_pc);
     Numeric_copy_to(t->pr_samples, t_state->pr_samples);
 
-    db_trade_state_persist(db, String_chars(t->id), t_state);
+    db_trade_state_persist(db, String_chars(process_id), String_chars(t->id),
+                           t_state);
   }
 
   position_state_save(db, t, &t->p_long);

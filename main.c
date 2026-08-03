@@ -91,6 +91,7 @@ struct Numeric *restrict week_nanos;
 struct Numeric *restrict boot_nanos;
 
 struct Config *restrict cnf;
+struct String *restrict process_id;
 bool ticker_exporter;
 bool verbose;
 
@@ -106,8 +107,8 @@ int abagnalectl(int argc, char *argv[]);
 static void terminate(int signum) { terminated = true; }
 
 static _Noreturn void usage(void) {
-  werr("Usage: %s [-Dmacro=value ... ] [-f config-file] [-I entity] [-n] [-p "
-       "plots-dir] [-v]\n",
+  werr("Usage: %s [-Dmacro=value ... ] [-f config-file] [-I entity] [-i "
+       "process-uuid] [-n] [-p plots-dir] [-v]\n",
        String_chars(progname));
 
   exit(EXIT_FAILURE);
@@ -139,6 +140,8 @@ int main(int argc, char *argv[]) {
   config_init();
   json_init();
   abagnale_init();
+
+  process_id = String_cnew("1fef4eab-66e8-4f49-8697-7132308b52f2");
 
   if (signal(SIGTERM, terminate) == SIG_ERR)
     fatal("%s", strerror(errno));
@@ -211,7 +214,7 @@ int main(int argc, char *argv[]) {
   optparse_init(&options, argv);
   options.permute = 0;
 
-  while ((c = optparse(&options, "D:f:I:p:vn")) != -1) {
+  while ((c = optparse(&options, "D:f:I:i:p:vn")) != -1) {
     switch (c) {
     case 'D':
       if (config_symset(options.optarg) < 0)
@@ -228,6 +231,10 @@ int main(int argc, char *argv[]) {
       }
 
       ticker_exporter = false;
+      break;
+    case 'i':
+      String_delete(process_id);
+      process_id = String_cnew(options.optarg);
       break;
     case 'n':
       configtest = true;

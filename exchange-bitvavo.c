@@ -465,6 +465,9 @@ static void bitvavo_init(void) {
   samples = Queue_new((MG_MAX_RECV_SIZE) / sizeof(struct Sample *),
                       (time_t)(bitvavo_ws_stall_ms / 1000L));
 
+  for (size_t i = nitems(bitvavo_ws_msg_handlers); i-- > 0;)
+    bitvavo_ws_msg_handlers[i].evt_ms = mg_millis();
+
   running = false;
 }
 

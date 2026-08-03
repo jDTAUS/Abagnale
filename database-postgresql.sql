@@ -18,7 +18,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict iusshNKWwBJ39OimWi2UYOxRfOevUfrurfvYylKcGQJFgEpY7z7wxSveLruhi8k
+\restrict UlMRe4Ju0BiuKjdygb4wkGmWRLha3RHSqIyth266MyYA9QNgkybTaag8PpbAint
 
 -- Dumped from database version 17.10 (Debian 17.10-0+deb13u1)
 -- Dumped by pg_dump version 17.10 (Debian 17.10-0+deb13u1)
@@ -44,9 +44,9 @@ CREATE DATABASE "ABAGNALE" WITH TEMPLATE = template0 ENCODING = 'UTF8' LOCALE_PR
 
 ALTER DATABASE "ABAGNALE" OWNER TO abagnale;
 
-\unrestrict iusshNKWwBJ39OimWi2UYOxRfOevUfrurfvYylKcGQJFgEpY7z7wxSveLruhi8k
+\unrestrict UlMRe4Ju0BiuKjdygb4wkGmWRLha3RHSqIyth266MyYA9QNgkybTaag8PpbAint
 \connect "ABAGNALE"
-\restrict iusshNKWwBJ39OimWi2UYOxRfOevUfrurfvYylKcGQJFgEpY7z7wxSveLruhi8k
+\restrict UlMRe4Ju0BiuKjdygb4wkGmWRLha3RHSqIyth266MyYA9QNgkybTaag8PpbAint
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -274,6 +274,7 @@ COMMENT ON TABLE public."PLOTS_DATAPOINTS" IS 'Datapoints of two dimensional plo
 --
 
 CREATE TABLE public."POSITION_STATES" (
+    "PROCESS_ID" uuid NOT NULL,
     "EXCHANGE_ID" uuid NOT NULL,
     "MARKET_ID" uuid NOT NULL,
     "POSITION_ID" uuid NOT NULL,
@@ -431,6 +432,7 @@ COMMENT ON TABLE public."TRADES" IS 'Trade book keeping.';
 --
 
 CREATE TABLE public."TRADE_STATES" (
+    "PROCESS_ID" uuid NOT NULL,
     "TRADE_ID" uuid NOT NULL,
     "FEE_PERCENT" numeric NOT NULL,
     "TAKE_PROFIT_PERCENT" numeric NOT NULL,
@@ -567,7 +569,7 @@ ALTER TABLE ONLY public."PLOTS"
 --
 
 ALTER TABLE ONLY public."POSITION_STATES"
-    ADD CONSTRAINT "POSITION_STATES_pkey" PRIMARY KEY ("EXCHANGE_ID", "MARKET_ID", "POSITION_ID");
+    ADD CONSTRAINT "POSITION_STATES_pkey" PRIMARY KEY ("PROCESS_ID", "EXCHANGE_ID", "MARKET_ID", "POSITION_ID");
 
 
 --
@@ -599,7 +601,7 @@ ALTER TABLE ONLY public."TRADES"
 --
 
 ALTER TABLE ONLY public."TRADE_STATES"
-    ADD CONSTRAINT "TRADE_STATES_pkey" PRIMARY KEY ("TRADE_ID");
+    ADD CONSTRAINT "TRADE_STATES_pkey" PRIMARY KEY ("PROCESS_ID", "TRADE_ID");
 
 
 --
@@ -760,5 +762,5 @@ ALTER TABLE ONLY public."TREND_PLOTS"
 -- PostgreSQL database dump complete
 --
 
-\unrestrict iusshNKWwBJ39OimWi2UYOxRfOevUfrurfvYylKcGQJFgEpY7z7wxSveLruhi8k
+\unrestrict UlMRe4Ju0BiuKjdygb4wkGmWRLha3RHSqIyth266MyYA9QNgkybTaag8PpbAint
 
