@@ -577,13 +577,13 @@ static bool trend_market_plot(const void *restrict const db,
   db_tx_trend_plot_candles_open(db, String_chars(e->id), String_chars(m->id));
   while (!terminated && db_tx_trend_plot_candles_next(db_cd, db)) {
     char *restrict const onanos = Numeric_to_char(db_cd->onanos, 0);
-    char *restrict const o = Numeric_to_char(db_cd->o, m->q_sc);
+    char *restrict const o = Numeric_to_char(db_cd->o, m->p_sc);
     char *restrict const hnanos = Numeric_to_char(db_cd->hnanos, 0);
-    char *restrict const h = Numeric_to_char(db_cd->h, m->q_sc);
+    char *restrict const h = Numeric_to_char(db_cd->h, m->p_sc);
     char *restrict const lnanos = Numeric_to_char(db_cd->lnanos, 0);
-    char *restrict const l = Numeric_to_char(db_cd->l, m->q_sc);
+    char *restrict const l = Numeric_to_char(db_cd->l, m->p_sc);
     char *restrict const cnanos = Numeric_to_char(db_cd->cnanos, 0);
-    char *restrict const c = Numeric_to_char(db_cd->c, m->q_sc);
+    char *restrict const c = Numeric_to_char(db_cd->c, m->p_sc);
     const bool red = Numeric_cmp(db_cd->o, db_cd->c) > 0;
 
     fprintf(f, "%scandle%zu = [\n", red ? "red_" : "green_",
