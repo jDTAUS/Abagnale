@@ -17,7 +17,7 @@
 //
 // SPDX-License-Identifier: GPL-2.0-only or commercial
 
-// $JDTAUS$
+// $JDTAUS: mongoose.c 9643 2026-07-29 08:15:42Z schulte $
 // Origin: https://github.com/cesanta/mongoose
 //  61638caeae46d6bd91bfd6d61d9673b7549890ff
 // Modifications: None.
