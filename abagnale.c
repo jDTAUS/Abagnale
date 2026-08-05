@@ -2271,7 +2271,7 @@ trade:
   const char *restrict ac_info;
   switch (p->type) {
   case POSITION_TYPE_LONG:
-    ac_info = "Open sell";
+    ac_info = "Close long";
     // Long: Sell at highest price since trigger.
     items = Array_items(samples);
     for (size_t i = Array_size(samples); i-- > 0;) {
@@ -2282,7 +2282,7 @@ trade:
     }
     break;
   case POSITION_TYPE_SHORT:
-    ac_info = "Open buy";
+    ac_info = "Close short";
     // Short: Buy at lowest price since trigger.
     items = Array_items(samples);
     for (size_t i = Array_size(samples); i-- > 0;) {
@@ -2716,8 +2716,8 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
       char *restrict const c = candle_string(
           &t->open_cd, String_chars(w_ctx->m->q_id), w_ctx->m->p_sc);
 
-      werr("%s: %s: Market: Open buy: Insufficient funds: %s%s@%s%s %s%s>%s%s, "
-           "return: %s%s, candle: %s\n",
+      werr("%s: %s: Market: Open long: Insufficient funds: %s%s@%s%s "
+           "%s%s>%s%s, return: %s%s, candle: %s\n",
            String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm), b,
            String_chars(w_ctx->m->b_id), pr, String_chars(w_ctx->m->q_id), r,
            String_chars(w_ctx->m->q_id), a, String_chars(w_ctx->m->q_id),
@@ -2746,7 +2746,7 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
       char *restrict const c = candle_string(
           &t->open_cd, String_chars(w_ctx->m->q_id), w_ctx->m->p_sc);
 
-      wout("%s: %s: Market: Open buy: %s%s@%s%s, return: %s%s, candle: %s\n",
+      wout("%s: %s: Market: Open long: %s%s@%s%s, return: %s%s, candle: %s\n",
            String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm), b,
            String_chars(w_ctx->m->b_id), pr, String_chars(w_ctx->m->q_id),
            q_return, String_chars(w_ctx->m->q_id), c);
@@ -2784,8 +2784,8 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
       char *restrict const c = candle_string(
           &t->open_cd, String_chars(w_ctx->m->q_id), w_ctx->m->p_sc);
 
-      werr("%s: %s: Market: Open sell: Insufficient funds: %s%s@%s%s %s%s>%s%s "
-           "%s%s>%s%s, return: %s%s, candle: %s\n",
+      werr("%s: %s: Market: Open short: Insufficient funds: %s%s@%s%s "
+           "%s%s>%s%s %s%s>%s%s, return: %s%s, candle: %s\n",
            String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm), b,
            String_chars(w_ctx->m->b_id), pr, String_chars(w_ctx->m->q_id), qr,
            String_chars(w_ctx->m->q_id), qa, String_chars(w_ctx->m->q_id), b,
@@ -2816,7 +2816,7 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
       char *restrict const c = candle_string(
           &t->open_cd, String_chars(w_ctx->m->q_id), w_ctx->m->p_sc);
 
-      wout("%s: %s: Market: Open sell: %s%s@%s%s, return: %s%s, candle: %s\n",
+      wout("%s: %s: Market: Open short: %s%s@%s%s, return: %s%s, candle: %s\n",
            String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm), b,
            String_chars(w_ctx->m->b_id), pr, String_chars(w_ctx->m->q_id),
            q_return, String_chars(w_ctx->m->q_id), c);
