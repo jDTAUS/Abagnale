@@ -2232,7 +2232,7 @@ static void position_trade(const struct worker_ctx *restrict const w_ctx,
   if (p->tp_trg.set) {
     if (Numeric_cmp(p->tp_samples, zero) <= 0 ||
         p->tp_trg.cnt > w_ctx->m_cnf->tp_dlcnt) {
-      tr_info = "take profit";
+      tr_info = "Take profit";
       tr_nanos = p->tp_trg.nanos;
       Numeric_copy_to(p->tp_trg.price, o_pr);
       goto trade;
@@ -2243,7 +2243,7 @@ static void position_trade(const struct worker_ctx *restrict const w_ctx,
   if (p->sl_trg.set) {
     if (Numeric_cmp(p->sl_samples, zero) <= 0 ||
         p->sl_trg.cnt > w_ctx->m_cnf->sl_dlcnt) {
-      tr_info = "stop loss";
+      tr_info = "Stop loss";
       tr_nanos = p->sl_trg.nanos;
       Numeric_copy_to(p->sl_trg.price, o_pr);
       goto trade;
@@ -2254,7 +2254,7 @@ static void position_trade(const struct worker_ctx *restrict const w_ctx,
   if (p->tl_trg.set) {
     if (Numeric_cmp(p->tl_samples, zero) <= 0 ||
         p->tl_trg.cnt > w_ctx->m_cnf->tl_dlcnt) {
-      tr_info = "take loss";
+      tr_info = "Take loss";
       tr_nanos = p->tl_trg.nanos;
       Numeric_copy_to(p->tl_trg.price, o_pr);
       goto trade;
@@ -2271,7 +2271,7 @@ trade:
   const char *restrict ac_info;
   switch (p->type) {
   case POSITION_TYPE_LONG:
-    ac_info = "Selling";
+    ac_info = "Open sell";
     // Long: Sell at highest price since trigger.
     items = Array_items(samples);
     for (size_t i = Array_size(samples); i-- > 0;) {
@@ -2282,7 +2282,7 @@ trade:
     }
     break;
   case POSITION_TYPE_SHORT:
-    ac_info = "Buying";
+    ac_info = "Open buy";
     // Short: Buy at lowest price since trigger.
     items = Array_items(samples);
     for (size_t i = Array_size(samples); i-- > 0;) {
@@ -2336,7 +2336,7 @@ trade:
     char *restrict const q_return =
         Numeric_to_char(t->q_return, w_ctx->m->q_sc);
 
-    wout("%s: %s: Trade: %s %s: %s %s%s@%s%s, return: %s%s\n",
+    wout("%s: %s: Trade: %s: %s: %s %s%s@%s%s, return: %s%s\n",
          String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm), ac_info,
          tr_info, String_chars(t->id), b, String_chars(w_ctx->m->b_id), pr,
          String_chars(w_ctx->m->q_id), q_return, String_chars(w_ctx->m->q_id));
@@ -2716,7 +2716,7 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
       char *restrict const c = candle_string(
           &t->open_cd, String_chars(w_ctx->m->q_id), w_ctx->m->p_sc);
 
-      werr("%s: %s: Position: Buy: Insufficient funds: %s%s@%s%s %s%s>%s%s, "
+      werr("%s: %s: Market: Open buy: Insufficient funds: %s%s@%s%s %s%s>%s%s, "
            "return: %s%s, candle: %s\n",
            String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm), b,
            String_chars(w_ctx->m->b_id), pr, String_chars(w_ctx->m->q_id), r,
@@ -2746,7 +2746,7 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
       char *restrict const c = candle_string(
           &t->open_cd, String_chars(w_ctx->m->q_id), w_ctx->m->p_sc);
 
-      wout("%s: %s: Market: Buying: %s%s@%s%s, return: %s%s, candle: %s\n",
+      wout("%s: %s: Market: Open buy: %s%s@%s%s, return: %s%s, candle: %s\n",
            String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm), b,
            String_chars(w_ctx->m->b_id), pr, String_chars(w_ctx->m->q_id),
            q_return, String_chars(w_ctx->m->q_id), c);
@@ -2784,7 +2784,7 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
       char *restrict const c = candle_string(
           &t->open_cd, String_chars(w_ctx->m->q_id), w_ctx->m->p_sc);
 
-      werr("%s: %s: Position: Sell: Insufficient funds: %s%s@%s%s %s%s>%s%s "
+      werr("%s: %s: Market: Open sell: Insufficient funds: %s%s@%s%s %s%s>%s%s "
            "%s%s>%s%s, return: %s%s, candle: %s\n",
            String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm), b,
            String_chars(w_ctx->m->b_id), pr, String_chars(w_ctx->m->q_id), qr,
@@ -2816,7 +2816,7 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
       char *restrict const c = candle_string(
           &t->open_cd, String_chars(w_ctx->m->q_id), w_ctx->m->p_sc);
 
-      wout("%s: %s: Market: Selling: %s%s@%s%s, return: %s%s, candle: %s\n",
+      wout("%s: %s: Market: Open sell: %s%s@%s%s, return: %s%s, candle: %s\n",
            String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm), b,
            String_chars(w_ctx->m->b_id), pr, String_chars(w_ctx->m->q_id),
            q_return, String_chars(w_ctx->m->q_id), c);
