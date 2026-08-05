@@ -533,7 +533,7 @@ static bool trend_position_close(const void *restrict const db,
   }
 
   if (close && verbose && !p->tl_trg.set) {
-    wout("%s: %s: Trade: Trend not confirmed: %s\n", String_chars(e->nm),
+    wout("%s: %s: Position: Trend not confirmed: %s\n", String_chars(e->nm),
          String_chars(m->nm), String_chars(t->id));
   }
 
