@@ -313,7 +313,8 @@ static int cmd_exchanges(int argc, char *argv[]) {
     usage();
 
   for (size_t i = all_exchanges_nitems; i-- > 0;)
-    printf("%s\n", String_chars(all_exchanges[i]->nm));
+    printf("%s\t%s\n", String_chars(all_exchanges[i]->id),
+           String_chars(all_exchanges[i]->nm));
 
   return EXIT_SUCCESS;
 }
