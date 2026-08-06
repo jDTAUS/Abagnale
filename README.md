@@ -205,7 +205,7 @@ Abagnale includes infrastructure expected from long-running production services:
 
 # Why ISO C?
 
-Abagnale is implemented in **portable ISO C**, reflecting a deliberate engineering philosophy rather than a language preference. By adhering closely to the ISO C standard, the platform remains lightweight, portable, and easy to build across a wide range of environments using conforming compilers.
+Abagnale is implemented in portable ISO C, reflecting a deliberate engineering philosophy rather than a language preference. By adhering closely to the ISO C standard, the platform remains lightweight, portable, and easy to build across a wide range of environments using conforming compilers.
 
 This standards-based approach minimizes unnecessary dependencies, promotes long-term maintainability, and ensures the codebase remains accessible to developers familiar with one of the industry's most enduring programming languages.
 

@@ -1846,8 +1846,6 @@ static void bitvavo_ws_evt_handler(struct mg_connection *c, int ev,
 #ifdef ABAG_BITVAVO_DEBUG
     wout("%s: %lu MG_EV_CLOSE\n", String_chars(c->mgr->userdata), c->id);
 #endif
-    heap_free(c->fn_data);
-
     if (running) {
       struct mg_mgr *restrict const mgr = c->mgr;
 

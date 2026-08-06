@@ -3457,7 +3457,7 @@ static int trades_process(void *restrict const arg) {
       char *restrict const stddev = Numeric_to_char(tp_pc, 4);
       char *restrict const fee = Numeric_to_char(t->fee_pc, 2);
 
-      werr("%s: %s: Volatility: Fee constraint: %s%%<%s%%\n",
+      werr("%s: %s: Pricing: Volatility fee constraint: %s%%<%s%%\n",
            String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm), stddev, fee);
 
       Numeric_char_free(stddev);
