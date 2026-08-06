@@ -1,5 +1,5 @@
 /* $SchulteIT: LICENSES.txt 15211 2025-10-27 10:26:10Z schulte $ */
-/* $JDTAUS$ */
+/* $JDTAUS: LICENSE.txt 9640 2026-07-22 06:47:01Z schulte $ */
 
 #1: License applying to files not mentioned otherwise
 
