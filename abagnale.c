@@ -3196,12 +3196,14 @@ static int orders_process(void *restrict const arg) {
           t->status == TRADE_STATUS_DONE) {
         mutex_lock(&t->mtx);
 
-        if (!TRADE_IS_ENQUEUED(t) && !TRADE_IS_DELETED(t))
+        if (!TRADE_IS_ENQUEUED(t) && !TRADE_IS_DELETED(t)) {
+          mutex_unlock(&t->mtx);
           trade_delete(t);
-        else
+        } else {
           TRADE_SET_DELETED(t);
+          mutex_unlock(&t->mtx);
+        }
 
-        mutex_unlock(&t->mtx);
         Array_remove_idx(trades, i);
       }
     }
@@ -3347,12 +3349,14 @@ static int samples_process(void *restrict const arg) {
             t->status == TRADE_STATUS_DONE) {
           mutex_lock(&t->mtx);
 
-          if (!TRADE_IS_ENQUEUED(t) && !TRADE_IS_DELETED(t))
+          if (!TRADE_IS_ENQUEUED(t) && !TRADE_IS_DELETED(t)) {
+            mutex_unlock(&t->mtx);
             trade_delete(t);
-          else
+          } else {
             TRADE_SET_DELETED(t);
+            mutex_unlock(&t->mtx);
+          }
 
-          mutex_unlock(&t->mtx);
           Array_remove_idx(trades, i);
           goto again;
         } else if (t->status == TRADE_STATUS_NEW) {
