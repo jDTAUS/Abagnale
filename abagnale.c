@@ -3366,8 +3366,7 @@ static int samples_process(void *restrict const arg) {
           mutex_unlock(&t->mtx);
         }
       } else {
-        wout("%s: %s: Position: No matching market configuration - ignoring: "
-             "%s\n",
+        wout("%s: %s: Position: No matching market configuration: %s\n",
              String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
              String_chars(t->id));
 

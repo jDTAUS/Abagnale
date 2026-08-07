@@ -13,6 +13,8 @@ User=abagnale
 Group=abagnale
 Environment=PATH=/usr/bin:/usr/local/bin
 Environment=LC_CTYPE=C.UTF-8
+#Environment=PGPASSFILE=/etc/abagnale/abagnale.pgpass
+#Environment=PGSERVICEFILE=/etc/abagnale/abagnale.pgservice
 #Environment=ABAG_CONFIG_FILE=/etc/abagnale/abagnale.conf
 #Environment=ABAG_DATABASE_TARGET=ABAGNALE
 #Environment=ABAG_DATABASE_USER=abagnale
@@ -45,7 +47,6 @@ Environment=LC_CTYPE=C.UTF-8
 #Environment=BITVAVO_REQUESTS_PER_SECOND=16
 #Environment=BITVAVO_WS_STALL_MILLIS=3600000
 #Environment=BITVAVO_WS_RETRY_SECONDS=3
-
 WorkingDirectory=/tmp
 KillMode=process
 TimeoutSec=600
