@@ -54,10 +54,6 @@ static void db_warn(void) {
   //  werr("===============\n");
 }
 
-static void db_fatal(void) {
-  fatal("%s: %ld: %s", sqlca.sqlstate, sqlca.sqlcode, sqlca.sqlerrm.sqlerrmc);
-}
-
 void *db_connect(const char *const cname) {
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(1, stdout);
@@ -70,8 +66,8 @@ void *db_connect(const char *const cname) {
   const char *sql_progname = String_chars(progname);
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
-  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
-  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL WHENEVER SQLERROR GOTO fatal;
+  EXEC SQL WHENEVER NOT FOUND GOTO fatal;
   EXEC SQL CONNECT TO :sql_tgt AS :con USER :sql_usr;
   EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
   EXEC SQL AT :con SET AUTOCOMMIT TO OFF;
@@ -116,6 +112,9 @@ void *db_connect(const char *const cname) {
   ECPGdebug(0, stdout);
 #endif
   return String_cnew(cname);
+fatal:
+  fatal("%s: SQLSTATE %s: SQLCODE %ld: %s", cname, sqlca.sqlstate,
+        sqlca.sqlcode, sqlca.sqlerrm.sqlerrmc);
 }
 
 void db_disconnect(void *const db) {
@@ -127,14 +126,18 @@ void db_disconnect(void *const db) {
   const char *con = String_chars(db);
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
-  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
-  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL WHENEVER SQLERROR GOTO fatal;
+  EXEC SQL WHENEVER NOT FOUND GOTO fatal;
   EXEC SQL DISCONNECT :con;
   // clang-format on
   String_delete(db);
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(0, stdout);
 #endif
+  return;
+fatal:
+  fatal("%s: SQLSTATE %s: SQLCODE %ld: %s", con, sqlca.sqlstate, sqlca.sqlcode,
+        sqlca.sqlerrm.sqlerrmc);
 }
 
 void db_tx_begin(const void *const db) {
@@ -146,13 +149,17 @@ void db_tx_begin(const void *const db) {
   const char *con = String_chars(db);
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
-  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
-  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL WHENEVER SQLERROR GOTO fatal;
+  EXEC SQL WHENEVER NOT FOUND GOTO fatal;
   EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ;
   // clang-format on
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(0, stdout);
 #endif
+  return;
+fatal:
+  fatal("%s: SQLSTATE %s: SQLCODE %ld: %s", con, sqlca.sqlstate, sqlca.sqlcode,
+        sqlca.sqlerrm.sqlerrmc);
 }
 
 void db_tx_commit(const void *const db) {
@@ -164,13 +171,17 @@ void db_tx_commit(const void *const db) {
   const char *con = String_chars(db);
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
-  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
-  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL WHENEVER SQLERROR GOTO fatal;
+  EXEC SQL WHENEVER NOT FOUND GOTO fatal;
   EXEC SQL AT :con COMMIT;
   // clang-format on
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(0, stdout);
 #endif
+  return;
+fatal:
+  fatal("%s: SQLSTATE %s: SQLCODE %ld: %s", con, sqlca.sqlstate, sqlca.sqlcode,
+        sqlca.sqlerrm.sqlerrmc);
 }
 
 void db_tx_rollback(const void *const db) {
@@ -182,13 +193,17 @@ void db_tx_rollback(const void *const db) {
   const char *con = String_chars(db);
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
-  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
-  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL WHENEVER SQLERROR GOTO fatal;
+  EXEC SQL WHENEVER NOT FOUND GOTO fatal;
   EXEC SQL AT :con ROLLBACK;
   // clang-format on
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(0, stdout);
 #endif
+  return;
+fatal:
+  fatal("%s: SQLSTATE %s: SQLCODE %ld: %s", con, sqlca.sqlstate, sqlca.sqlcode,
+        sqlca.sqlerrm.sqlerrmc);
 }
 
 void db_uuid(char *const id, const void *const db) {
@@ -201,8 +216,8 @@ void db_uuid(char *const id, const void *const db) {
   char *sql_id = id;
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
-  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
-  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL WHENEVER SQLERROR GOTO fatal;
+  EXEC SQL WHENEVER NOT FOUND GOTO fatal;
   EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
   EXEC SQL AT :con SELECT gen_random_uuid() INTO :sql_id;
   EXEC SQL AT :con COMMIT;
@@ -210,6 +225,10 @@ void db_uuid(char *const id, const void *const db) {
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(0, stdout);
 #endif
+  return;
+fatal:
+  fatal("%s: SQLSTATE %s: SQLCODE %ld: %s", con, sqlca.sqlstate, sqlca.sqlcode,
+        sqlca.sqlerrm.sqlerrmc);
 }
 
 void db_symbol_to_id(char *const id, const void *const db,
@@ -225,7 +244,7 @@ void db_symbol_to_id(char *const id, const void *const db,
   char *sql_id = id;
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
-  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL WHENEVER SQLERROR GOTO fatal;
   EXEC SQL WHENEVER NOT FOUND GOTO not_found;
   EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
   EXEC SQL AT :con
@@ -239,8 +258,8 @@ void db_symbol_to_id(char *const id, const void *const db,
 not_found:
   // clang-format off
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
-  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
-  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL WHENEVER SQLERROR GOTO fatal;
+  EXEC SQL WHENEVER NOT FOUND GOTO fatal;
   EXEC SQL AT :con
     EXECUTE id_create USING :sql_e_id, :sql_symbol INTO :sql_id;
   EXEC SQL AT :con COMMIT;
@@ -248,6 +267,10 @@ not_found:
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(0, stdout);
 #endif
+  return;
+fatal:
+  fatal("%s: SQLSTATE %s: SQLCODE %ld: %s", con, sqlca.sqlstate, sqlca.sqlcode,
+        sqlca.sqlerrm.sqlerrmc);
 }
 
 void db_sample_create(const void *const db, const char *const e_id,
@@ -262,13 +285,17 @@ void db_sample_create(const void *const db, const char *const e_id,
   const numeric *sql_price = Numeric_db(price);
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
-  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
-  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL WHENEVER SQLERROR GOTO fatal;
+  EXEC SQL WHENEVER NOT FOUND GOTO fatal;
   EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ UNCOMMITTED;
   EXEC SQL AT :con
     EXECUTE sample_create USING :sql_e_id, :sql_m_id, :sql_nanos, :sql_price;
   EXEC SQL AT :con COMMIT;
   // clang-format on
+  return;
+fatal:
+  fatal("%s: SQLSTATE %s: SQLCODE %ld: %s", con, sqlca.sqlstate, sqlca.sqlcode,
+        sqlca.sqlerrm.sqlerrmc);
 }
 
 void db_samples_open(const void *const db, const char *const e_id,
@@ -285,11 +312,11 @@ void db_samples_open(const void *const db, const char *const e_id,
   const numeric *sql_since = Numeric_db(since);
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
-  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
-  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL WHENEVER SQLERROR GOTO fatal;
+  EXEC SQL WHENEVER NOT FOUND GOTO fatal;
   EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ;
   EXEC SQL AT :con DECLARE samples_cursor CURSOR FOR
-    SELECT "NANOS", "PRICE" 
+    SELECT "NANOS", "PRICE"
     FROM "SAMPLES"
     WHERE "EXCHANGE_ID" = :sql_e_id AND "MARKET_ID" = :sql_m_id
       AND "NANOS" >= :sql_since
@@ -300,6 +327,10 @@ void db_samples_open(const void *const db, const char *const e_id,
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(0, stdout);
 #endif
+  return;
+fatal:
+  fatal("%s: SQLSTATE %s: SQLCODE %ld: %s", con, sqlca.sqlstate, sqlca.sqlcode,
+        sqlca.sqlerrm.sqlerrmc);
 }
 
 bool db_samples_next(struct db_sample_rec *const sample, const void *const db) {
@@ -310,13 +341,16 @@ bool db_samples_next(struct db_sample_rec *const sample, const void *const db) {
   numeric *sql_price = Numeric_db(sample->price);
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
-  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL WHENEVER SQLERROR GOTO fatal;
   EXEC SQL WHENEVER NOT FOUND GOTO not_found;
   EXEC SQL AT :con FETCH FROM samples_cursor INTO :sql_nanos, :sql_price;
   // clang-format on
   return true;
 not_found:
   return false;
+fatal:
+  fatal("%s: SQLSTATE %s: SQLCODE %ld: %s", con, sqlca.sqlstate, sqlca.sqlcode,
+        sqlca.sqlerrm.sqlerrmc);
 }
 
 void db_samples_close(const void *const db) {
@@ -328,14 +362,18 @@ void db_samples_close(const void *const db) {
   const char *con = String_chars(db);
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
-  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
-  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL WHENEVER SQLERROR GOTO fatal;
+  EXEC SQL WHENEVER NOT FOUND GOTO fatal;
   EXEC SQL AT :con CLOSE samples_cursor;
   EXEC SQL AT :con COMMIT;
   // clang-format on
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(0, stdout);
 #endif
+  return;
+fatal:
+  fatal("%s: SQLSTATE %s: SQLCODE %ld: %s", con, sqlca.sqlstate, sqlca.sqlcode,
+        sqlca.sqlerrm.sqlerrmc);
 }
 
 void db_volatility_open(const void *const db, const char *const e_id,
@@ -359,8 +397,8 @@ void db_volatility_open(const void *const db, const char *const e_id,
   numeric *sql_nanos = Numeric_db(nanos ? nanos : zero);
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
-  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
-  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL WHENEVER SQLERROR GOTO fatal;
+  EXEC SQL WHENEVER NOT FOUND GOTO fatal;
   EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ;
   EXEC SQL AT :con
     CREATE TEMPORARY TABLE returns ON COMMIT DROP AS
@@ -392,6 +430,10 @@ void db_volatility_open(const void *const db, const char *const e_id,
   ECPGdebug(0, stdout);
 #endif
   Numeric_delete(nanos);
+  return;
+fatal:
+  fatal("%s: SQLSTATE %s: SQLCODE %ld: %s", con, sqlca.sqlstate, sqlca.sqlcode,
+        sqlca.sqlerrm.sqlerrmc);
 }
 
 void db_volatility(struct Numeric *const stddev, const void *const db,
@@ -407,8 +449,8 @@ void db_volatility(struct Numeric *const stddev, const void *const db,
   int sql_stddev_ind[1] = {0};
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
-  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
-  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL WHENEVER SQLERROR GOTO fatal;
+  EXEC SQL WHENEVER NOT FOUND GOTO fatal;
   EXEC SQL AT :con
     WITH stddev AS (
       SELECT
@@ -425,6 +467,10 @@ void db_volatility(struct Numeric *const stddev, const void *const db,
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(0, stdout);
 #endif
+  return;
+fatal:
+  fatal("%s: SQLSTATE %s: SQLCODE %ld: %s", con, sqlca.sqlstate, sqlca.sqlcode,
+        sqlca.sqlerrm.sqlerrmc);
 }
 
 void db_volatility_close(const void *const db) {
@@ -436,13 +482,17 @@ void db_volatility_close(const void *const db) {
   const char *con = String_chars(db);
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
-  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
-  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL WHENEVER SQLERROR GOTO fatal;
+  EXEC SQL WHENEVER NOT FOUND GOTO fatal;
   EXEC SQL AT :con COMMIT;
   // clang-format on
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(0, stdout);
 #endif
+  return;
+fatal:
+  fatal("%s: SQLSTATE %s: SQLCODE %ld: %s", con, sqlca.sqlstate, sqlca.sqlcode,
+        sqlca.sqlerrm.sqlerrmc);
 }
 
 void db_vacuum(void) {
@@ -454,6 +504,9 @@ void db_vacuum(void) {
   const char *sql_tgt = String_chars(cnf->db_tgt);
   const char *sql_usr = String_chars(cnf->db_usr);
   EXEC SQL END DECLARE SECTION;
+  EXEC SQL WHENEVER SQLWARNING CALL db_warn();
+  EXEC SQL WHENEVER SQLERROR GOTO fatal;
+  EXEC SQL WHENEVER NOT FOUND GOTO fatal;
   EXEC SQL CONNECT TO :sql_tgt AS vfa USER :sql_usr;
   EXEC SQL AT vfa SET AUTOCOMMIT TO ON;
   EXEC SQL AT vfa SET TIMEZONE TO 'UTC';
@@ -463,6 +516,10 @@ void db_vacuum(void) {
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(0, stdout);
 #endif
+  return;
+fatal:
+  fatal("vfa: SQLSTATE %s: SQLCODE %ld: %s", sqlca.sqlstate, sqlca.sqlcode,
+        sqlca.sqlerrm.sqlerrmc);
 }
 
 void db_vacuum_plots(const void *const db, const char *const e_id,
@@ -485,7 +542,7 @@ void db_vacuum_plots(const void *const db, const char *const e_id,
   char stmt[DB_STATEMENT_MAX_LENGTH + 1] = {0};
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
-  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL WHENEVER SQLERROR GOTO fatal;
   EXEC SQL WHENEVER NOT FOUND CONTINUE;
   EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
   // clang-format on
@@ -574,6 +631,10 @@ void db_vacuum_plots(const void *const db, const char *const e_id,
   ECPGdebug(0, stdout);
 #endif
   Numeric_delete(nanos);
+  return;
+fatal:
+  fatal("%s: SQLSTATE %s: SQLCODE %ld: %s", con, sqlca.sqlstate, sqlca.sqlcode,
+        sqlca.sqlerrm.sqlerrmc);
 }
 
 void db_vacuum_samples(const void *const db, const char *const e_id,
@@ -596,7 +657,7 @@ void db_vacuum_samples(const void *const db, const char *const e_id,
   char stmt[DB_STATEMENT_MAX_LENGTH + 1] = {0};
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
-  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL WHENEVER SQLERROR GOTO fatal;
   EXEC SQL WHENEVER NOT FOUND CONTINUE;
   EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
   // clang-format on
@@ -635,6 +696,10 @@ void db_vacuum_samples(const void *const db, const char *const e_id,
   ECPGdebug(0, stdout);
 #endif
   Numeric_delete(nanos);
+  return;
+fatal:
+  fatal("%s: SQLSTATE %s: SQLCODE %ld: %s", con, sqlca.sqlstate, sqlca.sqlcode,
+        sqlca.sqlerrm.sqlerrmc);
 }
 
 bool db_stats(struct db_stats_rec *const stats, const void *const db,
@@ -663,8 +728,8 @@ bool db_stats(struct db_stats_rec *const stats, const void *const db,
   numeric *scl_factor = Numeric_db(stats->scl_factor);
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
-  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
-  EXEC SQL WHENEVER NOT FOUND GO TO not_found;
+  EXEC SQL WHENEVER SQLERROR GOTO fatal;
+  EXEC SQL WHENEVER NOT FOUND GOTO not_found;
   EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
   EXEC SQL AT :con
     SELECT "MIN_BUY_ORDER_DURATION_NANOS",
@@ -705,6 +770,9 @@ not_found:
   ECPGdebug(0, stdout);
 #endif
   return false;
+fatal:
+  fatal("%s: SQLSTATE %s: SQLCODE %ld: %s", con, sqlca.sqlstate, sqlca.sqlcode,
+        sqlca.sqlerrm.sqlerrmc);
 }
 
 void db_stats_bcl_factor(const void *const db, const char *const e_id,
@@ -720,7 +788,7 @@ void db_stats_bcl_factor(const void *const db, const char *const e_id,
   numeric *sql_factor = Numeric_db(factor);
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
-  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL WHENEVER SQLERROR GOTO fatal;
   EXEC SQL WHENEVER NOT FOUND GOTO not_found;
   EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
   EXEC SQL AT :con
@@ -740,6 +808,10 @@ not_found:
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(0, stdout);
 #endif
+  return;
+fatal:
+  fatal("%s: SQLSTATE %s: SQLCODE %ld: EXCHANGE_ID='%s': MARKET_ID='%s': %s",
+        con, sqlca.sqlstate, sqlca.sqlcode, e_id, m_id, sqlca.sqlerrm.sqlerrmc);
 }
 
 void db_stats_scl_factor(const void *const db, const char *const e_id,
@@ -755,7 +827,7 @@ void db_stats_scl_factor(const void *const db, const char *const e_id,
   numeric *sql_factor = Numeric_db(factor);
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
-  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL WHENEVER SQLERROR GOTO fatal;
   EXEC SQL WHENEVER NOT FOUND GOTO not_found;
   EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
   EXEC SQL AT :con
@@ -775,6 +847,10 @@ not_found:
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(0, stdout);
 #endif
+  return;
+fatal:
+  fatal("%s: SQLSTATE %s: SQLCODE %ld: EXCHANGE_ID='%s': MARKET_ID='%s': %s",
+        con, sqlca.sqlstate, sqlca.sqlcode, e_id, m_id, sqlca.sqlerrm.sqlerrmc);
 }
 
 void db_trade_bfill(const void *const db, const char *const e_id,
@@ -801,8 +877,8 @@ void db_trade_bfill(const void *const db, const char *const e_id,
   const char *sql_status = t_done ? "DONE" : dsecs != NULL ? "BOUGHT" : NULL;
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
-  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
-  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL WHENEVER SQLERROR GOTO fatal;
+  EXEC SQL WHENEVER NOT FOUND GOTO fatal;
   EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
   EXEC SQL AT :con
     UPDATE "TRADES" SET
@@ -817,8 +893,8 @@ void db_trade_bfill(const void *const db, const char *const e_id,
   if (t_done || dsecs != NULL) {
     // clang-format off
     EXEC SQL WHENEVER SQLWARNING CALL db_warn();
-    EXEC SQL WHENEVER SQLERROR CALL db_fatal();
-    EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+    EXEC SQL WHENEVER SQLERROR GOTO fatal;
+    EXEC SQL WHENEVER NOT FOUND GOTO fatal;
     EXEC SQL AT :con
       UPDATE "TRADES"
         SET "STATUS" = :sql_status,
@@ -835,6 +911,12 @@ void db_trade_bfill(const void *const db, const char *const e_id,
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(0, stdout);
 #endif
+  return;
+fatal:
+  fatal("%s: SQLSTATE %s: SQLCODE %ld: EXCHANGE_ID='%s': MARKET_ID='%s': "
+        "BUY_ORDER_ID='%s': %s",
+        con, sqlca.sqlstate, sqlca.sqlcode, e_id, m_id, o_id,
+        sqlca.sqlerrm.sqlerrmc);
 }
 
 void db_trade_bopen(const void *const db, const char *const e_id,
@@ -858,8 +940,8 @@ void db_trade_bopen(const void *const db, const char *const e_id,
   const numeric *sql_q_fees = Numeric_db(q_fees);
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
-  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
-  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL WHENEVER SQLERROR GOTO fatal;
+  EXEC SQL WHENEVER NOT FOUND GOTO fatal;
   EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
   EXEC SQL AT :con
     UPDATE "TRADES" SET
@@ -875,6 +957,12 @@ void db_trade_bopen(const void *const db, const char *const e_id,
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(0, stdout);
 #endif
+  return;
+fatal:
+  fatal("%s: SQLSTATE %s: SQLCODE %ld: EXCHANGE_ID='%s': MARKET_ID='%s': "
+        "BUY_ORDER_ID='%s': %s",
+        con, sqlca.sqlstate, sqlca.sqlcode, e_id, m_id, o_id,
+        sqlca.sqlerrm.sqlerrmc);
 }
 
 void db_trade_sfill(const void *const db, const char *const e_id,
@@ -901,8 +989,8 @@ void db_trade_sfill(const void *const db, const char *const e_id,
   const char *sql_status = t_done ? "DONE" : dsecs != NULL ? "SOLD" : NULL;
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
-  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
-  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL WHENEVER SQLERROR GOTO fatal;
+  EXEC SQL WHENEVER NOT FOUND GOTO fatal;
   EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
   EXEC SQL AT :con
     UPDATE "TRADES" SET
@@ -917,8 +1005,8 @@ void db_trade_sfill(const void *const db, const char *const e_id,
   if (t_done || dsecs != NULL) {
     // clang-format off
     EXEC SQL WHENEVER SQLWARNING CALL db_warn();
-    EXEC SQL WHENEVER SQLERROR CALL db_fatal();
-    EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+    EXEC SQL WHENEVER SQLERROR GOTO fatal;
+    EXEC SQL WHENEVER NOT FOUND GOTO fatal;
     EXEC SQL AT :con
       UPDATE "TRADES"
         SET "STATUS" = :sql_status,
@@ -935,6 +1023,12 @@ void db_trade_sfill(const void *const db, const char *const e_id,
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(0, stdout);
 #endif
+  return;
+fatal:
+  fatal("%s: SQLSTATE %s: SQLCODE %ld: EXCHANGE_ID='%s': MARKET_ID='%s': "
+        "SELL_ORDER_ID='%s': %s",
+        con, sqlca.sqlstate, sqlca.sqlcode, e_id, m_id, o_id,
+        sqlca.sqlerrm.sqlerrmc);
 }
 
 void db_trade_sopen(const void *const db, const char *const e_id,
@@ -958,8 +1052,8 @@ void db_trade_sopen(const void *const db, const char *const e_id,
   const numeric *sql_q_fees = Numeric_db(q_fees);
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
-  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
-  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL WHENEVER SQLERROR GOTO fatal;
+  EXEC SQL WHENEVER NOT FOUND GOTO fatal;
   EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
   EXEC SQL AT :con
     UPDATE "TRADES" SET
@@ -975,6 +1069,12 @@ void db_trade_sopen(const void *const db, const char *const e_id,
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(0, stdout);
 #endif
+  return;
+fatal:
+  fatal("%s: SQLSTATE %s: SQLCODE %ld: EXCHANGE_ID='%s': MARKET_ID='%s': "
+        "SELL_ORDER_ID='%s': %s",
+        con, sqlca.sqlstate, sqlca.sqlcode, e_id, m_id, o_id,
+        sqlca.sqlerrm.sqlerrmc);
 }
 
 void db_trades_open(const void *const db, const char *const e_id,
@@ -989,8 +1089,8 @@ void db_trades_open(const void *const db, const char *const e_id,
   const char *sql_m_id = m_id;
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
-  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
-  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL WHENEVER SQLERROR GOTO fatal;
+  EXEC SQL WHENEVER NOT FOUND GOTO fatal;
   EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ;
   EXEC SQL AT :con DECLARE trades_cursor CURSOR FOR
     SELECT "TRADE_ID",
@@ -1024,6 +1124,10 @@ void db_trades_open(const void *const db, const char *const e_id,
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(0, stdout);
 #endif
+  return;
+fatal:
+  fatal("%s: SQLSTATE %s: SQLCODE %ld: %s", con, sqlca.sqlstate, sqlca.sqlcode,
+        sqlca.sqlerrm.sqlerrmc);
 }
 
 bool db_trades_next(struct db_trade_rec *const trade, const void *const db) {
@@ -1074,7 +1178,7 @@ bool db_trades_next(struct db_trade_rec *const trade, const void *const db) {
   numeric *q_return = Numeric_db(trade->q_return);
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
-  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL WHENEVER SQLERROR GOTO fatal;
   EXEC SQL WHENEVER NOT FOUND GOTO not_found;
   EXEC SQL AT :con FETCH FROM trades_cursor INTO
     :id, :e_id, :m_id, :b_id, :q_id, :q_return, :status,
@@ -1120,6 +1224,9 @@ not_found:
   ECPGdebug(0, stdout);
 #endif
   return false;
+fatal:
+  fatal("%s: SQLSTATE %s: SQLCODE %ld: %s", con, sqlca.sqlstate, sqlca.sqlcode,
+        sqlca.sqlerrm.sqlerrmc);
 }
 
 void db_trades_close(const void *const db) {
@@ -1131,14 +1238,18 @@ void db_trades_close(const void *const db) {
   const char *con = String_chars(db);
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
-  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
-  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL WHENEVER SQLERROR GOTO fatal;
+  EXEC SQL WHENEVER NOT FOUND GOTO fatal;
   EXEC SQL AT :con CLOSE trades_cursor;
   EXEC SQL AT :con COMMIT;
   // clang-format on
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(0, stdout);
 #endif
+  return;
+fatal:
+  fatal("%s: SQLSTATE %s: SQLCODE %ld: %s", con, sqlca.sqlstate, sqlca.sqlcode,
+        sqlca.sqlerrm.sqlerrmc);
 }
 
 void db_trade_bcreate(char *const t_id, const void *const db,
@@ -1165,8 +1276,8 @@ void db_trade_bcreate(char *const t_id, const void *const db,
   char *sql_t_id = t_id;
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
-  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
-  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL WHENEVER SQLERROR GOTO fatal;
+  EXEC SQL WHENEVER NOT FOUND GOTO fatal;
   EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
   EXEC SQL AT :con
     INSERT INTO "TRADES"
@@ -1192,6 +1303,12 @@ void db_trade_bcreate(char *const t_id, const void *const db,
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(0, stdout);
 #endif
+  return;
+fatal:
+  fatal("%s: SQLSTATE %s: SQLCODE %ld: EXCHANGE_ID='%s': MARKET_ID='%s': "
+        "BUY_ORDER_ID='%s': %s",
+        con, sqlca.sqlstate, sqlca.sqlcode, e_id, m_id, o_id,
+        sqlca.sqlerrm.sqlerrmc);
 }
 
 void db_trade_bupdate(const void *const db, const char *const t_id,
@@ -1210,8 +1327,8 @@ void db_trade_bupdate(const void *const db, const char *const t_id,
   const numeric *sql_o_pr = Numeric_db(o_pr);
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
-  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
-  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL WHENEVER SQLERROR GOTO fatal;
+  EXEC SQL WHENEVER NOT FOUND GOTO fatal;
   EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
   EXEC SQL AT :con
     UPDATE
@@ -1228,6 +1345,10 @@ void db_trade_bupdate(const void *const db, const char *const t_id,
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(0, stdout);
 #endif
+  return;
+fatal:
+  fatal("%s: SQLSTATE %s: SQLCODE %ld: TRADE_ID='%s': BUY_ORDER_ID='%s': %s",
+        con, sqlca.sqlstate, sqlca.sqlcode, t_id, o_id, sqlca.sqlerrm.sqlerrmc);
 }
 
 void db_trade_screate(char *const t_id, const void *const db,
@@ -1254,8 +1375,8 @@ void db_trade_screate(char *const t_id, const void *const db,
   char *sql_t_id = t_id;
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
-  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
-  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL WHENEVER SQLERROR GOTO fatal;
+  EXEC SQL WHENEVER NOT FOUND GOTO fatal;
   EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
   EXEC SQL AT :con
     INSERT INTO "TRADES"
@@ -1281,6 +1402,12 @@ void db_trade_screate(char *const t_id, const void *const db,
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(0, stdout);
 #endif
+  return;
+fatal:
+  fatal("%s: SQLSTATE %s: SQLCODE %ld: EXCHANGE_ID='%s': MARKET_ID='%s': "
+        "SELL_ORDER_ID='%s': %s",
+        con, sqlca.sqlstate, sqlca.sqlcode, e_id, m_id, o_id,
+        sqlca.sqlerrm.sqlerrmc);
 }
 
 void db_trade_supdate(const void *const db, const char *const t_id,
@@ -1299,8 +1426,8 @@ void db_trade_supdate(const void *const db, const char *const t_id,
   const numeric *sql_o_pr = Numeric_db(o_pr);
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
-  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
-  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL WHENEVER SQLERROR GOTO fatal;
+  EXEC SQL WHENEVER NOT FOUND GOTO fatal;
   EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
   EXEC SQL AT :con
     UPDATE
@@ -1317,6 +1444,10 @@ void db_trade_supdate(const void *const db, const char *const t_id,
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(0, stdout);
 #endif
+  return;
+fatal:
+  fatal("%s: SQLSTATE %s: SQLCODE %ld: TRADE_ID='%s': SELL_ORDER_ID='%s': %s",
+        con, sqlca.sqlstate, sqlca.sqlcode, t_id, o_id, sqlca.sqlerrm.sqlerrmc);
 }
 
 void db_trade_delete(const void *const db, const char *const t_id) {
@@ -1329,16 +1460,22 @@ void db_trade_delete(const void *const db, const char *const t_id) {
   const char *sql_t_id = t_id;
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
-  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
-  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL WHENEVER SQLERROR GOTO fatal;
+  EXEC SQL WHENEVER NOT FOUND GOTO fatal;
   EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
   EXEC SQL AT :con
     DELETE FROM "TRADES" WHERE "TRADE_ID" = :sql_t_id;
+  EXEC SQL AT :con
+    DELETE FROM "TRADE_STATES" WHERE "TRADE_ID" = :sql_t_id;
   EXEC SQL AT :con COMMIT;
   // clang-format on
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(0, stdout);
 #endif
+  return;
+fatal:
+  fatal("%s: SQLSTATE %s: SQLCODE %ld: TRADE_ID='%s': %s", con, sqlca.sqlstate,
+        sqlca.sqlcode, t_id, sqlca.sqlerrm.sqlerrmc);
 }
 
 void db_trade_breset(const void *const db, const char *const e_id,
@@ -1354,8 +1491,8 @@ void db_trade_breset(const void *const db, const char *const e_id,
   const char *sql_o_id = o_id;
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
-  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
-  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL WHENEVER SQLERROR GOTO fatal;
+  EXEC SQL WHENEVER NOT FOUND GOTO fatal;
   EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
   EXEC SQL AT :con
     UPDATE "TRADES" SET
@@ -1376,6 +1513,12 @@ void db_trade_breset(const void *const db, const char *const e_id,
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(0, stdout);
 #endif
+  return;
+fatal:
+  fatal("%s: SQLSTATE %s: SQLCODE %ld: EXCHANGE_ID='%s': MARKET_ID='%s': "
+        "BUY_ORDER_ID='%s': %s",
+        con, sqlca.sqlstate, sqlca.sqlcode, e_id, m_id, o_id,
+        sqlca.sqlerrm.sqlerrmc);
 }
 
 void db_trade_sreset(const void *const db, const char *const e_id,
@@ -1391,8 +1534,8 @@ void db_trade_sreset(const void *const db, const char *const e_id,
   const char *sql_o_id = o_id;
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
-  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
-  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL WHENEVER SQLERROR GOTO fatal;
+  EXEC SQL WHENEVER NOT FOUND GOTO fatal;
   EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
   EXEC SQL AT :con
     UPDATE "TRADES" SET
@@ -1413,6 +1556,12 @@ void db_trade_sreset(const void *const db, const char *const e_id,
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(0, stdout);
 #endif
+  return;
+fatal:
+  fatal("%s: SQLSTATE %s: SQLCODE %ld: EXCHANGE_ID='%s': MARKET_ID='%s': "
+        "SELL_ORDER_ID='%s': %s",
+        con, sqlca.sqlstate, sqlca.sqlcode, e_id, m_id, o_id,
+        sqlca.sqlerrm.sqlerrmc);
 }
 
 void db_trades_hold(struct db_balance_rec *balance, const void *const db,
@@ -1433,7 +1582,7 @@ void db_trades_hold(struct db_balance_rec *balance, const void *const db,
   int b_ind[1] = {0};
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
-  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL WHENEVER SQLERROR GOTO fatal;
   EXEC SQL WHENEVER NOT FOUND GOTO q_not_found;
   EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
   EXEC SQL AT :con
@@ -1448,7 +1597,7 @@ q_not_found:
     Numeric_copy_to(zero, balance->q);
   // clang-format off
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
-  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL WHENEVER SQLERROR GOTO fatal;
   EXEC SQL WHENEVER NOT FOUND GOTO b_not_found;
   EXEC SQL AT :con
     SELECT sum("BUY_ORDER_BASE_AMOUNT_FILLED") INTO :b :b_ind
@@ -1464,6 +1613,10 @@ b_not_found:
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(0, stdout);
 #endif
+  return;
+fatal:
+  fatal("%s: SQLSTATE %s: SQLCODE %ld: %s", con, sqlca.sqlstate, sqlca.sqlcode,
+        sqlca.sqlerrm.sqlerrmc);
 }
 
 void db_tx_plot_enanos(const void *const db, const char *const pl_id,
@@ -1478,8 +1631,8 @@ void db_tx_plot_enanos(const void *const db, const char *const pl_id,
   const numeric *sql_enanos = Numeric_db(enanos);
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
-  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
-  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL WHENEVER SQLERROR GOTO fatal;
+  EXEC SQL WHENEVER NOT FOUND GOTO fatal;
   EXEC SQL AT :con
     UPDATE "PLOTS" SET "ENANOS" = :sql_enanos
     WHERE "PLOT_ID" = :sql_id;
@@ -1487,6 +1640,10 @@ void db_tx_plot_enanos(const void *const db, const char *const pl_id,
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(0, stdout);
 #endif
+  return;
+fatal:
+  fatal("%s: SQLSTATE %s: SQLCODE %ld: %s", con, sqlca.sqlstate, sqlca.sqlcode,
+        sqlca.sqlerrm.sqlerrmc);
 }
 
 void db_tx_plot_datapoint(const void *const db, const char *const pl_id,
@@ -1503,13 +1660,17 @@ void db_tx_plot_datapoint(const void *const db, const char *const pl_id,
   const numeric *sql_y = Numeric_db(y);
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
-  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
-  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL WHENEVER SQLERROR GOTO fatal;
+  EXEC SQL WHENEVER NOT FOUND GOTO fatal;
   EXEC SQL AT :con EXECUTE plot_datapoint USING :sql_id, :sql_x, :sql_y;
   // clang-format on
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(0, stdout);
 #endif
+  return;
+fatal:
+  fatal("%s: SQLSTATE %s: SQLCODE %ld: %s", con, sqlca.sqlstate, sqlca.sqlcode,
+        sqlca.sqlerrm.sqlerrmc);
 }
 
 void db_tx_trend_plot(struct db_plot_rec *plot, const void *const db,
@@ -1527,7 +1688,7 @@ void db_tx_trend_plot(struct db_plot_rec *plot, const void *const db,
   const numeric *enanos = Numeric_db(plot->enanos);
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
-  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL WHENEVER SQLERROR GOTO fatal;
   EXEC SQL WHENEVER NOT FOUND GOTO not_found;
   EXEC SQL AT :con
     SELECT
@@ -1547,8 +1708,8 @@ void db_tx_trend_plot(struct db_plot_rec *plot, const void *const db,
 not_found:
   // clang-format off
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
-  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
-  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL WHENEVER SQLERROR GOTO fatal;
+  EXEC SQL WHENEVER NOT FOUND GOTO fatal;
   EXEC SQL AT :con
     INSERT INTO "PLOTS"
       ("SNANOS", "ENANOS")
@@ -1572,6 +1733,10 @@ not_found:
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(0, stdout);
 #endif
+  return;
+fatal:
+  fatal("%s: SQLSTATE %s: SQLCODE %ld: %s", con, sqlca.sqlstate, sqlca.sqlcode,
+        sqlca.sqlerrm.sqlerrmc);
 }
 
 void db_tx_trend_plot_candle(const void *const db, const char *const e_id,
@@ -1595,8 +1760,8 @@ void db_tx_trend_plot_candle(const void *const db, const char *const e_id,
   const numeric *cnanos = Numeric_db(candle->cnanos);
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
-  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
-  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL WHENEVER SQLERROR GOTO fatal;
+  EXEC SQL WHENEVER NOT FOUND GOTO fatal;
   EXEC SQL AT :con
     INSERT INTO "TREND_CANDLES"
       ("EXCHANGE_ID", "MARKET_ID", "OPEN", "HIGH", "LOW", "CLOSE",
@@ -1607,6 +1772,10 @@ void db_tx_trend_plot_candle(const void *const db, const char *const e_id,
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(0, stdout);
 #endif
+  return;
+fatal:
+  fatal("%s: SQLSTATE %s: SQLCODE %ld: %s", con, sqlca.sqlstate, sqlca.sqlcode,
+        sqlca.sqlerrm.sqlerrmc);
 }
 
 void db_tx_trend_plot_marker(const void *const db, const char *const e_id,
@@ -1628,8 +1797,8 @@ void db_tx_trend_plot_marker(const void *const db, const char *const e_id,
   char sql_id[DATABASE_UUID_MAX_LENGTH + 1] = {0};
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
-  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
-  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL WHENEVER SQLERROR GOTO fatal;
+  EXEC SQL WHENEVER NOT FOUND GOTO fatal;
   EXEC SQL AT :con
     INSERT INTO "PLOTS"
       ("SNANOS", "ENANOS")
@@ -1650,6 +1819,10 @@ void db_tx_trend_plot_marker(const void *const db, const char *const e_id,
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(0, stdout);
 #endif
+  return;
+fatal:
+  fatal("%s: SQLSTATE %s: SQLCODE %ld: %s", con, sqlca.sqlstate, sqlca.sqlcode,
+        sqlca.sqlerrm.sqlerrmc);
 }
 
 void db_tx_trend_plot_samples_open(const void *const db, const char *const e_id,
@@ -1664,8 +1837,8 @@ void db_tx_trend_plot_samples_open(const void *const db, const char *const e_id,
   const char *sql_m_id = m_id;
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
-  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
-  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL WHENEVER SQLERROR GOTO fatal;
+  EXEC SQL WHENEVER NOT FOUND GOTO fatal;
   EXEC SQL AT :con DECLARE trend_plot_cursor CURSOR FOR
     SELECT "X", "Y"
     FROM "TREND_PLOTS" t
@@ -1680,6 +1853,10 @@ void db_tx_trend_plot_samples_open(const void *const db, const char *const e_id,
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(0, stdout);
 #endif
+  return;
+fatal:
+  fatal("%s: SQLSTATE %s: SQLCODE %ld: %s", con, sqlca.sqlstate, sqlca.sqlcode,
+        sqlca.sqlerrm.sqlerrmc);
 }
 
 bool db_tx_trend_plot_samples_next(struct db_datapoint_rec *const point,
@@ -1691,13 +1868,16 @@ bool db_tx_trend_plot_samples_next(struct db_datapoint_rec *const point,
   numeric *y = Numeric_db(point->y);
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
-  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL WHENEVER SQLERROR GOTO fatal;
   EXEC SQL WHENEVER NOT FOUND GOTO not_found;
   EXEC SQL AT :con FETCH FROM trend_plot_cursor INTO :x, :y;
   // clang-format on
   return true;
 not_found:
   return false;
+fatal:
+  fatal("%s: SQLSTATE %s: SQLCODE %ld: %s", con, sqlca.sqlstate, sqlca.sqlcode,
+        sqlca.sqlerrm.sqlerrmc);
 }
 
 void db_tx_trend_plot_samples_close(const void *const db) {
@@ -1709,13 +1889,17 @@ void db_tx_trend_plot_samples_close(const void *const db) {
   const char *con = String_chars(db);
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
-  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
-  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL WHENEVER SQLERROR GOTO fatal;
+  EXEC SQL WHENEVER NOT FOUND GOTO fatal;
   EXEC SQL AT :con CLOSE trend_plot_cursor;
   // clang-format on
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(0, stdout);
 #endif
+  return;
+fatal:
+  fatal("%s: SQLSTATE %s: SQLCODE %ld: %s", con, sqlca.sqlstate, sqlca.sqlcode,
+        sqlca.sqlerrm.sqlerrmc);
 }
 
 void db_tx_trend_plot_candles_open(const void *const db, const char *const e_id,
@@ -1730,8 +1914,8 @@ void db_tx_trend_plot_candles_open(const void *const db, const char *const e_id,
   const char *sql_m_id = m_id;
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
-  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
-  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL WHENEVER SQLERROR GOTO fatal;
+  EXEC SQL WHENEVER NOT FOUND GOTO fatal;
   EXEC SQL AT :con DECLARE trend_plot_candles_cursor CURSOR FOR
     SELECT c."OPEN", c."HIGH", c."LOW", c."CLOSE",
       c."ONANOS", c."HNANOS", c."LNANOS", c."CNANOS"
@@ -1747,6 +1931,10 @@ void db_tx_trend_plot_candles_open(const void *const db, const char *const e_id,
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(0, stdout);
 #endif
+  return;
+fatal:
+  fatal("%s: SQLSTATE %s: SQLCODE %ld: %s", con, sqlca.sqlstate, sqlca.sqlcode,
+        sqlca.sqlerrm.sqlerrmc);
 }
 
 bool db_tx_trend_plot_candles_next(struct db_candle_rec *const candle,
@@ -1764,7 +1952,7 @@ bool db_tx_trend_plot_candles_next(struct db_candle_rec *const candle,
   numeric *cnanos = Numeric_db(candle->cnanos);
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
-  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL WHENEVER SQLERROR GOTO fatal;
   EXEC SQL WHENEVER NOT FOUND GOTO not_found;
   EXEC SQL AT :con
     FETCH FROM trend_plot_candles_cursor
@@ -1773,6 +1961,9 @@ bool db_tx_trend_plot_candles_next(struct db_candle_rec *const candle,
   return true;
 not_found:
   return false;
+fatal:
+  fatal("%s: SQLSTATE %s: SQLCODE %ld: %s", con, sqlca.sqlstate, sqlca.sqlcode,
+        sqlca.sqlerrm.sqlerrmc);
 }
 
 void db_tx_trend_plot_candles_close(const void *const db) {
@@ -1784,13 +1975,17 @@ void db_tx_trend_plot_candles_close(const void *const db) {
   const char *con = String_chars(db);
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
-  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
-  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL WHENEVER SQLERROR GOTO fatal;
+  EXEC SQL WHENEVER NOT FOUND GOTO fatal;
   EXEC SQL AT :con CLOSE trend_plot_candles_cursor;
   // clang-format on
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(0, stdout);
 #endif
+  return;
+fatal:
+  fatal("%s: SQLSTATE %s: SQLCODE %ld: %s", con, sqlca.sqlstate, sqlca.sqlcode,
+        sqlca.sqlerrm.sqlerrmc);
 }
 
 void db_tx_trend_plot_markers_open(const void *const db, const char *const e_id,
@@ -1805,8 +2000,8 @@ void db_tx_trend_plot_markers_open(const void *const db, const char *const e_id,
   const char *sql_m_id = m_id;
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
-  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
-  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL WHENEVER SQLERROR GOTO fatal;
+  EXEC SQL WHENEVER NOT FOUND GOTO fatal;
   EXEC SQL AT :con DECLARE trend_plot_markers_cursor CURSOR FOR
     SELECT d."X", d."Y", m."TYPE"
     FROM "TREND_PLOTS" t
@@ -1823,6 +2018,10 @@ void db_tx_trend_plot_markers_open(const void *const db, const char *const e_id,
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(0, stdout);
 #endif
+  return;
+fatal:
+  fatal("%s: SQLSTATE %s: SQLCODE %ld: %s", con, sqlca.sqlstate, sqlca.sqlcode,
+        sqlca.sqlerrm.sqlerrmc);
 }
 
 bool db_tx_trend_plot_markers_next(struct db_marker_rec *const marker,
@@ -1835,7 +2034,7 @@ bool db_tx_trend_plot_markers_next(struct db_marker_rec *const marker,
   char *type = marker->type;
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
-  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
+  EXEC SQL WHENEVER SQLERROR GOTO fatal;
   EXEC SQL WHENEVER NOT FOUND GOTO not_found;
   EXEC SQL AT :con
     FETCH FROM trend_plot_markers_cursor INTO :x, :y, :type;
@@ -1843,6 +2042,9 @@ bool db_tx_trend_plot_markers_next(struct db_marker_rec *const marker,
   return true;
 not_found:
   return false;
+fatal:
+  fatal("%s: SQLSTATE %s: SQLCODE %ld: %s", con, sqlca.sqlstate, sqlca.sqlcode,
+        sqlca.sqlerrm.sqlerrmc);
 }
 
 void db_tx_trend_plot_markers_close(const void *const db) {
@@ -1854,13 +2056,17 @@ void db_tx_trend_plot_markers_close(const void *const db) {
   const char *con = String_chars(db);
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
-  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
-  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL WHENEVER SQLERROR GOTO fatal;
+  EXEC SQL WHENEVER NOT FOUND GOTO fatal;
   EXEC SQL AT :con CLOSE trend_plot_markers_cursor;
   // clang-format on
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(0, stdout);
 #endif
+  return;
+fatal:
+  fatal("%s: SQLSTATE %s: SQLCODE %ld: %s", con, sqlca.sqlstate, sqlca.sqlcode,
+        sqlca.sqlerrm.sqlerrmc);
 }
 
 void db_trend_state(struct db_trend_state_rec *const state,
@@ -1879,8 +2085,8 @@ void db_trend_state(struct db_trend_state_rec *const state,
   char *ltrend = state->cd_ltrend;
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
-  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
-  EXEC SQL WHENEVER NOT FOUND GO TO not_found;
+  EXEC SQL WHENEVER SQLERROR GOTO fatal;
+  EXEC SQL WHENEVER NOT FOUND GOTO not_found;
   EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
   EXEC SQL AT :con
     SELECT "CANDLE_LAST_NANOS", "CANDLE_LAST_ANGLE", "CANDLE_LAST_TREND"
@@ -1909,6 +2115,10 @@ not_found:
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(0, stdout);
 #endif
+  return;
+fatal:
+  fatal("%s: SQLSTATE %s: SQLCODE %ld: %s", con, sqlca.sqlstate, sqlca.sqlcode,
+        sqlca.sqlerrm.sqlerrmc);
 }
 
 void db_trend_state_update(const void *const db, const char *const e_id,
@@ -1927,8 +2137,8 @@ void db_trend_state_update(const void *const db, const char *const e_id,
   const char *ltrend = state->cd_ltrend;
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
-  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
-  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL WHENEVER SQLERROR GOTO fatal;
+  EXEC SQL WHENEVER NOT FOUND GOTO fatal;
   EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
   EXEC SQL AT :con
     UPDATE "TREND_STATES"
@@ -1942,6 +2152,10 @@ void db_trend_state_update(const void *const db, const char *const e_id,
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(0, stdout);
 #endif
+  return;
+fatal:
+  fatal("%s: SQLSTATE %s: SQLCODE %ld: EXCHANGE_ID='%s': MARKET_ID='%s': %s",
+        con, sqlca.sqlstate, sqlca.sqlcode, e_id, m_id, sqlca.sqlerrm.sqlerrmc);
 }
 
 bool db_position_state_restore(struct db_position_state_rec *const state,
@@ -1975,8 +2189,8 @@ bool db_position_state_restore(struct db_position_state_rec *const state,
   bool sql_tp = false;
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
-  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
-  EXEC SQL WHENEVER NOT FOUND GO TO not_found;
+  EXEC SQL WHENEVER SQLERROR GOTO fatal;
+  EXEC SQL WHENEVER NOT FOUND GOTO not_found;
   EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
   EXEC SQL AT :con
     SELECT
@@ -2030,6 +2244,9 @@ not_found:
   ECPGdebug(0, stdout);
 #endif
   return false;
+fatal:
+  fatal("%s: SQLSTATE %s: SQLCODE %ld: %s", con, sqlca.sqlstate, sqlca.sqlcode,
+        sqlca.sqlerrm.sqlerrmc);
 }
 
 void db_position_state_persist(
@@ -2063,8 +2280,8 @@ void db_position_state_persist(
   bool sql_tp = state->tp;
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
-  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
-  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL WHENEVER SQLERROR GOTO fatal;
+  EXEC SQL WHENEVER NOT FOUND GOTO fatal;
   EXEC SQL AT :con
     INSERT INTO "POSITION_STATES" (
       "PROCESS_ID",
@@ -2113,6 +2330,12 @@ void db_position_state_persist(
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(0, stdout);
 #endif
+  return;
+fatal:
+  fatal("%s: SQLSTATE %s: SQLCODE %ld: PROCESS_ID='%s': EXCHANGE_ID='%s': "
+        "MARKET_ID='%s': POSITION_ID='%s': %s",
+        con, sqlca.sqlstate, sqlca.sqlcode, proc_id, e_id, m_id, p_id,
+        sqlca.sqlerrm.sqlerrmc);
 }
 
 bool db_trade_state_restore(struct db_trade_state_rec *const state,
@@ -2131,8 +2354,8 @@ bool db_trade_state_restore(struct db_trade_state_rec *const state,
   numeric *sql_pr_samples = Numeric_db(state->pr_samples);
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
-  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
-  EXEC SQL WHENEVER NOT FOUND GO TO not_found;
+  EXEC SQL WHENEVER SQLERROR GOTO fatal;
+  EXEC SQL WHENEVER NOT FOUND GOTO not_found;
   EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
   EXEC SQL AT :con
     SELECT
@@ -2163,6 +2386,9 @@ not_found:
   ECPGdebug(0, stdout);
 #endif
   return false;
+fatal:
+  fatal("%s: SQLSTATE %s: SQLCODE %ld: %s", con, sqlca.sqlstate, sqlca.sqlcode,
+        sqlca.sqlerrm.sqlerrmc);
 }
 
 void db_trade_state_persist(const void *const db, const char *const proc_id,
@@ -2181,8 +2407,8 @@ void db_trade_state_persist(const void *const db, const char *const proc_id,
   numeric *sql_pr_samples = Numeric_db(state->pr_samples);
   EXEC SQL END DECLARE SECTION;
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
-  EXEC SQL WHENEVER SQLERROR CALL db_fatal();
-  EXEC SQL WHENEVER NOT FOUND CALL db_fatal();
+  EXEC SQL WHENEVER SQLERROR GOTO fatal;
+  EXEC SQL WHENEVER NOT FOUND GOTO fatal;
   EXEC SQL AT :con
     INSERT INTO "TRADE_STATES" (
       "PROCESS_ID",
@@ -2202,4 +2428,8 @@ void db_trade_state_persist(const void *const db, const char *const proc_id,
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(0, stdout);
 #endif
+  return;
+fatal:
+  fatal("%s: SQLSTATE %s: SQLCODE %ld: PROCESS_ID='%s': TRADE_ID='%s': %s", con,
+        sqlca.sqlstate, sqlca.sqlcode, proc_id, t_id, sqlca.sqlerrm.sqlerrmc);
 }

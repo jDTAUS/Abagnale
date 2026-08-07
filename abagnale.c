@@ -1939,6 +1939,8 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
       } else
         Numeric_copy_to(zero, p->sl_samples);
 
+      position_state_save(w_ctx->db, t, p);
+
       if (verbose) {
         char *restrict const p_info = position_string(w_ctx, t, p);
         char *restrict const delay = Numeric_to_char(p->sl_samples, 0);
@@ -1967,6 +1969,8 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
     p->sl_trg.set = false;
     Numeric_copy_to(zero, p->sl_trg.nanos);
     Numeric_copy_to(zero, p->sl_trg.price);
+
+    position_state_save(w_ctx->db, t, p);
 
     if (verbose) {
       char *restrict const p_info = position_string(w_ctx, t, p);
@@ -2003,6 +2007,8 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
       } else
         Numeric_copy_to(zero, p->tp_samples);
 
+      position_state_save(w_ctx->db, t, p);
+
       if (verbose) {
         char *restrict const p_info = position_string(w_ctx, t, p);
         char *restrict const delay = Numeric_to_char(p->tp_samples, 0);
@@ -2031,6 +2037,8 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
     p->tp_trg.set = false;
     Numeric_copy_to(zero, p->tp_trg.nanos);
     Numeric_copy_to(zero, p->tp_trg.price);
+
+    position_state_save(w_ctx->db, t, p);
 
     if (verbose) {
       char *restrict const p_info = position_string(w_ctx, t, p);
@@ -2063,6 +2071,8 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
         Numeric_mul_to(sr, w_ctx->m_cnf->sl_dlnanos, p->sl_samples);
       } else
         Numeric_copy_to(zero, p->sl_samples);
+
+      position_state_save(w_ctx->db, t, p);
 
       if (verbose) {
         char *restrict const p_info = position_string(w_ctx, t, p);
@@ -2100,6 +2110,8 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
       } else
         Numeric_copy_to(zero, p->tl_samples);
 
+      position_state_save(w_ctx->db, t, p);
+
       if (verbose) {
         char *restrict const p_info = position_string(w_ctx, t, p);
         char *restrict const delay = Numeric_to_char(p->tl_samples, 0);
@@ -2128,6 +2140,8 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
     p->tl_trg.set = false;
     Numeric_copy_to(zero, p->tl_trg.nanos);
     Numeric_copy_to(zero, p->tl_trg.price);
+
+    position_state_save(w_ctx->db, t, p);
 
     if (verbose) {
       char *restrict const p_info = position_string(w_ctx, t, p);
@@ -2161,6 +2175,8 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
       } else
         Numeric_copy_to(zero, p->sl_samples);
 
+      position_state_save(w_ctx->db, t, p);
+
       if (verbose) {
         char *restrict const p_info = position_string(w_ctx, t, p);
         char *restrict const delay = Numeric_to_char(p->sl_samples, 0);
@@ -2193,6 +2209,8 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
         Numeric_mul_to(sr, w_ctx->m_cnf->tp_dlnanos, p->tp_samples);
       } else
         Numeric_copy_to(zero, p->tp_samples);
+
+      position_state_save(w_ctx->db, t, p);
 
       if (verbose) {
         char *restrict const p_info = position_string(w_ctx, t, p);
@@ -3177,6 +3195,7 @@ static int orders_process(void *restrict const arg) {
       if (t->status == TRADE_STATUS_CANCELLED ||
           t->status == TRADE_STATUS_DONE) {
         mutex_lock(&t->mtx);
+
         if (!TRADE_IS_ENQUEUED(t) && !TRADE_IS_DELETED(t))
           trade_delete(t);
         else
@@ -3327,6 +3346,7 @@ static int samples_process(void *restrict const arg) {
         if (t->status == TRADE_STATUS_CANCELLED ||
             t->status == TRADE_STATUS_DONE) {
           mutex_lock(&t->mtx);
+
           if (!TRADE_IS_ENQUEUED(t) && !TRADE_IS_DELETED(t))
             trade_delete(t);
           else
@@ -3495,6 +3515,7 @@ static int trades_process(void *restrict const arg) {
       TRADE_SET_READY(t, tp_pc);
       Numeric_div_to(t->tp_pc, hundred, r0);
       Numeric_add_to(r0, one, t->tp_pf);
+      trade_state_save(w_ctx->db, t);
       mutex_unlock(&t->mtx);
     }
     Market_delete(w_ctx->m);
