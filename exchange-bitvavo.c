@@ -1521,7 +1521,7 @@ static bool bitvavo_order_cancel(const struct Market *restrict const m,
     goto ret;
 
   errno = 0;
-  j_orderId = json_obj_get_string(rsp_doc, rsp_doc->values, L"orderId", 9);
+  j_orderId = json_obj_get_string(rsp_doc, rsp_doc->values, L"orderId", 7);
 
   if (!String_equals(o_id, j_orderId))
     panic();
