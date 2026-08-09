@@ -202,17 +202,41 @@ static void print_market(const struct Market *restrict const m) {
   char *restrict const b_inc = Numeric_to_char(m->b_inc, m->b_sc);
   char *restrict const p_inc = Numeric_to_char(m->p_inc, m->p_sc);
   char *restrict const q_inc = Numeric_to_char(m->q_inc, m->q_sc);
+  char *restrict const b_limit_min =
+      m->b_min_opt != NULL ? Numeric_to_char(m->b_min_opt, m->b_sc) : "";
 
-  printf("%s\t%s\t%s\t%s\t%s\t%s\t%s\t%" PRIuMAX "\t%s\t%" PRIuMAX
-         "\t%s\t%" PRIuMAX "\t%s\t%d\t%d\n",
+  char *restrict const b_limit_max =
+      m->b_max_opt != NULL ? Numeric_to_char(m->b_max_opt, m->b_sc) : "";
+
+  char *restrict const q_limit_min =
+      m->q_min_opt != NULL ? Numeric_to_char(m->q_min_opt, m->q_sc) : "";
+
+  char *restrict const q_limit_max =
+      m->q_max_opt != NULL ? Numeric_to_char(m->q_max_opt, m->q_sc) : "";
+
+  printf("%s\t%s\t%s\t%s\t%s\t%s\t%" PRIuMAX "\t%s\t%s\t%s\t%s\t%" PRIuMAX
+         "\t%s\t%s\t%s\t%" PRIuMAX "\t%s\t%d\t%d\n",
          String_chars(m->id), String_chars(m->nm), String_chars(m->sym),
          market_type_name(m->type), market_status_name(m->status),
-         String_chars(m->b_id), String_chars(m->q_id), m->b_sc, b_inc, m->p_sc,
-         p_inc, m->q_sc, q_inc, m->is_tradeable ? 1 : 0, m->is_active ? 1 : 0);
+         String_chars(m->b_id), m->b_sc, b_inc, b_limit_min, b_limit_max,
+         String_chars(m->q_id), m->q_sc, q_inc, q_limit_min, q_limit_max,
+         m->p_sc, p_inc, m->is_tradeable ? 1 : 0, m->is_active ? 1 : 0);
 
   Numeric_char_free(b_inc);
   Numeric_char_free(p_inc);
   Numeric_char_free(q_inc);
+
+  if (m->b_min_opt != NULL)
+    Numeric_char_free(b_limit_min);
+
+  if (m->b_max_opt != NULL)
+    Numeric_char_free(b_limit_max);
+
+  if (m->q_min_opt != NULL)
+    Numeric_char_free(q_limit_min);
+
+  if (m->q_max_opt != NULL)
+    Numeric_char_free(q_limit_max);
 }
 
 static _Noreturn void usage(void) {
@@ -372,9 +396,10 @@ static int cmd_markets(int argc, char *argv[]) {
   struct Array *restrict const markets = e->markets();
 
   if (header)
-    printf("ID\tNAME\tSYMBOL\tTYPE\tSTATUS\tBASE_SYMBOL\tQUOTE_SYMBOL\tBASE_"
-           "SCALE\tBASE_INCREMENT\tPRICE_SCALE\tPRICE_INCREMENT\tQUOTE_"
-           "SCALE\tQUOTE_INCREMENT\tTRADEABLE\tACTIVE\n");
+    printf("ID\tNAME\tSYMBOL\tTYPE\tSTATUS\tBASE_SYMBOL\tBASE_SCALE\tBASE_"
+           "INCREMENT\tBASE_LIMIT_MIN\tBASE_LIMIT_MAX\tQUOTE_SYMBOL\tQUOTE_"
+           "SCALE\tQUOTE_INCREMENT\tQUOTE_LIMIT_MIN\tQUOTE_LIMIT_MAX\tPRICE_"
+           "SCALE\tPRICE_INCREMENT\tTRADEABLE\tACTIVE\n");
 
   items = Array_items(markets);
   for (size_t i = Array_size(markets); i-- > 0;) {

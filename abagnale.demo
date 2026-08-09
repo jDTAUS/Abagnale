@@ -82,7 +82,7 @@ trade at coinbase using trend return $eur_return window 324h\
 	take-loss-delay 162h take-loss-delays 1
 
 trade at coinbase using trend return 10 DOGE window 324h\
-	 market DOGE@EUR\
+	market DOGE@EUR\
 	demand-timeout-min 10h demand-timeout-max 15h\
 	supply-timeout-min 10h supply-timeout-max 15h\
 	stop-loss-delay 135m stop-loss-delays 2\
@@ -800,153 +800,6 @@ trade at coinbase using trend return $gbp_return window 36h\
 	take-profit-delay 3m take-profit-delays 1\
 	take-loss-delay 18h take-loss-delays 1
 
-trade at bitvavo using trend return $eur_return window 36h\
-	market ACE@EUR\
-	market ACU@EUR\
-	market ADA@EUR\
-	market AERO@EUR\
-	market AI@EUR\
-	market AKT@EUR\
-	market ALGO@EUR\
-	market ALLO@EUR\
-	market AVAX@EUR\
-	market BICO@EUR\
-	market BILL@EUR\
-	market BIRB@EUR\
-	market BNB@EUR\
-	market BOME@EUR\
-	market BONK@EUR\
-	market BTC@EUR\
-	market CSPR@EUR\
-	market DIA@EUR\
-	market DOGE@EUR\
-	market EDGE@EUR\
-	market ENA@EUR\
-	market EPIC@EUR\
-	market ESP@EUR\
-	market ETH@EUR\
-	market EUL@EUR\
-	market FET@EUR\
-	market FUN@EUR\
-	market GWEI@EUR\
-	market HBAR@EUR\
-	market HEI@EUR\
-	market HOME@EUR\
-	market HYPE@EUR\
-	market ICNT@EUR\
-	market LINK@EUR\
-	market LMWR@EUR\
-	market LPT@EUR\
-	market MEGA@EUR\
-	market MIRA@EUR\
-	market MMT@EUR\
-	market NEAR@EUR\
-	market NIL@EUR\
-	market NPC@EUR\
-	market PTB@EUR\
-	market RAY@EUR\
-	market RE@EUR\
-	market RECALL@EUR\
-	market RLC@EUR\
-	market ROBO@EUR\
-	market SNX@EUR\
-	market SOL@EUR\
-	market SPX@EUR\
-	market SQD@EUR\
-	market SUI@EUR\
-	market SYN@EUR\
-	market SYRUP@EUR\
-	market TAO@EUR\
-	market TRX@EUR\
-	market UNI@EUR\
-	market USELESS@EUR\
-	market VET@EUR\
-	market WLD@EUR\
-	market XAN@EUR\
-	market XRP@EUR\
-	market ZAMA@EUR\
-	market ZBT@EUR\
-	demand-timeout-min 1h demand-timeout-max 1.5h\
-	supply-timeout-min 1h supply-timeout-max 1.5h\
-	stop-loss-delay 15m stop-loss-delays 2\
-	take-profit-delay 3m take-profit-delays 1\
-	take-loss-delay 18h take-loss-delays 1
-
-trade at bitvavo using trend return $eur_return window 72h\
-	market AAVE@EUR\
-	market ACE@EUR\
-	market ARB@EUR\
-	market BABY@EUR\
-	market BLEND@EUR\
-	market BOB@EUR\
-	market CC@EUR\
-	market CHILLGUY@EUR\
-	market COTI@EUR\
-	market DODO@EUR\
-	market DOT@EUR\
-	market DRIFT@EUR\
-	market EDEN@EUR\
-	market ETHFI@EUR\
-	market FARTCOIN@EUR\
-	market FIL@EUR\
-	market FLUID@EUR\
-	market GROVE@EUR\
-	market HFT@EUR\
-	market ICP@EUR\
-	market IMX@EUR\
-	market INJ@EUR\
-	market IO@EUR\
-	market IRYS@EUR\
-	market JUP@EUR\
-	market KAIA@EUR\
-	market KAS@EUR\
-	market LDO@EUR\
-	market LTC@EUR\
-	market LQTY@EUR\
-	market MON@EUR\
-	market MOODENG@EUR\
-	market MORPHO@EUR\
-	market OGN@EUR\
-	market ONDO@EUR\
-	market OPEN@EUR\
-	market PHA@EUR\
-	market PORTAL@EUR\
-	market PYTH@EUR\
-	market QNT@EUR\
-	market RAY@EUR\
-	market RENDER@EUR\
-	market SEI@EUR\
-	market SENT@EUR\
-	market SWELL@EUR\
-	market SOON@EUR\
-	market TAIKO@EUR\
-	market THQ@EUR\
-	market TIA@EUR\
-	market TOMO@EUR\
-	market TRUMP@EUR\
-	market TRX@EUR\
-	market USDC@EUR\
-	market USELESS@EUR\
-	market VIRTUAL@EUR\
-	market WAL@EUR\
-	market WIF@EUR\
-	market XNO@EUR\
-	market XLM@EUR\
-	market XPL@EUR\
-	demand-timeout-min 2h demand-timeout-max 3.5h\
-	supply-timeout-min 2h supply-timeout-max 3.5h\
-	stop-loss-delay 30m stop-loss-delays 2\
-	take-profit-delay 7.5m take-profit-delays 1\
-	take-loss-delay 36h take-loss-delays 1
-
-trade at bitvavo using trend return $usdc_return window 72h\
-	market match @USDC\
-	demand-timeout-min 2h demand-timeout-max 3.5h\
-	supply-timeout-min 2h supply-timeout-max 3.5h\
-	stop-loss-delay 30m stop-loss-delays 2\
-	take-profit-delay 7.5m take-profit-delays 1\
-	take-loss-delay 36h take-loss-delays 1
-
 trade at bitvavo using trend return $eur_return window 1296h\
 	market 0G@EUR\
 	market 2Z@EUR\
@@ -1051,6 +904,7 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market BIO@EUR\
 	market BLUR@EUR\
 	market BNT@EUR\
+	market BOME@EUR\
 	market BRETT@EUR\
 	market BREV@EUR\
 	market BTT@EUR\
@@ -1072,6 +926,7 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market CRO@EUR\
 	market CROSS@EUR\
 	market CRV@EUR\
+	market CSPR@EUR\
 	market CTC@EUR\
 	market CTK@EUR\
 	market CTR@EUR\
@@ -1085,6 +940,7 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market DUSK@EUR\
 	market DYDX@EUR\
 	market DYM@EUR\
+	market EDGE@EUR\
 	market EDU@EUR\
 	market EGLD@EUR\
 	market EIGEN@EUR\
@@ -1129,6 +985,7 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market INIT@EUR\
 	market INX@EUR\
 	market IOST@EUR\
+	market IQ@EUR\
 	market JASMY@EUR\
 	market JTO@EUR\
 	market KAT@EUR\
@@ -1142,6 +999,7 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market LIGHTER@EUR\
 	market LINEA@EUR\
 	market LISTA@EUR\
+	market LMWR@EUR\
 	market LRC@EUR\
 	market LSK@EUR\
 	market LUMIA@EUR\
@@ -1160,6 +1018,7 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market MIOTA@EUR\
 	market MLN@EUR\
 	market MOG@EUR\
+	market MOVE@EUR\
 	market MOVR@EUR\
 	market MTL@EUR\
 	market NEIRO@EUR\
@@ -1223,10 +1082,12 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market SUPER@EUR\
 	market SUSHI@EUR\
 	market SWEAT@EUR\
+	market SWELL@EUR\
 	market SXT@EUR\
 	market T@EUR\
 	market TAI@EUR\
 	market THE@EUR\
+	market THQ@EUR\
 	market TNSR@EUR\
 	market TOMO@EUR\
 	market TOSHI@EUR\
@@ -1272,447 +1133,161 @@ trade at bitvavo using trend return $eur_return window 324h\
 	take-profit-delay 27m take-profit-delays 1\
 	take-loss-delay 162h take-loss-delays 1
 
+trade at bitvavo using trend return $eur_return window 72h\
+	market AAVE@EUR\
+	market ACE@EUR\
+	market ARB@EUR\
+	market BABY@EUR\
+	market BLEND@EUR\
+	market BOB@EUR\
+	market CC@EUR\
+	market CHILLGUY@EUR\
+	market COTI@EUR\
+	market DODO@EUR\
+	market DOT@EUR\
+	market DRIFT@EUR\
+	market EDEN@EUR\
+	market ETHFI@EUR\
+	market FARTCOIN@EUR\
+	market FIL@EUR\
+	market FLUID@EUR\
+	market GROVE@EUR\
+	market HFT@EUR\
+	market ICP@EUR\
+	market IMX@EUR\
+	market INJ@EUR\
+	market IO@EUR\
+	market IRYS@EUR\
+	market JUP@EUR\
+	market KAIA@EUR\
+	market KAS@EUR\
+	market LDO@EUR\
+	market LTC@EUR\
+	market LQTY@EUR\
+	market MON@EUR\
+	market MOODENG@EUR\
+	market MORPHO@EUR\
+	market OGN@EUR\
+	market ONDO@EUR\
+	market OPEN@EUR\
+	market PHA@EUR\
+	market PORTAL@EUR\
+	market PYTH@EUR\
+	market QNT@EUR\
+	market RAY@EUR\
+	market RENDER@EUR\
+	market SEI@EUR\
+	market SENT@EUR\
+	market SOON@EUR\
+	market TAIKO@EUR\
+	market TIA@EUR\
+	market TOMO@EUR\
+	market TRUMP@EUR\
+	market TRX@EUR\
+	market USDC@EUR\
+	market USELESS@EUR\
+	market VIRTUAL@EUR\
+	market WAL@EUR\
+	market WIF@EUR\
+	market XNO@EUR\
+	market XLM@EUR\
+	market XPL@EUR\
+	demand-timeout-min 2h demand-timeout-max 3.5h\
+	supply-timeout-min 2h supply-timeout-max 3.5h\
+	stop-loss-delay 30m stop-loss-delays 2\
+	take-profit-delay 7.5m take-profit-delays 1\
+	take-loss-delay 36h take-loss-delays 1
+
+trade at bitvavo using trend return $eur_return window 36h\
+	market ACE@EUR\
+	market ACU@EUR\
+	market ADA@EUR\
+	market AERO@EUR\
+	market AI@EUR\
+	market AKT@EUR\
+	market ALGO@EUR\
+	market ALLO@EUR\
+	market AVAX@EUR\
+	market BICO@EUR\
+	market BILL@EUR\
+	market BIRB@EUR\
+	market BNB@EUR\
+	market BONK@EUR\
+	market BTC@EUR\
+	market DIA@EUR\
+	market DOGE@EUR\
+	market ENA@EUR\
+	market EPIC@EUR\
+	market ESP@EUR\
+	market ETH@EUR\
+	market EUL@EUR\
+	market FET@EUR\
+	market FUN@EUR\
+	market GWEI@EUR\
+	market HBAR@EUR\
+	market HEI@EUR\
+	market HOME@EUR\
+	market HYPE@EUR\
+	market ICNT@EUR\
+	market LINK@EUR\
+	market LPT@EUR\
+	market MEGA@EUR\
+	market MIRA@EUR\
+	market MMT@EUR\
+	market NEAR@EUR\
+	market NIL@EUR\
+	market NPC@EUR\
+	market PTB@EUR\
+	market RAY@EUR\
+	market RE@EUR\
+	market RECALL@EUR\
+	market RLC@EUR\
+	market ROBO@EUR\
+	market SNX@EUR\
+	market SOL@EUR\
+	market SPX@EUR\
+	market SQD@EUR\
+	market SUI@EUR\
+	market SYN@EUR\
+	market SYRUP@EUR\
+	market TAO@EUR\
+	market TRX@EUR\
+	market UNI@EUR\
+	market USELESS@EUR\
+	market VET@EUR\
+	market WLD@EUR\
+	market XAN@EUR\
+	market XRP@EUR\
+	market ZAMA@EUR\
+	market ZBT@EUR\
+	demand-timeout-min 1h demand-timeout-max 1.5h\
+	supply-timeout-min 1h supply-timeout-max 1.5h\
+	stop-loss-delay 15m stop-loss-delays 2\
+	take-profit-delay 3m take-profit-delays 1\
+	take-loss-delay 18h take-loss-delays 1
+
+trade at bitvavo using trend return $usdc_return window 1296h\
+	market DOGE@USDC\
+	market SUI@USDC\
+	demand-timeout-min 40h demand-timeout-max 60h\
+	supply-timeout-min 40h supply-timeout-max 60h\
+	stop-loss-delay 540m stop-loss-delays 2\
+	take-profit-delay 108m take-profit-delays 1\
+	take-loss-delay 648h take-loss-delays 1
+
 trade at bitvavo using trend return $eur_return window 180h\
-	market not 2Z@EUR\
-	market not ADX@EUR\
-	market not ARK@EUR\
-	market not ASTR@EUR\
-	market not AUDIO@EUR\
-	market not CETUS@EUR\
-	market not CYBER@EUR\
-	market not EURC@EUR\
-	market not EUROP@EUR\
-	market not FTT@EUR\
-	market not GNO@EUR\
-	market not GNS@EUR\
-	market not MAV@EUR\
-	market not MOCA@EUR\
-	market not ONG@EUR\
-	market not ONT@EUR\
-	market not POWR@EUR\
-	market not PUNDIX@EUR\
-	market not RAD@EUR\
-	market not RARE@EUR\
-	market not RED@EUR\
-	market not XTZ@EUR\
-	market not ZETA@EUR\
-	market not 1INCH@EUR\
-	market not 2Z@EUR\
-	market not A@EUR\
-	market not ACT@EUR\
-	market not AERGO@EUR\
-	market not AGLD@EUR\
-	market not AIOZ@EUR\
-	market not AIXBT@EUR\
-	market not ALICE@EUR\
-	market not ALT@EUR\
-	market not AMP@EUR\
-	market not ANKR@EUR\
-	market not APE@EUR\
-	market not API3@EUR\
-	market not APT@EUR\
-	market not ARKM@EUR\
-	market not ARPA@EUR\
-	market not ARX@EUR\
-	market not ASTER@EUR\
-	market not ATH@EUR\
-	market not ATOM@EUR\
-	market not AUCTION@EUR\
-	market not AVA@EUR\
-	market not AVNT@EUR\
-	market not AXL@EUR\
-	market not AXS@EUR\
-	market not AZTEC@EUR\
-	market not BANANA@EUR\
-	market not BAND@EUR\
-	market not BAT@EUR\
-	market not BEAM@EUR\
-	market not BEL@EUR\
-	market not BIGTIME@EUR\
-	market not BIO@EUR\
-	market not BLUR@EUR\
-	market not BNT@EUR\
-	market not BRETT@EUR\
-	market not BREV@EUR\
-	market not BTT@EUR\
-	market not C98@EUR\
-	market not C@EUR\
-	market not CAKE@EUR\
-	market not CARV@EUR\
-	market not CAT@EUR\
-	market not CATI@EUR\
-	market not CELO@EUR\
-	market not CELR@EUR\
-	market not CFG@EUR\
-	market not CHIP@EUR\
-	market not CHR@EUR\
-	market not CHZ@EUR\
-	market not COMP@EUR\
-	market not COW@EUR\
-	market not CPOOL@EUR\
-	market not CRO@EUR\
-	market not CROSS@EUR\
-	market not CRV@EUR\
-	market not CTC@EUR\
-	market not CTK@EUR\
-	market not CTR@EUR\
-	market not CVC@EUR\
-	market not CVX@EUR\
-	market not DATAIP@EUR\
-	market not DBR@EUR\
-	market not DEEP@EUR\
-	market not DGB@EUR\
-	market not DOGS@EUR\
-	market not DUSK@EUR\
-	market not DYDX@EUR\
-	market not DYM@EUR\
-	market not EDU@EUR\
-	market not EGLD@EUR\
-	market not EIGEN@EUR\
-	market not ELSA@EUR\
-	market not ENJ@EUR\
-	market not ENS@EUR\
-	market not ENSO@EUR\
-	market not ETC@EUR\
-	market not F@EUR\
-	market not FIDA@EUR\
-	market not FLOCK@EUR\
-	market not FLOKI@EUR\
-	market not FLR@EUR\
-	market not FLUID@EUR\
-	market not FLUX@EUR\
-	market not FORM@EUR\
-	market not FRAX@EUR\
-	market not FTT@EUR\
-	market not GALA@EUR\
-	market not GAS@EUR\
-	market not GIGA@EUR\
-	market not GLM@EUR\
-	market not GLMR@EUR\
-	market not GMT@EUR\
-	market not GMX@EUR\
-	market not GOAT@EUR\
-	market not GRAM@EUR\
-	market not GRASS@EUR\
-	market not GRT@EUR\
-	market not GTC@EUR\
-	market not HAEDAL@EUR\
-	market not HIGH@EUR\
-	market not HMSTR@EUR\
-	market not HNT@EUR\
-	market not HOT@EUR\
-	market not HUMA@EUR\
-	market not ICX@EUR\
-	market not ID@EUR\
-	market not IKA@EUR\
-	market not ILV@EUR\
-	market not IMU@EUR\
-	market not INIT@EUR\
-	market not INX@EUR\
-	market not IOST@EUR\
-	market not JASMY@EUR\
-	market not JTO@EUR\
-	market not KAT@EUR\
-	market not KAVA@EUR\
-	market not KERNEL@EUR\
-	market not KITE@EUR\
-	market not KMNO@EUR\
-	market not KNC@EUR\
-	market not KSM@EUR\
-	market not LAYER@EUR\
-	market not LIGHTER@EUR\
-	market not LINEA@EUR\
-	market not LISTA@EUR\
-	market not LRC@EUR\
-	market not LSK@EUR\
-	market not LUMIA@EUR\
-	market not LUNA2@EUR\
-	market not LUNA@EUR\
-	market not MAGIC@EUR\
-	market not MANA@EUR\
-	market not MANTA@EUR\
-	market not MASK@EUR\
-	market not ME@EUR\
-	market not MEME@EUR\
-	market not MERL@EUR\
-	market not MET@EUR\
-	market not METIS@EUR\
-	market not MEW@EUR\
-	market not MIOTA@EUR\
-	market not MLN@EUR\
-	market not MOG@EUR\
-	market not MOVR@EUR\
-	market not MTL@EUR\
-	market not NEIRO@EUR\
-	market not NEO@EUR\
-	market not NES@EUR\
-	market not NEWT@EUR\
-	market not NEX@EUR\
-	market not NMR@EUR\
-	market not NOM@EUR\
-	market not NOS@EUR\
-	market not NOT@EUR\
-	market not O@EUR\
-	market not OP@EUR\
-	market not OPEN@EUR\
-	market not ORCA@EUR\
-	market not OSMO@EUR\
-	market not PARTI@EUR\
-	market not PEAQ@EUR\
-	market not PENDLE@EUR\
-	market not PEOPLE@EUR\
-	market not PIXEL@EUR\
-	market not PLUME@EUR\
-	market not PNUT@EUR\
-	market not POL@EUR\
-	market not POND@EUR\
-	market not PONKE@EUR\
-	market not POPCAT@EUR\
-	market not PROMPT@EUR\
-	market not PROVE@EUR\
-	market not PUFFER@EUR\
-	market not PYR@EUR\
-	market not QKC@EUR\
-	market not RARE@EUR\
-	market not REQ@EUR\
-	market not RON@EUR\
-	market not RPL@EUR\
-	market not RSR@EUR\
-	market not RUNE@EUR\
-	market not RVN@EUR\
-	market not S@EUR\
-	market not SAFE@EUR\
-	market not SAGA@EUR\
-	market not SAND@EUR\
-	market not SCR@EUR\
-	market not SFP@EUR\
-	market not SHELL@EUR\
-	market not SIGN@EUR\
-	market not SKL@EUR\
-	market not SLP@EUR\
-	market not SOMI@EUR\
-	market not SOPH@EUR\
-	market not SOSO@EUR\
-	market not SPK@EUR\
-	market not SSV@EUR\
-	market not STO@EUR\
-	market not STORJ@EUR\
-	market not STRAX@EUR\
-	market not STRK@EUR\
-	market not STX@EUR\
-	market not SUPER@EUR\
-	market not SUSHI@EUR\
-	market not SWEAT@EUR\
-	market not SXT@EUR\
-	market not T@EUR\
-	market not TAI@EUR\
-	market not THE@EUR\
-	market not TNSR@EUR\
-	market not TOMO@EUR\
-	market not TOSHI@EUR\
-	market not TOWNS@EUR\
-	market not TRAC@EUR\
-	market not TRB@EUR\
-	market not TREE@EUR\
-	market not TURBO@EUR\
-	market not TWT@EUR\
-	market not U@EUR\
-	market not UMA@EUR\
-	market not UP@EUR\
-	market not VANA@EUR\
-	market not VELO@EUR\
-	market not VTHO@EUR\
-	market not VVV@EUR\
-	market not W@EUR\
-	market not WAXP@EUR\
-	market not WCT@EUR\
-	market not WELL@EUR\
-	market not WLFI@EUR\
-	market not WOO@EUR\
-	market not XAI@EUR\
-	market not XDC@EUR\
-	market not XTZ@EUR\
-	market not XVG@EUR\
-	market not XYO@EUR\
-	market not YB@EUR\
-	market not YFI@EUR\
-	market not YGG@EUR\
-	market not ZBCN@EUR\
-	market not ZEN@EUR\
-	market not ZK@EUR\
-	market not ZKC@EUR\
-	market not ZKP@EUR\
-	market not ZORA@EUR\
-	market not ZRC@EUR\
-	market not ZRO@EUR\
-	market not ZRX@EUR\
-	market not AAVE@EUR\
-	market not ACE@EUR\
-	market not ACX@EUR\
-	market not ANIME@EUR\
-	market not ARB@EUR\
-	market not BCH@EUR\
-	market not BLEND@EUR\
-	market not BOB@EUR\
-	market not CC@EUR\
-	market not CHILLGUY@EUR\
-	market not DEGEN@EUR\
-	market not DODO@EUR\
-	market not DOT@EUR\
-	market not DRIFT@EUR\
-	market not EDEN@EUR\
-	market not ETHFI@EUR\
-	market not FARTCOIN@EUR\
-	market not FIL@EUR\
-	market not FLUID@EUR\
-	market not FUEL@EUR\
-	market not G@EUR\
-	market not HFT@EUR\
-	market not ICP@EUR\
-	market not IMX@EUR\
-	market not IO@EUR\
-	market not IRYS@EUR\
-	market not JUP@EUR\
-	market not KAIA@EUR\
-	market not LDO@EUR\
-	market not LQTY@EUR\
-	market not MON@EUR\
-	market not MOODENG@EUR\
-	market not MORPHO@EUR\
-	market not OGN@EUR\
-	market not OPEN@EUR\
-	market not PENGU@EUR\
-	market not PHA@EUR\
-	market not PORTAL@EUR\
-	market not RAY@EUR\
-	market not RENDER@EUR\
-	market not REZ@EUR\
-	market not ROSE@EUR\
-	market not SKY@EUR\
-	market not SOON@EUR\
-	market not TAIKO@EUR\
-	market not THQ@EUR\
-	market not TIA@EUR\
-	market not TOMO@EUR\
-	market not TRUMP@EUR\
-	market not TRUST@EUR\
-	market not TRX@EUR\
-	market not USELESS@EUR\
-	market not VIRTUAL@EUR\
-	market not WIF@EUR\
-	market not WIN@EUR\
-	market not XNO@EUR\
-	market not XPL@EUR\
-	market not ZKJ@EUR\
-	market not 0G@EUR\
-	market not ACE@EUR\
-	market not ACH@EUR\
-	market not ACU@EUR\
-	market not ADA@EUR\
-	market not AERO@EUR\
-	market not AEVO@EUR\
-	market not AI@EUR\
-	market not AKT@EUR\
-	market not ALGO@EUR\
-	market not ALLO@EUR\
-	market not AVAX@EUR\
-	market not BABY@EUR\
-	market not BICO@EUR\
-	market not BILL@EUR\
-	market not BIRB@EUR\
-	market not BNB@EUR\
-	market not BOME@EUR\
-	market not BONK@EUR\
-	market not BTC@EUR\
-	market not CAP@EUR\
-	market not COTI@EUR\
-	market not CSPR@EUR\
-	market not DIA@EUR\
-	market not DOGE@EUR\
-	market not EDGE@EUR\
-	market not ENA@EUR\
-	market not EPIC@EUR\
-	market not ESP@EUR\
-	market not ETH@EUR\
-	market not EUL@EUR\
-	market not FET@EUR\
-	market not FUN@EUR\
-	market not GROVE@EUR\
-	market not GWEI@EUR\
-	market not HBAR@EUR\
-	market not HEI@EUR\
-	market not HOME@EUR\
-	market not HYPE@EUR\
-	market not ICNT@EUR\
-	market not INJ@EUR\
-	market not KAITO@EUR\
-	market not KAS@EUR\
-	market not LINK@EUR\
-	market not LMWR@EUR\
-	market not LPT@EUR\
-	market not LTC@EUR\
-	market not MANTRA@EUR\
-	market not MAVIA@EUR\
-	market not MEGA@EUR\
-	market not MIRA@EUR\
-	market not MMT@EUR\
-	market not NEAR@EUR\
-	market not NIL@EUR\
-	market not NPC@EUR\
-	market not ONDO@EUR\
-	market not PEPE@EUR\
-	market not PROM@EUR\
-	market not PTB@EUR\
-	market not PUMP@EUR\
-	market not PYTH@EUR\
-	market not QNT@EUR\
-	market not RAY@EUR\
-	market not RE@EUR\
-	market not RECALL@EUR\
-	market not RLC@EUR\
-	market not ROBO@EUR\
-	market not SAPIEN@EUR\
-	market not SEI@EUR\
-	market not SENT@EUR\
-	market not SHIB@EUR\
-	market not SLX@EUR\
-	market not SNX@EUR\
-	market not SOL@EUR\
-	market not SOLV@EUR\
-	market not SOON@EUR\
-	market not SPX@EUR\
-	market not SQD@EUR\
-	market not SUI@EUR\
-	market not SWELL@EUR\
-	market not SYN@EUR\
-	market not SYRUP@EUR\
-	market not TAO@EUR\
-	market not TLM@EUR\
-	market not TRIA@EUR\
-	market not TRX@EUR\
-	market not UNI@EUR\
-	market not USDC@EUR\
-	market not USELESS@EUR\
-	market not VANRY@EUR\
-	market not VERONA@EUR\
-	market not VET@EUR\
-	market not VSN@EUR\
-	market not WAL@EUR\
-	market not WLD@EUR\
-	market not WMTX@EUR\
-	market not XAN@EUR\
-	market not XLM@EUR\
-	market not XMN@EUR\
-	market not XRP@EUR\
-	market not ZAMA@EUR\
-	market not ZBT@EUR\
-	market not ZEUS@EUR\
-	market not ZIG@EUR\
-	market not ZIL@EUR\
 	market match @EUR\
 	demand-timeout-min 5h demand-timeout-max 7.5h\
 	supply-timeout-min 5h supply-timeout-max 7.5h\
 	stop-loss-delay 75m stop-loss-delays 2\
 	take-profit-delay 15m take-profit-delays 1\
 	take-loss-delay 90h take-loss-delays 1
+
+trade at bitvavo using trend return $usdc_return window 72h\
+	market match @USDC\
+	demand-timeout-min 2h demand-timeout-max 3.5h\
+	supply-timeout-min 2h supply-timeout-max 3.5h\
+	stop-loss-delay 30m stop-loss-delays 2\
+	take-profit-delay 7.5m take-profit-delays 1\
+	take-loss-delay 36h take-loss-delays 1
 

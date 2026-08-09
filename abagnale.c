@@ -2601,7 +2601,7 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
         char *restrict const s_pr =
             Numeric_to_char(sample->price, w_ctx->m->p_sc);
 
-        wout("%s: %s: Market: Entering open(%" PRIuMAX "): 1%s@%s%s\n",
+        wout("%s: %s: Entering open(%" PRIuMAX "): 1%s@%s%s\n",
              String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
              t->open_trg.cnt, String_chars(w_ctx->m->b_id), s_pr,
              String_chars(w_ctx->m->q_id));
@@ -2618,7 +2618,7 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
       char *restrict const s_pr =
           Numeric_to_char(sample->price, w_ctx->m->p_sc);
 
-      wout("%s: %s: Market: Leaving open(%" PRIuMAX "): 1%s@%s%s\n",
+      wout("%s: %s: Leaving open(%" PRIuMAX "): 1%s@%s%s\n",
            String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
            t->open_trg.cnt, String_chars(w_ctx->m->b_id), s_pr,
            String_chars(w_ctx->m->q_id));
@@ -2661,7 +2661,7 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
       char *restrict const s_pr =
           Numeric_to_char(sample->price, w_ctx->m->p_sc);
 
-      wout("%s: %s: Market: Leaving open(%" PRIuMAX "): 1%s@%s%s\n",
+      wout("%s: %s: Leaving open(%" PRIuMAX "): 1%s@%s%s\n",
            String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
            t->open_trg.cnt, String_chars(w_ctx->m->b_id), s_pr,
            String_chars(w_ctx->m->q_id));
@@ -2746,7 +2746,7 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
            q_return, String_chars(w_ctx->m->q_id), c);
 
       if (verbose)
-        wout("%s: %s: Market: Leaving open(%" PRIuMAX "): 1%s@%s%s\n",
+        wout("%s: %s: Leaving open(%" PRIuMAX "): 1%s@%s%s\n",
              String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
              t->open_trg.cnt, String_chars(w_ctx->m->b_id), s_pr,
              String_chars(w_ctx->m->q_id));
@@ -2781,8 +2781,8 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
         w_ctx->e->order_demand(w_ctx->m, b, pr);
 
     if (o_id == NULL) {
-      werr("%s: %s: Market: Failure creating buy order\n",
-           String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm));
+      werr("%s: %s: Failure creating buy order\n", String_chars(w_ctx->e->nm),
+           String_chars(w_ctx->m->nm));
 
       goto ret;
     }
@@ -2815,7 +2815,7 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
            q_return, String_chars(w_ctx->m->q_id), c);
 
       if (verbose)
-        wout("%s: %s: Market: Leaving open(%" PRIuMAX "): 1%s@%s%s\n",
+        wout("%s: %s: Leaving open(%" PRIuMAX "): 1%s@%s%s\n",
              String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
              t->open_trg.cnt, String_chars(w_ctx->m->b_id), s_pr,
              String_chars(w_ctx->m->q_id));
@@ -2851,8 +2851,8 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
         w_ctx->e->order_supply(w_ctx->m, b, pr);
 
     if (o_id == NULL) {
-      werr("%s: %s: Market: Failure creating sell order\n",
-           String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm));
+      werr("%s: %s: Failure creating sell order\n", String_chars(w_ctx->e->nm),
+           String_chars(w_ctx->m->nm));
 
       goto ret;
     }
@@ -3366,9 +3366,8 @@ static int samples_process(void *restrict const arg) {
           mutex_unlock(&t->mtx);
         }
       } else {
-        wout("%s: %s: Position: No matching market configuration: %s\n",
-             String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
-             String_chars(t->id));
+        wout("%s: %s: Position: Unconfigured: %s\n", String_chars(w_ctx->e->nm),
+             String_chars(w_ctx->m->nm), String_chars(t->id));
 
         Array_remove_idx(trades, i);
         goto again;
