@@ -462,9 +462,10 @@ static int cmd_market(int argc, char *argv[]) {
   }
 
   if (header)
-    printf("ID\tNAME\tSYMBOL\tTYPE\tSTATUS\tBASE_SYMBOL\tQUOTE_SYMBOL\tBASE_"
-           "SCALE\tBASE_INCREMENT\tPRICE_SCALE\tPRICE_INCREMENT\tQUOTE_"
-           "SCALE\tQUOTE_INCREMENT\tTRADEABLE\tACTIVE\n");
+    printf("ID\tNAME\tSYMBOL\tTYPE\tSTATUS\tBASE_SYMBOL\tBASE_SCALE\tBASE_"
+           "INCREMENT\tBASE_LIMIT_MIN\tBASE_LIMIT_MAX\tQUOTE_SYMBOL\tQUOTE_"
+           "SCALE\tQUOTE_INCREMENT\tQUOTE_LIMIT_MIN\tQUOTE_LIMIT_MAX\tPRICE_"
+           "SCALE\tPRICE_INCREMENT\tTRADEABLE\tACTIVE\n");
 
   print_market(m);
   mutex_unlock(m->mtx);
