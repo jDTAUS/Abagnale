@@ -1465,6 +1465,7 @@ void db_trade_delete(const void *const db, const char *const t_id) {
   EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
   EXEC SQL AT :con
     DELETE FROM "TRADES" WHERE "TRADE_ID" = :sql_t_id;
+  EXEC SQL WHENEVER NOT FOUND CONTINUE;
   EXEC SQL AT :con
     DELETE FROM "TRADE_STATES" WHERE "TRADE_ID" = :sql_t_id;
   EXEC SQL AT :con COMMIT;
