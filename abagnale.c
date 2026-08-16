@@ -1372,22 +1372,22 @@ static void position_pricing(const struct worker_ctx *restrict const w_ctx,
            String_chars(w_ctx->m->nm));
 
       if (b_min != NULL) {
-        wout(" base_min=%s%s", b_min, String_chars(w_ctx->m->b_id));
+        wout(" base>=%s%s", b_min, String_chars(w_ctx->m->b_id));
         Numeric_char_free(b_min);
       }
 
       if (b_max != NULL) {
-        wout(" base_max=%s%s", b_max, String_chars(w_ctx->m->b_id));
+        wout(" base<=%s%s", b_max, String_chars(w_ctx->m->b_id));
         Numeric_char_free(b_max);
       }
 
       if (q_min != NULL) {
-        wout(" quote_min=%s%s", q_min, String_chars(w_ctx->m->q_id));
+        wout(" quote>=%s%s", q_min, String_chars(w_ctx->m->q_id));
         Numeric_char_free(q_min);
       }
 
       if (q_max != NULL) {
-        wout(" quote_max=%s%s", q_max, String_chars(w_ctx->m->q_id));
+        wout(" quote<=%s%s", q_max, String_chars(w_ctx->m->q_id));
         Numeric_char_free(q_max);
       }
 
@@ -2397,8 +2397,18 @@ trade:
         Numeric_copy_to(s->price, o_pr);
     }
 
-    if (w_ctx->m->q_max_opt != NULL && Numeric_cmp(o_pr, p->tp_price) > 0)
+    if (w_ctx->m->q_max_opt != NULL && Numeric_cmp(o_pr, p->tp_price) > 0) {
+      char *restrict const pr = Numeric_to_char(o_pr, w_ctx->m->p_sc);
+      char *restrict const limit = Numeric_to_char(p->tp_price, w_ctx->m->p_sc);
+      wout("%s: %s: Limited: 1%s@%s%s>1%s@%s%s\n", String_chars(w_ctx->e->nm),
+           String_chars(w_ctx->m->nm), String_chars(w_ctx->m->b_id), pr,
+           String_chars(w_ctx->m->q_id), String_chars(w_ctx->m->b_id), limit,
+           String_chars(w_ctx->m->q_id));
+      Numeric_char_free(pr);
+      Numeric_char_free(limit);
+
       Numeric_copy_to(p->tp_price, o_pr);
+    }
 
     break;
   case POSITION_TYPE_SHORT:
@@ -2412,8 +2422,18 @@ trade:
         Numeric_copy_to(s->price, o_pr);
     }
 
-    if (w_ctx->m->q_min_opt != NULL && Numeric_cmp(o_pr, p->tp_price) < 0)
+    if (w_ctx->m->q_min_opt != NULL && Numeric_cmp(o_pr, p->tp_price) < 0) {
+      char *restrict const pr = Numeric_to_char(o_pr, w_ctx->m->p_sc);
+      char *restrict const limit = Numeric_to_char(p->tp_price, w_ctx->m->p_sc);
+      wout("%s: %s: Limited: 1%s@%s%s<1%s@%s%s\n", String_chars(w_ctx->e->nm),
+           String_chars(w_ctx->m->nm), String_chars(w_ctx->m->b_id), pr,
+           String_chars(w_ctx->m->q_id), String_chars(w_ctx->m->b_id), limit,
+           String_chars(w_ctx->m->q_id));
+      Numeric_char_free(pr);
+      Numeric_char_free(limit);
+
       Numeric_copy_to(p->tp_price, o_pr);
+    }
 
     break;
   default:
