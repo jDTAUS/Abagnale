@@ -43,7 +43,6 @@ trade at coinbase using trend return $eur_return window 108h\
 
 trade at coinbase using trend return $eur_return window 144h\
 	market AAVE@EUR\
-	market BCH@EUR\
 	market ICP@EUR\
 	demand-timeout-min 4h demand-timeout-max 6h\
 	supply-timeout-min 4h supply-timeout-max 6h\
@@ -53,7 +52,6 @@ trade at coinbase using trend return $eur_return window 144h\
 
 trade at coinbase using trend return $eur_return window 180h\
 	market BAT@EUR\
-	market ETH@EUR\
 	market UNI@EUR\
 	demand-timeout-min 5h demand-timeout-max 7.5h\
 	supply-timeout-min 5h supply-timeout-max 7.5h\
@@ -62,7 +60,6 @@ trade at coinbase using trend return $eur_return window 180h\
 	take-loss-delay 90h take-loss-delays 1
 
 trade at coinbase using trend return $btc_return window 324h\
-	market BCH@BTC\
 	market ETH@BTC\
 	demand-timeout-min 10h demand-timeout-max 15h\
 	supply-timeout-min 10h supply-timeout-max 15h\
@@ -72,7 +69,9 @@ trade at coinbase using trend return $btc_return window 324h\
 
 trade at coinbase using trend return $eur_return window 324h\
 	market ALGO@EUR\
+	market BCH@EUR\
 	market BTC@EUR\
+	market ETH@EUR\
 	market LTC@EUR\
 	market XLM@EUR\
 	demand-timeout-min 10h demand-timeout-max 15h\
@@ -92,6 +91,7 @@ trade at coinbase using trend return 10 DOGE window 324h\
 trade at coinbase using trend return $btc_return window 648h\
 	market AAVE@BTC\
 	market AVAX@BTC\
+	market BCH@BTC\
 	market SOL@BTC\
 	market XLM@BTC\
 	demand-timeout-min 20h demand-timeout-max 30h\
@@ -800,19 +800,24 @@ trade at coinbase using trend return $gbp_return window 36h\
 	take-profit-delay 3m take-profit-delays 1\
 	take-loss-delay 18h take-loss-delays 1
 
+
 trade at bitvavo using trend return $eur_return window 1296h\
 	market 0G@EUR\
+	market 1INCH@EUR\
 	market 2Z@EUR\
 	market ACH@EUR\
 	market ACX@EUR\
 	market ADX@EUR\
 	market AEVO@EUR\
+	market AMP@EUR\
 	market ANIME@EUR\
 	market ARK@EUR\
 	market ASTR@EUR\
 	market AUDIO@EUR\
 	market BCH@EUR\
+	market BTT@EUR\
 	market CAP@EUR\
+	market CELO@EUR\
 	market CETUS@EUR\
 	market CYBER@EUR\
 	market DEGEN@EUR\
@@ -823,11 +828,13 @@ trade at bitvavo using trend return $eur_return window 1296h\
 	market G@EUR\
 	market GNO@EUR\
 	market GNS@EUR\
+	market ICNT@EUR\
 	market KAITO@EUR\
 	market MANTRA@EUR\
 	market MAV@EUR\
 	market MAVIA@EUR\
 	market MOCA@EUR\
+	market MOVE@EUR\
 	market ONG@EUR\
 	market ONT@EUR\
 	market PENGU@EUR\
@@ -846,6 +853,7 @@ trade at bitvavo using trend return $eur_return window 1296h\
 	market SLX@EUR\
 	market SOLV@EUR\
 	market SOON@EUR\
+	market SPX@EUR\
 	market TLM@EUR\
 	market TRIA@EUR\
 	market TRUST@EUR\
@@ -868,17 +876,16 @@ trade at bitvavo using trend return $eur_return window 1296h\
 	take-loss-delay 648h take-loss-delays 1
 
 trade at bitvavo using trend return $eur_return window 324h\
-	market 1INCH@EUR\
 	market 2Z@EUR\
 	market A@EUR\
 	market ACT@EUR\
+	market AGI@EUR\
 	market AERGO@EUR\
 	market AGLD@EUR\
 	market AIOZ@EUR\
 	market AIXBT@EUR\
 	market ALICE@EUR\
 	market ALT@EUR\
-	market AMP@EUR\
 	market ANKR@EUR\
 	market APE@EUR\
 	market API3@EUR\
@@ -907,14 +914,12 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market BOME@EUR\
 	market BRETT@EUR\
 	market BREV@EUR\
-	market BTT@EUR\
 	market C98@EUR\
 	market C@EUR\
 	market CAKE@EUR\
 	market CARV@EUR\
 	market CAT@EUR\
 	market CATI@EUR\
-	market CELO@EUR\
 	market CELR@EUR\
 	market CFG@EUR\
 	market CHIP@EUR\
@@ -1018,7 +1023,6 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market MIOTA@EUR\
 	market MLN@EUR\
 	market MOG@EUR\
-	market MOVE@EUR\
 	market MOVR@EUR\
 	market MTL@EUR\
 	market NEIRO@EUR\
@@ -1064,6 +1068,7 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market SAGA@EUR\
 	market SAND@EUR\
 	market SCR@EUR\
+	market SEI@EUR\
 	market SFP@EUR\
 	market SHELL@EUR\
 	market SIGN@EUR\
@@ -1135,40 +1140,23 @@ trade at bitvavo using trend return $eur_return window 324h\
 
 trade at bitvavo using trend return $eur_return window 72h\
 	market AAVE@EUR\
-	market ACE@EUR\
-	market ARB@EUR\
 	market BABY@EUR\
-	market BLEND@EUR\
-	market BOB@EUR\
 	market CC@EUR\
 	market CHILLGUY@EUR\
 	market COTI@EUR\
 	market DODO@EUR\
 	market DOT@EUR\
 	market DRIFT@EUR\
-	market EDEN@EUR\
-	market ETHFI@EUR\
-	market FARTCOIN@EUR\
-	market FIL@EUR\
 	market FLUID@EUR\
-	market GROVE@EUR\
 	market HFT@EUR\
 	market ICP@EUR\
-	market IMX@EUR\
 	market INJ@EUR\
-	market IO@EUR\
 	market IRYS@EUR\
 	market JUP@EUR\
-	market KAIA@EUR\
 	market KAS@EUR\
-	market LDO@EUR\
 	market LTC@EUR\
-	market LQTY@EUR\
 	market MON@EUR\
 	market MOODENG@EUR\
-	market MORPHO@EUR\
-	market OGN@EUR\
-	market ONDO@EUR\
 	market OPEN@EUR\
 	market PHA@EUR\
 	market PORTAL@EUR\
@@ -1176,13 +1164,10 @@ trade at bitvavo using trend return $eur_return window 72h\
 	market QNT@EUR\
 	market RAY@EUR\
 	market RENDER@EUR\
-	market SEI@EUR\
 	market SENT@EUR\
 	market SOON@EUR\
-	market TAIKO@EUR\
 	market TIA@EUR\
 	market TOMO@EUR\
-	market TRUMP@EUR\
 	market TRX@EUR\
 	market USDC@EUR\
 	market USELESS@EUR\
@@ -1199,66 +1184,42 @@ trade at bitvavo using trend return $eur_return window 72h\
 	take-loss-delay 36h take-loss-delays 1
 
 trade at bitvavo using trend return $eur_return window 36h\
-	market ACE@EUR\
 	market ACU@EUR\
 	market ADA@EUR\
-	market AERO@EUR\
 	market AI@EUR\
 	market AKT@EUR\
-	market ALGO@EUR\
-	market ALLO@EUR\
 	market AVAX@EUR\
 	market BICO@EUR\
 	market BILL@EUR\
-	market BIRB@EUR\
 	market BNB@EUR\
 	market BONK@EUR\
 	market BTC@EUR\
-	market DIA@EUR\
 	market DOGE@EUR\
-	market ENA@EUR\
 	market EPIC@EUR\
-	market ESP@EUR\
 	market ETH@EUR\
-	market EUL@EUR\
 	market FET@EUR\
-	market FUN@EUR\
 	market GWEI@EUR\
-	market HBAR@EUR\
 	market HEI@EUR\
 	market HOME@EUR\
 	market HYPE@EUR\
-	market ICNT@EUR\
 	market LINK@EUR\
 	market LPT@EUR\
-	market MEGA@EUR\
-	market MIRA@EUR\
 	market MMT@EUR\
 	market NEAR@EUR\
 	market NIL@EUR\
 	market NPC@EUR\
-	market PTB@EUR\
 	market RAY@EUR\
 	market RE@EUR\
-	market RECALL@EUR\
-	market RLC@EUR\
 	market ROBO@EUR\
-	market SNX@EUR\
-	market SOL@EUR\
-	market SPX@EUR\
 	market SQD@EUR\
 	market SUI@EUR\
 	market SYN@EUR\
-	market SYRUP@EUR\
 	market TAO@EUR\
 	market TRX@EUR\
 	market UNI@EUR\
 	market USELESS@EUR\
-	market VET@EUR\
 	market WLD@EUR\
-	market XAN@EUR\
 	market XRP@EUR\
-	market ZAMA@EUR\
 	market ZBT@EUR\
 	demand-timeout-min 1h demand-timeout-max 1.5h\
 	supply-timeout-min 1h supply-timeout-max 1.5h\

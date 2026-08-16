@@ -149,6 +149,7 @@ struct abag_tls {
   } position_trigger;
   struct position_trade_vars {
     struct Numeric *restrict o_pr;
+    struct Numeric *restrict r0;
   } position_trade;
   struct trade_create_vars {
     struct db_stats_rec *restrict stats;
@@ -382,6 +383,7 @@ static struct abag_tls *const abag_tls(void) {
     tls->position_trigger.sr = Numeric_new();
     tls->position_trigger.r0 = Numeric_new();
     tls->position_trade.o_pr = Numeric_new();
+    tls->position_trade.r0 = Numeric_new();
     tls->trade_create.stats = heap_malloc(sizeof(struct db_stats_rec));
     tls->trade_create.stats->bd_min = Numeric_new();
     tls->trade_create.stats->bd_max = Numeric_new();
@@ -504,6 +506,7 @@ static void abag_tls_dtor(void *e) {
   Numeric_delete(tls->position_trigger.sr);
   Numeric_delete(tls->position_trigger.r0);
   Numeric_delete(tls->position_trade.o_pr);
+  Numeric_delete(tls->position_trade.r0);
   Numeric_delete(tls->trade_create.stats->bd_min);
   Numeric_delete(tls->trade_create.stats->bd_max);
   Numeric_delete(tls->trade_create.stats->bd_avg);
@@ -2337,6 +2340,7 @@ static void position_trade(const struct worker_ctx *restrict const w_ctx,
                            const struct Sample *restrict const sample) {
   const struct abag_tls *restrict const tls = abag_tls();
   struct Numeric *restrict const o_pr = tls->position_trade.o_pr;
+  struct Numeric *restrict const r0 = tls->position_trade.r0;
   void *const *items;
 
   position_pricing(w_ctx, t, p, false);
@@ -2397,17 +2401,27 @@ trade:
         Numeric_copy_to(s->price, o_pr);
     }
 
-    if (w_ctx->m->q_max_opt != NULL && Numeric_cmp(o_pr, p->tp_price) > 0) {
-      char *restrict const pr = Numeric_to_char(o_pr, w_ctx->m->p_sc);
-      char *restrict const limit = Numeric_to_char(p->tp_price, w_ctx->m->p_sc);
-      wout("%s: %s: Limited: 1%s@%s%s>1%s@%s%s\n", String_chars(w_ctx->e->nm),
-           String_chars(w_ctx->m->nm), String_chars(w_ctx->m->b_id), pr,
-           String_chars(w_ctx->m->q_id), String_chars(w_ctx->m->b_id), limit,
-           String_chars(w_ctx->m->q_id));
-      Numeric_char_free(pr);
-      Numeric_char_free(limit);
+    if (w_ctx->m->q_max_opt != NULL) {
+      Numeric_mul_to(p->b_ordered, o_pr, r0);
 
-      Numeric_copy_to(p->tp_price, o_pr);
+      if (Numeric_cmp(r0, w_ctx->m->q_max_opt) > 0) {
+        /*
+         * o_pr * b <= q_max_opt
+         * => o_pr <= q_max_opt / b
+         */
+        Numeric_div_to(w_ctx->m->q_max_opt, p->b_ordered, r0);
+
+        char *restrict const pr = Numeric_to_char(o_pr, w_ctx->m->p_sc);
+        char *restrict const limit = Numeric_to_char(r0, w_ctx->m->p_sc);
+        wout("%s: %s: Limited: 1%s@%s%s>1%s@%s%s\n", String_chars(w_ctx->e->nm),
+             String_chars(w_ctx->m->nm), String_chars(w_ctx->m->b_id), pr,
+             String_chars(w_ctx->m->q_id), String_chars(w_ctx->m->b_id), limit,
+             String_chars(w_ctx->m->q_id));
+        Numeric_char_free(pr);
+        Numeric_char_free(limit);
+
+        Numeric_copy_to(r0, o_pr);
+      }
     }
 
     break;
@@ -2422,17 +2436,27 @@ trade:
         Numeric_copy_to(s->price, o_pr);
     }
 
-    if (w_ctx->m->q_min_opt != NULL && Numeric_cmp(o_pr, p->tp_price) < 0) {
-      char *restrict const pr = Numeric_to_char(o_pr, w_ctx->m->p_sc);
-      char *restrict const limit = Numeric_to_char(p->tp_price, w_ctx->m->p_sc);
-      wout("%s: %s: Limited: 1%s@%s%s<1%s@%s%s\n", String_chars(w_ctx->e->nm),
-           String_chars(w_ctx->m->nm), String_chars(w_ctx->m->b_id), pr,
-           String_chars(w_ctx->m->q_id), String_chars(w_ctx->m->b_id), limit,
-           String_chars(w_ctx->m->q_id));
-      Numeric_char_free(pr);
-      Numeric_char_free(limit);
+    if (w_ctx->m->q_min_opt != NULL) {
+      Numeric_mul_to(p->b_ordered, o_pr, r0);
 
-      Numeric_copy_to(p->tp_price, o_pr);
+      if (Numeric_cmp(r0, w_ctx->m->q_min_opt) < 0) {
+        /*
+         * o_pr * b >= q_min_opt
+         * => o_pr >= q_min_opt / b
+         */
+        Numeric_div_to(w_ctx->m->q_min_opt, p->b_ordered, r0);
+
+        char *restrict const pr = Numeric_to_char(o_pr, w_ctx->m->p_sc);
+        char *restrict const limit = Numeric_to_char(r0, w_ctx->m->p_sc);
+        wout("%s: %s: Limited: 1%s@%s%s<1%s@%s%s\n", String_chars(w_ctx->e->nm),
+             String_chars(w_ctx->m->nm), String_chars(w_ctx->m->b_id), pr,
+             String_chars(w_ctx->m->q_id), String_chars(w_ctx->m->b_id), limit,
+             String_chars(w_ctx->m->q_id));
+        Numeric_char_free(pr);
+        Numeric_char_free(limit);
+
+        Numeric_copy_to(r0, o_pr);
+      }
     }
 
     break;
@@ -2440,6 +2464,11 @@ trade:
     panic();
   }
 
+  Numeric_div_to(o_pr, w_ctx->m->p_inc, r0);
+  Numeric_scale(r0, 0);
+  if (Numeric_cmp(r0, zero) == 0)
+    Numeric_copy_to(one, r0);
+  Numeric_mul_to(r0, w_ctx->m->p_inc, o_pr);
   Numeric_scale(o_pr, w_ctx->m->p_sc);
 
   struct Account *restrict const qa = w_ctx->e->account(w_ctx->m->qa_id);
