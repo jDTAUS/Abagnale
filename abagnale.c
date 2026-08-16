@@ -1336,6 +1336,7 @@ static void position_pricing(const struct worker_ctx *restrict const w_ctx,
       Numeric_copy_to(r0, p->b_ordered);
     }
 
+    // Apply exchange limits
     char *restrict b_min = NULL;
     char *restrict b_max = NULL;
     char *restrict q_min = NULL;
@@ -1454,19 +1455,23 @@ static void position_pricing(const struct worker_ctx *restrict const w_ctx,
     panic();
   }
 
+  // Ensure prices are multiples of the price increment
   Numeric_div_to(p->sl_price, w_ctx->m->p_inc, r0);
   Numeric_scale(r0, 0);
   if (Numeric_cmp(r0, zero) == 0)
     Numeric_copy_to(one, r0);
   Numeric_mul_to(r0, w_ctx->m->p_inc, p->sl_price);
+  Numeric_scale(p->sl_price, w_ctx->m->p_inc);
 
   Numeric_div_to(p->tp_price, w_ctx->m->p_inc, r0);
   Numeric_scale(r0, 0);
   if (Numeric_cmp(r0, zero) == 0)
     Numeric_copy_to(one, r0);
   Numeric_mul_to(r0, w_ctx->m->p_inc, p->tp_price);
+  Numeric_scale(p->tp_price, w_ctx->m->p_sc);
 
-  if (create) {
+  // Apply exchange limits
+  if (create && (w_ctx->m->q_min_opt != NULL || w_ctx->m->q_max_opt != NULL)) {
     switch (p->type) {
     case POSITION_TYPE_LONG:
       if (w_ctx->m->q_max_opt != NULL) {
@@ -2401,15 +2406,16 @@ trade:
         Numeric_copy_to(s->price, o_pr);
     }
 
+    // Apply exchange limits
     if (w_ctx->m->q_max_opt != NULL) {
-      Numeric_mul_to(p->b_ordered, o_pr, r0);
+      Numeric_mul_to(p->b_filled, o_pr, r0);
 
       if (Numeric_cmp(r0, w_ctx->m->q_max_opt) > 0) {
         /*
          * o_pr * b <= q_max_opt
          * => o_pr <= q_max_opt / b
          */
-        Numeric_div_to(w_ctx->m->q_max_opt, p->b_ordered, r0);
+        Numeric_div_to(w_ctx->m->q_max_opt, p->b_filled, r0);
 
         char *restrict const pr = Numeric_to_char(o_pr, w_ctx->m->p_sc);
         char *restrict const limit = Numeric_to_char(r0, w_ctx->m->p_sc);
@@ -2436,15 +2442,16 @@ trade:
         Numeric_copy_to(s->price, o_pr);
     }
 
+    // Apply exchange limits
     if (w_ctx->m->q_min_opt != NULL) {
-      Numeric_mul_to(p->b_ordered, o_pr, r0);
+      Numeric_mul_to(p->b_filled, o_pr, r0);
 
       if (Numeric_cmp(r0, w_ctx->m->q_min_opt) < 0) {
         /*
          * o_pr * b >= q_min_opt
          * => o_pr >= q_min_opt / b
          */
-        Numeric_div_to(w_ctx->m->q_min_opt, p->b_ordered, r0);
+        Numeric_div_to(w_ctx->m->q_min_opt, p->b_filled, r0);
 
         char *restrict const pr = Numeric_to_char(o_pr, w_ctx->m->p_sc);
         char *restrict const limit = Numeric_to_char(r0, w_ctx->m->p_sc);
@@ -2464,6 +2471,7 @@ trade:
     panic();
   }
 
+  // Ensure price is a multiple of the price increment
   Numeric_div_to(o_pr, w_ctx->m->p_inc, r0);
   Numeric_scale(r0, 0);
   if (Numeric_cmp(r0, zero) == 0)
