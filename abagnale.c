@@ -1345,13 +1345,15 @@ static void position_pricing(const struct worker_ctx *restrict const w_ctx,
     if (w_ctx->m->b_min_opt != NULL &&
         Numeric_cmp(p->b_ordered, w_ctx->m->b_min_opt) < 0) {
       Numeric_copy_to(w_ctx->m->b_min_opt, p->b_ordered);
-      b_min = Numeric_to_char(w_ctx->m->b_min_opt, w_ctx->m->b_sc);
+      if (verbose)
+        b_min = Numeric_to_char(w_ctx->m->b_min_opt, w_ctx->m->b_sc);
     }
 
     if (w_ctx->m->b_max_opt != NULL &&
         Numeric_cmp(p->b_ordered, w_ctx->m->b_max_opt) > 0) {
       Numeric_copy_to(w_ctx->m->b_max_opt, p->b_ordered);
-      b_max = Numeric_to_char(w_ctx->m->b_max_opt, w_ctx->m->b_sc);
+      if (verbose)
+        b_max = Numeric_to_char(w_ctx->m->b_max_opt, w_ctx->m->b_sc);
     }
 
     Numeric_mul_to(p->b_ordered, p->price, r0);
@@ -1360,13 +1362,15 @@ static void position_pricing(const struct worker_ctx *restrict const w_ctx,
     if (w_ctx->m->q_min_opt != NULL &&
         Numeric_cmp(r0, w_ctx->m->q_min_opt) < 0) {
       Numeric_div_to(w_ctx->m->q_min_opt, p->price, p->b_ordered);
-      q_min = Numeric_to_char(w_ctx->m->q_min_opt, w_ctx->m->q_sc);
+      if (verbose)
+        q_min = Numeric_to_char(w_ctx->m->q_min_opt, w_ctx->m->q_sc);
     }
 
     if (w_ctx->m->q_max_opt != NULL &&
         Numeric_cmp(r0, w_ctx->m->q_max_opt) > 0) {
       Numeric_div_to(w_ctx->m->q_max_opt, p->price, p->b_ordered);
-      q_max = Numeric_to_char(w_ctx->m->q_max_opt, w_ctx->m->q_sc);
+      if (verbose)
+        q_max = Numeric_to_char(w_ctx->m->q_max_opt, w_ctx->m->q_sc);
     }
 
     Numeric_scale(p->b_ordered, w_ctx->m->b_sc);
@@ -2417,14 +2421,17 @@ trade:
          */
         Numeric_div_to(w_ctx->m->q_max_opt, p->b_filled, r0);
 
-        char *restrict const pr = Numeric_to_char(o_pr, w_ctx->m->p_sc);
-        char *restrict const limit = Numeric_to_char(r0, w_ctx->m->p_sc);
-        wout("%s: %s: Limited: 1%s@%s%s>1%s@%s%s\n", String_chars(w_ctx->e->nm),
-             String_chars(w_ctx->m->nm), String_chars(w_ctx->m->b_id), pr,
-             String_chars(w_ctx->m->q_id), String_chars(w_ctx->m->b_id), limit,
-             String_chars(w_ctx->m->q_id));
-        Numeric_char_free(pr);
-        Numeric_char_free(limit);
+        if (verbose) {
+          char *restrict const pr = Numeric_to_char(o_pr, w_ctx->m->p_sc);
+          char *restrict const limit = Numeric_to_char(r0, w_ctx->m->p_sc);
+          wout("%s: %s: Limited: 1%s@%s%s>1%s@%s%s\n",
+               String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
+               String_chars(w_ctx->m->b_id), pr, String_chars(w_ctx->m->q_id),
+               String_chars(w_ctx->m->b_id), limit,
+               String_chars(w_ctx->m->q_id));
+          Numeric_char_free(pr);
+          Numeric_char_free(limit);
+        }
 
         Numeric_copy_to(r0, o_pr);
       }
@@ -2453,14 +2460,17 @@ trade:
          */
         Numeric_div_to(w_ctx->m->q_min_opt, p->b_filled, r0);
 
-        char *restrict const pr = Numeric_to_char(o_pr, w_ctx->m->p_sc);
-        char *restrict const limit = Numeric_to_char(r0, w_ctx->m->p_sc);
-        wout("%s: %s: Limited: 1%s@%s%s<1%s@%s%s\n", String_chars(w_ctx->e->nm),
-             String_chars(w_ctx->m->nm), String_chars(w_ctx->m->b_id), pr,
-             String_chars(w_ctx->m->q_id), String_chars(w_ctx->m->b_id), limit,
-             String_chars(w_ctx->m->q_id));
-        Numeric_char_free(pr);
-        Numeric_char_free(limit);
+        if (verbose) {
+          char *restrict const pr = Numeric_to_char(o_pr, w_ctx->m->p_sc);
+          char *restrict const limit = Numeric_to_char(r0, w_ctx->m->p_sc);
+          wout("%s: %s: Limited: 1%s@%s%s<1%s@%s%s\n",
+               String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
+               String_chars(w_ctx->m->b_id), pr, String_chars(w_ctx->m->q_id),
+               String_chars(w_ctx->m->b_id), limit,
+               String_chars(w_ctx->m->q_id));
+          Numeric_char_free(pr);
+          Numeric_char_free(limit);
+        }
 
         Numeric_copy_to(r0, o_pr);
       }
