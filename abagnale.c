@@ -1333,24 +1333,66 @@ static void position_pricing(const struct worker_ctx *restrict const w_ctx,
       Numeric_copy_to(r0, p->b_ordered);
     }
 
+    char *restrict b_min = NULL;
+    char *restrict b_max = NULL;
+    char *restrict q_min = NULL;
+    char *restrict q_max = NULL;
+
     if (w_ctx->m->b_min_opt != NULL &&
-        Numeric_cmp(p->b_ordered, w_ctx->m->b_min_opt) < 0)
+        Numeric_cmp(p->b_ordered, w_ctx->m->b_min_opt) < 0) {
       Numeric_copy_to(w_ctx->m->b_min_opt, p->b_ordered);
+      b_min = Numeric_to_char(w_ctx->m->b_min_opt, w_ctx->m->b_sc);
+    }
 
     if (w_ctx->m->b_max_opt != NULL &&
-        Numeric_cmp(p->b_ordered, w_ctx->m->b_max_opt) > 0)
+        Numeric_cmp(p->b_ordered, w_ctx->m->b_max_opt) > 0) {
       Numeric_copy_to(w_ctx->m->b_max_opt, p->b_ordered);
+      b_max = Numeric_to_char(w_ctx->m->b_max_opt, w_ctx->m->b_sc);
+    }
 
     Numeric_mul_to(p->b_ordered, p->price, r0);
     Numeric_scale(r0, w_ctx->m->q_sc);
 
-    if (w_ctx->m->q_min_opt != NULL && Numeric_cmp(r0, w_ctx->m->q_min_opt) < 0)
+    if (w_ctx->m->q_min_opt != NULL &&
+        Numeric_cmp(r0, w_ctx->m->q_min_opt) < 0) {
       Numeric_div_to(w_ctx->m->q_min_opt, p->price, p->b_ordered);
+      q_min = Numeric_to_char(w_ctx->m->q_min_opt, w_ctx->m->q_sc);
+    }
 
-    if (w_ctx->m->q_max_opt != NULL && Numeric_cmp(r0, w_ctx->m->q_max_opt) > 0)
+    if (w_ctx->m->q_max_opt != NULL &&
+        Numeric_cmp(r0, w_ctx->m->q_max_opt) > 0) {
       Numeric_div_to(w_ctx->m->q_max_opt, p->price, p->b_ordered);
+      q_max = Numeric_to_char(w_ctx->m->q_max_opt, w_ctx->m->q_sc);
+    }
 
     Numeric_scale(p->b_ordered, w_ctx->m->b_sc);
+
+    if (b_min != NULL || b_max != NULL || q_min != NULL || q_max != NULL) {
+      wout("%s: %s: Limited:", String_chars(w_ctx->e->nm),
+           String_chars(w_ctx->m->nm));
+
+      if (b_min != NULL) {
+        wout(" base_min=%s%s", b_min, String_chars(w_ctx->m->b_id));
+        Numeric_char_free(b_min);
+      }
+
+      if (b_max != NULL) {
+        wout(" base_max=%s%s", b_max, String_chars(w_ctx->m->b_id));
+        Numeric_char_free(b_max);
+      }
+
+      if (q_min != NULL) {
+        wout(" quote_min=%s%s", q_min, String_chars(w_ctx->m->q_id));
+        Numeric_char_free(q_min);
+      }
+
+      if (q_max != NULL) {
+        wout(" quote_max=%s%s", q_max, String_chars(w_ctx->m->q_id));
+        Numeric_char_free(q_max);
+      }
+
+      wout("\n");
+    }
   }
 
   Numeric_mul_to(t->fee_pf, two, r1);
@@ -1420,6 +1462,57 @@ static void position_pricing(const struct worker_ctx *restrict const w_ctx,
   if (Numeric_cmp(r0, zero) == 0)
     Numeric_copy_to(one, r0);
   Numeric_mul_to(r0, w_ctx->m->p_inc, p->tp_price);
+
+  if (create) {
+    switch (p->type) {
+    case POSITION_TYPE_LONG:
+      if (w_ctx->m->q_max_opt != NULL) {
+        Numeric_mul_to(p->sl_price, p->b_ordered, r0);
+        if (Numeric_cmp(r0, w_ctx->m->q_max_opt) > 0) {
+          /*
+           * sl_pr_long * b <= q_max_opt
+           * => b <= q_max_opt / sl_pr_long
+           */
+          Numeric_div_to(w_ctx->m->q_max_opt, p->sl_price, p->b_ordered);
+          Numeric_scale(p->b_ordered, w_ctx->m->b_sc);
+        }
+        Numeric_mul_to(p->tp_price, p->b_ordered, r0);
+        if (Numeric_cmp(r0, w_ctx->m->q_max_opt) > 0) {
+          /*
+           * tp_pr_long * b <= q_max_opt
+           * => b <= q_max_opt / tp_pr_long
+           */
+          Numeric_div_to(w_ctx->m->q_max_opt, p->tp_price, p->b_ordered);
+          Numeric_scale(p->b_ordered, w_ctx->m->b_sc);
+        }
+      }
+      break;
+    case POSITION_TYPE_SHORT:
+      if (w_ctx->m->q_min_opt != NULL) {
+        Numeric_mul_to(p->sl_price, p->b_ordered, r0);
+        if (Numeric_cmp(r0, w_ctx->m->q_min_opt) < 0) {
+          /*
+           * sl_pr_short * b >= q_min_opt
+           * => b >= q_min_opt / sl_pr_short
+           */
+          Numeric_div_to(w_ctx->m->q_min_opt, p->sl_price, p->b_ordered);
+          Numeric_scale(p->b_ordered, w_ctx->m->b_sc);
+        }
+        Numeric_mul_to(p->tp_price, p->b_ordered, r0);
+        if (Numeric_cmp(r0, w_ctx->m->q_min_opt) < 0) {
+          /*
+           * tp_pr_short * b >= q_min_opt
+           * => b >= q_min_opt / tp_pr_long
+           */
+          Numeric_div_to(w_ctx->m->q_min_opt, p->tp_price, p->b_ordered);
+          Numeric_scale(p->b_ordered, w_ctx->m->b_sc);
+        }
+      }
+      break;
+    default:
+      panic();
+    }
+  }
 }
 
 static void position_create(const struct worker_ctx *restrict const w_ctx,
@@ -2303,6 +2396,10 @@ trade:
           Numeric_cmp(s->price, o_pr) > 0)
         Numeric_copy_to(s->price, o_pr);
     }
+
+    if (w_ctx->m->q_max_opt != NULL && Numeric_cmp(o_pr, p->tp_price) > 0)
+      Numeric_copy_to(p->tp_price, o_pr);
+
     break;
   case POSITION_TYPE_SHORT:
     ac_info = "Close short";
@@ -2314,6 +2411,10 @@ trade:
           Numeric_cmp(s->price, o_pr) < 0)
         Numeric_copy_to(s->price, o_pr);
     }
+
+    if (w_ctx->m->q_min_opt != NULL && Numeric_cmp(o_pr, p->tp_price) < 0)
+      Numeric_copy_to(p->tp_price, o_pr);
+
     break;
   default:
     panic();
