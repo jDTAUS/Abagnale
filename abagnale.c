@@ -1331,7 +1331,6 @@ static void position_pricing(const struct worker_ctx *restrict const w_ctx,
     if (Numeric_cmp(p->b_ordered, w_ctx->m->b_inc) < 0) {
       Numeric_add_to(p->b_ordered, w_ctx->m->b_inc, r0);
       Numeric_copy_to(r0, p->b_ordered);
-      Numeric_scale(p->b_ordered, w_ctx->m->b_sc);
     }
 
     if (w_ctx->m->b_min_opt != NULL &&
@@ -1350,6 +1349,8 @@ static void position_pricing(const struct worker_ctx *restrict const w_ctx,
 
     if (w_ctx->m->q_max_opt != NULL && Numeric_cmp(r0, w_ctx->m->q_max_opt) > 0)
       Numeric_div_to(w_ctx->m->q_max_opt, p->price, p->b_ordered);
+
+    Numeric_scale(p->b_ordered, w_ctx->m->b_sc);
   }
 
   Numeric_mul_to(t->fee_pf, two, r1);
