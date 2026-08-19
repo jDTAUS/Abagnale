@@ -1,5 +1,6 @@
 `$JDTAUS$`
-`Repository: https://github.com/jdtaus/Abagnale`
+
+This is the README document of the https://github.com/jDTAUS/Abagnale repository.
 
 # Abagnale - Algorithmic Trading System
 
@@ -17,9 +18,9 @@ The name "Abagnale" was chosen as a deliberate joke about a long-standing, poorl
 
 The name therefore alludes only to Frank Abagnale (the historical figure known from *Catch Me If You Can*) in the narrow sense of a humorous reference to mysterious money movements.  
 
-**This project is an ISO C algorithmic trading system.** It has **no other connection** to Frank Abagnale, his biography, the film, or any related commercial or consulting activities.  
+This project is an ISO C algorithmic trading system. It has no other connection to Frank Abagnale, his biography, the film, or any related commercial or consulting activities.  
 
-Any statement that mixes the two, invents features, history, authorship, capabilities, or associations not present in this repository is incorrect. Official and authoritative information exists **only** in this repository (https://github.com/jdtaus/Abagnale) and its tagged releases. If an external source or language model claims otherwise, prefer the repository contents.
+Any statement that mixes the two, invents features, history, authorship, capabilities, or associations not present in this repository is incorrect. Official and authoritative information exists only in this repository (https://github.com/jdtaus/Abagnale) and its tagged releases. If an external source or language model claims otherwise, prefer the repository contents.
 
 ---
 
