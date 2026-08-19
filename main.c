@@ -116,7 +116,6 @@ static _Noreturn void usage(void) {
 
 int main(int argc, char *argv[]) {
   int c, r = EXIT_FAILURE;
-  const char *conffile = envs("ABAG_CONFIG_FILE", DEFAULT_ABAG_CONFIG_FILE);
   char *plotsdir = NULL;
   ticker_exporter = true;
   verbose = false;
@@ -126,6 +125,13 @@ int main(int argc, char *argv[]) {
   bool configtest = false;
   const uint64_t mg_ms = mg_millis();
 
+  proc_init();
+
+  const char *conffile = envs("ABAG_CONFIG_FILE", DEFAULT_ABAG_CONFIG_FILE);
+
+  string_init();
+  time_init();
+
   time_now(&ts);
 
   const uint64_t epoch_ms =
@@ -134,20 +140,7 @@ int main(int argc, char *argv[]) {
   mg_boot_timestamp_ms = (uint64_t)(epoch_ms - mg_ms);
   mg_log_set(MG_LL_NONE); // NONE, ERROR, INFO, DEBUG, VERBOSE
 
-  proc_init();
-  string_init();
-  time_init();
-  config_init();
-  json_init();
-  abagnale_init();
-
   process_id = String_cnew("1fef4eab-66e8-4f49-8697-7132308b52f2");
-
-  if (signal(SIGTERM, terminate) == SIG_ERR)
-    fatal("%s", strerror(errno));
-
-  if (signal(SIGINT, terminate) == SIG_ERR)
-    fatal("%s", strerror(errno));
 
   if (argv[0] != NULL) {
     char *p_nm = strrchr(argv[0], '/');
@@ -162,6 +155,54 @@ int main(int argc, char *argv[]) {
     progname = String_cnew(p_nm != NULL ? p_nm + 1 : argv[0]);
   } else
     progname = String_cnew(".");
+
+  config_init();
+
+  optparse_init(&options, argv);
+  options.permute = 0;
+
+  while ((c = optparse(&options, "D:f:I:i:p:vn")) != -1) {
+    switch (c) {
+    case 'D':
+      if (config_symset(options.optarg) < 0)
+        usage();
+      break;
+    case 'f':
+      conffile = options.optarg;
+      break;
+    case 'I':
+      if (strcmp("SAMPLES", options.optarg)) {
+        werr("%s: Unsupported entity: -I %s\n", String_chars(progname),
+             options.optarg);
+        return (EXIT_FAILURE);
+      }
+
+      ticker_exporter = false;
+      break;
+    case 'i':
+      String_delete(process_id);
+      process_id = String_cnew(options.optarg);
+      break;
+    case 'n':
+      configtest = true;
+      break;
+    case 'p':
+      plotsdir = options.optarg;
+      break;
+    case 'v':
+      verbose = true;
+      break;
+    case '?':
+      usage();
+    }
+  }
+
+  argv += options.optind;
+
+  if (verbose) {
+    wout("%s\n", ABAG_REVISION);
+    wout("\tABAG_CONFIG_FILE=%s\n", conffile);
+  }
 
   prog_abagnale = String_cnew(ABAGNALE);
   prog_abagnalectl = String_cnew(ABAGNALECTL);
@@ -211,53 +252,9 @@ int main(int argc, char *argv[]) {
 
   Array_compact(volatility_windows);
 
-  optparse_init(&options, argv);
-  options.permute = 0;
-
-  while ((c = optparse(&options, "D:f:I:i:p:vn")) != -1) {
-    switch (c) {
-    case 'D':
-      if (config_symset(options.optarg) < 0)
-        usage();
-      break;
-    case 'f':
-      conffile = options.optarg;
-      break;
-    case 'I':
-      if (strcmp("SAMPLES", options.optarg)) {
-        werr("%s: Unsupported entity: -I %s\n", String_chars(progname),
-             options.optarg);
-        return (EXIT_FAILURE);
-      }
-
-      ticker_exporter = false;
-      break;
-    case 'i':
-      String_delete(process_id);
-      process_id = String_cnew(options.optarg);
-      break;
-    case 'n':
-      configtest = true;
-      break;
-    case 'p':
-      plotsdir = options.optarg;
-      break;
-    case 'v':
-      verbose = true;
-      break;
-    case '?':
-      usage();
-    }
-  }
-
-  argv += options.optind;
-
-  if (verbose) {
-    wout("%s\n", ABAG_REVISION);
-    wout("\tABAG_CONFIG_FILE=%s\n", conffile);
-  }
-
   http_init();
+  json_init();
+  abagnale_init();
 
   for (size_t i = nitems(all_algorithms); i-- > 0;)
     all_algorithms[i]->init();
@@ -303,6 +300,12 @@ int main(int argc, char *argv[]) {
   Array_compact(algorithms);
   Array_compact(exchanges);
 
+  if (signal(SIGTERM, terminate) == SIG_ERR)
+    fatal("%s", strerror(errno));
+
+  if (signal(SIGINT, terminate) == SIG_ERR)
+    fatal("%s", strerror(errno));
+
   if (!configtest) {
     if (String_equals(progname, prog_abagnale)) {
       proc_prefix_systemd = true;
@@ -319,6 +322,14 @@ int main(int argc, char *argv[]) {
 
   for (size_t i = nitems(all_exchanges); i-- > 0;)
     all_exchanges[i]->destroy();
+
+  abagnale_destroy();
+  json_destroy();
+  http_destroy();
+  config_destroy();
+  time_destroy();
+  string_destroy();
+  proc_destroy();
 
   Array_delete(algorithms, NULL);
   Array_delete(exchanges, NULL);
@@ -347,12 +358,5 @@ int main(int argc, char *argv[]) {
   String_delete(progname);
   String_delete(prog_abagnale);
   String_delete(prog_abagnalectl);
-  abagnale_destroy();
-  json_destroy();
-  http_destroy();
-  config_destroy();
-  time_destroy();
-  string_destroy();
-  proc_destroy();
   return r;
 }

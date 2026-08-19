@@ -100,14 +100,6 @@ trade at coinbase using trend return $btc_return window 648h\
 	take-profit-delay 54m take-profit-delays 1\
 	take-loss-delay 324h take-loss-delays 1
 
-trade at coinbase using trend return 30 DOGE window 648h\
-	market DOGE@BTC\
-	demand-timeout-min 20h demand-timeout-max 30h\
-	supply-timeout-min 20h supply-timeout-max 30h\
-	stop-loss-delay 270m stop-loss-delays 2\
-	take-profit-delay 54m take-profit-delays 1\
-	take-loss-delay 324h take-loss-delays 1
-
 trade at coinbase using trend return $eur_return window 648h\
 	market AVAX@EUR\
 	market CRV@EUR\
@@ -132,6 +124,14 @@ trade at coinbase using trend return $btc_return window 1296h\
 	market ICP@BTC\
 	market LTC@BTC\
 	market UNI@BTC\
+	demand-timeout-min 40h demand-timeout-max 60h\
+	supply-timeout-min 40h supply-timeout-max 60h\
+	stop-loss-delay 540m stop-loss-delays 2\
+	take-profit-delay 108m take-profit-delays 1\
+	take-loss-delay 648h take-loss-delays 1
+
+trade at coinbase using trend return 30 DOGE window 1296h\
+	market DOGE@BTC\
 	demand-timeout-min 40h demand-timeout-max 60h\
 	supply-timeout-min 40h supply-timeout-max 60h\
 	stop-loss-delay 540m stop-loss-delays 2\
@@ -815,10 +815,13 @@ trade at bitvavo using trend return $eur_return window 1296h\
 	market ASTR@EUR\
 	market AUDIO@EUR\
 	market BCH@EUR\
+	market BNT@EUR\
+	market BREV@EUR\
 	market BTT@EUR\
 	market CAP@EUR\
 	market CELO@EUR\
 	market CETUS@EUR\
+	market CVC@EUR\
 	market CYBER@EUR\
 	market DEGEN@EUR\
 	market EURC@EUR\
@@ -837,6 +840,7 @@ trade at bitvavo using trend return $eur_return window 1296h\
 	market MOVE@EUR\
 	market ONG@EUR\
 	market ONT@EUR\
+	market OSMO@EUR\
 	market PENGU@EUR\
 	market PEPE@EUR\
 	market POWR@EUR\
@@ -845,6 +849,7 @@ trade at bitvavo using trend return $eur_return window 1296h\
 	market RAD@EUR\
 	market RARE@EUR\
 	market RED@EUR\
+	market REQ@EUR\
 	market REZ@EUR\
 	market ROSE@EUR\
 	market SAPIEN@EUR\
@@ -854,6 +859,7 @@ trade at bitvavo using trend return $eur_return window 1296h\
 	market SOLV@EUR\
 	market SOON@EUR\
 	market SPX@EUR\
+	market SWELL@EUR\
 	market TLM@EUR\
 	market TRIA@EUR\
 	market TRUST@EUR\
@@ -863,6 +869,7 @@ trade at bitvavo using trend return $eur_return window 1296h\
 	market WIN@EUR\
 	market WMTX@EUR\
 	market XMN@EUR\
+	market XNO@EUR\
 	market XTZ@EUR\
 	market ZETA@EUR\
 	market ZEUS@EUR\
@@ -872,7 +879,7 @@ trade at bitvavo using trend return $eur_return window 1296h\
 	demand-timeout-min 40h demand-timeout-max 60h\
 	supply-timeout-min 40h supply-timeout-max 60h\
 	stop-loss-delay 540m stop-loss-delays 2\
-	take-profit-delay 108m take-profit-delays 1\
+	take-profit-delay 108m take-profit-delays 0\
 	take-loss-delay 648h take-loss-delays 1
 
 trade at bitvavo using trend return $eur_return window 324h\
@@ -910,10 +917,8 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market BIGTIME@EUR\
 	market BIO@EUR\
 	market BLUR@EUR\
-	market BNT@EUR\
 	market BOME@EUR\
 	market BRETT@EUR\
-	market BREV@EUR\
 	market C98@EUR\
 	market C@EUR\
 	market CAKE@EUR\
@@ -935,7 +940,6 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market CTC@EUR\
 	market CTK@EUR\
 	market CTR@EUR\
-	market CVC@EUR\
 	market CVX@EUR\
 	market DATAIP@EUR\
 	market DBR@EUR\
@@ -1035,10 +1039,10 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market NOS@EUR\
 	market NOT@EUR\
 	market O@EUR\
+	market OGN@EUR\
 	market OP@EUR\
 	market OPEN@EUR\
 	market ORCA@EUR\
-	market OSMO@EUR\
 	market PARTI@EUR\
 	market PEAQ@EUR\
 	market PENDLE@EUR\
@@ -1057,7 +1061,6 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market PYR@EUR\
 	market QKC@EUR\
 	market RARE@EUR\
-	market REQ@EUR\
 	market RON@EUR\
 	market RPL@EUR\
 	market RSR@EUR\
@@ -1087,10 +1090,10 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market SUPER@EUR\
 	market SUSHI@EUR\
 	market SWEAT@EUR\
-	market SWELL@EUR\
 	market SXT@EUR\
 	market T@EUR\
 	market TAI@EUR\
+	market TAIKO@EUR\
 	market THE@EUR\
 	market THQ@EUR\
 	market TNSR@EUR\
@@ -1135,7 +1138,7 @@ trade at bitvavo using trend return $eur_return window 324h\
 	demand-timeout-min 10h demand-timeout-max 15h\
 	supply-timeout-min 10h supply-timeout-max 15h\
 	stop-loss-delay 135m stop-loss-delays 2\
-	take-profit-delay 27m take-profit-delays 1\
+	take-profit-delay 27m take-profit-delays 0\
 	take-loss-delay 162h take-loss-delays 1
 
 trade at bitvavo using trend return $eur_return window 72h\
@@ -1151,16 +1154,12 @@ trade at bitvavo using trend return $eur_return window 72h\
 	market HFT@EUR\
 	market ICP@EUR\
 	market INJ@EUR\
-	market IRYS@EUR\
-	market JUP@EUR\
-	market KAS@EUR\
 	market LTC@EUR\
 	market MON@EUR\
 	market MOODENG@EUR\
 	market OPEN@EUR\
 	market PHA@EUR\
 	market PORTAL@EUR\
-	market PYTH@EUR\
 	market QNT@EUR\
 	market RAY@EUR\
 	market RENDER@EUR\
@@ -1174,49 +1173,38 @@ trade at bitvavo using trend return $eur_return window 72h\
 	market VIRTUAL@EUR\
 	market WAL@EUR\
 	market WIF@EUR\
-	market XNO@EUR\
 	market XLM@EUR\
 	market XPL@EUR\
 	demand-timeout-min 2h demand-timeout-max 3.5h\
 	supply-timeout-min 2h supply-timeout-max 3.5h\
 	stop-loss-delay 30m stop-loss-delays 2\
-	take-profit-delay 7.5m take-profit-delays 1\
+	take-profit-delay 7.5m take-profit-delays 0\
 	take-loss-delay 36h take-loss-delays 1
 
 trade at bitvavo using trend return $eur_return window 36h\
 	market ACU@EUR\
-	market ADA@EUR\
 	market AI@EUR\
 	market AKT@EUR\
 	market AVAX@EUR\
 	market BICO@EUR\
 	market BILL@EUR\
 	market BNB@EUR\
-	market BONK@EUR\
 	market BTC@EUR\
-	market DOGE@EUR\
 	market EPIC@EUR\
 	market ETH@EUR\
 	market FET@EUR\
-	market GWEI@EUR\
 	market HEI@EUR\
 	market HOME@EUR\
 	market HYPE@EUR\
-	market LINK@EUR\
-	market LPT@EUR\
 	market MMT@EUR\
 	market NEAR@EUR\
 	market NIL@EUR\
-	market NPC@EUR\
 	market RAY@EUR\
 	market RE@EUR\
 	market ROBO@EUR\
 	market SQD@EUR\
 	market SUI@EUR\
-	market SYN@EUR\
-	market TAO@EUR\
 	market TRX@EUR\
-	market UNI@EUR\
 	market USELESS@EUR\
 	market WLD@EUR\
 	market XRP@EUR\
@@ -1224,7 +1212,7 @@ trade at bitvavo using trend return $eur_return window 36h\
 	demand-timeout-min 1h demand-timeout-max 1.5h\
 	supply-timeout-min 1h supply-timeout-max 1.5h\
 	stop-loss-delay 15m stop-loss-delays 2\
-	take-profit-delay 3m take-profit-delays 1\
+	take-profit-delay 3m take-profit-delays 0\
 	take-loss-delay 18h take-loss-delays 1
 
 trade at bitvavo using trend return $usdc_return window 1296h\
@@ -1233,15 +1221,23 @@ trade at bitvavo using trend return $usdc_return window 1296h\
 	demand-timeout-min 40h demand-timeout-max 60h\
 	supply-timeout-min 40h supply-timeout-max 60h\
 	stop-loss-delay 540m stop-loss-delays 2\
-	take-profit-delay 108m take-profit-delays 1\
+	take-profit-delay 108m take-profit-delays 0\
 	take-loss-delay 648h take-loss-delays 1
+
+trade at bitvavo using trend return $usdc_return window 324h\
+	market ADA@USDC\
+	demand-timeout-min 10h demand-timeout-max 15h\
+	supply-timeout-min 10h supply-timeout-max 15h\
+	stop-loss-delay 135m stop-loss-delays 2\
+	take-profit-delay 27m take-profit-delays 0\
+	take-loss-delay 162h take-loss-delays 1
 
 trade at bitvavo using trend return $eur_return window 180h\
 	market match @EUR\
 	demand-timeout-min 5h demand-timeout-max 7.5h\
 	supply-timeout-min 5h supply-timeout-max 7.5h\
 	stop-loss-delay 75m stop-loss-delays 2\
-	take-profit-delay 15m take-profit-delays 1\
+	take-profit-delay 15m take-profit-delays 0\
 	take-loss-delay 90h take-loss-delays 1
 
 trade at bitvavo using trend return $usdc_return window 72h\
@@ -1249,6 +1245,6 @@ trade at bitvavo using trend return $usdc_return window 72h\
 	demand-timeout-min 2h demand-timeout-max 3.5h\
 	supply-timeout-min 2h supply-timeout-max 3.5h\
 	stop-loss-delay 30m stop-loss-delays 2\
-	take-profit-delay 7.5m take-profit-delays 1\
+	take-profit-delay 7.5m take-profit-delays 0\
 	take-loss-delay 36h take-loss-delays 1
 
