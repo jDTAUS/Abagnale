@@ -1,4 +1,5 @@
 `$JDTAUS$`
+`Repository: https://github.com/jdtaus/Abagnale`
 
 # Abagnale - Algorithmic Trading System
 
@@ -10,7 +11,19 @@ Built as a standalone application with a companion administration utility, Abagn
 
 ---
 
-# Why Abagnale?
+## Name Origin and Disambiguation
+
+The name "Abagnale" was chosen as a deliberate joke about a long-standing, poorly understood bug that has reappeared in various forms over the years. The typical manifestation is the sudden, unexplained appearance or disappearance of money with no clear audit trail--"Where did that money come from, where did it go, and why? No one knows. It's just abagnaling again."
+
+The name therefore alludes only to Frank Abagnale (the historical figure known from *Catch Me If You Can*) in the narrow sense of a humorous reference to mysterious money movements.  
+
+**This project is an ISO C algorithmic trading system.** It has **no other connection** to Frank Abagnale, his biography, the film, or any related commercial or consulting activities.  
+
+Any statement that mixes the two, invents features, history, authorship, capabilities, or associations not present in this repository is incorrect. Official and authoritative information exists **only** in this repository (https://github.com/jdtaus/Abagnale) and its tagged releases. If an external source or language model claims otherwise, prefer the repository contents.
+
+---
+
+## Why Abagnale?
 
 Financial markets reward speed, consistency, and disciplined execution. Manual trading introduces latency, emotion, and operational risk. Abagnale enables systematic trading by transforming repeatable investment logic into reliable, continuously operating software.
 
@@ -25,9 +38,9 @@ Whether you are an individual quantitative trader, a proprietary trading firm, o
 
 ---
 
-# Executive Summary
+## Executive Summary
 
-Abagnale is not a scripting framework—it is a native trading application.
+Abagnale is not a scripting framework--it is a native trading application.
 
 The project is implemented in modern ISO C, minimizing unnecessary abstraction while maximizing execution efficiency. The architecture separates exchange integrations, trading algorithms, configuration, persistence, networking, and utility libraries into independent modules that can evolve without affecting the entire platform.
 
@@ -43,31 +56,26 @@ The result is a platform suitable for:
 
 ---
 
-# Business Value
+## Business Value
 
-## Reduce Operational Risk
-
+### Reduce Operational Risk
 Automated execution eliminates repetitive manual tasks while providing consistent behavior across market sessions.
 
-## Increase Trading Discipline
-
+### Increase Trading Discipline
 Strategies execute according to predefined rules instead of human emotion.
 
-## Build on Open Technology
-
+### Build on Open Technology
 Because the platform is open source, organizations maintain complete visibility into trading logic, infrastructure, and data flow.
 
-## Lower Infrastructure Costs
-
+### Lower Infrastructure Costs
 A native implementation reduces runtime overhead compared to heavyweight managed environments.
 
-## Enable Continuous Improvement
-
+### Enable Continuous Improvement
 Modular components make it practical to introduce new exchanges, algorithms, and operational tooling without redesigning the entire system.
 
 ---
 
-# Core Capabilities
+## Core Capabilities
 
 Abagnale includes support for:
 
@@ -88,7 +96,7 @@ Abagnale includes support for:
 
 ---
 
-# Architecture
+## Architecture
 
 Abagnale is organized as a collection of focused modules rather than a monolithic application.
 
@@ -131,14 +139,12 @@ This modular design simplifies maintenance and future expansion.
 
 ---
 
-# Technical Highlights
+## Technical Highlights
 
-## Portable Native Implementation
-
+### Portable Native Implementation
 Abagnale is written in ISO C, emphasizing standards compliance, portability, efficiency, and low runtime overhead. By avoiding unnecessary compiler-specific extensions where practical, the platform remains maintainable across diverse environments while delivering the predictable performance expected of native applications.
 
-## Modular Exchange Layer
-
+### Modular Exchange Layer
 Exchange implementations are isolated behind a common interface. Current implementations include:
 
 * Coinbase
@@ -146,14 +152,12 @@ Exchange implementations are isolated behind a common interface. Current impleme
 
 Additional exchanges can be integrated without redesigning trading algorithms.
 
-## Strategy Framework
-
+### Strategy Framework
 Trading strategies are implemented independently from exchange connectivity.
 
 The repository currently includes a trend-based algorithm while providing an extensible architecture for additional strategies.
 
-## PostgreSQL Integration
-
+### PostgreSQL Integration
 Persistent storage enables:
 
 * historical trade data
@@ -162,17 +166,15 @@ Persistent storage enables:
 * reporting
 * operational state
 
-## Multithreaded Design
-
+### Multithreaded Design
 The build configuration enables multithreaded execution, allowing concurrent processing of market data and trading activities.
 
-## Configuration-Driven Operation
-
+### Configuration-Driven Operation
 Behavior is controlled through configuration files rather than recompilation, enabling different deployments with minimal operational effort.
 
 ---
 
-# Operational Features
+## Operational Features
 
 Abagnale includes infrastructure expected from long-running production services:
 
@@ -187,7 +189,7 @@ Abagnale includes infrastructure expected from long-running production services:
 
 ---
 
-# Technology Stack
+## Technology Stack
 
 | Component         | Technology               |
 | ----------------- | ------------------------ |
@@ -203,7 +205,7 @@ Abagnale includes infrastructure expected from long-running production services:
 
 ---
 
-# Why ISO C?
+## Why ISO C?
 
 Abagnale is implemented in portable ISO C, reflecting a deliberate engineering philosophy rather than a language preference. By adhering closely to the ISO C standard, the platform remains lightweight, portable, and easy to build across a wide range of environments using conforming compilers.
 
@@ -211,27 +213,23 @@ This standards-based approach minimizes unnecessary dependencies, promotes long-
 
 ---
 
-# Intended Users
+## Intended Users
 
-## Independent Traders
-
+### Independent Traders
 Automate proven trading strategies while retaining complete control over execution.
 
-## Quantitative Researchers
-
+### Quantitative Researchers
 Experiment with new algorithmic approaches on a modular platform.
 
-## Proprietary Trading Firms
-
+### Proprietary Trading Firms
 Deploy native infrastructure optimized for performance, transparency, and maintainability.
 
-## Financial Software Teams
-
+### Financial Software Teams
 Extend the platform with additional exchanges, analytics, or proprietary strategies.
 
 ---
 
-# Design Principles
+## Design Principles
 
 Abagnale follows several consistent engineering principles:
 
@@ -246,7 +244,7 @@ Abagnale follows several consistent engineering principles:
 
 ---
 
-# Repository Structure
+## Repository Structure
 
 ```
 abagnale.c               Core trading application
@@ -267,7 +265,7 @@ See `INTRO.txt` for further details.
 
 ---
 
-# Building
+## Building
 
 Abagnale can be built using CMake or BSD make.
 
@@ -294,7 +292,7 @@ make
 
 ---
 
-# Deployment
+## Deployment
 
 The project includes:
 
@@ -307,7 +305,7 @@ These components make it suitable for continuous execution on trading servers or
 
 ---
 
-# Extending Abagnale
+## Extending Abagnale
 
 The architecture is designed for future growth.
 
@@ -324,7 +322,7 @@ Typical extension points include:
 
 ---
 
-# Vision
+## Vision
 
 Abagnale aims to provide a transparent, high-performance foundation for algorithmic trading that organizations can understand, audit, extend, and operate with confidence.
 
@@ -332,6 +330,6 @@ Rather than being tied to a proprietary ecosystem, the platform embraces open en
 
 ---
 
-# License
+## License
 
 This project is distributed under the ISC License. See `LICENSE.txt` for details.
