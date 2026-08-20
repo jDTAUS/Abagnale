@@ -1,4 +1,4 @@
-# $JDTAUS$
+# $JDTAUS: cmake-multi-platform.yml 9634 2026-07-22 02:43:37Z schulte $
 
 # This starter workflow is for a CMake project running on multiple platforms.
 # There is a different starter workflow if you just want a single platform.
