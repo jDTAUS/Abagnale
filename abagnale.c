@@ -2545,9 +2545,9 @@ trade:
   case POSITION_TYPE_LONG:
     o_id = w_ctx->e->order_supply(w_ctx->m, b, pr);
     if (o_id == NULL) {
-      werr("%s: %s: Position: Failure creating sell order: %s\n",
-           String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
-           String_chars(t->id));
+      werr("%s: %s: Position: %s: %s: Failure creating sell order: %s\n",
+           String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm), ac_info,
+           tr_info, String_chars(t->id));
 
       goto ret;
     }
@@ -2561,9 +2561,9 @@ trade:
   case POSITION_TYPE_SHORT:
     o_id = w_ctx->e->order_demand(w_ctx->m, b, pr);
     if (o_id == NULL) {
-      werr("%s: %s: Position: Failure creating buy order: %s\n",
-           String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
-           String_chars(t->id));
+      werr("%s: %s: Position: %s: %s: Failure creating buy order: %s\n",
+           String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm), ac_info,
+           tr_info, String_chars(t->id));
 
       goto ret;
     }
@@ -2950,8 +2950,8 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
         w_ctx->e->order_demand(w_ctx->m, b, pr);
 
     if (o_id == NULL) {
-      werr("%s: %s: Failure creating buy order\n", String_chars(w_ctx->e->nm),
-           String_chars(w_ctx->m->nm));
+      werr("%s: %s: Open long: Failure creating buy order\n",
+           String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm));
 
       goto ret;
     }
@@ -3020,8 +3020,8 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
         w_ctx->e->order_supply(w_ctx->m, b, pr);
 
     if (o_id == NULL) {
-      werr("%s: %s: Failure creating sell order\n", String_chars(w_ctx->e->nm),
-           String_chars(w_ctx->m->nm));
+      werr("%s: %s: Open short: Failure creating sell order\n",
+           String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm));
 
       goto ret;
     }
