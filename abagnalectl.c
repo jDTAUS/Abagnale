@@ -240,8 +240,8 @@ static void print_market(const struct Market *restrict const m) {
 }
 
 static _Noreturn void usage(void) {
-  werr("Usage: %s [-Dmacro=value ... ] [-f config-file] [-I entity] [-n] [-p "
-       "plots-dir] [-v] command\n",
+  werr("Usage: %s [-Dmacro=value ... ] [-f config-file] [-I entity] [-i "
+       "process-uuid] [-n] [-p plots-dir] [-v]\n",
        String_chars(progname));
 
   for (size_t i = nitems(cmd_tab); i-- > 0;) {
