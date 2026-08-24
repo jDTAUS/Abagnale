@@ -2,7 +2,6 @@
 
 [Unit]
 Description=Abagnale Algorithmic Trading System
-Requires=postgresql.service
 After=postgresql.service
 
 [Service]
@@ -11,6 +10,11 @@ Restart=always
 RestartSec=300
 User=abagnale
 Group=abagnale
+ConfigurationDirectory=abagnale
+ConfigurationDirectoryMode=0750
+StateDirectory=abagnale
+StateDirectoryMode=0750
+WorkingDirectory=~
 Environment=PATH=/usr/bin:/usr/local/bin
 Environment=LC_CTYPE=C.UTF-8
 #Environment=PGPASSFILE=/etc/abagnale/abagnale.pgpass
@@ -47,7 +51,6 @@ Environment=LC_CTYPE=C.UTF-8
 #Environment=BITVAVO_REQUESTS_PER_SECOND=16
 #Environment=BITVAVO_WS_STALL_MILLIS=3600000
 #Environment=BITVAVO_WS_RETRY_SECONDS=3
-WorkingDirectory=/tmp
 KillMode=process
 TimeoutSec=600
 OOMPolicy=continue
