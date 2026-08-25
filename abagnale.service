@@ -10,6 +10,7 @@ Restart=always
 RestartSec=300
 User=abagnale
 Group=abagnale
+UMask=0027
 ConfigurationDirectory=abagnale
 ConfigurationDirectoryMode=0750
 StateDirectory=abagnale
