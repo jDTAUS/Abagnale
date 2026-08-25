@@ -1,4 +1,4 @@
-# $JDTAUS$
+# $JDTAUS: abagnale.service 9695 2026-08-24 08:59:41Z schulte $
 
 [Unit]
 Description=Abagnale Algorithmic Trading System
