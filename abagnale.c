@@ -3288,9 +3288,9 @@ static int orders_process(void *restrict const arg) {
     }
 
     w_ctx->m = Market_copy(market);
-    w_ctx->m_cnf = marketconfig(w_ctx->e->nm, w_ctx->m->nm);
-
     mutex_unlock(market->mtx);
+
+    w_ctx->m_cnf = marketconfig(w_ctx->e->nm, w_ctx->m->nm);
 
     Map_lock(market_samples);
     samples = Map_get(market_samples, order->m_id);
@@ -3343,7 +3343,14 @@ static int orders_process(void *restrict const arg) {
       }
     }
 
-    if (t != NULL) {
+    if (t == NULL) {
+      Array_unlock(trades);
+      Market_delete(w_ctx->m);
+      Order_delete(order);
+      continue;
+    }
+
+    if (w_ctx->m_cnf != NULL) {
       if (t->status == TRADE_STATUS_BUYING ||
           t->status == TRADE_STATUS_SELLING) {
         t->a = algorithm(w_ctx->m_cnf->a_nm);
@@ -3375,6 +3382,21 @@ static int orders_process(void *restrict const arg) {
 
         Array_remove_idx(trades, i);
       }
+    } else {
+      wout("%s: %s: Position: Unconfigured: %s\n", String_chars(w_ctx->e->nm),
+           String_chars(w_ctx->m->nm), String_chars(t->id));
+
+      mutex_lock(&t->mtx);
+
+      if (!TRADE_IS_ENQUEUED(t) && !TRADE_IS_DELETED(t)) {
+        mutex_unlock(&t->mtx);
+        trade_delete(t);
+      } else {
+        TRADE_SET_DELETED(t);
+        mutex_unlock(&t->mtx);
+      }
+
+      Array_remove_idx(trades, i);
     }
 
     Array_unlock(trades);
