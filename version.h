@@ -17,6 +17,6 @@
 #ifndef VERSION_H
 #define VERSION_H
 
-#define ABAG_REVISION "$Abagnale$"
+#define ABAG_REVISION "$Abagnale: v0/9698 2026-08-25 23:53:41Z $"
 
 #endif
