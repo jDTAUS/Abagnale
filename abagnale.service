@@ -15,7 +15,7 @@ ConfigurationDirectory=abagnale
 ConfigurationDirectoryMode=0750
 StateDirectory=abagnale
 StateDirectoryMode=0750
-WorkingDirectory=~
+WorkingDirectory=%S/abagnale
 Environment=PATH=/usr/bin:/usr/local/bin
 Environment=LC_CTYPE=C.UTF-8
 #Environment=PGPASSFILE=/etc/abagnale/abagnale.pgpass
