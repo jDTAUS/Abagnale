@@ -136,6 +136,8 @@ CFLAGS+=-DWCHAR_T_UTF32
 #CFLAGS+=-DWCHAR_T_UTF8
 CFLAGS+=-pedantic
 CFLAGS+=-O3
+CFLAGS+=-march=native
+CFLAGS+=-mtune=native
 
 LDFLAGS=$(DEBUG) $(PROFILE) $(LTO)
 LDFLAGS+=-L/usr/local/lib
