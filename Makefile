@@ -19,7 +19,7 @@
 
 .SUFFIXES: .c .pgc .o .y
 
-CC=clang-19
+CC=cc
 
 # ECPG - Embedded SQL in C
 #   https://www.postgresql.org/docs/18/ecpg.html
@@ -87,7 +87,7 @@ PROFILE=
 LTO=
 LTO+=-flto=auto
 
-STANDARD=-std=c23
+STANDARD=-std=c2x
 
 WARNINGS=-Wall
 WARNINGS+=-Werror
@@ -122,12 +122,12 @@ CFLAGS+=-DMG_TLS=MG_TLS_BUILTIN
 #CFLAGS+=-DCOINBASE_TICKER_SIZE=(2^10)
 #CFLAGS+=-DCOINBASE_TICKERS_DAY=(2^24)
 #
-#      24h     2^26 + 2^34 = 0x404000000
-#      MG_MAX_RECV_SIZE=0x400000000 (16GB)
-#      1h      24h / 24 = 0x2AD55555
-#      MG_MAX_RECV_SIZE=0x2EE00000 (750MB)
+#	24h	2^26 + 2^34 = 0x404000000
+#	MG_MAX_RECV_SIZE=0x400000000 (16GB)
+#	1h	24h / 24 = 0x2AD55555
+#	MG_MAX_RECV_SIZE=0x2EE00000 (750MB)
 #
-#      MG_MAX_RECV_SIZE=0x40000000 (1GB)
+#	MG_MAX_RECV_SIZE=0x40000000 (1GB)
 #
 CFLAGS+=-DMG_MAX_RECV_SIZE=0x40000000UL
 CFLAGS+=-DMG_UECC_OPTIMIZATION_LEVEL=4
@@ -138,47 +138,9 @@ CFLAGS+=-pedantic
 CFLAGS+=-O3
 CFLAGS+=-march=native
 CFLAGS+=-mtune=native
-CFLAGS+=-fverbose-asm
-CFLAGS+=-mmmx
-CFLAGS+=-msse
-CFLAGS+=-msse2
-CFLAGS+=-msse3
-CFLAGS+=-msse4
-CFLAGS+=-msse4a
-CFLAGS+=-msse4.1
-CFLAGS+=-msse4.2
-CFLAGS+=-mavx
-#CFLAGS+=-mavxvnni
-#CFLAGS+=-mavx2
-#CFLAGS+=-mavx512f
-#CFLAGS+=-mavx512cd
-#CFLAGS+=-mavx512vl
-#CFLAGS+=-mavx512bw
-#CFLAGS+=-mavx512dq
-#CFLAGS+=-mavx512ifma
-#CFLAGS+=-mavx512vbmi
-#CFLAGS+=-mavx512vbmi2
-#CFLAGS+=-mavx512bf16
-#CFLAGS+=-mavx512fp16
-#CFLAGS+=-mavx512bitalg
-#CFLAGS+=-mavx512vpopcntdq
-#CFLAGS+=-mavx512vp2intersect
-#CFLAGS+=-mavx512vnni
-#CFLAGS+=-mavx10.1
-#CFLAGS+=-mavx10.1-256
-#CFLAGS+=-mavx10.1-512
-CFLAGS+=-msha
-#CFLAGS+=-msha512
-CFLAGS+=-maes
-#CFLAGS+=-fsanitize=address
-#CFLAGS+=-fsanitize=undefined
-#CFLAGS+=-fno-omit-frame-pointer
 
 LDFLAGS=$(DEBUG) $(PROFILE) $(LTO)
 LDFLAGS+=-L/usr/local/lib
-#LDFLAGS+=-fsanitize=address
-#LDFLAGS+=-fsanitize=undefined
-#LDFLAGS+=-fno-omit-frame-pointer
 
 # ECPG - Embedded SQL in C
 #   https://www.postgresql.org/docs/18/ecpg.html
@@ -256,8 +218,8 @@ FORMATSRC+=heap.c
 FORMATSRC+=http.c
 FORMATSRC+=json.c
 FORMATSRC+=main.c
-FORMATSRC+=map.c
 FORMATSRC+=mongoose-ext.c
+FORMATSRC+=map.c
 FORMATSRC+=proc.c
 FORMATSRC+=queue.c
 FORMATSRC+=string.c
