@@ -34,6 +34,7 @@ void *Numeric_db(const struct Numeric *restrict const);
 struct Numeric *Numeric_from_char(const char *restrict const);
 
 char *Numeric_to_char(const struct Numeric *restrict const, const int);
+char *Numeric_to_char_unscaled(const struct Numeric *restrict const);
 void Numeric_char_free(char *restrict const);
 
 struct Numeric *Numeric_add(const struct Numeric *restrict const,

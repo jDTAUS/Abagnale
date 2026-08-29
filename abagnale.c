@@ -294,9 +294,22 @@ const struct MarketConfig *marketconfig(struct String *restrict const e_nm,
       }
 
     Map_put(market_configs, &k, m_cnf);
-  }
-  Map_unlock(market_configs);
 
+    if (m_cnf != NULL) {
+      char *restrict const w_ns = nanos_string(m_cnf->wnanos);
+      char *restrict const ret = Numeric_to_char_unscaled(m_cnf->r_amount);
+
+      wout("%s: Configured: %s using %s return %s%s window %s\n",
+           String_chars(e_nm), String_chars(m_nm), String_chars(m_cnf->a_nm),
+           ret, String_chars(m_cnf->r_id), w_ns);
+
+      Numeric_char_free(ret);
+      heap_free(w_ns);
+    } else
+      wout("%s: Unconfigured: %s\n", String_chars(e_nm), String_chars(m_nm));
+  }
+
+  Map_unlock(market_configs);
   return m_cnf;
 }
 
@@ -1887,9 +1900,9 @@ static void position_maintain(const struct worker_ctx *restrict const w_ctx,
 
       if (verbose) {
         samples_per_minute(m, samples);
-        char *restrict const f_asc = Numeric_to_char(p->cl_factor, 2);
+        char *restrict const f_asc = Numeric_to_char(p->cl_factor, 4);
         char *restrict const s_asc = Numeric_to_char(p->cl_samples, 0);
-        char *restrict const m_asc = Numeric_to_char(m, 2);
+        char *restrict const m_asc = Numeric_to_char(m, 4);
         char *restrict const p_info = position_string(w_ctx, t, p);
 
         wout("%s: %s: Position: Order open: %s, timeout: %s %s %s\n",
@@ -2676,8 +2689,8 @@ static void trade_pricing(const struct worker_ctx *restrict const w_ctx,
     Numeric_copy_to(w_ctx->m_cnf->v_pc, t->tp_pc);
 
   if (Numeric_cmp(t->tp_pc, t->fee_pc) < 0) {
-    char *restrict const stddev = Numeric_to_char(t->tp_pc, 4);
-    char *restrict const fee = Numeric_to_char(t->fee_pc, 2);
+    char *restrict const stddev = Numeric_to_char_unscaled(t->tp_pc);
+    char *restrict const fee = Numeric_to_char_unscaled(t->fee_pc);
 
     werr("%s: %s: Pricing: Volatility fee constraint: %s%%<%s%%\n",
          String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm), stddev, fee);
@@ -2690,8 +2703,8 @@ static void trade_pricing(const struct worker_ctx *restrict const w_ctx,
   }
 
   if (verbose || err) {
-    char *restrict const fee = Numeric_to_char(t->fee_pc, 2);
-    char *restrict const v = Numeric_to_char(t->tp_pc, 4);
+    char *restrict const fee = Numeric_to_char_unscaled(t->fee_pc);
+    char *restrict const v = Numeric_to_char_unscaled(t->tp_pc);
 
     if (err)
       werr("%s: %s: Pricing: name: %s, fee: %s%%, volatility: %s%%\n",
@@ -3078,7 +3091,7 @@ static void trade_maintain(const struct worker_ctx *restrict const w_ctx,
     Numeric_add_to(t->p_long.q_fees, t->p_short.q_fees, q_costs);
     Numeric_sub_to(t->p_short.q_filled, t->p_long.q_filled, q_delta);
     Numeric_sub_to(q_delta, q_costs, q_profit);
-    char *restrict const v = Numeric_to_char(t->tp_pc, 4);
+    char *restrict const v = Numeric_to_char_unscaled(t->tp_pc);
     char *restrict const l_p = Numeric_to_char(t->p_long.price, w_ctx->m->p_sc);
     char *restrict const profit = Numeric_to_char(q_profit, w_ctx->m->q_sc);
     char *restrict const costs = Numeric_to_char(q_costs, w_ctx->m->q_sc);
@@ -3667,8 +3680,8 @@ static int trades_process(void *restrict const arg) {
     db_volatility_close(w_ctx->db);
 
     if (Numeric_cmp(tp_pc, t->fee_pc) < 0) {
-      char *restrict const stddev = Numeric_to_char(tp_pc, 4);
-      char *restrict const fee = Numeric_to_char(t->fee_pc, 2);
+      char *restrict const stddev = Numeric_to_char_unscaled(tp_pc);
+      char *restrict const fee = Numeric_to_char_unscaled(t->fee_pc);
 
       werr("%s: %s: Pricing: Volatility fee constraint: %s%%<%s%%\n",
            String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm), stddev, fee);
@@ -3681,8 +3694,8 @@ static int trades_process(void *restrict const arg) {
     }
 
     if (verbose || err) {
-      char *restrict const fee = Numeric_to_char(t->fee_pc, 2);
-      char *restrict const v = Numeric_to_char(tp_pc, 4);
+      char *restrict const fee = Numeric_to_char_unscaled(t->fee_pc);
+      char *restrict const v = Numeric_to_char_unscaled(tp_pc);
       const struct Pricing *restrict const pricing =
           w_ctx->e->pricing(w_ctx->m);
 

@@ -74,7 +74,7 @@ inline struct Numeric *Numeric_from_char(const char *restrict const s) {
     n = heap_malloc(sizeof(struct Numeric));
     n->n = res;
 #ifdef ABAG_MATH_DEBUG
-    n->s = Numeric_to_char(n, 20);
+    n->s = Numeric_to_char_unscaled(n);
 #endif
   }
   return n;
@@ -83,6 +83,13 @@ inline struct Numeric *Numeric_from_char(const char *restrict const s) {
 inline char *Numeric_to_char(const struct Numeric *restrict const n,
                              const int d) {
   char *restrict const s = PGTYPESnumeric_to_asc(n->n, d);
+  if (s == NULL)
+    panic();
+  return s;
+}
+
+inline char *Numeric_to_char_unscaled(const struct Numeric *restrict const n) {
+  char *restrict const s = PGTYPESnumeric_to_asc(n->n, n->n->dscale);
   if (s == NULL)
     panic();
   return s;
@@ -105,7 +112,7 @@ inline void Numeric_add_to(const struct Numeric *restrict const n1,
     panic();
 #ifdef ABAG_MATH_DEBUG
   Numeric_char_free(res->s);
-  res->s = Numeric_to_char(res, 20);
+  res->s = Numeric_to_char_unscaled(res);
 #endif
 }
 
@@ -124,7 +131,7 @@ inline void Numeric_sub_to(const struct Numeric *restrict const n1,
     panic();
 #ifdef ABAG_MATH_DEBUG
   Numeric_char_free(res->s);
-  res->s = Numeric_to_char(res, 20);
+  res->s = Numeric_to_char_unscaled(res);
 #endif
 }
 
@@ -143,7 +150,7 @@ inline void Numeric_mul_to(const struct Numeric *restrict const n1,
     panic();
 #ifdef ABAG_MATH_DEBUG
   Numeric_char_free(res->s);
-  res->s = Numeric_to_char(res, 20);
+  res->s = Numeric_to_char_unscaled(res);
 #endif
 }
 
@@ -162,7 +169,7 @@ inline void Numeric_div_to(const struct Numeric *restrict const n1,
     panic();
 #ifdef ABAG_MATH_DEBUG
   Numeric_char_free(res->s);
-  res->s = Numeric_to_char(res, 20);
+  res->s = Numeric_to_char_unscaled(res);
 #endif
 }
 
@@ -186,7 +193,7 @@ inline void Numeric_from_int_to(const signed int i,
   if (ret < 0)
     panic();
 #ifdef ABAG_MATH_DEBUG
-  res->s = Numeric_to_char(res, 20);
+  res->s = Numeric_to_char_unscaled(res);
 #endif
 }
 
@@ -210,7 +217,7 @@ inline void Numeric_from_long_to(const signed long int l,
   if (ret < 0)
     panic();
 #ifdef ABAG_MATH_DEBUG
-  res->s = Numeric_to_char(res, 20);
+  res->s = Numeric_to_char_unscaled(res);
 #endif
 }
 
@@ -235,7 +242,7 @@ inline void Numeric_copy_to(const struct Numeric *restrict const n,
     panic();
 #ifdef ABAG_MATH_DEBUG
   Numeric_char_free(res->s);
-  res->s = Numeric_to_char(res, 20);
+  res->s = Numeric_to_char_unscaled(res);
 #endif
 }
 
@@ -251,7 +258,7 @@ inline void Numeric_from_double_to(const double d,
   if (ret < 0)
     panic();
 #ifdef ABAG_MATH_DEBUG
-  res->s = Numeric_to_char(res, 20);
+  res->s = Numeric_to_char_unscaled(res);
 #endif
 }
 
@@ -271,7 +278,7 @@ inline void Numeric_abs(struct Numeric *restrict const n) {
   }
 #ifdef ABAG_MATH_DEBUG
   Numeric_char_free(n->s);
-  n->s = Numeric_to_char(n, 20);
+  n->s = Numeric_to_char_unscaled(n);
 #endif
 }
 
@@ -291,7 +298,7 @@ inline void Numeric_inc(struct Numeric *restrict const n) {
     panic();
 #ifdef ABAG_MATH_DEBUG
   Numeric_char_free(n->s);
-  n->s = Numeric_to_char(n, 20);
+  n->s = Numeric_to_char_unscaled(n);
 #endif
 }
 
@@ -301,7 +308,7 @@ inline void Numeric_dec(struct Numeric *restrict const n) {
     panic();
 #ifdef ABAG_MATH_DEBUG
   Numeric_char_free(n->s);
-  n->s = Numeric_to_char(n, 20);
+  n->s = Numeric_to_char_unscaled(n);
 #endif
 }
 
@@ -316,6 +323,6 @@ inline void Numeric_atan_to(const struct Numeric *restrict const n,
   Numeric_from_double_to(atan(Numeric_to_double(n)), res);
 #ifdef ABAG_MATH_DEBUG
   Numeric_char_free(res->s);
-  res->s = Numeric_to_char(res, 20);
+  res->s = Numeric_to_char_unscaled(res);
 #endif
 }
