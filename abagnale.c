@@ -299,7 +299,7 @@ const struct MarketConfig *marketconfig(struct String *restrict const e_nm,
       char *restrict const w_ns = nanos_string(m_cnf->wnanos);
       char *restrict const ret = Numeric_to_char_unscaled(m_cnf->r_amount);
 
-      wout("%s: Configured: %s using %s return %s%s window %s\n",
+      wout("%s: Configuration: %s using %s return %s%s window %s\n",
            String_chars(e_nm), String_chars(m_nm), String_chars(m_cnf->a_nm),
            ret, String_chars(m_cnf->r_id), w_ns);
 
