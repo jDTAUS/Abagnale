@@ -547,9 +547,6 @@ void db_vacuum_plots(const void *const db, const char *const e_id,
   EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
   // clang-format on
   if (fname != NULL) {
-    // clang-format off
-    EXEC SQL AT :con SET LOCAL ROLE pg_write_server_files;
-    // clang-format on
     char *restrict const nanos_asc = Numeric_to_char(nanos, 0);
     r = snprintf(stmt, sizeof(stmt),
                  "COPY ("
@@ -665,9 +662,6 @@ void db_vacuum_samples(const void *const db, const char *const e_id,
   EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
   // clang-format on
   if (fname != NULL) {
-    // clang-format off
-    EXEC SQL AT :con SET LOCAL ROLE pg_write_server_files;
-    // clang-format on
     char *restrict const nanos_asc = Numeric_to_char(nanos, 0);
     const int r = snprintf(stmt, sizeof(stmt),
                            "COPY ( "
