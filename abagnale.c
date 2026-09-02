@@ -295,7 +295,9 @@ const struct MarketConfig *marketconfig(struct String *restrict const e_nm,
 
     Map_put(market_configs, &k, m_cnf);
 
-    if (m_cnf != NULL) {
+    if (m_cnf == NULL)
+      wout("%s: Unconfigured: %s\n", String_chars(e_nm), String_chars(m_nm));
+    else if (verbose) {
       char *restrict const w_ns = nanos_string(m_cnf->wnanos);
       char *restrict const ret = Numeric_to_char_unscaled(m_cnf->r_amount);
 
@@ -305,8 +307,7 @@ const struct MarketConfig *marketconfig(struct String *restrict const e_nm,
 
       Numeric_char_free(ret);
       heap_free(w_ns);
-    } else
-      wout("%s: Unconfigured: %s\n", String_chars(e_nm), String_chars(m_nm));
+    }
   }
 
   Map_unlock(market_configs);
@@ -1375,6 +1376,8 @@ static void position_pricing(const struct worker_ctx *restrict const w_ctx,
     if (w_ctx->m->q_min_opt != NULL &&
         Numeric_cmp(r0, w_ctx->m->q_min_opt) < 0) {
       Numeric_div_to(w_ctx->m->q_min_opt, p->price, p->b_ordered);
+      Numeric_mul_to(p->b_ordered, p->price, r0);
+      Numeric_scale(r0, w_ctx->m->q_sc);
       if (verbose)
         q_min = Numeric_to_char(w_ctx->m->q_min_opt, w_ctx->m->q_sc);
     }
@@ -1382,6 +1385,8 @@ static void position_pricing(const struct worker_ctx *restrict const w_ctx,
     if (w_ctx->m->q_max_opt != NULL &&
         Numeric_cmp(r0, w_ctx->m->q_max_opt) > 0) {
       Numeric_div_to(w_ctx->m->q_max_opt, p->price, p->b_ordered);
+      Numeric_mul_to(p->b_ordered, p->price, r0);
+      Numeric_scale(r0, w_ctx->m->q_sc);
       if (verbose)
         q_max = Numeric_to_char(w_ctx->m->q_max_opt, w_ctx->m->q_sc);
     }

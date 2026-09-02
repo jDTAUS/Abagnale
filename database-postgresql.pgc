@@ -36,8 +36,8 @@ extern const struct Numeric *restrict const zero;
 extern const struct Config *restrict const cnf;
 
 static void db_warn(void) {
-  werr("%s: %s: %ld: %s\n", __func__, sqlca.sqlstate, sqlca.sqlcode,
-       sqlca.sqlerrm.sqlerrmc);
+  werr("%s: SQLSTATE %s: SQLCODE %ld: %s", __func__, sqlca.sqlstate,
+       sqlca.sqlcode, sqlca.sqlerrm.sqlerrmc);
   //  werr("==== sqlca ====\n");
   //  werr("sqlcode: %ld\n", sqlca.sqlcode);
   //  werr("sqlerrm.sqlerrml: %d\n", sqlca.sqlerrm.sqlerrml);
