@@ -39,7 +39,7 @@ INCLUDES+=-I/usr/local/include
 INCLUDES+=-I/usr/local/include/postgresql
 
 DEBUG=
-#DEBUG+=-g
+DEBUG+=-g
 #DEBUG+=-O0
 #DEBUG+=-DABAG_HTTP_DEBUG
 #DEBUG+=-DABAG_MATH_DEBUG
@@ -229,7 +229,7 @@ FORMATSRC+=time.c
 FORMATSRC+=database-postgresql.pgc
 FORMATSRC+=math-postgresql.c
 
-CLEAN=$(OBJS) database-postgresql.c y.tab.h
+CLEAN=$(OBJS) database-postgresql.c y.tab.h abagnale abagnalectl
 
 all: abagnale abagnalectl
 

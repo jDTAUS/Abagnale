@@ -199,6 +199,9 @@ int main(int argc, char *argv[]) {
 
   argv += options.optind;
 
+  if (configtest)
+    verbose = false;
+
   if (verbose) {
     wout("%s\n", ABAG_REVISION);
     wout("\tABAG_CONFIG_FILE=%s\n", conffile);
