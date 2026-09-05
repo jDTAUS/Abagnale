@@ -1105,8 +1105,8 @@ int config_fparse(struct Config *const x_conf,
   it = MapIterator_new(symbols);
   while(MapIterator_next(it)) {
     const struct sym *restrict const sym = MapIterator_value(it);
-    if (!sym->used)
-      werr("%s: macro '%s' not used\n", filename, String_chars(sym->nam));
+    if (!sym->used && verbose)
+      wout("%s: macro '%s' not used\n", filename, String_chars(sym->nam));
     if (!sym->persist)
       sym_delete(MapIterator_remove(it));
   }
