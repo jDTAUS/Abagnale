@@ -24,19 +24,20 @@ usdc_return="0.25 USDC"
 usdt_return="0.25 USDT"
 inr_return="0.25 INR"
 gbp_return="0.25 GBP"
+cad_return="0.25 GBP"
 
 trade at coinbase using trend return $eur_return window 72h\
 	market USDC@EUR\
-	demand-timeout-min 2h demand-timeout-max 3.5h\
-	supply-timeout-min 2h supply-timeout-max 3.5h\
+	demand-timeout-min 2h demand-timeout-max 18h\
+	supply-timeout-min 2h supply-timeout-max 18h\
 	stop-loss-delay 30m stop-loss-delays 2\
 	take-profit-delay 7.5m take-profit-delays 1\
 	take-loss-delay 36h take-loss-delays 1
 
 trade at coinbase using trend return $eur_return window 108h\
 	market ADA@EUR\
-	demand-timeout-min 3h demand-timeout-max 4.5h\
-	supply-timeout-min 3h supply-timeout-max 4.5h\
+	demand-timeout-min 3h demand-timeout-max 27h\
+	supply-timeout-min 3h supply-timeout-max 27h\
 	stop-loss-delay 45m stop-loss-delays 2\
 	take-profit-delay 9m take-profit-delays 1\
 	take-loss-delay 54h take-loss-delays 1
@@ -44,8 +45,8 @@ trade at coinbase using trend return $eur_return window 108h\
 trade at coinbase using trend return $eur_return window 144h\
 	market AAVE@EUR\
 	market ICP@EUR\
-	demand-timeout-min 4h demand-timeout-max 6h\
-	supply-timeout-min 4h supply-timeout-max 6h\
+	demand-timeout-min 4h demand-timeout-max 36h\
+	supply-timeout-min 4h supply-timeout-max 36h\
 	stop-loss-delay 1h stop-loss-delays 2\
 	take-profit-delay 12m take-profit-delays 1\
 	take-loss-delay 72h take-loss-delays 1
@@ -53,16 +54,16 @@ trade at coinbase using trend return $eur_return window 144h\
 trade at coinbase using trend return $eur_return window 180h\
 	market BAT@EUR\
 	market UNI@EUR\
-	demand-timeout-min 5h demand-timeout-max 7.5h\
-	supply-timeout-min 5h supply-timeout-max 7.5h\
+	demand-timeout-min 5h demand-timeout-max 45h\
+	supply-timeout-min 5h supply-timeout-max 45h\
 	stop-loss-delay 75m stop-loss-delays 2\
 	take-profit-delay 15m take-profit-delays 1\
 	take-loss-delay 90h take-loss-delays 1
 
 trade at coinbase using trend return $btc_return window 324h\
 	market ETH@BTC\
-	demand-timeout-min 10h demand-timeout-max 15h\
-	supply-timeout-min 10h supply-timeout-max 15h\
+	demand-timeout-min 10h demand-timeout-max 81h\
+	supply-timeout-min 10h supply-timeout-max 81h\
 	stop-loss-delay 135m stop-loss-delays 2\
 	take-profit-delay 27m take-profit-delays 1\
 	take-loss-delay 162h take-loss-delays 1
@@ -74,16 +75,16 @@ trade at coinbase using trend return $eur_return window 324h\
 	market ETH@EUR\
 	market LTC@EUR\
 	market XLM@EUR\
-	demand-timeout-min 10h demand-timeout-max 15h\
-	supply-timeout-min 10h supply-timeout-max 15h\
+	demand-timeout-min 10h demand-timeout-max 81h\
+	supply-timeout-min 10h supply-timeout-max 81h\
 	stop-loss-delay 135m stop-loss-delays 2\
 	take-profit-delay 27m take-profit-delays 1\
 	take-loss-delay 162h take-loss-delays 1
 
 trade at coinbase using trend return 10 DOGE window 324h\
 	market DOGE@EUR\
-	demand-timeout-min 10h demand-timeout-max 15h\
-	supply-timeout-min 10h supply-timeout-max 15h\
+	demand-timeout-min 10h demand-timeout-max 81h\
+	supply-timeout-min 10h supply-timeout-max 81h\
 	stop-loss-delay 135m stop-loss-delays 2\
 	take-profit-delay 27m take-profit-delays 1\
 	take-loss-delay 162h take-loss-delays 1
@@ -94,8 +95,8 @@ trade at coinbase using trend return $btc_return window 648h\
 	market BCH@BTC\
 	market SOL@BTC\
 	market XLM@BTC\
-	demand-timeout-min 20h demand-timeout-max 30h\
-	supply-timeout-min 20h supply-timeout-max 30h\
+	demand-timeout-min 20h demand-timeout-max 162h\
+	supply-timeout-min 20h supply-timeout-max 162h\
 	stop-loss-delay 270m stop-loss-delays 2\
 	take-profit-delay 54m take-profit-delays 1\
 	take-loss-delay 324h take-loss-delays 1
@@ -107,8 +108,8 @@ trade at coinbase using trend return $eur_return window 648h\
 	market SHIB@EUR\
 	market SNX@EUR\
 	market SOL@EUR\
-	demand-timeout-min 20h demand-timeout-max 30h\
-	supply-timeout-min 20h supply-timeout-max 30h\
+	demand-timeout-min 20h demand-timeout-max 162h\
+	supply-timeout-min 20h supply-timeout-max 162h\
 	stop-loss-delay 270m stop-loss-delays 2\
 	take-profit-delay 54m take-profit-delays 1\
 	take-loss-delay 324h take-loss-delays 1
@@ -124,16 +125,16 @@ trade at coinbase using trend return $btc_return window 1296h\
 	market ICP@BTC\
 	market LTC@BTC\
 	market UNI@BTC\
-	demand-timeout-min 40h demand-timeout-max 60h\
-	supply-timeout-min 40h supply-timeout-max 60h\
+	demand-timeout-min 40h demand-timeout-max 324h\
+	supply-timeout-min 40h supply-timeout-max 324h\
 	stop-loss-delay 540m stop-loss-delays 2\
 	take-profit-delay 108m take-profit-delays 1\
 	take-loss-delay 648h take-loss-delays 1
 
 trade at coinbase using trend return 30 DOGE window 1296h\
 	market DOGE@BTC\
-	demand-timeout-min 40h demand-timeout-max 60h\
-	supply-timeout-min 40h supply-timeout-max 60h\
+	demand-timeout-min 40h demand-timeout-max 324h\
+	supply-timeout-min 40h supply-timeout-max 324h\
 	stop-loss-delay 540m stop-loss-delays 2\
 	take-profit-delay 108m take-profit-delays 1\
 	take-loss-delay 648h take-loss-delays 1
@@ -141,8 +142,8 @@ trade at coinbase using trend return 30 DOGE window 1296h\
 trade at coinbase using trend return $eth_return window 1296h\
 	market ADA@ETH\
 	market BAT@ETH\
-	demand-timeout-min 40h demand-timeout-max 60h\
-	supply-timeout-min 40h supply-timeout-max 60h\
+	demand-timeout-min 40h demand-timeout-max 324h\
+	supply-timeout-min 40h supply-timeout-max 324h\
 	stop-loss-delay 540m stop-loss-delays 2\
 	take-profit-delay 108m take-profit-delays 1\
 	take-loss-delay 648h take-loss-delays 1
@@ -154,756 +155,574 @@ trade at coinbase using trend return $eur_return window 1296h\
 	market FIL@EUR\
 	market GRT@EUR\
 	market MANA@EUR\
-	demand-timeout-min 40h demand-timeout-max 60h\
-	supply-timeout-min 40h supply-timeout-max 60h\
+	demand-timeout-min 40h demand-timeout-max 324h\
+	supply-timeout-min 40h supply-timeout-max 324h\
 	stop-loss-delay 540m stop-loss-delays 2\
 	take-profit-delay 108m take-profit-delays 1\
 	take-loss-delay 648h take-loss-delays 1
 
 trade at coinbase using trend return $btc_return window 2592h\
 	market BAT@BTC\
-	demand-timeout-min 80h demand-timeout-max 120h\
-	supply-timeout-min 80h supply-timeout-max 120h\
+	demand-timeout-min 80h demand-timeout-max 648h\
+	supply-timeout-min 80h supply-timeout-max 648h\
 	stop-loss-delay 1080m stop-loss-delays 2\
 	take-profit-delay 216m take-profit-delays 1\
 	take-loss-delay 1296h take-loss-delays 1
 
 trade at coinbase using trend return $eth_return window 2592h\
 	market SOL@ETH\
-	demand-timeout-min 80h demand-timeout-max 120h\
-	supply-timeout-min 80h supply-timeout-max 120h\
+	demand-timeout-min 80h demand-timeout-max 648h\
+	supply-timeout-min 80h supply-timeout-max 648h\
 	stop-loss-delay 1080m stop-loss-delays 2\
 	take-profit-delay 216m take-profit-delays 1\
 	take-loss-delay 1296h take-loss-delays 1
+
 trade at coinbase using trend return $btc_return window 36h\
-	market not match CGLD\
-		not match CLV\
-		not match EOS\
-		not match LOKA\
-		not match MUSE\
-		not match WCFG\
-		not match MKR\
-		not match NOIA\
-		not match DVI\
-		not match PSP\
-		not match BZRX\
-		not match NATION\
-		not match CBAT\
-		not match EWTB\
-		not match UMEE\
-		not match DAD\
-		not match RFOX\
-		not match SQT\
-		not match VR\
-		not match LMR\
-		not match CETH\
-		not match GRID\
-		not match DAO\
-		not match SURE\
-		not match UXP\
-		not match BFC\
-		not match YOUC\
-		not match MFG\
-		not match FXC\
-		not match LUNR\
-		not match PHA\
-		not match SOFI\
-		not match MIM\
-		not match ^J@\
-		not match @J$\
-		not match TITAN\
-		not match ELON\
-		not match BETA\
-		not match OM\
-		not match CREAM\
-		not match MTA\
-		not match CQT\
-		not match DPX\
-		not match UBT\
-		not match LTX\
-		not match DOGEGF\
-		not match STAKE\
-		not match PUSH\
-		not match INXT\
-		not match AGI\
-		not match LST\
-		not match ANTV1\
-		not match CVP\
-		not match SEAM\
-		not match IDEX\
-		not match LRC\
-		not match OMNI\
-		not match PIRATE\
-		not match FIS\
-		not match IOTX\
-		not match BADGER\
-		not match STORJ\
-		not ETH@DAI\
-		not FLOW@USDT\
-		not MANA@ETH\
-		not COMP@BTC\
-		not YFI@BTC\
-		not LSETH@ETH\
-		not MINA@EUR\
-		not GRT@GBP\
-		not MASK@GBP\
-		not CHZ@USDT\
-		not CRO@USDT\
+	market\
+		not 1INCH@EUR\
+		not AAVE@BTC\
+		not AAVE@EUR\
+		not ADA@BTC\
+		not ADA@ETH\
+		not ADA@EUR\
+		not ALGO@BTC\
+		not ALGO@EUR\
+		not ANKR@EUR\
+		not APE@EUR\
+		not AVAX@BTC\
+		not AVAX@EUR\
+		not BAT@BTC\
+		not BAT@ETH\
+		not BAT@EUR\
+		not BCH@BTC\
+		not BCH@EUR\
+		not BTC@EUR\
+		not CRV@BTC\
+		not CRV@EUR\
+		not DASH@BTC\
+		not DOGE@BTC\
+		not DOGE@EUR\
+		not ETC@BTC\
+		not ETC@EUR\
+		not ETH@BTC\
+		not ETH@EUR\
+		not FIL@BTC\
+		not FIL@EUR\
+		not GRT@BTC\
+		not GRT@EUR\
+		not ICP@BTC\
+		not ICP@EUR\
+		not LTC@BTC\
+		not LTC@EUR\
+		not MANA@EUR\
+		not SHIB@EUR\
+		not SNX@EUR\
+		not SOL@BTC\
+		not SOL@ETH\
+		not SOL@EUR\
+		not UNI@BTC\
+		not UNI@EUR\
+		not USDC@EUR\
+		not XLM@BTC\
+		not XLM@EUR\
 		match @BTC\
-	demand-timeout-min 1h demand-timeout-max 1.5h\
-	supply-timeout-min 1h supply-timeout-max 1.5h\
+	demand-timeout-min 1h demand-timeout-max 9h\
+	supply-timeout-min 1h supply-timeout-max 9h\
+	stop-loss-delay 15m stop-loss-delays 2\
+	take-profit-delay 3m take-profit-delays 1\
+	take-loss-delay 18h take-loss-delays 1
+
+trade at coinbase using trend return $cad_return window 36h\
+	market\
+		not 1INCH@EUR\
+		not AAVE@BTC\
+		not AAVE@EUR\
+		not ADA@BTC\
+		not ADA@ETH\
+		not ADA@EUR\
+		not ALGO@BTC\
+		not ALGO@EUR\
+		not ANKR@EUR\
+		not APE@EUR\
+		not AVAX@BTC\
+		not AVAX@EUR\
+		not BAT@BTC\
+		not BAT@ETH\
+		not BAT@EUR\
+		not BCH@BTC\
+		not BCH@EUR\
+		not BTC@EUR\
+		not CRV@BTC\
+		not CRV@EUR\
+		not DASH@BTC\
+		not DOGE@BTC\
+		not DOGE@EUR\
+		not ETC@BTC\
+		not ETC@EUR\
+		not ETH@BTC\
+		not ETH@EUR\
+		not FIL@BTC\
+		not FIL@EUR\
+		not GRT@BTC\
+		not GRT@EUR\
+		not ICP@BTC\
+		not ICP@EUR\
+		not LTC@BTC\
+		not LTC@EUR\
+		not MANA@EUR\
+		not SHIB@EUR\
+		not SNX@EUR\
+		not SOL@BTC\
+		not SOL@ETH\
+		not SOL@EUR\
+		not UNI@BTC\
+		not UNI@EUR\
+		not USDC@EUR\
+		not XLM@BTC\
+		not XLM@EUR\
+		match @CAD\
+	demand-timeout-min 1h demand-timeout-max 9h\
+	supply-timeout-min 1h supply-timeout-max 9h\
 	stop-loss-delay 15m stop-loss-delays 2\
 	take-profit-delay 3m take-profit-delays 1\
 	take-loss-delay 18h take-loss-delays 1
 
 trade at coinbase using trend return $eth_return window 36h\
-	market not match CGLD\
-		not match CLV\
-		not match EOS\
-		not match LOKA\
-		not match MUSE\
-		not match WCFG\
-		not match MKR\
-		not match NOIA\
-		not match DVI\
-		not match PSP\
-		not match BZRX\
-		not match NATION\
-		not match CBAT\
-		not match EWTB\
-		not match UMEE\
-		not match DAD\
-		not match RFOX\
-		not match SQT\
-		not match VR\
-		not match LMR\
-		not match CETH\
-		not match GRID\
-		not match DAO\
-		not match SURE\
-		not match UXP\
-		not match BFC\
-		not match YOUC\
-		not match MFG\
-		not match FXC\
-		not match LUNR\
-		not match PHA\
-		not match SOFI\
-		not match MIM\
-		not match ^J@\
-		not match @J$\
-		not match TITAN\
-		not match ELON\
-		not match BETA\
-		not match OM\
-		not match CREAM\
-		not match MTA\
-		not match CQT\
-		not match DPX\
-		not match UBT\
-		not match LTX\
-		not match DOGEGF\
-		not match STAKE\
-		not match PUSH\
-		not match INXT\
-		not match AGI\
-		not match LST\
-		not match ANTV1\
-		not match CVP\
-		not match SEAM\
-		not match IDEX\
-		not match LRC\
-		not match OMNI\
-		not match PIRATE\
-		not match FIS\
-		not match IOTX\
-		not match BADGER\
-		not match STORJ\
-		not ETH@DAI\
-		not FLOW@USDT\
-		not MANA@ETH\
-		not COMP@BTC\
-		not YFI@BTC\
-		not LSETH@ETH\
-		not MINA@EUR\
-		not GRT@GBP\
-		not MASK@GBP\
-		not CHZ@USDT\
-		not CRO@USDT\
+	market\
+		not 1INCH@EUR\
+		not AAVE@BTC\
+		not AAVE@EUR\
+		not ADA@BTC\
+		not ADA@ETH\
+		not ADA@EUR\
+		not ALGO@BTC\
+		not ALGO@EUR\
+		not ANKR@EUR\
+		not APE@EUR\
+		not AVAX@BTC\
+		not AVAX@EUR\
+		not BAT@BTC\
+		not BAT@ETH\
+		not BAT@EUR\
+		not BCH@BTC\
+		not BCH@EUR\
+		not BTC@EUR\
+		not CRV@BTC\
+		not CRV@EUR\
+		not DASH@BTC\
+		not DOGE@BTC\
+		not DOGE@EUR\
+		not ETC@BTC\
+		not ETC@EUR\
+		not ETH@BTC\
+		not ETH@EUR\
+		not FIL@BTC\
+		not FIL@EUR\
+		not GRT@BTC\
+		not GRT@EUR\
+		not ICP@BTC\
+		not ICP@EUR\
+		not LTC@BTC\
+		not LTC@EUR\
+		not MANA@EUR\
+		not SHIB@EUR\
+		not SNX@EUR\
+		not SOL@BTC\
+		not SOL@ETH\
+		not SOL@EUR\
+		not UNI@BTC\
+		not UNI@EUR\
+		not USDC@EUR\
+		not XLM@BTC\
+		not XLM@EUR\
 		match @ETH\
-	demand-timeout-min 1h demand-timeout-max 1.5h\
-	supply-timeout-min 1h supply-timeout-max 1.5h\
+	demand-timeout-min 1h demand-timeout-max 9h\
+	supply-timeout-min 1h supply-timeout-max 9h\
 	stop-loss-delay 15m stop-loss-delays 2\
 	take-profit-delay 3m take-profit-delays 1\
 	take-loss-delay 18h take-loss-delays 1
 
 trade at coinbase using trend return $eur_return window 36h\
-	market not match CGLD\
-		not match CLV\
-		not match EOS\
-		not match LOKA\
-		not match MUSE\
-		not match WCFG\
-		not match MKR\
-		not match NOIA\
-		not match DVI\
-		not match PSP\
-		not match BZRX\
-		not match NATION\
-		not match CBAT\
-		not match EWTB\
-		not match UMEE\
-		not match DAD\
-		not match RFOX\
-		not match SQT\
-		not match VR\
-		not match LMR\
-		not match CETH\
-		not match GRID\
-		not match DAO\
-		not match SURE\
-		not match UXP\
-		not match BFC\
-		not match YOUC\
-		not match MFG\
-		not match FXC\
-		not match LUNR\
-		not match PHA\
-		not match SOFI\
-		not match MIM\
-		not match ^J@\
-		not match @J$\
-		not match TITAN\
-		not match ELON\
-		not match BETA\
-		not match OM\
-		not match CREAM\
-		not match MTA\
-		not match CQT\
-		not match DPX\
-		not match UBT\
-		not match LTX\
-		not match DOGEGF\
-		not match STAKE\
-		not match PUSH\
-		not match INXT\
-		not match AGI\
-		not match LST\
-		not match ANTV1\
-		not match CVP\
-		not match SEAM\
-		not match IDEX\
-		not match LRC\
-		not match OMNI\
-		not match PIRATE\
-		not match FIS\
-		not match IOTX\
-		not match BADGER\
-		not match STORJ\
-		not ETH@DAI\
-		not FLOW@USDT\
-		not MANA@ETH\
-		not COMP@BTC\
-		not YFI@BTC\
-		not LSETH@ETH\
-		not MINA@EUR\
-		not GRT@GBP\
-		not MASK@GBP\
-		not CHZ@USDT\
-		not CRO@USDT\
+	market\
+		not 1INCH@EUR\
+		not AAVE@BTC\
+		not AAVE@EUR\
+		not ADA@BTC\
+		not ADA@ETH\
+		not ADA@EUR\
+		not ALGO@BTC\
+		not ALGO@EUR\
+		not ANKR@EUR\
+		not APE@EUR\
+		not AVAX@BTC\
+		not AVAX@EUR\
+		not BAT@BTC\
+		not BAT@ETH\
+		not BAT@EUR\
+		not BCH@BTC\
+		not BCH@EUR\
+		not BTC@EUR\
+		not CRV@BTC\
+		not CRV@EUR\
+		not DASH@BTC\
+		not DOGE@BTC\
+		not DOGE@EUR\
+		not ETC@BTC\
+		not ETC@EUR\
+		not ETH@BTC\
+		not ETH@EUR\
+		not FIL@BTC\
+		not FIL@EUR\
+		not GRT@BTC\
+		not GRT@EUR\
+		not ICP@BTC\
+		not ICP@EUR\
+		not LTC@BTC\
+		not LTC@EUR\
+		not MANA@EUR\
+		not SHIB@EUR\
+		not SNX@EUR\
+		not SOL@BTC\
+		not SOL@ETH\
+		not SOL@EUR\
+		not UNI@BTC\
+		not UNI@EUR\
+		not USDC@EUR\
+		not XLM@BTC\
+		not XLM@EUR\
 		match @EUR\
-	demand-timeout-min 1h demand-timeout-max 1.5h\
-	supply-timeout-min 1h supply-timeout-max 1.5h\
-	stop-loss-delay 15m stop-loss-delays 2\
-	take-profit-delay 3m take-profit-delays 1\
-	take-loss-delay 18h take-loss-delays 1
-
-trade at coinbase using trend return $usdc_return window 36h\
-	market not match CGLD\
-		not match CLV\
-		not match EOS\
-		not match LOKA\
-		not match MUSE\
-		not match WCFG\
-		not match MKR\
-		not match NOIA\
-		not match DVI\
-		not match PSP\
-		not match BZRX\
-		not match NATION\
-		not match CBAT\
-		not match EWTB\
-		not match UMEE\
-		not match DAD\
-		not match RFOX\
-		not match SQT\
-		not match VR\
-		not match LMR\
-		not match CETH\
-		not match GRID\
-		not match DAO\
-		not match SURE\
-		not match UXP\
-		not match BFC\
-		not match YOUC\
-		not match MFG\
-		not match FXC\
-		not match LUNR\
-		not match PHA\
-		not match SOFI\
-		not match MIM\
-		not match ^J@\
-		not match J@$\
-		not match TITAN\
-		not match ELON\
-		not match BETA\
-		not match OM\
-		not match CREAM\
-		not match MTA\
-		not match CQT\
-		not match DPX\
-		not match UBT\
-		not match LTX\
-		not match DOGEGF\
-		not match STAKE\
-		not match PUSH\
-		not match INXT\
-		not match AGI\
-		not match LST\
-		not match ANTV1\
-		not match CVP\
-		not match SEAM\
-		not match IDEX\
-		not match LRC\
-		not match OMNI\
-		not match PIRATE\
-		not match FIS\
-		not match IOTX\
-		not match BADGER\
-		not match STORJ\
-		not ETH@DAI\
-		not FLOW@USDT\
-		not MANA@ETH\
-		not COMP@BTC\
-		not YFI@BTC\
-		not LSETH@ETH\
-		not MINA@EUR\
-		not GRT@GBP\
-		not MASK@GBP\
-		not CHZ@USDT\
-		not CRO@USDT\
-		match @USDC\
-	demand-timeout-min 1h demand-timeout-max 1.5h\
-	supply-timeout-min 1h supply-timeout-max 1.5h\
-	stop-loss-delay 15m stop-loss-delays 2\
-	take-profit-delay 3m take-profit-delays 1\
-	take-loss-delay 18h take-loss-delays 1
-
-trade at coinbase using trend return $usdt_return window 36h\
-	market not match CGLD\
-		not match CLV\
-		not match EOS\
-		not match LOKA\
-		not match MUSE\
-		not match WCFG\
-		not match MKR\
-		not match NOIA\
-		not match DVI\
-		not match PSP\
-		not match BZRX\
-		not match NATION\
-		not match CBAT\
-		not match EWTB\
-		not match UMEE\
-		not match DAD\
-		not match RFOX\
-		not match SQT\
-		not match VR\
-		not match LMR\
-		not match CETH\
-		not match GRID\
-		not match DAO\
-		not match SURE\
-		not match UXP\
-		not match BFC\
-		not match YOUC\
-		not match MFG\
-		not match FXC\
-		not match LUNR\
-		not match PHA\
-		not match SOFI\
-		not match MIM\
-		not match ^J@\
-		not match @J$\
-		not match TITAN\
-		not match ELON\
-		not match BETA\
-		not match OM\
-		not match CREAM\
-		not match MTA\
-		not match CQT\
-		not match DPX\
-		not match UBT\
-		not match LTX\
-		not match DOGEGF\
-		not match STAKE\
-		not match PUSH\
-		not match INXT\
-		not match AGI\
-		not match LST\
-		not match ANTV1\
-		not match CVP\
-		not match SEAM\
-		not match IDEX\
-		not match LRC\
-		not match OMNI\
-		not match PIRATE\
-		not match FIS\
-		not match IOTX\
-		not match BADGER\
-		not match STORJ\
-		not ETH@DAI\
-		not FLOW@USDT\
-		not MANA@ETH\
-		not COMP@BTC\
-		not YFI@BTC\
-		not LSETH@ETH\
-		not MINA@EUR\
-		not GRT@GBP\
-		not MASK@GBP\
-		not CHZ@USDT\
-		not CRO@USDT\
-		match @USDT\
-	demand-timeout-min 1h demand-timeout-max 1.5h\
-	supply-timeout-min 1h supply-timeout-max 1.5h\
-	stop-loss-delay 15m stop-loss-delays 2\
-	take-profit-delay 3m take-profit-delays 1\
-	take-loss-delay 18h take-loss-delays 1
-
-trade at coinbase using trend return $usd_return window 36h\
-	market not match CGLD\
-		not match CLV\
-		not match EOS\
-		not match LOKA\
-		not match MUSE\
-		not match WCFG\
-		not match MKR\
-		not match NOIA\
-		not match DVI\
-		not match PSP\
-		not match BZRX\
-		not match NATION\
-		not match CBAT\
-		not match EWTB\
-		not match UMEE\
-		not match DAD\
-		not match RFOX\
-		not match SQT\
-		not match VR\
-		not match LMR\
-		not match CETH\
-		not match GRID\
-		not match DAO\
-		not match SURE\
-		not match UXP\
-		not match BFC\
-		not match YOUC\
-		not match MFG\
-		not match FXC\
-		not match LUNR\
-		not match PHA\
-		not match SOFI\
-		not match MIM\
-		not match ^J@\
-		not match @J$\
-		not match TITAN\
-		not match ELON\
-		not match BETA\
-		not match OM\
-		not match CREAM\
-		not match MTA\
-		not match CQT\
-		not match DPX\
-		not match UBT\
-		not match LTX\
-		not match DOGEGF\
-		not match STAKE\
-		not match PUSH\
-		not match INXT\
-		not match AGI\
-		not match LST\
-		not match ANTV1\
-		not match CVP\
-		not match SEAM\
-		not match IDEX\
-		not match LRC\
-		not match OMNI\
-		not match PIRATE\
-		not match FIS\
-		not match IOTX\
-		not match BADGER\
-		not match STORJ\
-		not ETH@DAI\
-		not FLOW@USDT\
-		not MANA@ETH\
-		not COMP@BTC\
-		not YFI@BTC\
-		not LSETH@ETH\
-		not MINA@EUR\
-		not GRT@GBP\
-		not MASK@GBP\
-		not CHZ@USDT\
-		not CRO@USDT\
-		match @USD\
-	demand-timeout-min 1h demand-timeout-max 1.5h\
-	supply-timeout-min 1h supply-timeout-max 1.5h\
-	stop-loss-delay 15m stop-loss-delays 2\
-	take-profit-delay 3m take-profit-delays 1\
-	take-loss-delay 18h take-loss-delays 1
-
-trade at coinbase using trend return $inr_return window 36h\
-	market not match CGLD\
-		not match CLV\
-		not match EOS\
-		not match LOKA\
-		not match MUSE\
-		not match WCFG\
-		not match MKR\
-		not match NOIA\
-		not match DVI\
-		not match PSP\
-		not match BZRX\
-		not match NATION\
-		not match CBAT\
-		not match EWTB\
-		not match UMEE\
-		not match DAD\
-		not match RFOX\
-		not match SQT\
-		not match VR\
-		not match LMR\
-		not match CETH\
-		not match GRID\
-		not match DAO\
-		not match SURE\
-		not match UXP\
-		not match BFC\
-		not match YOUC\
-		not match MFG\
-		not match FXC\
-		not match LUNR\
-		not match PHA\
-		not match SOFI\
-		not match MIM\
-		not match ^J@\
-		not match @J$\
-		not match TITAN\
-		not match ELON\
-		not match BETA\
-		not match OM\
-		not match CREAM\
-		not match MTA\
-		not match CQT\
-		not match DPX\
-		not match UBT\
-		not match LTX\
-		not match DOGEGF\
-		not match STAKE\
-		not match PUSH\
-		not match INXT\
-		not match AGI\
-		not match LST\
-		not match ANTV1\
-		not match CVP\
-		not match SEAM\
-		not match IDEX\
-		not match LRC\
-		not match OMNI\
-		not match PIRATE\
-		not match FIS\
-		not match IOTX\
-		not match BADGER\
-		not match STORJ\
-		not ETH@DAI\
-		not FLOW@USDT\
-		not MANA@ETH\
-		not COMP@BTC\
-		not YFI@BTC\
-		not LSETH@ETH\
-		not MINA@EUR\
-		not GRT@GBP\
-		not MASK@GBP\
-		not CHZ@USDT\
-		not CRO@USDT\
-		match @INR\
-	demand-timeout-min 1h demand-timeout-max 1.5h\
-	supply-timeout-min 1h supply-timeout-max 1.5h\
+	demand-timeout-min 1h demand-timeout-max 9h\
+	supply-timeout-min 1h supply-timeout-max 9h\
 	stop-loss-delay 15m stop-loss-delays 2\
 	take-profit-delay 3m take-profit-delays 1\
 	take-loss-delay 18h take-loss-delays 1
 
 trade at coinbase using trend return $gbp_return window 36h\
-	market not match CGLD\
-		not match CLV\
-		not match EOS\
-		not match LOKA\
-		not match MUSE\
-		not match WCFG\
-		not match MKR\
-		not match NOIA\
-		not match DVI\
-		not match PSP\
-		not match BZRX\
-		not match NATION\
-		not match CBAT\
-		not match EWTB\
-		not match UMEE\
-		not match DAD\
-		not match RFOX\
-		not match SQT\
-		not match VR\
-		not match LMR\
-		not match CETH\
-		not match GRID\
-		not match DAO\
-		not match SURE\
-		not match UXP\
-		not match BFC\
-		not match YOUC\
-		not match MFG\
-		not match FXC\
-		not match LUNR\
-		not match PHA\
-		not match SOFI\
-		not match MIM\
-		not match ^J@\
-		not match @J$\
-		not match TITAN\
-		not match ELON\
-		not match BETA\
-		not match OM\
-		not match CREAM\
-		not match MTA\
-		not match CQT\
-		not match DPX\
-		not match UBT\
-		not match LTX\
-		not match DOGEGF\
-		not match STAKE\
-		not match PUSH\
-		not match INXT\
-		not match AGI\
-		not match LST\
-		not match ANTV1\
-		not match CVP\
-		not match SEAM\
-		not match IDEX\
-		not match LRC\
-		not match OMNI\
-		not match PIRATE\
-		not match FIS\
-		not match IOTX\
-		not match BADGER\
-		not match STORJ\
-		not ETH@DAI\
-		not FLOW@USDT\
-		not MANA@ETH\
-		not COMP@BTC\
-		not YFI@BTC\
-		not LSETH@ETH\
-		not MINA@EUR\
-		not GRT@GBP\
-		not MASK@GBP\
-		not CHZ@USDT\
-		not CRO@USDT\
+	market\
+		not 1INCH@EUR\
+		not AAVE@BTC\
+		not AAVE@EUR\
+		not ADA@BTC\
+		not ADA@ETH\
+		not ADA@EUR\
+		not ALGO@BTC\
+		not ALGO@EUR\
+		not ANKR@EUR\
+		not APE@EUR\
+		not AVAX@BTC\
+		not AVAX@EUR\
+		not BAT@BTC\
+		not BAT@ETH\
+		not BAT@EUR\
+		not BCH@BTC\
+		not BCH@EUR\
+		not BTC@EUR\
+		not CRV@BTC\
+		not CRV@EUR\
+		not DASH@BTC\
+		not DOGE@BTC\
+		not DOGE@EUR\
+		not ETC@BTC\
+		not ETC@EUR\
+		not ETH@BTC\
+		not ETH@EUR\
+		not FIL@BTC\
+		not FIL@EUR\
+		not GRT@BTC\
+		not GRT@EUR\
+		not ICP@BTC\
+		not ICP@EUR\
+		not LTC@BTC\
+		not LTC@EUR\
+		not MANA@EUR\
+		not SHIB@EUR\
+		not SNX@EUR\
+		not SOL@BTC\
+		not SOL@ETH\
+		not SOL@EUR\
+		not UNI@BTC\
+		not UNI@EUR\
+		not USDC@EUR\
+		not XLM@BTC\
+		not XLM@EUR\
 		match @GBP\
-	demand-timeout-min 1h demand-timeout-max 1.5h\
-	supply-timeout-min 1h supply-timeout-max 1.5h\
+	demand-timeout-min 1h demand-timeout-max 9h\
+	supply-timeout-min 1h supply-timeout-max 9h\
 	stop-loss-delay 15m stop-loss-delays 2\
 	take-profit-delay 3m take-profit-delays 1\
 	take-loss-delay 18h take-loss-delays 1
 
-trade at bitvavo using trend return $eur_return window 1296h\
-	market 0G@EUR\
-	market 1INCH@EUR\
-	market 2Z@EUR\
-	market ACH@EUR\
-	market ACX@EUR\
-	market ADX@EUR\
-	market AEVO@EUR\
-	market AMP@EUR\
-	market ANIME@EUR\
-	market ARK@EUR\
-	market ASTR@EUR\
-	market AUDIO@EUR\
-	market BCH@EUR\
-	market BNT@EUR\
-	market BREV@EUR\
-	market BTT@EUR\
-	market CAP@EUR\
-	market CELO@EUR\
-	market CETUS@EUR\
-	market CTC@EUR\
-	market CVC@EUR\
-	market CYBER@EUR\
-	market DEGEN@EUR\
-	market EURC@EUR\
-	market EUROP@EUR\
-	market FTT@EUR\
-	market FUEL@EUR\
-	market G@EUR\
-	market GNO@EUR\
-	market GNS@EUR\
-	market ICNT@EUR\
-	market KAITO@EUR\
-	market MANTRA@EUR\
-	market MAV@EUR\
-	market MAVIA@EUR\
-	market MOCA@EUR\
-	market MOVE@EUR\
-	market ONG@EUR\
-	market ONT@EUR\
-	market OSMO@EUR\
-	market PENGU@EUR\
-	market PEPE@EUR\
-	market POWR@EUR\
-	market PUMP@EUR\
-	market PUNDIX@EUR\
-	market RAD@EUR\
-	market RARE@EUR\
-	market RED@EUR\
-	market REQ@EUR\
-	market REZ@EUR\
-	market ROSE@EUR\
-	market SAPIEN@EUR\
-	market SHIB@EUR\
-	market SKY@EUR\
-	market SLX@EUR\
-	market SOLV@EUR\
+trade at coinbase using trend return $inr_return window 36h\
+	market\
+		not 1INCH@EUR\
+		not AAVE@BTC\
+		not AAVE@EUR\
+		not ADA@BTC\
+		not ADA@ETH\
+		not ADA@EUR\
+		not ALGO@BTC\
+		not ALGO@EUR\
+		not ANKR@EUR\
+		not APE@EUR\
+		not AVAX@BTC\
+		not AVAX@EUR\
+		not BAT@BTC\
+		not BAT@ETH\
+		not BAT@EUR\
+		not BCH@BTC\
+		not BCH@EUR\
+		not BTC@EUR\
+		not CRV@BTC\
+		not CRV@EUR\
+		not DASH@BTC\
+		not DOGE@BTC\
+		not DOGE@EUR\
+		not ETC@BTC\
+		not ETC@EUR\
+		not ETH@BTC\
+		not ETH@EUR\
+		not FIL@BTC\
+		not FIL@EUR\
+		not GRT@BTC\
+		not GRT@EUR\
+		not ICP@BTC\
+		not ICP@EUR\
+		not LTC@BTC\
+		not LTC@EUR\
+		not MANA@EUR\
+		not SHIB@EUR\
+		not SNX@EUR\
+		not SOL@BTC\
+		not SOL@ETH\
+		not SOL@EUR\
+		not UNI@BTC\
+		not UNI@EUR\
+		not USDC@EUR\
+		not XLM@BTC\
+		not XLM@EUR\
+		match @INR\
+	demand-timeout-min 1h demand-timeout-max 9h\
+	supply-timeout-min 1h supply-timeout-max 9h\
+	stop-loss-delay 15m stop-loss-delays 2\
+	take-profit-delay 3m take-profit-delays 1\
+	take-loss-delay 18h take-loss-delays 1
+
+trade at coinbase using trend return $usdc_return window 36h\
+	market\
+		not 1INCH@EUR\
+		not AAVE@BTC\
+		not AAVE@EUR\
+		not ADA@BTC\
+		not ADA@ETH\
+		not ADA@EUR\
+		not ALGO@BTC\
+		not ALGO@EUR\
+		not ANKR@EUR\
+		not APE@EUR\
+		not AVAX@BTC\
+		not AVAX@EUR\
+		not BAT@BTC\
+		not BAT@ETH\
+		not BAT@EUR\
+		not BCH@BTC\
+		not BCH@EUR\
+		not BTC@EUR\
+		not CRV@BTC\
+		not CRV@EUR\
+		not DASH@BTC\
+		not DOGE@BTC\
+		not DOGE@EUR\
+		not ETC@BTC\
+		not ETC@EUR\
+		not ETH@BTC\
+		not ETH@EUR\
+		not FIL@BTC\
+		not FIL@EUR\
+		not GRT@BTC\
+		not GRT@EUR\
+		not ICP@BTC\
+		not ICP@EUR\
+		not LTC@BTC\
+		not LTC@EUR\
+		not MANA@EUR\
+		not SHIB@EUR\
+		not SNX@EUR\
+		not SOL@BTC\
+		not SOL@ETH\
+		not SOL@EUR\
+		not UNI@BTC\
+		not UNI@EUR\
+		not USDC@EUR\
+		not XLM@BTC\
+		not XLM@EUR\
+		match @USDC\
+	demand-timeout-min 1h demand-timeout-max 9h\
+	supply-timeout-min 1h supply-timeout-max 9h\
+	stop-loss-delay 15m stop-loss-delays 2\
+	take-profit-delay 3m take-profit-delays 1\
+	take-loss-delay 18h take-loss-delays 1
+
+trade at coinbase using trend return $usdt_return window 36h\
+	market\
+		not 1INCH@EUR\
+		not AAVE@BTC\
+		not AAVE@EUR\
+		not ADA@BTC\
+		not ADA@ETH\
+		not ADA@EUR\
+		not ALGO@BTC\
+		not ALGO@EUR\
+		not ANKR@EUR\
+		not APE@EUR\
+		not AVAX@BTC\
+		not AVAX@EUR\
+		not BAT@BTC\
+		not BAT@ETH\
+		not BAT@EUR\
+		not BCH@BTC\
+		not BCH@EUR\
+		not BTC@EUR\
+		not CRV@BTC\
+		not CRV@EUR\
+		not DASH@BTC\
+		not DOGE@BTC\
+		not DOGE@EUR\
+		not ETC@BTC\
+		not ETC@EUR\
+		not ETH@BTC\
+		not ETH@EUR\
+		not FIL@BTC\
+		not FIL@EUR\
+		not GRT@BTC\
+		not GRT@EUR\
+		not ICP@BTC\
+		not ICP@EUR\
+		not LTC@BTC\
+		not LTC@EUR\
+		not MANA@EUR\
+		not SHIB@EUR\
+		not SNX@EUR\
+		not SOL@BTC\
+		not SOL@ETH\
+		not SOL@EUR\
+		not UNI@BTC\
+		not UNI@EUR\
+		not USDC@EUR\
+		not XLM@BTC\
+		not XLM@EUR\
+		match @USDT\
+	demand-timeout-min 1h demand-timeout-max 9h\
+	supply-timeout-min 1h supply-timeout-max 9h\
+	stop-loss-delay 15m stop-loss-delays 2\
+	take-profit-delay 3m take-profit-delays 1\
+	take-loss-delay 18h take-loss-delays 1
+
+trade at coinbase using trend return $usd_return window 36h\
+	market\
+		not 1INCH@EUR\
+		not AAVE@BTC\
+		not AAVE@EUR\
+		not ADA@BTC\
+		not ADA@ETH\
+		not ADA@EUR\
+		not ALGO@BTC\
+		not ALGO@EUR\
+		not ANKR@EUR\
+		not APE@EUR\
+		not AVAX@BTC\
+		not AVAX@EUR\
+		not BAT@BTC\
+		not BAT@ETH\
+		not BAT@EUR\
+		not BCH@BTC\
+		not BCH@EUR\
+		not BTC@EUR\
+		not CRV@BTC\
+		not CRV@EUR\
+		not DASH@BTC\
+		not DOGE@BTC\
+		not DOGE@EUR\
+		not ETC@BTC\
+		not ETC@EUR\
+		not ETH@BTC\
+		not ETH@EUR\
+		not FIL@BTC\
+		not FIL@EUR\
+		not GRT@BTC\
+		not GRT@EUR\
+		not ICP@BTC\
+		not ICP@EUR\
+		not LTC@BTC\
+		not LTC@EUR\
+		not MANA@EUR\
+		not SHIB@EUR\
+		not SNX@EUR\
+		not SOL@BTC\
+		not SOL@ETH\
+		not SOL@EUR\
+		not UNI@BTC\
+		not UNI@EUR\
+		not USDC@EUR\
+		not XLM@BTC\
+		not XLM@EUR\
+		match @USD\
+	demand-timeout-min 1h demand-timeout-max 9h\
+	supply-timeout-min 1h supply-timeout-max 9h\
+	stop-loss-delay 15m stop-loss-delays 2\
+	take-profit-delay 3m take-profit-delays 1\
+	take-loss-delay 18h take-loss-delays 1
+
+trade at bitvavo using trend return $eur_return window 36h\
+	market ACU@EUR\
+	market AKT@EUR\
+	market AVAX@EUR\
+	market BICO@EUR\
+	market BILL@EUR\
+	market BNB@EUR\
+	market BTC@EUR\
+	market ETH@EUR\
+	market HYPE@EUR\
+	market MMT@EUR\
+	market NEAR@EUR\
+	market TRX@EUR\
+	market USELESS@EUR\
+	demand-timeout-min 1h demand-timeout-max 9h\
+	supply-timeout-min 1h supply-timeout-max 9h\
+	stop-loss-delay 15m stop-loss-delays 1\
+	take-profit-delay 3m take-profit-delays 0\
+	take-loss-delay 18h take-loss-delays 1
+
+trade at bitvavo using trend return $eur_return window 72h\
+	market AAVE@EUR\
+	market BABY@EUR\
+	market CC@EUR\
+	market DODO@EUR\
+	market DOT@EUR\
+	market FLUID@EUR\
+	market INJ@EUR\
+	market LTC@EUR\
+	market MON@EUR\
+	market OPEN@EUR\
+	market PHA@EUR\
+	market PORTAL@EUR\
+	market QNT@EUR\
+	market RAY@EUR\
+	market RENDER@EUR\
 	market SOON@EUR\
-	market SPX@EUR\
-	market SWELL@EUR\
-	market TLM@EUR\
-	market TRIA@EUR\
-	market TRUST@EUR\
-	market VANRY@EUR\
-	market VERONA@EUR\
-	market VSN@EUR\
-	market WIN@EUR\
-	market WMTX@EUR\
-	market XMN@EUR\
-	market XNO@EUR\
-	market XTZ@EUR\
-	market ZETA@EUR\
-	market ZEUS@EUR\
-	market ZIL@EUR\
-	market ZKJ@EUR\
-	market ZIG@EUR\
-	demand-timeout-min 40h demand-timeout-max 60h\
-	supply-timeout-min 40h supply-timeout-max 60h\
-	stop-loss-delay 540m stop-loss-delays 1\
-	take-profit-delay 108m take-profit-delays 0\
-	take-loss-delay 648h take-loss-delays 1
+	market TIA@EUR\
+	market TOMO@EUR\
+	market TRX@EUR\
+	market USDC@EUR\
+	market USELESS@EUR\
+	market WAL@EUR\
+	market WIF@EUR\
+	market XLM@EUR\
+	market XPL@EUR\
+	demand-timeout-min 2h demand-timeout-max 18h\
+	supply-timeout-min 2h supply-timeout-max 18h\
+	stop-loss-delay 30m stop-loss-delays 1\
+	take-profit-delay 7.5m take-profit-delays 0\
+	take-loss-delay 36h take-loss-delays 1
 
 trade at bitvavo using trend return $eur_return window 324h\
 	market 2Z@EUR\
@@ -927,7 +746,6 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market ATH@EUR\
 	market ATOM@EUR\
 	market AUCTION@EUR\
-	market AVA@EUR\
 	market AVNT@EUR\
 	market AXL@EUR\
 	market AXS@EUR\
@@ -939,6 +757,7 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market BEL@EUR\
 	market BIGTIME@EUR\
 	market BIO@EUR\
+	market BIRB@EUR\
 	market BLUR@EUR\
 	market BOME@EUR\
 	market BRETT@EUR\
@@ -946,10 +765,10 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market C@EUR\
 	market CAKE@EUR\
 	market CARV@EUR\
-	market CAT@EUR\
 	market CATI@EUR\
 	market CELR@EUR\
 	market CFG@EUR\
+	market CHILLGUY@EUR\
 	market CHIP@EUR\
 	market CHR@EUR\
 	market CHZ@EUR\
@@ -962,13 +781,16 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market CSPR@EUR\
 	market CTK@EUR\
 	market CTR@EUR\
+	market CTSI@EUR\
 	market CVX@EUR\
 	market DATAIP@EUR\
 	market DBR@EUR\
 	market DEEP@EUR\
 	market DGB@EUR\
 	market DOGS@EUR\
+	market DOS@EUR\
 	market DUSK@EUR\
+	market DRIFT@EUR\
 	market DYDX@EUR\
 	market DYM@EUR\
 	market EDGE@EUR\
@@ -988,7 +810,6 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market FLUID@EUR\
 	market FLUX@EUR\
 	market FORM@EUR\
-	market FRAX@EUR\
 	market FTT@EUR\
 	market GALA@EUR\
 	market GAS@EUR\
@@ -1000,14 +821,18 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market GOAT@EUR\
 	market GRAM@EUR\
 	market GRASS@EUR\
+	market GROVE@EUR\
 	market GRT@EUR\
 	market GTC@EUR\
+	market GWEI@EUR\
 	market HAEDAL@EUR\
+	market HFT@EUR\
 	market HIGH@EUR\
 	market HMSTR@EUR\
 	market HNT@EUR\
 	market HOT@EUR\
 	market HUMA@EUR\
+	market ICP@EUR\
 	market ICX@EUR\
 	market ID@EUR\
 	market IKA@EUR\
@@ -1027,13 +852,13 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market KNC@EUR\
 	market KSM@EUR\
 	market LAYER@EUR\
+	market LDO@EUR\
 	market LIGHTER@EUR\
 	market LINEA@EUR\
 	market LISTA@EUR\
 	market LMWR@EUR\
 	market LRC@EUR\
 	market LSK@EUR\
-	market LUMIA@EUR\
 	market LUNA2@EUR\
 	market LUNA@EUR\
 	market MAGIC@EUR\
@@ -1041,6 +866,7 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market MANTA@EUR\
 	market MASK@EUR\
 	market ME@EUR\
+	market MEGA@EUR\
 	market MEME@EUR\
 	market MERL@EUR\
 	market MET@EUR\
@@ -1049,6 +875,7 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market MIOTA@EUR\
 	market MLN@EUR\
 	market MOG@EUR\
+	market MORPHO@EUR\
 	market MOVR@EUR\
 	market MTL@EUR\
 	market NEIRO@EUR\
@@ -1081,11 +908,11 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market PROVE@EUR\
 	market PUFFER@EUR\
 	market PYR@EUR\
-	market QKC@EUR\
+	market QUID@EUR\
 	market RARE@EUR\
 	market RON@EUR\
-	market RPL@EUR\
 	market RSR@EUR\
+	market RLC@EUR\
 	market RUNE@EUR\
 	market RVN@EUR\
 	market S@EUR\
@@ -1127,10 +954,8 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market TREE@EUR\
 	market TURBO@EUR\
 	market TWT@EUR\
-	market U@EUR\
 	market UMA@EUR\
 	market UP@EUR\
-	market VANA@EUR\
 	market VELO@EUR\
 	market VTHO@EUR\
 	market VVV@EUR\
@@ -1157,114 +982,875 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market ZRC@EUR\
 	market ZRO@EUR\
 	market ZRX@EUR\
-	demand-timeout-min 10h demand-timeout-max 15h\
-	supply-timeout-min 10h supply-timeout-max 15h\
+	demand-timeout-min 10h demand-timeout-max 81h\
+	supply-timeout-min 10h supply-timeout-max 81h\
 	stop-loss-delay 135m stop-loss-delays 1\
 	take-profit-delay 27m take-profit-delays 0\
 	take-loss-delay 162h take-loss-delays 1
 
-trade at bitvavo using trend return $eur_return window 72h\
-	market AAVE@EUR\
-	market BABY@EUR\
-	market CC@EUR\
-	market CHILLGUY@EUR\
-	market COTI@EUR\
-	market DODO@EUR\
-	market DOT@EUR\
-	market DRIFT@EUR\
-	market FLUID@EUR\
-	market HFT@EUR\
-	market ICP@EUR\
-	market INJ@EUR\
-	market LTC@EUR\
-	market MON@EUR\
-	market MOODENG@EUR\
-	market OPEN@EUR\
-	market PHA@EUR\
-	market PORTAL@EUR\
-	market QNT@EUR\
-	market RAY@EUR\
-	market RENDER@EUR\
-	market SENT@EUR\
+trade at bitvavo using trend return $usdc_return window 324h\
+	market ADA@USDC\
+	market TIA@USDC\
+	demand-timeout-min 10h demand-timeout-max 81h\
+	supply-timeout-min 10h supply-timeout-max 81h\
+	stop-loss-delay 135m stop-loss-delays 1\
+	take-profit-delay 27m take-profit-delays 0\
+	take-loss-delay 162h take-loss-delays 1
+
+trade at bitvavo using trend return $eur_return window 1296h\
+	market 0G@EUR\
+	market 1INCH@EUR\
+	market 2Z@EUR\
+	market ACH@EUR\
+	market ACX@EUR\
+	market ADX@EUR\
+	market AEVO@EUR\
+	market AMP@EUR\
+	market ANIME@EUR\
+	market ARK@EUR\
+	market ASTR@EUR\
+	market AUDIO@EUR\
+	market AVA@EUR\
+	market BCH@EUR\
+	market BNT@EUR\
+	market BREV@EUR\
+	market BTT@EUR\
+	market CAP@EUR\
+	market CAT@EUR\
+	market CELO@EUR\
+	market CETUS@EUR\
+	market CTC@EUR\
+	market CVC@EUR\
+	market CYBER@EUR\
+	market DEGEN@EUR\
+	market EURC@EUR\
+	market EUROP@EUR\
+	market FRAX@EUR\
+	market FTT@EUR\
+	market FUEL@EUR\
+	market G@EUR\
+	market GNO@EUR\
+	market GNS@EUR\
+	market ICNT@EUR\
+	market KAITO@EUR\
+	market LUMIA@EUR\
+	market MANTRA@EUR\
+	market MAV@EUR\
+	market MAVIA@EUR\
+	market MOCA@EUR\
+	market MOVE@EUR\
+	market ONG@EUR\
+	market ONT@EUR\
+	market OSMO@EUR\
+	market PENGU@EUR\
+	market PEPE@EUR\
+	market POWR@EUR\
+	market PUMP@EUR\
+	market PUNDIX@EUR\
+	market QKC@EUR\
+	market RAD@EUR\
+	market RARE@EUR\
+	market RED@EUR\
+	market REQ@EUR\
+	market REZ@EUR\
+	market ROSE@EUR\
+	market RPL@EUR\
+	market SAPIEN@EUR\
+	market SHIB@EUR\
+	market SKY@EUR\
+	market SLX@EUR\
+	market SOLV@EUR\
 	market SOON@EUR\
-	market TIA@EUR\
-	market TOMO@EUR\
-	market TRX@EUR\
-	market USDC@EUR\
-	market USELESS@EUR\
-	market VIRTUAL@EUR\
-	market WAL@EUR\
-	market WIF@EUR\
-	market XLM@EUR\
-	market XPL@EUR\
-	demand-timeout-min 2h demand-timeout-max 3.5h\
-	supply-timeout-min 2h supply-timeout-max 3.5h\
-	stop-loss-delay 30m stop-loss-delays 1\
-	take-profit-delay 7.5m take-profit-delays 0\
-	take-loss-delay 36h take-loss-delays 1
-
-trade at bitvavo using trend return $eur_return window 36h\
-	market ACU@EUR\
-	market AI@EUR\
-	market AKT@EUR\
-	market AVAX@EUR\
-	market BICO@EUR\
-	market BILL@EUR\
-	market BNB@EUR\
-	market BTC@EUR\
-	market EPIC@EUR\
-	market ETH@EUR\
-	market FET@EUR\
-	market HEI@EUR\
-	market HOME@EUR\
-	market HYPE@EUR\
-	market MMT@EUR\
-	market NEAR@EUR\
-	market NIL@EUR\
-	market RAY@EUR\
-	market RE@EUR\
-	market ROBO@EUR\
-	market SQD@EUR\
-	market SUI@EUR\
-	market TRX@EUR\
-	market USELESS@EUR\
-	market WLD@EUR\
-	market XRP@EUR\
-	market ZBT@EUR\
-	demand-timeout-min 1h demand-timeout-max 1.5h\
-	supply-timeout-min 1h supply-timeout-max 1.5h\
-	stop-loss-delay 15m stop-loss-delays 1\
-	take-profit-delay 3m take-profit-delays 0\
-	take-loss-delay 18h take-loss-delays 1
-
-trade at bitvavo using trend return $usdc_return window 1296h\
-	market DOGE@USDC\
-	market SUI@USDC\
-	demand-timeout-min 40h demand-timeout-max 60h\
-	supply-timeout-min 40h supply-timeout-max 60h\
+	market SPX@EUR\
+	market SWELL@EUR\
+	market TLM@EUR\
+	market TRIA@EUR\
+	market TRUST@EUR\
+	market U@EUR\
+	market VANA@EUR\
+	market VANRY@EUR\
+	market VERONA@EUR\
+	market VSN@EUR\
+	market WIN@EUR\
+	market WMTX@EUR\
+	market XMN@EUR\
+	market XNO@EUR\
+	market XTZ@EUR\
+	market ZETA@EUR\
+	market ZEUS@EUR\
+	market ZIL@EUR\
+	market ZKJ@EUR\
+	market ZIG@EUR\
+	demand-timeout-min 40h demand-timeout-max 324h\
+	supply-timeout-min 40h supply-timeout-max 324h\
 	stop-loss-delay 540m stop-loss-delays 1\
 	take-profit-delay 108m take-profit-delays 0\
 	take-loss-delay 648h take-loss-delays 1
 
-trade at bitvavo using trend return $usdc_return window 324h\
-	market ADA@USDC\
-	demand-timeout-min 10h demand-timeout-max 15h\
-	supply-timeout-min 10h supply-timeout-max 15h\
-	stop-loss-delay 135m stop-loss-delays 1\
-	take-profit-delay 27m take-profit-delays 0\
-	take-loss-delay 162h take-loss-delays 1
+trade at bitvavo using trend return $usdc_return window 1296h\
+	market DOGE@USDC\
+	market SUI@USDC\
+	demand-timeout-min 40h demand-timeout-max 324h\
+	supply-timeout-min 40h supply-timeout-max 324h\
+	stop-loss-delay 540m stop-loss-delays 1\
+	take-profit-delay 108m take-profit-delays 0\
+	take-loss-delay 648h take-loss-delays 1
+
 trade at bitvavo using trend return $eur_return window 180h\
-	market match @EUR\
-	demand-timeout-min 5h demand-timeout-max 7.5h\
-	supply-timeout-min 5h supply-timeout-max 7.5h\
+	market\
+		not 0G@EUR\
+		not 1INCH@EUR\
+		not 2Z@EUR\
+		not A@EUR\
+		not AAVE@EUR\
+		not ACH@EUR\
+		not ACT@EUR\
+		not ACU@EUR\
+		not ACX@EUR\
+		not ADA@USDC\
+		not ADX@EUR\
+		not AERGO@EUR\
+		not AEVO@EUR\
+		not AGI@EUR\
+		not AGLD@EUR\
+		not AIOZ@EUR\
+		not AIXBT@EUR\
+		not AKT@EUR\
+		not ALICE@EUR\
+		not ALT@EUR\
+		not AMP@EUR\
+		not ANIME@EUR\
+		not ANKR@EUR\
+		not APE@EUR\
+		not API3@EUR\
+		not APT@EUR\
+		not ARK@EUR\
+		not ARKM@EUR\
+		not ARPA@EUR\
+		not ARX@EUR\
+		not ASTER@EUR\
+		not ASTR@EUR\
+		not ATH@EUR\
+		not ATOM@EUR\
+		not AUCTION@EUR\
+		not AUDIO@EUR\
+		not AVA@EUR\
+		not AVAX@EUR\
+		not AVNT@EUR\
+		not AXL@EUR\
+		not AXS@EUR\
+		not AZTEC@EUR\
+		not BABY@EUR\
+		not BANANA@EUR\
+		not BAND@EUR\
+		not BAT@EUR\
+		not BCH@EUR\
+		not BEAM@EUR\
+		not BEL@EUR\
+		not BICO@EUR\
+		not BIGTIME@EUR\
+		not BILL@EUR\
+		not BIO@EUR\
+		not BIRB@EUR\
+		not BLUR@EUR\
+		not BNB@EUR\
+		not BNT@EUR\
+		not BOME@EUR\
+		not BRETT@EUR\
+		not BREV@EUR\
+		not BTC@EUR\
+		not BTT@EUR\
+		not C98@EUR\
+		not C@EUR\
+		not CAKE@EUR\
+		not CAP@EUR\
+		not CARV@EUR\
+		not CAT@EUR\
+		not CATI@EUR\
+		not CC@EUR\
+		not CELO@EUR\
+		not CELR@EUR\
+		not CETUS@EUR\
+		not CFG@EUR\
+		not CHILLGUY@EUR\
+		not CHIP@EUR\
+		not CHR@EUR\
+		not CHZ@EUR\
+		not COMP@EUR\
+		not COW@EUR\
+		not CPOOL@EUR\
+		not CRO@EUR\
+		not CROSS@EUR\
+		not CRV@EUR\
+		not CSPR@EUR\
+		not CTC@EUR\
+		not CTK@EUR\
+		not CTR@EUR\
+		not CTSI@EUR\
+		not CVC@EUR\
+		not CVX@EUR\
+		not CYBER@EUR\
+		not DATAIP@EUR\
+		not DBR@EUR\
+		not DEEP@EUR\
+		not DEGEN@EUR\
+		not DGB@EUR\
+		not DODO@EUR\
+		not DOGS@EUR\
+		not DOS@EUR\
+		not DOT@EUR\
+		not DRIFT@EUR\
+		not DUSK@EUR\
+		not DYDX@EUR\
+		not DYM@EUR\
+		not EDGE@EUR\
+		not EDU@EUR\
+		not EGLD@EUR\
+		not EIGEN@EUR\
+		not ELSA@EUR\
+		not ENJ@EUR\
+		not ENS@EUR\
+		not ENSO@EUR\
+		not ETC@EUR\
+		not ETH@EUR\
+		not EURC@EUR\
+		not EUROP@EUR\
+		not F@EUR\
+		not FIDA@EUR\
+		not FLOCK@EUR\
+		not FLOKI@EUR\
+		not FLR@EUR\
+		not FLUID@EUR\
+		not FLUX@EUR\
+		not FORM@EUR\
+		not FRAX@EUR\
+		not FTT@EUR\
+		not FUEL@EUR\
+		not G@EUR\
+		not GALA@EUR\
+		not GAS@EUR\
+		not GIGA@EUR\
+		not GLM@EUR\
+		not GLMR@EUR\
+		not GMT@EUR\
+		not GMX@EUR\
+		not GNO@EUR\
+		not GNS@EUR\
+		not GOAT@EUR\
+		not GRAM@EUR\
+		not GRASS@EUR\
+		not GROVE@EUR\
+		not GRT@EUR\
+		not GTC@EUR\
+		not GWEI@EUR\
+		not HAEDAL@EUR\
+		not HFT@EUR\
+		not HIGH@EUR\
+		not HMSTR@EUR\
+		not HNT@EUR\
+		not HOT@EUR\
+		not HUMA@EUR\
+		not HYPE@EUR\
+		not ICNT@EUR\
+		not ICP@EUR\
+		not ICX@EUR\
+		not ID@EUR\
+		not IKA@EUR\
+		not ILV@EUR\
+		not IMU@EUR\
+		not INIT@EUR\
+		not INJ@EUR\
+		not INX@EUR\
+		not IOST@EUR\
+		not IQ@EUR\
+		not JASMY@EUR\
+		not JTO@EUR\
+		not KAITO@EUR\
+		not KAT@EUR\
+		not KAVA@EUR\
+		not KERNEL@EUR\
+		not KITE@EUR\
+		not KMNO@EUR\
+		not KNC@EUR\
+		not KSM@EUR\
+		not LAYER@EUR\
+		not LDO@EUR\
+		not LIGHTER@EUR\
+		not LINEA@EUR\
+		not LISTA@EUR\
+		not LMWR@EUR\
+		not LRC@EUR\
+		not LSK@EUR\
+		not LTC@EUR\
+		not LUMIA@EUR\
+		not LUNA2@EUR\
+		not LUNA@EUR\
+		not MAGIC@EUR\
+		not MANA@EUR\
+		not MANTA@EUR\
+		not MANTRA@EUR\
+		not MASK@EUR\
+		not MAV@EUR\
+		not MAVIA@EUR\
+		not ME@EUR\
+		not MEGA@EUR\
+		not MEME@EUR\
+		not MERL@EUR\
+		not MET@EUR\
+		not METIS@EUR\
+		not MEW@EUR\
+		not MIOTA@EUR\
+		not MLN@EUR\
+		not MMT@EUR\
+		not MOCA@EUR\
+		not MOG@EUR\
+		not MON@EUR\
+		not MORPHO@EUR\
+		not MOVE@EUR\
+		not MOVR@EUR\
+		not MTL@EUR\
+		not NEAR@EUR\
+		not NEIRO@EUR\
+		not NEO@EUR\
+		not NES@EUR\
+		not NEWT@EUR\
+		not NEX@EUR\
+		not NMR@EUR\
+		not NOM@EUR\
+		not NOS@EUR\
+		not NOT@EUR\
+		not O@EUR\
+		not OGN@EUR\
+		not ONG@EUR\
+		not ONT@EUR\
+		not OP@EUR\
+		not OPEN@EUR\
+		not ORCA@EUR\
+		not OSMO@EUR\
+		not PARTI@EUR\
+		not PEAQ@EUR\
+		not PENDLE@EUR\
+		not PENGU@EUR\
+		not PEOPLE@EUR\
+		not PEPE@EUR\
+		not PHA@EUR\
+		not PIXEL@EUR\
+		not PLUME@EUR\
+		not PNUT@EUR\
+		not POL@EUR\
+		not POND@EUR\
+		not PONKE@EUR\
+		not POPCAT@EUR\
+		not PORTAL@EUR\
+		not POWR@EUR\
+		not PROM@EUR\
+		not PROMPT@EUR\
+		not PROVE@EUR\
+		not PUFFER@EUR\
+		not PUMP@EUR\
+		not PUNDIX@EUR\
+		not PYR@EUR\
+		not QKC@EUR\
+		not QNT@EUR\
+		not QUID@EUR\
+		not RAD@EUR\
+		not RARE@EUR\
+		not RAY@EUR\
+		not RED@EUR\
+		not RENDER@EUR\
+		not REQ@EUR\
+		not REZ@EUR\
+		not RON@EUR\
+		not ROSE@EUR\
+		not RPL@EUR\
+		not RLC@EUR\
+		not RSR@EUR\
+		not RUNE@EUR\
+		not RVN@EUR\
+		not S@EUR\
+		not SAFE@EUR\
+		not SAGA@EUR\
+		not SAND@EUR\
+		not SAPIEN@EUR\
+		not SCR@EUR\
+		not SEI@EUR\
+		not SFP@EUR\
+		not SHELL@EUR\
+		not SHIB@EUR\
+		not SIGN@EUR\
+		not SKL@EUR\
+		not SKY@EUR\
+		not SLP@EUR\
+		not SLX@EUR\
+		not SOLV@EUR\
+		not SOMI@EUR\
+		not SOON@EUR\
+		not SOPH@EUR\
+		not SOSO@EUR\
+		not SPK@EUR\
+		not SPX@EUR\
+		not SSV@EUR\
+		not STO@EUR\
+		not STORJ@EUR\
+		not STRAX@EUR\
+		not STRK@EUR\
+		not STX@EUR\
+		not SUPER@EUR\
+		not SUSHI@EUR\
+		not SWEAT@EUR\
+		not SWELL@EUR\
+		not SXT@EUR\
+		not T@EUR\
+		not TAI@EUR\
+		not TAIKO@EUR\
+		not THE@EUR\
+		not THQ@EUR\
+		not TIA@EUR\
+		not TIA@USDC\
+		not TLM@EUR\
+		not TNSR@EUR\
+		not TOMO@EUR\
+		not TOSHI@EUR\
+		not TOWNS@EUR\
+		not TRAC@EUR\
+		not TRB@EUR\
+		not TREE@EUR\
+		not TRIA@EUR\
+		not TRUST@EUR\
+		not TRX@EUR\
+		not TURBO@EUR\
+		not TWT@EUR\
+		not U@EUR\
+		not UMA@EUR\
+		not UP@EUR\
+		not USDC@EUR\
+		not USELESS@EUR\
+		not VANA@EUR\
+		not VANRY@EUR\
+		not VELO@EUR\
+		not VERONA@EUR\
+		not VSN@EUR\
+		not VTHO@EUR\
+		not VVV@EUR\
+		not W@EUR\
+		not WAL@EUR\
+		not WAXP@EUR\
+		not WCT@EUR\
+		not WELL@EUR\
+		not WIF@EUR\
+		not WIN@EUR\
+		not WLFI@EUR\
+		not WMTX@EUR\
+		not WOO@EUR\
+		not XAI@EUR\
+		not XDC@EUR\
+		not XLM@EUR\
+		not XMN@EUR\
+		not XNO@EUR\
+		not XPL@EUR\
+		not XTZ@EUR\
+		not XVG@EUR\
+		not XYO@EUR\
+		not YB@EUR\
+		not YFI@EUR\
+		not YGG@EUR\
+		not ZBCN@EUR\
+		not ZEN@EUR\
+		not ZETA@EUR\
+		not ZEUS@EUR\
+		not ZIG@EUR\
+		not ZIL@EUR\
+		not ZK@EUR\
+		not ZKC@EUR\
+		not ZKJ@EUR\
+		not ZKP@EUR\
+		not ZORA@EUR\
+		not ZRC@EUR\
+		not ZRO@EUR\
+		not ZRX@EUR\
+		match @EUR\
+	demand-timeout-min 5h demand-timeout-max 45h\
+	supply-timeout-min 5h supply-timeout-max 45h\
 	stop-loss-delay 75m stop-loss-delays 1\
 	take-profit-delay 15m take-profit-delays 0\
 	take-loss-delay 90h take-loss-delays 1
 
 trade at bitvavo using trend return $usdc_return window 72h\
-	market match @USDC\
-	demand-timeout-min 2h demand-timeout-max 3.5h\
-	supply-timeout-min 2h supply-timeout-max 3.5h\
+	market\
+		not 0G@EUR\
+		not 1INCH@EUR\
+		not 2Z@EUR\
+		not A@EUR\
+		not AAVE@EUR\
+		not ACH@EUR\
+		not ACT@EUR\
+		not ACU@EUR\
+		not ACX@EUR\
+		not ADA@USDC\
+		not ADX@EUR\
+		not AERGO@EUR\
+		not AEVO@EUR\
+		not AGI@EUR\
+		not AGLD@EUR\
+		not AIOZ@EUR\
+		not AIXBT@EUR\
+		not AKT@EUR\
+		not ALICE@EUR\
+		not ALT@EUR\
+		not AMP@EUR\
+		not ANIME@EUR\
+		not ANKR@EUR\
+		not APE@EUR\
+		not API3@EUR\
+		not APT@EUR\
+		not ARK@EUR\
+		not ARKM@EUR\
+		not ARPA@EUR\
+		not ARX@EUR\
+		not ASTER@EUR\
+		not ASTR@EUR\
+		not ATH@EUR\
+		not ATOM@EUR\
+		not AUCTION@EUR\
+		not AUDIO@EUR\
+		not AVA@EUR\
+		not AVAX@EUR\
+		not AVNT@EUR\
+		not AXL@EUR\
+		not AXS@EUR\
+		not AZTEC@EUR\
+		not BABY@EUR\
+		not BANANA@EUR\
+		not BAND@EUR\
+		not BAT@EUR\
+		not BCH@EUR\
+		not BEAM@EUR\
+		not BEL@EUR\
+		not BICO@EUR\
+		not BIGTIME@EUR\
+		not BILL@EUR\
+		not BIO@EUR\
+		not BIRB@EUR\
+		not BLUR@EUR\
+		not BNB@EUR\
+		not BNT@EUR\
+		not BOME@EUR\
+		not BRETT@EUR\
+		not BREV@EUR\
+		not BTC@EUR\
+		not BTT@EUR\
+		not C98@EUR\
+		not C@EUR\
+		not CAKE@EUR\
+		not CAP@EUR\
+		not CARV@EUR\
+		not CAT@EUR\
+		not CATI@EUR\
+		not CC@EUR\
+		not CELO@EUR\
+		not CELR@EUR\
+		not CETUS@EUR\
+		not CFG@EUR\
+		not CHILLGUY@EUR\
+		not CHIP@EUR\
+		not CHR@EUR\
+		not CHZ@EUR\
+		not COMP@EUR\
+		not COW@EUR\
+		not CPOOL@EUR\
+		not CRO@EUR\
+		not CROSS@EUR\
+		not CRV@EUR\
+		not CSPR@EUR\
+		not CTC@EUR\
+		not CTK@EUR\
+		not CTR@EUR\
+		not CTSI@EUR\
+		not CVC@EUR\
+		not CVX@EUR\
+		not CYBER@EUR\
+		not DATAIP@EUR\
+		not DBR@EUR\
+		not DEEP@EUR\
+		not DEGEN@EUR\
+		not DGB@EUR\
+		not DODO@EUR\
+		not DOGS@EUR\
+		not DOS@EUR\
+		not DOT@EUR\
+		not DRIFT@EUR\
+		not DUSK@EUR\
+		not DYDX@EUR\
+		not DYM@EUR\
+		not EDGE@EUR\
+		not EDU@EUR\
+		not EGLD@EUR\
+		not EIGEN@EUR\
+		not ELSA@EUR\
+		not ENJ@EUR\
+		not ENS@EUR\
+		not ENSO@EUR\
+		not ETC@EUR\
+		not ETH@EUR\
+		not EURC@EUR\
+		not EUROP@EUR\
+		not F@EUR\
+		not FIDA@EUR\
+		not FLOCK@EUR\
+		not FLOKI@EUR\
+		not FLR@EUR\
+		not FLUID@EUR\
+		not FLUX@EUR\
+		not FORM@EUR\
+		not FRAX@EUR\
+		not FTT@EUR\
+		not FUEL@EUR\
+		not G@EUR\
+		not GALA@EUR\
+		not GAS@EUR\
+		not GIGA@EUR\
+		not GLM@EUR\
+		not GLMR@EUR\
+		not GMT@EUR\
+		not GMX@EUR\
+		not GNO@EUR\
+		not GNS@EUR\
+		not GOAT@EUR\
+		not GRAM@EUR\
+		not GRASS@EUR\
+		not GROVE@EUR\
+		not GRT@EUR\
+		not GTC@EUR\
+		not GWEI@EUR\
+		not HAEDAL@EUR\
+		not HFT@EUR\
+		not HIGH@EUR\
+		not HMSTR@EUR\
+		not HNT@EUR\
+		not HOT@EUR\
+		not HUMA@EUR\
+		not HYPE@EUR\
+		not ICNT@EUR\
+		not ICP@EUR\
+		not ICX@EUR\
+		not ID@EUR\
+		not IKA@EUR\
+		not ILV@EUR\
+		not IMU@EUR\
+		not INIT@EUR\
+		not INJ@EUR\
+		not INX@EUR\
+		not IOST@EUR\
+		not IQ@EUR\
+		not JASMY@EUR\
+		not JTO@EUR\
+		not KAITO@EUR\
+		not KAT@EUR\
+		not KAVA@EUR\
+		not KERNEL@EUR\
+		not KITE@EUR\
+		not KMNO@EUR\
+		not KNC@EUR\
+		not KSM@EUR\
+		not LAYER@EUR\
+		not LDO@EUR\
+		not LIGHTER@EUR\
+		not LINEA@EUR\
+		not LISTA@EUR\
+		not LMWR@EUR\
+		not LRC@EUR\
+		not LSK@EUR\
+		not LTC@EUR\
+		not LUMIA@EUR\
+		not LUNA2@EUR\
+		not LUNA@EUR\
+		not MAGIC@EUR\
+		not MANA@EUR\
+		not MANTA@EUR\
+		not MANTRA@EUR\
+		not MASK@EUR\
+		not MAV@EUR\
+		not MAVIA@EUR\
+		not ME@EUR\
+		not MEGA@EUR\
+		not MEME@EUR\
+		not MERL@EUR\
+		not MET@EUR\
+		not METIS@EUR\
+		not MEW@EUR\
+		not MIOTA@EUR\
+		not MLN@EUR\
+		not MMT@EUR\
+		not MOCA@EUR\
+		not MOG@EUR\
+		not MON@EUR\
+		not MORPHO@EUR\
+		not MOVE@EUR\
+		not MOVR@EUR\
+		not MTL@EUR\
+		not NEAR@EUR\
+		not NEIRO@EUR\
+		not NEO@EUR\
+		not NES@EUR\
+		not NEWT@EUR\
+		not NEX@EUR\
+		not NMR@EUR\
+		not NOM@EUR\
+		not NOS@EUR\
+		not NOT@EUR\
+		not O@EUR\
+		not OGN@EUR\
+		not ONG@EUR\
+		not ONT@EUR\
+		not OP@EUR\
+		not OPEN@EUR\
+		not ORCA@EUR\
+		not OSMO@EUR\
+		not PARTI@EUR\
+		not PEAQ@EUR\
+		not PENDLE@EUR\
+		not PENGU@EUR\
+		not PEOPLE@EUR\
+		not PEPE@EUR\
+		not PHA@EUR\
+		not PIXEL@EUR\
+		not PLUME@EUR\
+		not PNUT@EUR\
+		not POL@EUR\
+		not POND@EUR\
+		not PONKE@EUR\
+		not POPCAT@EUR\
+		not PORTAL@EUR\
+		not POWR@EUR\
+		not PROM@EUR\
+		not PROMPT@EUR\
+		not PROVE@EUR\
+		not PUFFER@EUR\
+		not PUMP@EUR\
+		not PUNDIX@EUR\
+		not PYR@EUR\
+		not QKC@EUR\
+		not QNT@EUR\
+		not QUID@EUR\
+		not RAD@EUR\
+		not RARE@EUR\
+		not RAY@EUR\
+		not RED@EUR\
+		not RENDER@EUR\
+		not REQ@EUR\
+		not REZ@EUR\
+		not RON@EUR\
+		not ROSE@EUR\
+		not RPL@EUR\
+		not RSR@EUR\
+		not RLC@EUR\
+		not RUNE@EUR\
+		not RVN@EUR\
+		not S@EUR\
+		not SAFE@EUR\
+		not SAGA@EUR\
+		not SAND@EUR\
+		not SAPIEN@EUR\
+		not SCR@EUR\
+		not SEI@EUR\
+		not SFP@EUR\
+		not SHELL@EUR\
+		not SHIB@EUR\
+		not SIGN@EUR\
+		not SKL@EUR\
+		not SKY@EUR\
+		not SLP@EUR\
+		not SLX@EUR\
+		not SOLV@EUR\
+		not SOMI@EUR\
+		not SOON@EUR\
+		not SOPH@EUR\
+		not SOSO@EUR\
+		not SPK@EUR\
+		not SPX@EUR\
+		not SSV@EUR\
+		not STO@EUR\
+		not STORJ@EUR\
+		not STRAX@EUR\
+		not STRK@EUR\
+		not STX@EUR\
+		not SUPER@EUR\
+		not SUSHI@EUR\
+		not SWEAT@EUR\
+		not SWELL@EUR\
+		not SXT@EUR\
+		not T@EUR\
+		not TAI@EUR\
+		not TAIKO@EUR\
+		not THE@EUR\
+		not THQ@EUR\
+		not TIA@EUR\
+		not TIA@USDC\
+		not TLM@EUR\
+		not TNSR@EUR\
+		not TOMO@EUR\
+		not TOSHI@EUR\
+		not TOWNS@EUR\
+		not TRAC@EUR\
+		not TRB@EUR\
+		not TREE@EUR\
+		not TRIA@EUR\
+		not TRUST@EUR\
+		not TRX@EUR\
+		not TURBO@EUR\
+		not TWT@EUR\
+		not U@EUR\
+		not UMA@EUR\
+		not UP@EUR\
+		not USDC@EUR\
+		not USELESS@EUR\
+		not VANA@EUR\
+		not VANRY@EUR\
+		not VELO@EUR\
+		not VERONA@EUR\
+		not VSN@EUR\
+		not VTHO@EUR\
+		not VVV@EUR\
+		not W@EUR\
+		not WAL@EUR\
+		not WAXP@EUR\
+		not WCT@EUR\
+		not WELL@EUR\
+		not WIF@EUR\
+		not WIN@EUR\
+		not WLFI@EUR\
+		not WMTX@EUR\
+		not WOO@EUR\
+		not XAI@EUR\
+		not XDC@EUR\
+		not XLM@EUR\
+		not XMN@EUR\
+		not XNO@EUR\
+		not XPL@EUR\
+		not XTZ@EUR\
+		not XVG@EUR\
+		not XYO@EUR\
+		not YB@EUR\
+		not YFI@EUR\
+		not YGG@EUR\
+		not ZBCN@EUR\
+		not ZEN@EUR\
+		not ZETA@EUR\
+		not ZEUS@EUR\
+		not ZIG@EUR\
+		not ZIL@EUR\
+		not ZK@EUR\
+		not ZKC@EUR\
+		not ZKJ@EUR\
+		not ZKP@EUR\
+		not ZORA@EUR\
+		not ZRC@EUR\
+		not ZRO@EUR\
+		not ZRX@EUR\
+		match @USDC\
+	demand-timeout-min 2h demand-timeout-max 18h\
+	supply-timeout-min 2h supply-timeout-max 18h\
 	stop-loss-delay 30m stop-loss-delays 1\
 	take-profit-delay 7.5m take-profit-delays 0\
 	take-loss-delay 36h take-loss-delays 1
+
