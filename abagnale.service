@@ -5,7 +5,7 @@ Description=Abagnale Algorithmic Trading System
 After=postgresql.service
 
 [Service]
-ExecStart=/usr/bin/abagnale
+ExecStart=/usr/bin/abagnale -v -p ${STATE_DIRECTORY}/plots
 Restart=always
 RestartSec=300
 User=abagnale
