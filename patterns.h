@@ -21,7 +21,7 @@
  * $SchulteIT: patterns.h 15199 2025-10-27 07:48:03Z schulte $
  * $JDTAUS$
  * Origin: OpenBSD 7.8 httpd/patterns.h
- * Modifications: Use standard C int64_t instead of POSIX off_t
+ * Modifications: Use standard C intmax_t instead of POSIX off_t
  *                Use struct String instead of char
  */
 
@@ -41,8 +41,8 @@
 #define MAXREPETITION	0xfffff	/* Max for repetition items */
 
 struct str_find {
-	int64_t sm_so;	/* start offset of match */
-	int64_t sm_eo;	/* end offset of match */
+	intmax_t sm_so;	/* start offset of match */
+	intmax_t sm_eo;	/* end offset of match */
 };
 
 struct str_match {

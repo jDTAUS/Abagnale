@@ -35,7 +35,7 @@
  * $SchulteIT: patterns.c 15221 2025-10-28 07:11:14Z schulte $
  * $JDTAUS$
  * Origin: OpenBSD 7.8 httpd/patterns.c
- * Modifications: Use standard C int64_t instead of POSIX off_t
+ * Modifications: Use standard C intmax_t instead of POSIX off_t
  *                Use struct String instead of char
  *                Replace POSIX strndup with String_cnnew
  *                Prefix functions dealing with the heap with heap_
@@ -540,8 +540,8 @@ push_onecapture(struct match_state *ms, int i, const char *s,
 	if (i >= ms->level) {
 		if (i == 0 || ms->level == 0) {
 			/* add whole match */
-			sm->sm_so = (int64_t)(s - ms->src_init);
-			sm->sm_eo = (int64_t)(e - s) + sm->sm_so;
+			sm->sm_so = (intmax_t)(s - ms->src_init);
+			sm->sm_eo = (intmax_t)(e - s) + sm->sm_so;
 		} else
 			return match_error(ms, "invalid capture index");
 	} else {
@@ -593,7 +593,7 @@ nospecials(const char *p, size_t l)
 
 static int
 str_find_aux(struct match_state *ms, const char *pattern, const char *string,
-    struct str_find *sm, size_t nsm, int64_t init)
+    struct str_find *sm, size_t nsm, intmax_t init)
 {
 	size_t		 ls = strlen(string);
 	size_t		 lp = strlen(pattern);
@@ -604,7 +604,7 @@ str_find_aux(struct match_state *ms, const char *pattern, const char *string,
 
 	if (init < 0)
 		init = 0;
-	else if (init > (int64_t)ls)
+	else if (init > (intmax_t)ls)
 		return match_error(ms, "starting after string's end");
 	s1 = s + init;
 
