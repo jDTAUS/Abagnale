@@ -21,10 +21,10 @@
 #include "host.h"
 #endif
 
+#include "abagnale.h"
 #include "charset.h"
 #include "config.h"
 #include "database.h"
-#include "exchange.h"
 #include "heap.h"
 #include "http.h"
 #include "mongoose-ext.h"
@@ -189,6 +189,7 @@ static const struct {
 extern const struct Numeric *restrict const zero;
 extern const struct Numeric *restrict const hundred;
 extern const bool verbose;
+extern const bool ticker_exporter;
 
 static const struct ExchangeConfig *restrict coinbase_cnf;
 static char coinbase_ws_uri[URL_MAX_LENGTH + 1];
@@ -873,9 +874,10 @@ static void ws_subscribe(struct mg_connection *restrict const c,
   items = Array_items(m_array);
   for (size_t i = Array_size(m_array); i-- > 0;) {
     const struct Market *restrict const m = items[i];
-    wcjson_array_add_tail(&ch_doc, j_ch_arr,
-                          wcjson_value_mbstring(&ch_doc, String_chars(m->sym),
-                                                String_length(m->sym)));
+    if (ticker_exporter || marketconfig(exchange_coinbase.nm, m->nm) != NULL)
+      wcjson_array_add_tail(&ch_doc, j_ch_arr,
+                            wcjson_value_mbstring(&ch_doc, String_chars(m->sym),
+                                                  String_length(m->sym)));
   }
   Array_unlock(m_array);
 

@@ -20,8 +20,8 @@
 #include "host.h"
 #endif
 
+#include "abagnale.h"
 #include "database.h"
-#include "exchange.h"
 #include "heap.h"
 #include "http.h"
 #include "mongoose-ext.h"
@@ -116,6 +116,7 @@
 #endif
 
 extern const bool verbose;
+extern const bool ticker_exporter;
 
 extern const struct Numeric *restrict const zero;
 extern const struct Numeric *restrict const one;
@@ -1681,9 +1682,11 @@ static int bitvavo_ws_subscribe(struct mg_connection *restrict const c) {
   items = Array_items(m_array);
   for (size_t i = Array_size(m_array); i-- > 0;) {
     const struct Market *restrict const m = items[i];
-    wcjson_array_add_tail(&req_doc, j_markets,
-                          wcjson_value_mbstring(&req_doc, String_chars(m->sym),
-                                                String_length(m->sym)));
+    if (ticker_exporter || marketconfig(exchange_bitvavo.nm, m->nm) != NULL)
+      wcjson_array_add_tail(&req_doc, j_markets,
+                            wcjson_value_mbstring(&req_doc,
+                                                  String_chars(m->sym),
+                                                  String_length(m->sym)));
   }
   Array_unlock(m_array);
 
