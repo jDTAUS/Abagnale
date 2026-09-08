@@ -104,6 +104,14 @@
 #define DEFAULT_CDP_HTTP_TIMEOUT_MILLIS 60000L
 #endif
 
+#ifndef DEFAULT_COINBASE_ACCOUNTS_CAPACITY
+#define DEFAULT_COINBASE_ACCOUNTS_CAPACITY 512
+#endif
+
+#ifndef DEFAULT_COINBASE_MARKETS_CAPACITY
+#define DEFAULT_COINBASE_MARKETS_CAPACITY 2048
+#endif
+
 #ifndef nitems
 #define nitems(_a) (sizeof((_a)) / sizeof((_a)[0]))
 #endif
@@ -1157,14 +1165,15 @@ static void coinbase_init(void) {
   samples = Queue_new(COINBASE_TICKERS_DAY,
                       (time_t)(coinbase_stall_ms / 1000L)); // 64MB/128MB
 
-  markets = Array_new(1024);
-  markets_by_id = Map_new(StringMapOps, 1024);
-  markets_by_symbol = Map_new(StringMapOps, 1024);
+  markets = Array_new(DEFAULT_COINBASE_MARKETS_CAPACITY);
+  markets_by_id = Map_new(StringMapOps, DEFAULT_COINBASE_MARKETS_CAPACITY);
+  markets_by_symbol = Map_new(StringMapOps, DEFAULT_COINBASE_MARKETS_CAPACITY);
 
   markets_reload = true;
-  accounts = Array_new(256);
-  accounts_by_id = Map_new(StringMapOps, 256);
-  accounts_by_symbol = Map_new(StringMapOps, 256);
+  accounts = Array_new(DEFAULT_COINBASE_ACCOUNTS_CAPACITY);
+  accounts_by_id = Map_new(StringMapOps, DEFAULT_COINBASE_ACCOUNTS_CAPACITY);
+  accounts_by_symbol =
+      Map_new(StringMapOps, DEFAULT_COINBASE_ACCOUNTS_CAPACITY);
 
   accounts_reload = true;
   pricing = NULL;
@@ -1747,6 +1756,14 @@ static struct Array *coinbase_accounts(void) {
   Array_lock(accounts);
 
   if (accounts_reload) {
+    const size_t a_size = Array_size(accounts);
+    const size_t a_capacity =
+        a_size == 0 ? DEFAULT_COINBASE_ACCOUNTS_CAPACITY : a_size;
+
+    Map_delete(accounts_by_id, NULL);
+    Map_delete(accounts_by_symbol, NULL);
+    accounts_by_id = Map_new(StringMapOps, a_capacity);
+    accounts_by_symbol = Map_new(StringMapOps, a_capacity);
     Array_clear(accounts, Account_delete);
 
     if (accounts_with_cursor(accounts, NULL) == 0)
@@ -1756,12 +1773,6 @@ static struct Array *coinbase_accounts(void) {
         ws_channels[i - 1].reconnect = true;
 
     Array_compact(accounts);
-
-    Map_delete(accounts_by_id, NULL);
-    Map_delete(accounts_by_symbol, NULL);
-
-    accounts_by_id = Map_new(StringMapOps, Array_size(accounts));
-    accounts_by_symbol = Map_new(StringMapOps, Array_size(accounts));
 
     items = Array_items(accounts);
     for (size_t i = Array_size(accounts); i-- > 0;) {

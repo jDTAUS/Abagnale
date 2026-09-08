@@ -65,8 +65,8 @@
 #define TRADE_SET_ENQUEUED(t) (Numeric_copy_to(n_two, (t)->tp_pc))
 #define TRADE_UNSET_ENQUEUED(t) (Numeric_copy_to(zero, (t)->tp_pc))
 
-#define PRODUCTS_MAP_CAPACITY 2048
-#define PRODUCTS_QUEUE_CAPACITY 2048
+#define MARKETS_MAP_CAPACITY 2048
+#define MARKETS_QUEUE_CAPACITY 2048
 
 struct worker_ctx {
   void *restrict db;
@@ -566,7 +566,7 @@ static void abag_tls_dtor(void *e) {
 }
 
 void abagnale_init(void) {
-  market_configs = Map_new(MarketConfigKeyMapOps, PRODUCTS_MAP_CAPACITY);
+  market_configs = Map_new(MarketConfigKeyMapOps, MARKETS_MAP_CAPACITY);
 }
 
 void abagnale_destroy(void) { Map_delete(market_configs, NULL); }
@@ -3818,9 +3818,9 @@ int abagnale(int argc, char *argv[]) {
 
   ninety_percent_factor = Numeric_from_char("0.9");
 
-  market_samples = Map_new(StringMapOps, PRODUCTS_MAP_CAPACITY);
-  market_prices = Map_new(StringMapOps, PRODUCTS_MAP_CAPACITY);
-  market_trades = Map_new(StringMapOps, PRODUCTS_MAP_CAPACITY);
+  market_samples = Map_new(StringMapOps, MARKETS_MAP_CAPACITY);
+  market_prices = Map_new(StringMapOps, MARKETS_MAP_CAPACITY);
+  market_trades = Map_new(StringMapOps, MARKETS_MAP_CAPACITY);
 
   tls_create(&abag_tls_key, abag_tls_dtor);
 
@@ -3835,7 +3835,7 @@ int abagnale(int argc, char *argv[]) {
         heap_calloc(1, sizeof(struct worker_ctx));
 
     e_ctx->e = e;
-    e_ctx->trades_queue = Queue_new(PRODUCTS_QUEUE_CAPACITY, (time_t)0);
+    e_ctx->trades_queue = Queue_new(MARKETS_QUEUE_CAPACITY, (time_t)0);
     e_ctx->e->start();
     Queue_start(e_ctx->trades_queue);
     Array_add_tail(trade_queues, e_ctx->trades_queue);
