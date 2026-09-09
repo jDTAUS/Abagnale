@@ -24,6 +24,7 @@
 #include "host.h"
 #endif
 
+#include "config.h"
 #include "exchange.h"
 
 #include <stdint.h>

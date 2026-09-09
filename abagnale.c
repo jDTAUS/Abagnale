@@ -22,7 +22,6 @@
 #endif
 
 #include "abagnale.h"
-#include "config.h"
 #include "database.h"
 #include "exchange.h"
 #include "heap.h"

@@ -23,7 +23,6 @@
 
 #include "abagnale.h"
 #include "array.h"
-#include "config.h"
 #include "database.h"
 #include "heap.h"
 #include "math.h"

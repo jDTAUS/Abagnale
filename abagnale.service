@@ -5,7 +5,7 @@ Description=Abagnale Algorithmic Trading System
 After=postgresql.service
 
 [Service]
-ExecStart=/usr/bin/abagnale -v -p ${STATE_DIRECTORY}/plots
+ExecStart=/usr/bin/abagnale -v -p %S/abagnale/plots
 Restart=always
 RestartSec=300
 User=abagnale
@@ -14,6 +14,8 @@ UMask=0027
 ConfigurationDirectory=abagnale
 ConfigurationDirectoryMode=0750
 StateDirectory=abagnale
+StateDirectory=abagnale/plots/bitvavo/trend
+StateDirectory=abagnale/plots/coinbase/trend
 StateDirectoryMode=0750
 WorkingDirectory=%S/abagnale
 Environment=PATH=/usr/bin:/usr/local/bin
