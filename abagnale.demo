@@ -24,7 +24,10 @@ usdc_return="0.25 USDC"
 usdt_return="0.25 USDT"
 inr_return="0.25 INR"
 gbp_return="0.25 GBP"
-cad_return="0.25 GBP"
+cad_return="0.25 CAD"
+brl_return="0.25 BRL"
+sgd_return="0.25 SGD"
+aud_return="0.25 AUD"
 
 trade at coinbase using trend return $eur_return window 72h\
 	market USDC@EUR\
@@ -62,6 +65,7 @@ trade at coinbase using trend return $eur_return window 180h\
 
 trade at coinbase using trend return $btc_return window 324h\
 	market ETH@BTC\
+	market YFI@BTC\
 	demand-timeout-min 10h demand-timeout-max 81h\
 	supply-timeout-min 10h supply-timeout-max 81h\
 	stop-loss-delay 135m stop-loss-delays 2\
@@ -93,6 +97,7 @@ trade at coinbase using trend return $btc_return window 648h\
 	market AAVE@BTC\
 	market AVAX@BTC\
 	market BCH@BTC\
+	market COMP@BTC\
 	market SOL@BTC\
 	market XLM@BTC\
 	demand-timeout-min 20h demand-timeout-max 162h\
@@ -177,7 +182,7 @@ trade at coinbase using trend return $eth_return window 2592h\
 	take-profit-delay 216m take-profit-delays 1\
 	take-loss-delay 1296h take-loss-delays 1
 
-trade at coinbase using trend return $btc_return window 36h\
+trade at coinbase using trend return $aud_return window 36h\
 	market\
 		not 1INCH@EUR\
 		not AAVE@BTC\
@@ -197,6 +202,7 @@ trade at coinbase using trend return $btc_return window 36h\
 		not BCH@BTC\
 		not BCH@EUR\
 		not BTC@EUR\
+		not COMP@BTC\
 		not CRV@BTC\
 		not CRV@EUR\
 		not DASH@BTC\
@@ -225,6 +231,121 @@ trade at coinbase using trend return $btc_return window 36h\
 		not USDC@EUR\
 		not XLM@BTC\
 		not XLM@EUR\
+		not XFI@BTC\
+		match @AUD\
+	demand-timeout-min 1h demand-timeout-max 9h\
+	supply-timeout-min 1h supply-timeout-max 9h\
+	stop-loss-delay 15m stop-loss-delays 2\
+	take-profit-delay 3m take-profit-delays 1\
+	take-loss-delay 18h take-loss-delays 1
+
+trade at coinbase using trend return $brl_return window 36h\
+	market\
+		not 1INCH@EUR\
+		not AAVE@BTC\
+		not AAVE@EUR\
+		not ADA@BTC\
+		not ADA@ETH\
+		not ADA@EUR\
+		not ALGO@BTC\
+		not ALGO@EUR\
+		not ANKR@EUR\
+		not APE@EUR\
+		not AVAX@BTC\
+		not AVAX@EUR\
+		not BAT@BTC\
+		not BAT@ETH\
+		not BAT@EUR\
+		not BCH@BTC\
+		not BCH@EUR\
+		not BTC@EUR\
+		not COMP@BTC\
+		not CRV@BTC\
+		not CRV@EUR\
+		not DASH@BTC\
+		not DOGE@BTC\
+		not DOGE@EUR\
+		not ETC@BTC\
+		not ETC@EUR\
+		not ETH@BTC\
+		not ETH@EUR\
+		not FIL@BTC\
+		not FIL@EUR\
+		not GRT@BTC\
+		not GRT@EUR\
+		not ICP@BTC\
+		not ICP@EUR\
+		not LTC@BTC\
+		not LTC@EUR\
+		not MANA@EUR\
+		not SHIB@EUR\
+		not SNX@EUR\
+		not SOL@BTC\
+		not SOL@ETH\
+		not SOL@EUR\
+		not UNI@BTC\
+		not UNI@EUR\
+		not USDC@EUR\
+		not XLM@BTC\
+		not XLM@EUR\
+		not YFI@BTC\
+		match @BRL\
+	demand-timeout-min 1h demand-timeout-max 9h\
+	supply-timeout-min 1h supply-timeout-max 9h\
+	stop-loss-delay 15m stop-loss-delays 2\
+	take-profit-delay 3m take-profit-delays 1\
+	take-loss-delay 18h take-loss-delays 1
+
+trade at coinbase using trend return $btc_return window 36h\
+	market\
+		not 1INCH@EUR\
+		not AAVE@BTC\
+		not AAVE@EUR\
+		not ADA@BTC\
+		not ADA@ETH\
+		not ADA@EUR\
+		not ALGO@BTC\
+		not ALGO@EUR\
+		not ANKR@EUR\
+		not APE@EUR\
+		not AVAX@BTC\
+		not AVAX@EUR\
+		not BAT@BTC\
+		not BAT@ETH\
+		not BAT@EUR\
+		not BCH@BTC\
+		not BCH@EUR\
+		not BTC@EUR\
+		not COMP@BTC\
+		not CRV@BTC\
+		not CRV@EUR\
+		not DASH@BTC\
+		not DOGE@BTC\
+		not DOGE@EUR\
+		not ETC@BTC\
+		not ETC@EUR\
+		not ETH@BTC\
+		not ETH@EUR\
+		not FIL@BTC\
+		not FIL@EUR\
+		not GRT@BTC\
+		not GRT@EUR\
+		not ICP@BTC\
+		not ICP@EUR\
+		not LTC@BTC\
+		not LTC@EUR\
+		not MANA@EUR\
+		not SHIB@EUR\
+		not SNX@EUR\
+		not SOL@BTC\
+		not SOL@ETH\
+		not SOL@EUR\
+		not UNI@BTC\
+		not UNI@EUR\
+		not USDC@EUR\
+		not XLM@BTC\
+		not XLM@EUR\
+		not YFI@BTC\
 		match @BTC\
 	demand-timeout-min 1h demand-timeout-max 9h\
 	supply-timeout-min 1h supply-timeout-max 9h\
@@ -252,6 +373,7 @@ trade at coinbase using trend return $cad_return window 36h\
 		not BCH@BTC\
 		not BCH@EUR\
 		not BTC@EUR\
+		not COMP@BTC\
 		not CRV@BTC\
 		not CRV@EUR\
 		not DASH@BTC\
@@ -280,6 +402,7 @@ trade at coinbase using trend return $cad_return window 36h\
 		not USDC@EUR\
 		not XLM@BTC\
 		not XLM@EUR\
+		not YFI@BTC\
 		match @CAD\
 	demand-timeout-min 1h demand-timeout-max 9h\
 	supply-timeout-min 1h supply-timeout-max 9h\
@@ -307,6 +430,7 @@ trade at coinbase using trend return $eth_return window 36h\
 		not BCH@BTC\
 		not BCH@EUR\
 		not BTC@EUR\
+		not COMP@BTC\
 		not CRV@BTC\
 		not CRV@EUR\
 		not DASH@BTC\
@@ -335,6 +459,7 @@ trade at coinbase using trend return $eth_return window 36h\
 		not USDC@EUR\
 		not XLM@BTC\
 		not XLM@EUR\
+		not YFI@BTC\
 		match @ETH\
 	demand-timeout-min 1h demand-timeout-max 9h\
 	supply-timeout-min 1h supply-timeout-max 9h\
@@ -362,6 +487,7 @@ trade at coinbase using trend return $eur_return window 36h\
 		not BCH@BTC\
 		not BCH@EUR\
 		not BTC@EUR\
+		not COMP@BTC\
 		not CRV@BTC\
 		not CRV@EUR\
 		not DASH@BTC\
@@ -390,6 +516,7 @@ trade at coinbase using trend return $eur_return window 36h\
 		not USDC@EUR\
 		not XLM@BTC\
 		not XLM@EUR\
+		not YFI@BTC\
 		match @EUR\
 	demand-timeout-min 1h demand-timeout-max 9h\
 	supply-timeout-min 1h supply-timeout-max 9h\
@@ -417,6 +544,7 @@ trade at coinbase using trend return $gbp_return window 36h\
 		not BCH@BTC\
 		not BCH@EUR\
 		not BTC@EUR\
+		not COMP@BTC\
 		not CRV@BTC\
 		not CRV@EUR\
 		not DASH@BTC\
@@ -445,6 +573,7 @@ trade at coinbase using trend return $gbp_return window 36h\
 		not USDC@EUR\
 		not XLM@BTC\
 		not XLM@EUR\
+		not YFI@BTC\
 		match @GBP\
 	demand-timeout-min 1h demand-timeout-max 9h\
 	supply-timeout-min 1h supply-timeout-max 9h\
@@ -472,6 +601,7 @@ trade at coinbase using trend return $inr_return window 36h\
 		not BCH@BTC\
 		not BCH@EUR\
 		not BTC@EUR\
+		not COMP@BTC\
 		not CRV@BTC\
 		not CRV@EUR\
 		not DASH@BTC\
@@ -500,7 +630,65 @@ trade at coinbase using trend return $inr_return window 36h\
 		not USDC@EUR\
 		not XLM@BTC\
 		not XLM@EUR\
+		not YFI@BTC\
 		match @INR\
+	demand-timeout-min 1h demand-timeout-max 9h\
+	supply-timeout-min 1h supply-timeout-max 9h\
+	stop-loss-delay 15m stop-loss-delays 2\
+	take-profit-delay 3m take-profit-delays 1\
+	take-loss-delay 18h take-loss-delays 1
+
+trade at coinbase using trend return $sgd_return window 36h\
+	market\
+		not 1INCH@EUR\
+		not AAVE@BTC\
+		not AAVE@EUR\
+		not ADA@BTC\
+		not ADA@ETH\
+		not ADA@EUR\
+		not ALGO@BTC\
+		not ALGO@EUR\
+		not ANKR@EUR\
+		not APE@EUR\
+		not AVAX@BTC\
+		not AVAX@EUR\
+		not BAT@BTC\
+		not BAT@ETH\
+		not BAT@EUR\
+		not BCH@BTC\
+		not BCH@EUR\
+		not BTC@EUR\
+		not COMP@BTC\
+		not CRV@BTC\
+		not CRV@EUR\
+		not DASH@BTC\
+		not DOGE@BTC\
+		not DOGE@EUR\
+		not ETC@BTC\
+		not ETC@EUR\
+		not ETH@BTC\
+		not ETH@EUR\
+		not FIL@BTC\
+		not FIL@EUR\
+		not GRT@BTC\
+		not GRT@EUR\
+		not ICP@BTC\
+		not ICP@EUR\
+		not LTC@BTC\
+		not LTC@EUR\
+		not MANA@EUR\
+		not SHIB@EUR\
+		not SNX@EUR\
+		not SOL@BTC\
+		not SOL@ETH\
+		not SOL@EUR\
+		not UNI@BTC\
+		not UNI@EUR\
+		not USDC@EUR\
+		not XLM@BTC\
+		not XLM@EUR\
+		not YFI@BTC\
+		match @SGD\
 	demand-timeout-min 1h demand-timeout-max 9h\
 	supply-timeout-min 1h supply-timeout-max 9h\
 	stop-loss-delay 15m stop-loss-delays 2\
@@ -527,6 +715,7 @@ trade at coinbase using trend return $usdc_return window 36h\
 		not BCH@BTC\
 		not BCH@EUR\
 		not BTC@EUR\
+		not COMP@BTC\
 		not CRV@BTC\
 		not CRV@EUR\
 		not DASH@BTC\
@@ -555,6 +744,7 @@ trade at coinbase using trend return $usdc_return window 36h\
 		not USDC@EUR\
 		not XLM@BTC\
 		not XLM@EUR\
+		not YFI@BTC\
 		match @USDC\
 	demand-timeout-min 1h demand-timeout-max 9h\
 	supply-timeout-min 1h supply-timeout-max 9h\
@@ -582,6 +772,7 @@ trade at coinbase using trend return $usdt_return window 36h\
 		not BCH@BTC\
 		not BCH@EUR\
 		not BTC@EUR\
+		not COMP@BTC\
 		not CRV@BTC\
 		not CRV@EUR\
 		not DASH@BTC\
@@ -610,6 +801,7 @@ trade at coinbase using trend return $usdt_return window 36h\
 		not USDC@EUR\
 		not XLM@BTC\
 		not XLM@EUR\
+		not YFI@BTC\
 		match @USDT\
 	demand-timeout-min 1h demand-timeout-max 9h\
 	supply-timeout-min 1h supply-timeout-max 9h\
@@ -637,6 +829,7 @@ trade at coinbase using trend return $usd_return window 36h\
 		not BCH@BTC\
 		not BCH@EUR\
 		not BTC@EUR\
+		not COMP@BTC\
 		not CRV@BTC\
 		not CRV@EUR\
 		not DASH@BTC\
@@ -665,6 +858,7 @@ trade at coinbase using trend return $usd_return window 36h\
 		not USDC@EUR\
 		not XLM@BTC\
 		not XLM@EUR\
+		not YFI@BTC\
 		match @USD\
 	demand-timeout-min 1h demand-timeout-max 9h\
 	supply-timeout-min 1h supply-timeout-max 9h\
@@ -676,16 +870,12 @@ trade at bitvavo using trend return $eur_return window 36h\
 	market ACU@EUR\
 	market AKT@EUR\
 	market AVAX@EUR\
-	market BICO@EUR\
 	market BILL@EUR\
 	market BNB@EUR\
 	market BTC@EUR\
 	market ETH@EUR\
 	market HYPE@EUR\
-	market MMT@EUR\
 	market NEAR@EUR\
-	market TRX@EUR\
-	market USELESS@EUR\
 	demand-timeout-min 1h demand-timeout-max 9h\
 	supply-timeout-min 1h supply-timeout-max 9h\
 	stop-loss-delay 15m stop-loss-delays 1\
@@ -695,22 +885,17 @@ trade at bitvavo using trend return $eur_return window 36h\
 trade at bitvavo using trend return $eur_return window 72h\
 	market AAVE@EUR\
 	market BABY@EUR\
+	market BICO@EUR\
 	market CC@EUR\
-	market DODO@EUR\
 	market DOT@EUR\
-	market FLUID@EUR\
 	market INJ@EUR\
 	market LTC@EUR\
 	market MON@EUR\
-	market OPEN@EUR\
 	market PHA@EUR\
-	market PORTAL@EUR\
 	market QNT@EUR\
 	market RAY@EUR\
 	market RENDER@EUR\
-	market SOON@EUR\
 	market TIA@EUR\
-	market TOMO@EUR\
 	market TRX@EUR\
 	market USDC@EUR\
 	market USELESS@EUR\
@@ -725,7 +910,6 @@ trade at bitvavo using trend return $eur_return window 72h\
 	take-loss-delay 36h take-loss-delays 1
 
 trade at bitvavo using trend return $eur_return window 324h\
-	market 2Z@EUR\
 	market A@EUR\
 	market ACT@EUR\
 	market AGI@EUR\
@@ -740,7 +924,6 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market API3@EUR\
 	market APT@EUR\
 	market ARKM@EUR\
-	market ARPA@EUR\
 	market ARX@EUR\
 	market ASTER@EUR\
 	market ATH@EUR\
@@ -754,10 +937,10 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market BAND@EUR\
 	market BAT@EUR\
 	market BEAM@EUR\
-	market BEL@EUR\
 	market BIGTIME@EUR\
 	market BIO@EUR\
 	market BIRB@EUR\
+	market BLEND@EUR\
 	market BLUR@EUR\
 	market BOME@EUR\
 	market BRETT@EUR\
@@ -774,25 +957,23 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market CHZ@EUR\
 	market COMP@EUR\
 	market COW@EUR\
-	market CPOOL@EUR\
 	market CRO@EUR\
 	market CROSS@EUR\
 	market CRV@EUR\
 	market CSPR@EUR\
 	market CTK@EUR\
 	market CTR@EUR\
-	market CTSI@EUR\
 	market CVX@EUR\
 	market DATAIP@EUR\
 	market DBR@EUR\
 	market DEEP@EUR\
 	market DGB@EUR\
+	market DIA@EUR\
+	market DODO@EUR\
 	market DOGS@EUR\
 	market DOS@EUR\
 	market DUSK@EUR\
 	market DRIFT@EUR\
-	market DYDX@EUR\
-	market DYM@EUR\
 	market EDGE@EUR\
 	market EDU@EUR\
 	market EGLD@EUR\
@@ -810,13 +991,11 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market FLUID@EUR\
 	market FLUX@EUR\
 	market FORM@EUR\
-	market FTT@EUR\
 	market GALA@EUR\
 	market GAS@EUR\
 	market GIGA@EUR\
 	market GLM@EUR\
 	market GLMR@EUR\
-	market GMT@EUR\
 	market GMX@EUR\
 	market GOAT@EUR\
 	market GRAM@EUR\
@@ -830,7 +1009,6 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market HIGH@EUR\
 	market HMSTR@EUR\
 	market HNT@EUR\
-	market HOT@EUR\
 	market HUMA@EUR\
 	market ICP@EUR\
 	market ICX@EUR\
@@ -842,6 +1020,7 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market INX@EUR\
 	market IOST@EUR\
 	market IQ@EUR\
+	market IRYS@EUR\
 	market JASMY@EUR\
 	market JTO@EUR\
 	market KAT@EUR\
@@ -857,6 +1036,7 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market LINEA@EUR\
 	market LISTA@EUR\
 	market LMWR@EUR\
+	market LQTY@EUR\
 	market LRC@EUR\
 	market LSK@EUR\
 	market LUNA2@EUR\
@@ -871,11 +1051,10 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market MERL@EUR\
 	market MET@EUR\
 	market METIS@EUR\
-	market MEW@EUR\
 	market MIOTA@EUR\
 	market MLN@EUR\
+	market MMT@EUR\
 	market MOG@EUR\
-	market MORPHO@EUR\
 	market MOVR@EUR\
 	market MTL@EUR\
 	market NEIRO@EUR\
@@ -888,7 +1067,6 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market NOS@EUR\
 	market NOT@EUR\
 	market O@EUR\
-	market OGN@EUR\
 	market OP@EUR\
 	market OPEN@EUR\
 	market ORCA@EUR\
@@ -896,20 +1074,20 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market PEAQ@EUR\
 	market PENDLE@EUR\
 	market PEOPLE@EUR\
-	market PIXEL@EUR\
 	market PLUME@EUR\
 	market PNUT@EUR\
 	market POL@EUR\
 	market POND@EUR\
 	market PONKE@EUR\
 	market POPCAT@EUR\
+	market PORTAL@EUR\
 	market PROM@EUR\
 	market PROMPT@EUR\
 	market PROVE@EUR\
 	market PUFFER@EUR\
 	market PYR@EUR\
 	market QUID@EUR\
-	market RARE@EUR\
+	market ROBO@EUR\
 	market RON@EUR\
 	market RSR@EUR\
 	market RLC@EUR\
@@ -924,7 +1102,6 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market SFP@EUR\
 	market SHELL@EUR\
 	market SIGN@EUR\
-	market SKL@EUR\
 	market SLP@EUR\
 	market SOMI@EUR\
 	market SOPH@EUR\
@@ -954,7 +1131,6 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market TREE@EUR\
 	market TURBO@EUR\
 	market TWT@EUR\
-	market UMA@EUR\
 	market UP@EUR\
 	market VELO@EUR\
 	market VTHO@EUR\
@@ -967,7 +1143,6 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market WOO@EUR\
 	market XAI@EUR\
 	market XDC@EUR\
-	market XTZ@EUR\
 	market XVG@EUR\
 	market XYO@EUR\
 	market YB@EUR\
@@ -996,6 +1171,27 @@ trade at bitvavo using trend return $usdc_return window 324h\
 	stop-loss-delay 135m stop-loss-delays 1\
 	take-profit-delay 27m take-profit-delays 0\
 	take-loss-delay 162h take-loss-delays 1
+
+trade at bitvavo using trend return $eur_return window 648h\
+	market ARPA@EUR\
+	market BEL@EUR\
+	market CPOOL@EUR\
+	market CTSI@EUR\
+	market DYDX@EUR\
+	market DYM@EUR\
+	market GMT@EUR\
+	market HOT@EUR\
+	market MEW@EUR\
+	market MORPHO@EUR\
+	market OGN@EUR\
+	market PIXEL@EUR\
+	market SKL@EUR\
+	market UMA@EUR\
+	demand-timeout-min 20h demand-timeout-max 162h\
+	supply-timeout-min 20h supply-timeout-max 162h\
+	stop-loss-delay 270m stop-loss-delays 2\
+	take-profit-delay 54m take-profit-delays 1\
+	take-loss-delay 324h take-loss-delays 1
 
 trade at bitvavo using trend return $eur_return window 1296h\
 	market 0G@EUR\
@@ -1152,6 +1348,7 @@ trade at bitvavo using trend return $eur_return window 180h\
 		not BILL@EUR\
 		not BIO@EUR\
 		not BIRB@EUR\
+		not BLEND@EUR\
 		not BLUR@EUR\
 		not BNB@EUR\
 		not BNT@EUR\
@@ -1195,7 +1392,9 @@ trade at bitvavo using trend return $eur_return window 180h\
 		not DEEP@EUR\
 		not DEGEN@EUR\
 		not DGB@EUR\
+		not DIA@EUR\
 		not DODO@EUR\
+		not DOGE@USDC\
 		not DOGS@EUR\
 		not DOS@EUR\
 		not DOT@EUR\
@@ -1263,6 +1462,7 @@ trade at bitvavo using trend return $eur_return window 180h\
 		not INX@EUR\
 		not IOST@EUR\
 		not IQ@EUR\
+		not IRYS@EUR\
 		not JASMY@EUR\
 		not JTO@EUR\
 		not KAITO@EUR\
@@ -1279,6 +1479,7 @@ trade at bitvavo using trend return $eur_return window 180h\
 		not LINEA@EUR\
 		not LISTA@EUR\
 		not LMWR@EUR\
+		not LQTY@EUR\
 		not LRC@EUR\
 		not LSK@EUR\
 		not LTC@EUR\
@@ -1360,6 +1561,7 @@ trade at bitvavo using trend return $eur_return window 180h\
 		not RENDER@EUR\
 		not REQ@EUR\
 		not REZ@EUR\
+		not ROBO@EUR\
 		not RON@EUR\
 		not ROSE@EUR\
 		not RPL@EUR\
@@ -1396,6 +1598,7 @@ trade at bitvavo using trend return $eur_return window 180h\
 		not STRK@EUR\
 		not STX@EUR\
 		not SUPER@EUR\
+		not SUI@USDC\
 		not SUSHI@EUR\
 		not SWEAT@EUR\
 		not SWELL@EUR\
@@ -1531,6 +1734,7 @@ trade at bitvavo using trend return $usdc_return window 72h\
 		not BILL@EUR\
 		not BIO@EUR\
 		not BIRB@EUR\
+		not BLEND@EUR\
 		not BLUR@EUR\
 		not BNB@EUR\
 		not BNT@EUR\
@@ -1574,7 +1778,9 @@ trade at bitvavo using trend return $usdc_return window 72h\
 		not DEEP@EUR\
 		not DEGEN@EUR\
 		not DGB@EUR\
+		not DIA@EUR\
 		not DODO@EUR\
+		not DOGE@USDC\
 		not DOGS@EUR\
 		not DOS@EUR\
 		not DOT@EUR\
@@ -1642,6 +1848,7 @@ trade at bitvavo using trend return $usdc_return window 72h\
 		not INX@EUR\
 		not IOST@EUR\
 		not IQ@EUR\
+		not IRYS@EUR\
 		not JASMY@EUR\
 		not JTO@EUR\
 		not KAITO@EUR\
@@ -1658,6 +1865,7 @@ trade at bitvavo using trend return $usdc_return window 72h\
 		not LINEA@EUR\
 		not LISTA@EUR\
 		not LMWR@EUR\
+		not LQTY@EUR\
 		not LRC@EUR\
 		not LSK@EUR\
 		not LTC@EUR\
@@ -1739,6 +1947,7 @@ trade at bitvavo using trend return $usdc_return window 72h\
 		not RENDER@EUR\
 		not REQ@EUR\
 		not REZ@EUR\
+		not ROBO@EUR\
 		not RON@EUR\
 		not ROSE@EUR\
 		not RPL@EUR\
@@ -1774,6 +1983,7 @@ trade at bitvavo using trend return $usdc_return window 72h\
 		not STRAX@EUR\
 		not STRK@EUR\
 		not STX@EUR\
+		not SUI@USDC\
 		not SUPER@EUR\
 		not SUSHI@EUR\
 		not SWEAT@EUR\
