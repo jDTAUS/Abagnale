@@ -202,7 +202,6 @@ extern const struct Numeric *restrict const second_nanos;
 extern const struct Numeric *restrict const minute_nanos;
 
 static struct Map *restrict market_samples;
-static struct Map *restrict market_prices;
 static struct Map *restrict market_trades;
 static struct Map *restrict market_configs;
 static tss_t abag_tls_key;
@@ -2754,23 +2753,6 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
   struct Numeric *restrict const q_fees = tls->trade_bet.q_fees;
   struct Numeric *restrict const r0 = tls->trade_bet.r0;
   struct db_balance_rec *restrict const hold = tls->trade_bet.hold;
-  bool pr_changed = false;
-
-  Map_lock(market_prices);
-  struct Numeric *restrict pr_last = Map_get(market_prices, w_ctx->m->id);
-  if (pr_last == NULL) {
-    pr_last = Numeric_copy(zero);
-    Map_put(market_prices, w_ctx->m->id, pr_last);
-  }
-  if (Numeric_cmp(pr_last, sample->price)) {
-    Numeric_copy_to(sample->price, pr_last);
-    pr_changed = true;
-  }
-  Map_unlock(market_prices);
-
-  if (!pr_changed)
-    return;
-
   struct Position *restrict const p =
       t->a != NULL ? t->a->position_open(w_ctx->db, w_ctx->e, w_ctx->m, t,
                                          samples, sample)
@@ -3818,7 +3800,6 @@ int abagnale(int argc, char *argv[]) {
   ninety_percent_factor = Numeric_from_char("0.9");
 
   market_samples = Map_new(StringMapOps, MARKETS_MAP_CAPACITY);
-  market_prices = Map_new(StringMapOps, MARKETS_MAP_CAPACITY);
   market_trades = Map_new(StringMapOps, MARKETS_MAP_CAPACITY);
 
   tls_create(&abag_tls_key, abag_tls_dtor);
@@ -3903,7 +3884,6 @@ int abagnale(int argc, char *argv[]) {
   Numeric_delete(ninety_percent_factor);
 
   Map_delete(market_samples, sample_array_delete);
-  Map_delete(market_prices, Numeric_delete);
   Map_delete(market_trades, trade_array_delete);
   Array_delete(trade_queues, trade_queue_delete);
   Array_delete(workers, thrd_delete);
