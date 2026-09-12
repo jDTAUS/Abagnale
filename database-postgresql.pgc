@@ -316,10 +316,19 @@ void db_samples_open(const void *const db, const char *const e_id,
   EXEC SQL WHENEVER NOT FOUND GOTO fatal;
   EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ;
   EXEC SQL AT :con DECLARE samples_cursor CURSOR FOR
-    SELECT "NANOS", "PRICE"
-    FROM "SAMPLES"
-    WHERE "EXCHANGE_ID" = :sql_e_id AND "MARKET_ID" = :sql_m_id
-      AND "NANOS" >= :sql_since
+    SELECT
+      "NANOS",
+      "PRICE"
+    FROM (
+      SELECT
+        "NANOS",
+        "PRICE",
+        lag("PRICE", 1) OVER (ORDER BY "NANOS") AS "PREVIOUS"
+      FROM "SAMPLES"
+      WHERE "EXCHANGE_ID" = :sql_e_id
+        AND "MARKET_ID" = :sql_m_id
+        AND "NANOS" >= :sql_since
+    ) WHERE "PRICE" <> "PREVIOUS" OR "PREVIOUS" IS NULL
     ORDER BY "NANOS" ASC;
 
   EXEC SQL AT :con OPEN samples_cursor;

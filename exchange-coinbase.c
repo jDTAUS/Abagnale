@@ -210,6 +210,7 @@ static struct String *restrict coinbase_authorization;
 static struct Array *restrict markets;
 static struct Map *restrict markets_by_id;
 static struct Map *restrict markets_by_symbol;
+static struct Map *restrict market_prices;
 static _Atomic bool markets_reload;
 
 static struct Array *restrict accounts;
@@ -507,6 +508,7 @@ static void ws_ticker_update(const struct wcjson_document *restrict const doc,
   const int saved_errno = errno;
   struct Sample *restrict s = NULL;
   struct Market *restrict m = NULL;
+  struct Numeric *restrict pr = NULL;
 
   errno = 0;
 
@@ -526,6 +528,17 @@ static void ws_ticker_update(const struct wcjson_document *restrict const doc,
       ws_channels[i].reconnect = true;
     goto ret;
   }
+
+  Map_lock(market_prices);
+  pr = Map_get(market_prices, m->id);
+
+  if (pr != NULL && Numeric_cmp(pr, j_price) == 0) {
+    Map_unlock(market_prices);
+    goto ret;
+  }
+
+  Map_put(market_prices, m->id, pr);
+  Map_unlock(market_prices);
 
   s = Sample_new();
   s->m_id = String_copy(m->id);
@@ -1170,6 +1183,7 @@ static void coinbase_init(void) {
   markets = Array_new(DEFAULT_COINBASE_MARKETS_CAPACITY);
   markets_by_id = Map_new(StringMapOps, DEFAULT_COINBASE_MARKETS_CAPACITY);
   markets_by_symbol = Map_new(StringMapOps, DEFAULT_COINBASE_MARKETS_CAPACITY);
+  market_prices = Map_new(StringMapOps, DEFAULT_COINBASE_MARKETS_CAPACITY);
 
   markets_reload = true;
   accounts = Array_new(DEFAULT_COINBASE_ACCOUNTS_CAPACITY);
@@ -1201,6 +1215,7 @@ static void coinbase_destroy(void) {
   Array_delete(markets, Market_delete);
   Map_delete(markets_by_id, NULL);
   Map_delete(markets_by_symbol, NULL);
+  Map_delete(market_prices, NULL);
   Array_delete(accounts, Account_delete);
   Map_delete(accounts_by_id, NULL);
   Map_delete(accounts_by_symbol, NULL);
