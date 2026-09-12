@@ -303,6 +303,7 @@ static tss_t bitvavo_tls_key;
 static struct Array *restrict markets;
 static struct Map *restrict markets_by_id;
 static struct Map *restrict markets_by_symbol;
+static struct Map *restrict market_prices;
 static _Atomic bool markets_reload;
 
 static struct Array *restrict accounts;
@@ -469,6 +470,7 @@ static void bitvavo_init(void) {
   markets = Array_new(DEFAULT_BITVAVO_MARKETS_CAPACITY);
   markets_by_id = Map_new(StringMapOps, DEFAULT_BITVAVO_MARKETS_CAPACITY);
   markets_by_symbol = Map_new(StringMapOps, DEFAULT_BITVAVO_MARKETS_CAPACITY);
+  market_prices = Map_new(StringMapOps, DEFAULT_BITVAVO_MARKETS_CAPACITY);
   markets_reload = true;
 
   accounts = Array_new(DEFAULT_BITVAVO_ACCOUNTS_CAPACITY);
@@ -507,6 +509,7 @@ static void bitvavo_destroy(void) {
   Array_delete(markets, Market_delete);
   Map_delete(markets_by_id, NULL);
   Map_delete(markets_by_symbol, NULL);
+  Map_delete(market_prices, Numeric_delete);
   Array_delete(accounts, Account_delete);
   Map_delete(accounts_by_id, NULL);
   Map_delete(accounts_by_symbol, NULL);
@@ -1933,6 +1936,7 @@ bitvavo_ws_ticker_evt_handler(struct mg_connection *restrict const c,
                               const struct wcjson_document *restrict const doc,
                               const struct wcjson_value *restrict const evt) {
   struct Sample *restrict s = NULL;
+  struct Numeric *restrict pr = NULL;
   const int saved_errno = errno;
   int ret = -1;
 
@@ -1957,6 +1961,20 @@ bitvavo_ws_ticker_evt_handler(struct mg_connection *restrict const c,
          String_chars(c->mgr->userdata), String_chars(j_market));
     goto ret;
   }
+
+  Map_lock(market_prices);
+  pr = Map_get(market_prices, m->id);
+
+  if (pr == NULL) {
+    pr = Numeric_new();
+    Map_put(market_prices, m->id, pr);
+  } else if (Numeric_cmp(pr, j_lastPrice) == 0) {
+    Map_unlock(market_prices);
+    goto ok;
+  }
+
+  Numeric_copy_to(j_lastPrice, pr);
+  Map_unlock(market_prices);
 
   s = Sample_new();
   s->m_id = String_copy(m->id);
