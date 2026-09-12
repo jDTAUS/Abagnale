@@ -1936,6 +1936,7 @@ bitvavo_ws_ticker_evt_handler(struct mg_connection *restrict const c,
                               const struct wcjson_document *restrict const doc,
                               const struct wcjson_value *restrict const evt) {
   struct Sample *restrict s = NULL;
+  struct String *restrict m_id = NULL;
   struct Numeric *restrict pr = NULL;
   const int saved_errno = errno;
   int ret = -1;
@@ -1962,12 +1963,15 @@ bitvavo_ws_ticker_evt_handler(struct mg_connection *restrict const c,
     goto ret;
   }
 
+  m_id = String_copy(m->id);
+  mutex_unlock(m->mtx);
+
   Map_lock(market_prices);
-  pr = Map_get(market_prices, m->id);
+  pr = Map_get(market_prices, m_id);
 
   if (pr == NULL) {
     pr = Numeric_new();
-    Map_put(market_prices, m->id, pr);
+    Map_put(market_prices, m_id, pr);
   } else if (Numeric_cmp(pr, j_lastPrice) == 0) {
     Map_unlock(market_prices);
     goto ok;
@@ -1977,12 +1981,10 @@ bitvavo_ws_ticker_evt_handler(struct mg_connection *restrict const c,
   Map_unlock(market_prices);
 
   s = Sample_new();
-  s->m_id = String_copy(m->id);
+  s->m_id = m_id;
   s->price = j_lastPrice;
   s->nanos = Numeric_new();
   nanos_now(s->nanos);
-
-  mutex_unlock(m->mtx);
 
   Queue_enqueue_await(samples, s);
 
@@ -1999,8 +2001,10 @@ ok:
   errno = 0;
   ret = 0;
 ret:
-  if (s == NULL)
+  if (s == NULL) {
     Numeric_delete(j_lastPrice);
+    String_delete(m_id);
+  }
 
   String_delete(j_market);
 

@@ -507,7 +507,7 @@ static void ws_ticker_update(const struct wcjson_document *restrict const doc,
                              const struct Numeric *restrict const nanos) {
   const int saved_errno = errno;
   struct Sample *restrict s = NULL;
-  struct Market *restrict m = NULL;
+  struct String *restrict m_id = NULL;
   struct Numeric *restrict pr = NULL;
 
   errno = 0;
@@ -521,7 +521,7 @@ static void ws_ticker_update(const struct wcjson_document *restrict const doc,
   if (errno || j_product_id == NULL || j_price == NULL)
     goto ret;
 
-  m = coinbase_market_by_symbol(j_product_id);
+  struct Market *restrict const m = coinbase_market_by_symbol(j_product_id);
 
   if (m == NULL) {
     for (size_t i = nitems(ws_channels); i-- > 0;)
@@ -529,12 +529,15 @@ static void ws_ticker_update(const struct wcjson_document *restrict const doc,
     goto ret;
   }
 
+  m_id = String_copy(m->id);
+  mutex_unlock(m->mtx);
+
   Map_lock(market_prices);
-  pr = Map_get(market_prices, m->id);
+  pr = Map_get(market_prices, m_id);
 
   if (pr == NULL) {
     pr = Numeric_new();
-    Map_put(market_prices, m->id, pr);
+    Map_put(market_prices, m_id, pr);
   } else if (Numeric_cmp(pr, j_price) == 0) {
     Map_unlock(market_prices);
     goto ret;
@@ -544,11 +547,9 @@ static void ws_ticker_update(const struct wcjson_document *restrict const doc,
   Map_unlock(market_prices);
 
   s = Sample_new();
-  s->m_id = String_copy(m->id);
+  s->m_id = m_id;
   s->nanos = Numeric_copy(nanos);
   s->price = j_price;
-
-  mutex_unlock(m->mtx);
 
   Queue_enqueue_await(samples, s);
 
@@ -562,8 +563,10 @@ static void ws_ticker_update(const struct wcjson_document *restrict const doc,
 
   errno = 0;
 ret:
-  if (s == NULL)
+  if (s == NULL) {
     Numeric_delete(j_price);
+    String_delete(m_id);
+  }
 
   String_delete(j_product_id);
 
