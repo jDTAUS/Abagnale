@@ -532,12 +532,15 @@ static void ws_ticker_update(const struct wcjson_document *restrict const doc,
   Map_lock(market_prices);
   pr = Map_get(market_prices, m->id);
 
-  if (pr != NULL && Numeric_cmp(pr, j_price) == 0) {
+  if (pr == NULL) {
+    pr = Numeric_new();
+    Map_put(market_prices, m->id, pr);
+  } else if (Numeric_cmp(pr, j_price) == 0) {
     Map_unlock(market_prices);
     goto ret;
   }
 
-  Map_put(market_prices, m->id, pr);
+  Numeric_copy_to(j_price, pr);
   Map_unlock(market_prices);
 
   s = Sample_new();
@@ -1215,7 +1218,7 @@ static void coinbase_destroy(void) {
   Array_delete(markets, Market_delete);
   Map_delete(markets_by_id, NULL);
   Map_delete(markets_by_symbol, NULL);
-  Map_delete(market_prices, NULL);
+  Map_delete(market_prices, Numeric_delete);
   Array_delete(accounts, Account_delete);
   Map_delete(accounts_by_id, NULL);
   Map_delete(accounts_by_symbol, NULL);
