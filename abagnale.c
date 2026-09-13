@@ -2926,6 +2926,7 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
       heap_free(c);
 
       trigger_reset(&t->open_trg);
+      Numeric_copy_to(zero, t->pr_samples);
       goto ret;
     }
 
@@ -2996,6 +2997,7 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
       heap_free(c);
 
       trigger_reset(&t->open_trg);
+      Numeric_copy_to(zero, t->pr_samples);
       goto ret;
     }
 
