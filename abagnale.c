@@ -102,6 +102,9 @@ struct abag_tls {
   struct samples_per_minute_vars {
     struct Numeric *restrict s;
   } samples_per_minute;
+  struct samples_per_hour_vars {
+    struct Numeric *restrict s;
+  } samples_per_hour;
   struct samples_load_vars {
     struct Numeric *restrict now;
     struct Numeric *restrict filter;
@@ -200,6 +203,7 @@ extern const struct Numeric *restrict const four;
 extern const struct Numeric *restrict const hundred;
 extern const struct Numeric *restrict const second_nanos;
 extern const struct Numeric *restrict const minute_nanos;
+extern const struct Numeric *restrict const hour_nanos;
 
 static struct Map *restrict market_samples;
 static struct Map *restrict market_trades;
@@ -360,6 +364,7 @@ static struct abag_tls *const abag_tls(void) {
     tls->samples_per_nano.duration = Numeric_new();
     tls->samples_per_second.n = Numeric_new();
     tls->samples_per_minute.s = Numeric_new();
+    tls->samples_per_hour.s = Numeric_new();
     tls->samples_load.sample = heap_malloc(sizeof(struct db_sample_rec));
     tls->samples_load.sample->nanos = Numeric_new();
     tls->samples_load.sample->price = Numeric_new();
@@ -483,6 +488,7 @@ static void abag_tls_dtor(void *e) {
   Numeric_delete(tls->samples_per_nano.duration);
   Numeric_delete(tls->samples_per_second.n);
   Numeric_delete(tls->samples_per_minute.s);
+  Numeric_delete(tls->samples_per_hour.s);
   Numeric_delete(tls->samples_load.sample->nanos);
   Numeric_delete(tls->samples_load.sample->price);
   heap_free(tls->samples_load.sample);
@@ -1042,6 +1048,15 @@ void samples_per_minute(struct Numeric *restrict const ret,
 
   samples_per_nano(s, samples);
   Numeric_mul_to(s, minute_nanos, ret);
+}
+
+void samples_per_hour(struct Numeric *restrict const ret,
+                      const struct Array *restrict const samples) {
+  const struct abag_tls *restrict const tls = abag_tls();
+  struct Numeric *restrict const s = tls->samples_per_hour.s;
+
+  samples_per_nano(s, samples);
+  Numeric_mul_to(s, hour_nanos, ret);
 }
 
 static void samples_load(struct Array *restrict const a,
@@ -1902,7 +1917,7 @@ static void position_maintain(const struct worker_ctx *restrict const w_ctx,
       position_timeout(w_ctx, t, p, samples, sample);
 
       if (verbose) {
-        samples_per_minute(m, samples);
+        samples_per_hour(m, samples);
         char *restrict const f_asc = Numeric_to_char(p->cl_factor, 4);
         char *restrict const s_asc = Numeric_to_char(p->cl_samples, 0);
         char *restrict const m_asc = Numeric_to_char(m, 4);
