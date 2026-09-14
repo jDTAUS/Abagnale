@@ -153,14 +153,4 @@ const struct Algorithm *algorithm(const struct String *restrict const);
 const struct Exchange *exchange(const struct String *restrict const);
 const struct MarketConfig *marketconfig(struct String *restrict const,
                                         struct String *restrict const);
-
-void samples_per_nano(struct Numeric *restrict const,
-                      const struct Array *restrict const);
-void samples_per_second(struct Numeric *restrict const,
-                        const struct Array *restrict const);
-void samples_per_minute(struct Numeric *restrict const,
-                        const struct Array *restrict const);
-void samples_per_hour(struct Numeric *restrict const,
-                      const struct Array *restrict const);
-
 #endif

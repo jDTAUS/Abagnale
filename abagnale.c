@@ -96,14 +96,8 @@ struct abag_tls {
     struct Numeric *restrict size;
     struct Numeric *restrict duration;
   } samples_per_nano;
-  struct samples_per_second_vars {
-    struct Numeric *restrict n;
-  } samples_per_second;
-  struct samples_per_minute_vars {
-    struct Numeric *restrict s;
-  } samples_per_minute;
   struct samples_per_hour_vars {
-    struct Numeric *restrict s;
+    struct Numeric *restrict rate;
   } samples_per_hour;
   struct samples_load_vars {
     struct Numeric *restrict now;
@@ -362,9 +356,7 @@ static struct abag_tls *const abag_tls(void) {
     tls->trade_state_save.t_state->pr_samples = Numeric_new();
     tls->samples_per_nano.size = Numeric_new();
     tls->samples_per_nano.duration = Numeric_new();
-    tls->samples_per_second.n = Numeric_new();
-    tls->samples_per_minute.s = Numeric_new();
-    tls->samples_per_hour.s = Numeric_new();
+    tls->samples_per_hour.rate = Numeric_new();
     tls->samples_load.sample = heap_malloc(sizeof(struct db_sample_rec));
     tls->samples_load.sample->nanos = Numeric_new();
     tls->samples_load.sample->price = Numeric_new();
@@ -486,9 +478,7 @@ static void abag_tls_dtor(void *e) {
   heap_free(tls->trade_state_save.t_state);
   Numeric_delete(tls->samples_per_nano.size);
   Numeric_delete(tls->samples_per_nano.duration);
-  Numeric_delete(tls->samples_per_second.n);
-  Numeric_delete(tls->samples_per_minute.s);
-  Numeric_delete(tls->samples_per_hour.s);
+  Numeric_delete(tls->samples_per_hour.rate);
   Numeric_delete(tls->samples_load.sample->nanos);
   Numeric_delete(tls->samples_load.sample->price);
   heap_free(tls->samples_load.sample);
@@ -1009,8 +999,9 @@ static inline void trade_delete(void *restrict const t) {
   heap_free(trade);
 }
 
-void samples_per_nano(struct Numeric *restrict const ret,
-                      const struct Array *restrict const samples) {
+inline static void
+samples_per_nano(struct Numeric *restrict const ret,
+                 const struct Array *restrict const samples) {
   const struct abag_tls *restrict const tls = abag_tls();
   struct Numeric *restrict const size = tls->samples_per_nano.size;
   struct Numeric *restrict const duration = tls->samples_per_nano.duration;
@@ -1032,31 +1023,14 @@ void samples_per_nano(struct Numeric *restrict const ret,
     Numeric_copy_to(zero, ret);
 }
 
-void samples_per_second(struct Numeric *restrict const ret,
-                        const struct Array *restrict const samples) {
+inline static void
+samples_per_hour(struct Numeric *restrict const ret,
+                 const struct Array *restrict const samples) {
   const struct abag_tls *restrict const tls = abag_tls();
-  struct Numeric *restrict const n = tls->samples_per_second.n;
+  struct Numeric *restrict const rate = tls->samples_per_hour.rate;
 
-  samples_per_nano(n, samples);
-  Numeric_mul_to(n, second_nanos, ret);
-}
-
-void samples_per_minute(struct Numeric *restrict const ret,
-                        const struct Array *restrict const samples) {
-  const struct abag_tls *restrict const tls = abag_tls();
-  struct Numeric *restrict const s = tls->samples_per_minute.s;
-
-  samples_per_nano(s, samples);
-  Numeric_mul_to(s, minute_nanos, ret);
-}
-
-void samples_per_hour(struct Numeric *restrict const ret,
-                      const struct Array *restrict const samples) {
-  const struct abag_tls *restrict const tls = abag_tls();
-  struct Numeric *restrict const s = tls->samples_per_hour.s;
-
-  samples_per_nano(s, samples);
-  Numeric_mul_to(s, hour_nanos, ret);
+  samples_per_nano(rate, samples);
+  Numeric_mul_to(rate, hour_nanos, ret);
 }
 
 static void samples_load(struct Array *restrict const a,
