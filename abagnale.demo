@@ -2,7 +2,7 @@
 
 # This file serves as a syntax demonstration for the abagnale configuration
 # file format. This is not an example portfolio nor any kind of trading advice.
-# Larger windows demand larger amounts of RAM (>16GB). The time it takes for
+# Larger windows demand larger amounts of RAM (>6GB). The time it takes for
 # the application to reload state when restarting depends on the IO
 # capabilities of the system and the frequency 'abagnalectl vacuum' is run.
 # Plan restarts for any configuration changes accordingly. See abagnale.conf
@@ -125,7 +125,6 @@ trade at coinbase using trend return $btc_return window 1296h\
 	market CRV@BTC\
 	market DASH@BTC\
 	market ETC@BTC\
-	market FIL@BTC\
 	market GRT@BTC\
 	market ICP@BTC\
 	market LTC@BTC\
@@ -168,6 +167,7 @@ trade at coinbase using trend return $eur_return window 1296h\
 
 trade at coinbase using trend return $btc_return window 2592h\
 	market BAT@BTC\
+	market FIL@BTC\
 	demand-timeout-min 80h demand-timeout-max 648h\
 	supply-timeout-min 80h supply-timeout-max 648h\
 	stop-loss-delay 1080m stop-loss-delays 2\
@@ -868,7 +868,6 @@ trade at coinbase using trend return $usd_return window 36h\
 
 trade at bitvavo using trend return $eur_return window 36h\
 	market ACU@EUR\
-	market AKT@EUR\
 	market AVAX@EUR\
 	market BILL@EUR\
 	market BNB@EUR\
@@ -884,11 +883,11 @@ trade at bitvavo using trend return $eur_return window 36h\
 
 trade at bitvavo using trend return $eur_return window 72h\
 	market AAVE@EUR\
+	market AKT@EUR\
 	market BABY@EUR\
 	market BICO@EUR\
 	market CC@EUR\
 	market DOT@EUR\
-	market INJ@EUR\
 	market LTC@EUR\
 	market MON@EUR\
 	market PHA@EUR\
@@ -918,8 +917,6 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market AIOZ@EUR\
 	market AIXBT@EUR\
 	market ALICE@EUR\
-	market ALT@EUR\
-	market ANKR@EUR\
 	market APE@EUR\
 	market API3@EUR\
 	market APT@EUR\
@@ -961,11 +958,9 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market CROSS@EUR\
 	market CRV@EUR\
 	market CSPR@EUR\
-	market CTK@EUR\
 	market CTR@EUR\
 	market CVX@EUR\
 	market DATAIP@EUR\
-	market DBR@EUR\
 	market DEEP@EUR\
 	market DGB@EUR\
 	market DIA@EUR\
@@ -1012,11 +1007,11 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market HUMA@EUR\
 	market ICP@EUR\
 	market ICX@EUR\
-	market ID@EUR\
 	market IKA@EUR\
 	market ILV@EUR\
 	market IMU@EUR\
 	market INIT@EUR\
+	market INJ@EUR\
 	market INX@EUR\
 	market IOST@EUR\
 	market IQ@EUR\
@@ -1043,7 +1038,6 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market LUNA@EUR\
 	market MAGIC@EUR\
 	market MANA@EUR\
-	market MANTA@EUR\
 	market MASK@EUR\
 	market ME@EUR\
 	market MEGA@EUR\
@@ -1058,7 +1052,6 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market MOVR@EUR\
 	market MTL@EUR\
 	market NEIRO@EUR\
-	market NEO@EUR\
 	market NES@EUR\
 	market NEWT@EUR\
 	market NEX@EUR\
@@ -1116,7 +1109,6 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market SUPER@EUR\
 	market SUSHI@EUR\
 	market SWEAT@EUR\
-	market SXT@EUR\
 	market T@EUR\
 	market TAI@EUR\
 	market TAIKO@EUR\
@@ -1154,7 +1146,6 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market ZKC@EUR\
 	market ZKP@EUR\
 	market ZORA@EUR\
-	market ZRC@EUR\
 	market ZRO@EUR\
 	market ZRX@EUR\
 	demand-timeout-min 10h demand-timeout-max 81h\
@@ -1173,24 +1164,33 @@ trade at bitvavo using trend return $usdc_return window 324h\
 	take-loss-delay 162h take-loss-delays 1
 
 trade at bitvavo using trend return $eur_return window 648h\
+	market ALT@EUR\
+	market ANKR@EUR\
 	market ARPA@EUR\
 	market BEL@EUR\
 	market CPOOL@EUR\
+	market CTK@EUR\
 	market CTSI@EUR\
+	market DBR@EUR\
 	market DYDX@EUR\
 	market DYM@EUR\
 	market GMT@EUR\
 	market HOT@EUR\
+	market ID@EUR\
+	market MANTA@EUR\
 	market MEW@EUR\
 	market MORPHO@EUR\
+	market NEO@EUR\
 	market OGN@EUR\
 	market PIXEL@EUR\
 	market SKL@EUR\
+	market SXT@EUR\
 	market UMA@EUR\
+	market ZRC@EUR\
 	demand-timeout-min 20h demand-timeout-max 162h\
 	supply-timeout-min 20h supply-timeout-max 162h\
-	stop-loss-delay 270m stop-loss-delays 2\
-	take-profit-delay 54m take-profit-delays 1\
+	stop-loss-delay 270m stop-loss-delays 1\
+	take-profit-delay 54m take-profit-delays 0\
 	take-loss-delay 324h take-loss-delays 1
 
 trade at bitvavo using trend return $eur_return window 1296h\
