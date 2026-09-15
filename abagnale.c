@@ -3477,7 +3477,7 @@ static int samples_process(void *restrict const arg) {
       const size_t s_items = Array_size(samples);
       for (size_t i = 0; i < s_items; i++)
         if (Numeric_cmp(((struct Sample *)items[i])->nanos, outdated_ns) > 0) {
-          Array_cut(samples, i, Array_size(samples) - i, Sample_delete);
+          Array_cut(samples, i, s_items - i, Sample_delete);
           break;
         }
 
