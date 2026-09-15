@@ -8,7 +8,6 @@
 # Plan restarts for any configuration changes accordingly. See abagnale.conf
 # for further information.
 
-database target ABAGNALE user schulte
 dns-v4 udp://127.0.0.1:53
 dns-v6 udp://::1:53
 dns-timeout 3s
@@ -29,6 +28,36 @@ brl_return="0.25 BRL"
 sgd_return="0.25 SGD"
 aud_return="0.25 AUD"
 
+# abagnalectl.conf
+#include /etc/abagnale/abagnale-coinbase-72h.conf
+#include /etc/abagnale/abagnale-coinbase-108h.conf
+#include /etc/abagnale/abagnale-coinbase-144h.conf
+#include /etc/abagnale/abagnale-coinbase-180h.conf
+#include /etc/abagnale/abagnale-coinbase-324h.conf
+#include /etc/abagnale/abagnale-coinbase-648h.conf
+#include /etc/abagnale/abagnale-coinbase-1296h.conf
+#include /etc/abagnale/abagnale-coinbase-2592h.conf
+#include /etc/abagnale/abagnale-coinbase-all-aud.conf
+#include /etc/abagnale/abagnale-coinbase-all-brl.conf
+#include /etc/abagnale/abagnale-coinbase-all-btc.conf
+#include /etc/abagnale/abagnale-coinbase-all-cad.conf
+#include /etc/abagnale/abagnale-coinbase-all-eth.conf
+#include /etc/abagnale/abagnale-coinbase-all-eur.conf
+#include /etc/abagnale/abagnale-coinbase-all-gbp.conf
+#include /etc/abagnale/abagnale-coinbase-all-inr.conf
+#include /etc/abagnale/abagnale-coinbase-all-sgd.conf
+#include /etc/abagnale/abagnale-coinbase-all-usdc.conf
+#include /etc/abagnale/abagnale-coinbase-all-usdt.conf
+#include /etc/abagnale/abagnale-coinbase-all-usd.conf
+#include /etc/abagnale/abagnale-bitvavo-36h.conf
+#include /etc/abagnale/abagnale-bitvavo-72h.conf
+#include /etc/abagnale/abagnale-bitvavo-324h.conf
+#include /etc/abagnale/abagnale-bitvavo-648h.conf
+#include /etc/abagnale/abagnale-bitvavo-1296h.conf
+#include /etc/abagnale/abagnale-bitvavo-all-eur.conf
+#include /etc/abagnale/abagnale-bitvavo-all-usdc.conf
+
+# abagnale-coinbase-72h.conf
 trade at coinbase using trend return $eur_return window 72h\
 	market USDC@EUR\
 	demand-timeout-min 2h demand-timeout-max 18h\
@@ -37,6 +66,7 @@ trade at coinbase using trend return $eur_return window 72h\
 	take-profit-delay 7.5m take-profit-delays 1\
 	take-loss-delay 36h take-loss-delays 1
 
+# abagnale-coinbase-108h.conf
 trade at coinbase using trend return $eur_return window 108h\
 	market ADA@EUR\
 	demand-timeout-min 3h demand-timeout-max 27h\
@@ -45,6 +75,7 @@ trade at coinbase using trend return $eur_return window 108h\
 	take-profit-delay 9m take-profit-delays 1\
 	take-loss-delay 54h take-loss-delays 1
 
+# abagnale-coinbase-144h.conf
 trade at coinbase using trend return $eur_return window 144h\
 	market AAVE@EUR\
 	market ICP@EUR\
@@ -54,6 +85,7 @@ trade at coinbase using trend return $eur_return window 144h\
 	take-profit-delay 12m take-profit-delays 1\
 	take-loss-delay 72h take-loss-delays 1
 
+# abagnale-coinbase-180h.conf
 trade at coinbase using trend return $eur_return window 180h\
 	market BAT@EUR\
 	market UNI@EUR\
@@ -63,6 +95,7 @@ trade at coinbase using trend return $eur_return window 180h\
 	take-profit-delay 15m take-profit-delays 1\
 	take-loss-delay 90h take-loss-delays 1
 
+# abagnale-coinbase-324h.conf
 trade at coinbase using trend return $btc_return window 324h\
 	market ETH@BTC\
 	market YFI@BTC\
@@ -93,6 +126,7 @@ trade at coinbase using trend return 10 DOGE window 324h\
 	take-profit-delay 27m take-profit-delays 1\
 	take-loss-delay 162h take-loss-delays 1
 
+# abagnale-coinbase-648h.conf
 trade at coinbase using trend return $btc_return window 648h\
 	market AAVE@BTC\
 	market AVAX@BTC\
@@ -119,6 +153,7 @@ trade at coinbase using trend return $eur_return window 648h\
 	take-profit-delay 54m take-profit-delays 1\
 	take-loss-delay 324h take-loss-delays 1
 
+# abagnale-coinbase-1296h.conf
 trade at coinbase using trend return $btc_return window 1296h\
 	market ADA@BTC\
 	market ALGO@BTC\
@@ -165,6 +200,7 @@ trade at coinbase using trend return $eur_return window 1296h\
 	take-profit-delay 108m take-profit-delays 1\
 	take-loss-delay 648h take-loss-delays 1
 
+# abagnale-coinbase-2592h.conf
 trade at coinbase using trend return $btc_return window 2592h\
 	market BAT@BTC\
 	market FIL@BTC\
@@ -182,6 +218,7 @@ trade at coinbase using trend return $eth_return window 2592h\
 	take-profit-delay 216m take-profit-delays 1\
 	take-loss-delay 1296h take-loss-delays 1
 
+# abagnale-coinbase-all-aud.conf
 trade at coinbase using trend return $aud_return window 36h\
 	market\
 		not 1INCH@EUR\
@@ -239,6 +276,7 @@ trade at coinbase using trend return $aud_return window 36h\
 	take-profit-delay 3m take-profit-delays 1\
 	take-loss-delay 18h take-loss-delays 1
 
+# abagnale-coinbase-all-brl.conf
 trade at coinbase using trend return $brl_return window 36h\
 	market\
 		not 1INCH@EUR\
@@ -296,6 +334,7 @@ trade at coinbase using trend return $brl_return window 36h\
 	take-profit-delay 3m take-profit-delays 1\
 	take-loss-delay 18h take-loss-delays 1
 
+# abagnale-coinbase-all-btc.conf
 trade at coinbase using trend return $btc_return window 36h\
 	market\
 		not 1INCH@EUR\
@@ -353,6 +392,7 @@ trade at coinbase using trend return $btc_return window 36h\
 	take-profit-delay 3m take-profit-delays 1\
 	take-loss-delay 18h take-loss-delays 1
 
+# abagnale-coinbase-all-cad.conf
 trade at coinbase using trend return $cad_return window 36h\
 	market\
 		not 1INCH@EUR\
@@ -410,6 +450,7 @@ trade at coinbase using trend return $cad_return window 36h\
 	take-profit-delay 3m take-profit-delays 1\
 	take-loss-delay 18h take-loss-delays 1
 
+# abagnale-coinbase-all-eth.conf
 trade at coinbase using trend return $eth_return window 36h\
 	market\
 		not 1INCH@EUR\
@@ -467,6 +508,7 @@ trade at coinbase using trend return $eth_return window 36h\
 	take-profit-delay 3m take-profit-delays 1\
 	take-loss-delay 18h take-loss-delays 1
 
+# abagnale-coinbase-all-eur.conf
 trade at coinbase using trend return $eur_return window 36h\
 	market\
 		not 1INCH@EUR\
@@ -524,6 +566,7 @@ trade at coinbase using trend return $eur_return window 36h\
 	take-profit-delay 3m take-profit-delays 1\
 	take-loss-delay 18h take-loss-delays 1
 
+# abagnale-coinbase-all-gbp.conf
 trade at coinbase using trend return $gbp_return window 36h\
 	market\
 		not 1INCH@EUR\
@@ -581,6 +624,7 @@ trade at coinbase using trend return $gbp_return window 36h\
 	take-profit-delay 3m take-profit-delays 1\
 	take-loss-delay 18h take-loss-delays 1
 
+# abagnale-coinbase-all-inr.conf
 trade at coinbase using trend return $inr_return window 36h\
 	market\
 		not 1INCH@EUR\
@@ -638,6 +682,7 @@ trade at coinbase using trend return $inr_return window 36h\
 	take-profit-delay 3m take-profit-delays 1\
 	take-loss-delay 18h take-loss-delays 1
 
+# abagnale-coinbase-all-sgd.conf
 trade at coinbase using trend return $sgd_return window 36h\
 	market\
 		not 1INCH@EUR\
@@ -695,6 +740,7 @@ trade at coinbase using trend return $sgd_return window 36h\
 	take-profit-delay 3m take-profit-delays 1\
 	take-loss-delay 18h take-loss-delays 1
 
+# abagnale-coinbase-all-usdc.conf
 trade at coinbase using trend return $usdc_return window 36h\
 	market\
 		not 1INCH@EUR\
@@ -752,6 +798,7 @@ trade at coinbase using trend return $usdc_return window 36h\
 	take-profit-delay 3m take-profit-delays 1\
 	take-loss-delay 18h take-loss-delays 1
 
+# abagnale-coinbase-all-usdt.conf
 trade at coinbase using trend return $usdt_return window 36h\
 	market\
 		not 1INCH@EUR\
@@ -809,6 +856,7 @@ trade at coinbase using trend return $usdt_return window 36h\
 	take-profit-delay 3m take-profit-delays 1\
 	take-loss-delay 18h take-loss-delays 1
 
+# abagnale-coinbase-all-usd.conf
 trade at coinbase using trend return $usd_return window 36h\
 	market\
 		not 1INCH@EUR\
@@ -866,6 +914,7 @@ trade at coinbase using trend return $usd_return window 36h\
 	take-profit-delay 3m take-profit-delays 1\
 	take-loss-delay 18h take-loss-delays 1
 
+# abagnale-bitvavo-36h.conf
 trade at bitvavo using trend return $eur_return window 36h\
 	market ACU@EUR\
 	market AVAX@EUR\
@@ -881,6 +930,7 @@ trade at bitvavo using trend return $eur_return window 36h\
 	take-profit-delay 3m take-profit-delays 0\
 	take-loss-delay 18h take-loss-delays 1
 
+# abagnale-bitvavo-72h.conf
 trade at bitvavo using trend return $eur_return window 72h\
 	market AAVE@EUR\
 	market AKT@EUR\
@@ -899,7 +949,6 @@ trade at bitvavo using trend return $eur_return window 72h\
 	market USDC@EUR\
 	market USELESS@EUR\
 	market WAL@EUR\
-	market WIF@EUR\
 	market XLM@EUR\
 	market XPL@EUR\
 	demand-timeout-min 2h demand-timeout-max 18h\
@@ -908,6 +957,7 @@ trade at bitvavo using trend return $eur_return window 72h\
 	take-profit-delay 7.5m take-profit-delays 0\
 	take-loss-delay 36h take-loss-delays 1
 
+# abagnale-bitvavo-324h.conf
 trade at bitvavo using trend return $eur_return window 324h\
 	market A@EUR\
 	market ACT@EUR\
@@ -1131,6 +1181,7 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market WAXP@EUR\
 	market WCT@EUR\
 	market WELL@EUR\
+	market WIF@EUR\
 	market WLFI@EUR\
 	market WOO@EUR\
 	market XAI@EUR\
@@ -1163,6 +1214,7 @@ trade at bitvavo using trend return $usdc_return window 324h\
 	take-profit-delay 27m take-profit-delays 0\
 	take-loss-delay 162h take-loss-delays 1
 
+# abagnale-bitvavo-648h.conf
 trade at bitvavo using trend return $eur_return window 648h\
 	market ALT@EUR\
 	market ANKR@EUR\
@@ -1193,6 +1245,7 @@ trade at bitvavo using trend return $eur_return window 648h\
 	take-profit-delay 54m take-profit-delays 0\
 	take-loss-delay 324h take-loss-delays 1
 
+# abagnale-bitvavo-1296h.conf
 trade at bitvavo using trend return $eur_return window 1296h\
 	market 0G@EUR\
 	market 1INCH@EUR\
@@ -1292,6 +1345,7 @@ trade at bitvavo using trend return $usdc_return window 1296h\
 	take-profit-delay 108m take-profit-delays 0\
 	take-loss-delay 648h take-loss-delays 1
 
+# abagnale-bitvavo-all-eur.conf
 trade at bitvavo using trend return $eur_return window 180h\
 	market\
 		not 0G@EUR\
@@ -1678,6 +1732,7 @@ trade at bitvavo using trend return $eur_return window 180h\
 	take-profit-delay 15m take-profit-delays 0\
 	take-loss-delay 90h take-loss-delays 1
 
+# abagnale-bitvavo-all-usdc.conf
 trade at bitvavo using trend return $usdc_return window 72h\
 	market\
 		not 0G@EUR\
