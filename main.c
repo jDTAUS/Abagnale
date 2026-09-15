@@ -143,16 +143,19 @@ int main(int argc, char *argv[]) {
   process_id = String_cnew("1fef4eab-66e8-4f49-8697-7132308b52f2");
 
   if (argv[0] != NULL) {
-    char *p_nm = strrchr(argv[0], '/');
+    char *restrict p_nm = strrchr(argv[0], '/');
 
     if (p_nm == NULL)
       p_nm = strrchr(argv[0], '\\');
 
     char *restrict p_dot = strrchr(argv[0], '.');
-    if (p_dot != NULL)
-      *p_dot = '\0';
 
-    progname = String_cnew(p_nm != NULL ? p_nm + 1 : argv[0]);
+    if (p_dot != NULL)
+      progname =
+          String_cnnew(p_nm != NULL ? p_nm + 1 : argv[0], p_dot - argv[0]);
+    else
+      progname = String_cnew(p_nm != NULL ? p_nm + 1 : argv[0]);
+
   } else
     progname = String_cnew(".");
 
