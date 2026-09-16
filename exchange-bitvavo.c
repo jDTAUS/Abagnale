@@ -1682,14 +1682,17 @@ static int bitvavo_ws_subscribe(struct mg_connection *restrict const c) {
   struct wcjson_value *restrict const j_markets = wcjson_value_array(&req_doc);
   struct wcjson_value *restrict const j_channels = wcjson_value_array(&req_doc);
 
+  size_t m_cnt = 0;
   items = Array_items(m_array);
   for (size_t i = Array_size(m_array); i-- > 0;) {
     const struct Market *restrict const m = items[i];
-    if (ticker_exporter || marketconfig(exchange_bitvavo.nm, m->nm) != NULL)
+    if (ticker_exporter || marketconfig(exchange_bitvavo.nm, m->nm) != NULL) {
       wcjson_array_add_tail(&req_doc, j_markets,
                             wcjson_value_mbstring(&req_doc,
                                                   String_chars(m->sym),
                                                   String_length(m->sym)));
+      m_cnt++;
+    }
   }
   Array_unlock(m_array);
 
@@ -1730,6 +1733,12 @@ static int bitvavo_ws_subscribe(struct mg_connection *restrict const c) {
 
   if (errno)
     goto ret;
+
+  if (m_cnt == 0) {
+    werr("%s: subscribe: %lu Unconfigured\n", String_chars(c->mgr->userdata),
+         c->id);
+    goto ret;
+  }
 
   if (!mg_ws_send(c, req_body, req_len, WEBSOCKET_OP_TEXT))
     goto ret;

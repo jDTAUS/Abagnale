@@ -890,13 +890,16 @@ static void ws_subscribe(struct mg_connection *restrict const c,
     goto ret;
   }
 
+  size_t m_cnt = 0;
   items = Array_items(m_array);
   for (size_t i = Array_size(m_array); i-- > 0;) {
     const struct Market *restrict const m = items[i];
-    if (ticker_exporter || marketconfig(exchange_coinbase.nm, m->nm) != NULL)
+    if (ticker_exporter || marketconfig(exchange_coinbase.nm, m->nm) != NULL) {
       wcjson_array_add_tail(&ch_doc, j_ch_arr,
                             wcjson_value_mbstring(&ch_doc, String_chars(m->sym),
                                                   String_length(m->sym)));
+      m_cnt++;
+    }
   }
   Array_unlock(m_array);
 
@@ -931,7 +934,7 @@ static void ws_subscribe(struct mg_connection *restrict const c,
 
   if (wcjson_document_build(&wc_json, &ch_doc) < 0 ||
       wcjson_document_build(&wc_json, &hb_doc) < 0) {
-    werr("%s: %s: subscribe: %s\n", coinbase_ws_uri, channel->name,
+    werr("%s: %s: subscribe: %lu %s\n", coinbase_ws_uri, channel->name, c->id,
          json_mbserror(&wc_json));
     goto ret;
   }
@@ -946,6 +949,12 @@ static void ws_subscribe(struct mg_connection *restrict const c,
 
   if (errno)
     goto ret;
+
+  if (m_cnt == 0) {
+    werr("%s: %s: subscribe: %lu Unconfigured\n", coinbase_ws_uri,
+         channel->name, c->id);
+    goto ret;
+  }
 
   if (!mg_ws_send(c, hb_body, hb_len, WEBSOCKET_OP_TEXT) ||
       !mg_ws_send(c, ch_body, ch_len, WEBSOCKET_OP_TEXT))
@@ -963,7 +972,7 @@ ret:
   heap_free(ch_doc.esc);
 
   if (errno)
-    werr("%s: %s: subscribe: %s\n", coinbase_ws_uri, channel->name,
+    werr("%s: %s: subscribe: %lu %s\n", coinbase_ws_uri, channel->name, c->id,
          strerror(errno));
 
   errno = saved_errno;
