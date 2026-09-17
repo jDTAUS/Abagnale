@@ -919,7 +919,6 @@ trade at bitvavo using trend return $eur_return window 36h\
 	market ACU@EUR\
 	market AVAX@EUR\
 	market BILL@EUR\
-	market BNB@EUR\
 	market BTC@EUR\
 	market ETH@EUR\
 	market HYPE@EUR\
@@ -936,6 +935,7 @@ trade at bitvavo using trend return $eur_return window 72h\
 	market AKT@EUR\
 	market BABY@EUR\
 	market BICO@EUR\
+	market BNB@EUR\
 	market CC@EUR\
 	market DOT@EUR\
 	market LTC@EUR\
@@ -1050,7 +1050,6 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market GTC@EUR\
 	market GWEI@EUR\
 	market HAEDAL@EUR\
-	market HFT@EUR\
 	market HIGH@EUR\
 	market HMSTR@EUR\
 	market HNT@EUR\
@@ -1086,7 +1085,6 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market LSK@EUR\
 	market LUNA2@EUR\
 	market LUNA@EUR\
-	market MAGIC@EUR\
 	market MANA@EUR\
 	market MASK@EUR\
 	market ME@EUR\
@@ -1159,6 +1157,7 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market SUPER@EUR\
 	market SUSHI@EUR\
 	market SWEAT@EUR\
+	market SYN@EUR\
 	market T@EUR\
 	market TAI@EUR\
 	market TAIKO@EUR\
@@ -1227,8 +1226,10 @@ trade at bitvavo using trend return $eur_return window 648h\
 	market DYDX@EUR\
 	market DYM@EUR\
 	market GMT@EUR\
+	market HFT@EUR\
 	market HOT@EUR\
 	market ID@EUR\
+	market MAGIC@EUR\
 	market MANTA@EUR\
 	market MEW@EUR\
 	market MORPHO@EUR\
@@ -1656,6 +1657,7 @@ trade at bitvavo using trend return $eur_return window 180h\
 		not SUSHI@EUR\
 		not SWEAT@EUR\
 		not SWELL@EUR\
+		not SYN@EUR\
 		not SXT@EUR\
 		not T@EUR\
 		not TAI@EUR\
@@ -2043,6 +2045,7 @@ trade at bitvavo using trend return $usdc_return window 72h\
 		not SUSHI@EUR\
 		not SWEAT@EUR\
 		not SWELL@EUR\
+		not SYN@EUR\
 		not SXT@EUR\
 		not T@EUR\
 		not TAI@EUR\
