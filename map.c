@@ -211,7 +211,7 @@ MapIterator_key(const struct MapIterator *restrict const it) {
   return it->e != NULL ? it->e->key : NULL;
 }
 
-inline const void *const
+inline void *const
 MapIterator_value(const struct MapIterator *restrict const it) {
   return it->e != NULL ? it->e->value : NULL;
 }

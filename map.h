@@ -58,7 +58,7 @@ bool MapIterator_next(struct MapIterator *restrict const);
 void *MapIterator_remove(struct MapIterator *restrict const);
 
 const void *const MapIterator_key(const struct MapIterator *restrict const);
-const void *const MapIterator_value(const struct MapIterator *restrict const);
+void *const MapIterator_value(const struct MapIterator *restrict const);
 
 #ifdef MULTI_THREADED
 mtx_t *Map_mutex(struct Map *restrict const);
