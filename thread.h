@@ -29,6 +29,7 @@
 #include <time.h>
 
 void thread_create(thrd_t *restrict const, int (*)(void *), void *arg);
+void thread_detach(thrd_t);
 void thread_join(const thrd_t, int *restrict const);
 void thread_sleep(const struct timespec *restrict const);
 _Noreturn void thread_exit(const int);

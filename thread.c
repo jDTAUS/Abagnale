@@ -50,6 +50,12 @@ inline void thread_create(thrd_t *restrict const t, int (*entry)(void *),
     fatal("%s", strthrd(r));
 }
 
+inline void thread_detach(thrd_t t) {
+  int r = thrd_detach(t);
+  if (r != thrd_success)
+    fatal("%s", strthrd(r));
+}
+
 inline void thread_join(const thrd_t t, int *restrict const res) {
   int r = thrd_join(t, res);
   if (r != thrd_success)
