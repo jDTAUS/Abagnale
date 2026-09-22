@@ -30,6 +30,7 @@
 #include "time.h"
 
 #include <errno.h>
+#include <signal.h>
 #include <stdio.h>
 #include <string.h>
 
@@ -83,7 +84,7 @@ static const struct {
     {CANDLE_NONE, "NONE", 4},
 };
 
-extern _Atomic bool terminated;
+extern volatile sig_atomic_t terminated;
 extern const struct Numeric *restrict const zero;
 extern const struct Numeric *restrict const n_one;
 extern const struct Numeric *restrict const hundred;

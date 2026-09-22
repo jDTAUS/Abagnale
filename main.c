@@ -53,7 +53,7 @@ extern uint64_t mg_boot_timestamp_ms;
 struct String *restrict progname;
 struct String *restrict prog_abagnale;
 struct String *restrict prog_abagnalectl;
-_Atomic bool terminated;
+volatile sig_atomic_t terminated = 0;
 
 extern struct Exchange exchange_bitvavo;
 extern struct Exchange exchange_coinbase;
@@ -104,7 +104,7 @@ extern bool proc_prefix_systemd;
 int abagnale(int argc, char *argv[]);
 int abagnalectl(int argc, char *argv[]);
 
-static void terminate(int signum) { terminated = true; }
+static void terminate(int signum) { terminated = 1; }
 
 static _Noreturn void usage(void) {
   werr("Usage: %s [-Dmacro=value ... ] [-f config-file] [-I entity] [-i "
