@@ -3431,6 +3431,7 @@ static int market_order_func(void *restrict const arg) {
     Order_delete(order);
   } while (!terminated);
 
+  db_disconnect(w_ctx->db);
   Map_lock(w_ctx->order_queues);
   Map_remove(w_ctx->order_queues, w_ctx->m_id);
   Map_unlock(w_ctx->order_queues);
