@@ -29,7 +29,7 @@ Environment=LC_CTYPE=C.UTF-8
 #Environment=ABAG_DATABASE_TARGET=ABAGNALE
 #Environment=ABAG_DATABASE_USER=abagnale
 #Environment=ABAG_HTTP_TIMEOUT_MILLIS=60000
-#Environment=ABAG_THREAD_TIMEOUT_SECONDS=20
+#Environment=ABAG_THREAD_TIMEOUT_SECONDS=5
 #Environment=CDP_REST_URI=https://api.coinbase.com
 #Environment=CDP_WS_URI=wss://advanced-trade-ws.coinbase.com
 #Environment=CDP_ACCOUNT_PATH=/api/v3/brokerage/accounts/
