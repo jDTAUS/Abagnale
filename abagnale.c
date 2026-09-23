@@ -83,7 +83,6 @@ struct worker_ctx {
   struct Queue *restrict trade_queue;
   struct Queue *restrict trades_queue;
   struct thread_group *restrict threads;
-  thrd_t thrd;
 };
 
 struct abag_tls {
@@ -209,7 +208,7 @@ static struct Map *restrict market_samples;
 static struct Map *restrict market_trades;
 static struct Map *restrict market_configs;
 static tss_t abag_tls_key;
-static struct thread_group workers;
+static struct thread_group worker;
 static unsigned long thread_timeout_seconds;
 static struct Numeric *restrict ninety_percent_factor;
 
@@ -3834,13 +3833,14 @@ static int exchange_stop_func(void *restrict const arg) {
   thread_group_destroy(e_ctx->threads);
   heap_free(e_ctx->threads);
   heap_free(e_ctx);
-  workers.cnt--;
-  condition_broadcast(&workers.cnd);
+  worker.cnt--;
+  condition_broadcast(&worker.cnd);
   thread_exit(EXIT_SUCCESS);
 }
 
 static int exchange_sample_func(void *restrict const arg) {
   struct worker_ctx *restrict const e_ctx = arg;
+  thrd_t thrd;
 
   while (!terminated) {
     struct Sample *restrict const sample = e_ctx->e->sample_await();
@@ -3877,8 +3877,8 @@ static int exchange_sample_func(void *restrict const arg) {
       m_ctx->ticker_queue = ticker_queue;
       m_ctx->threads->cnt++;
       condition_broadcast(&m_ctx->threads->cnd);
-      thread_create(&m_ctx->thrd, market_sample_func, m_ctx);
-      thread_detach(m_ctx->thrd);
+      thread_create(&thrd, market_sample_func, m_ctx);
+      thread_detach(thrd);
     }
 
     Map_unlock(e_ctx->ticker_queues);
@@ -3901,6 +3901,7 @@ static int exchange_sample_func(void *restrict const arg) {
 
 static int exchange_order_func(void *restrict const arg) {
   struct worker_ctx *restrict const e_ctx = arg;
+  thrd_t thrd;
 
   while (!terminated) {
     struct Order *restrict const order = e_ctx->e->order_await();
@@ -3938,8 +3939,8 @@ static int exchange_order_func(void *restrict const arg) {
       o_ctx->order_queue = order_queue;
       o_ctx->threads->cnt++;
       condition_broadcast(&o_ctx->threads->cnd);
-      thread_create(&o_ctx->thrd, market_order_func, o_ctx);
-      thread_detach(o_ctx->thrd);
+      thread_create(&thrd, market_order_func, o_ctx);
+      thread_detach(thrd);
     }
 
     Queue_enqueue_await(order_queue, order);
@@ -3960,6 +3961,7 @@ static int exchange_order_func(void *restrict const arg) {
 
 static int exchange_trade_func(void *restrict const arg) {
   struct worker_ctx *restrict const e_ctx = arg;
+  thrd_t thrd;
 
   while (!terminated) {
     struct Trade *restrict const trade =
@@ -3998,8 +4000,8 @@ static int exchange_trade_func(void *restrict const arg) {
       t_ctx->trade_queue = trade_queue;
       t_ctx->threads->cnt++;
       condition_broadcast(&t_ctx->threads->cnd);
-      thread_create(&t_ctx->thrd, market_trade_func, t_ctx);
-      thread_detach(t_ctx->thrd);
+      thread_create(&thrd, market_trade_func, t_ctx);
+      thread_detach(thrd);
     }
 
     Queue_enqueue_await(trade_queue, trade);
@@ -4025,6 +4027,7 @@ static inline void trade_array_delete(void *restrict const entry) {
 
 int abagnale(int argc, char *argv[]) {
   void *const *restrict items;
+  thrd_t thrd;
 
   if (Array_size(exchanges) == 0) {
     werr("%s: No exchanges configured\n", String_chars(progname));
@@ -4038,7 +4041,7 @@ int abagnale(int argc, char *argv[]) {
 
   tls_create(&abag_tls_key, abag_tls_dtor);
 
-  thread_group_init(&workers);
+  thread_group_init(&worker);
 
   thread_timeout_seconds =
       envul("ABAG_THREAD_TIMEOUT_SECONDS", DEFAULT_ABAG_THREAD_TIMEOUT_SECONDS);
@@ -4061,26 +4064,26 @@ int abagnale(int argc, char *argv[]) {
     thread_group_init(e_ctx->threads);
     Queue_start(e_ctx->trades_queue);
     e_ctx->e->start();
-    thread_create(&e_ctx->thrd, exchange_sample_func, e_ctx);
-    thread_detach(e_ctx->thrd);
+    thread_create(&thrd, exchange_sample_func, e_ctx);
+    thread_detach(thrd);
     e_ctx->threads->cnt++;
-    thread_create(&e_ctx->thrd, exchange_order_func, e_ctx);
-    thread_detach(e_ctx->thrd);
+    thread_create(&thrd, exchange_order_func, e_ctx);
+    thread_detach(thrd);
     e_ctx->threads->cnt++;
-    thread_create(&e_ctx->thrd, exchange_trade_func, e_ctx);
-    thread_detach(e_ctx->thrd);
+    thread_create(&thrd, exchange_trade_func, e_ctx);
+    thread_detach(thrd);
     e_ctx->threads->cnt++;
     condition_broadcast(&e_ctx->threads->cnd);
-    thread_create(&e_ctx->thrd, exchange_stop_func, e_ctx);
-    thread_detach(e_ctx->thrd);
-    workers.cnt++;
-    condition_broadcast(&workers.cnd);
+    thread_create(&thrd, exchange_stop_func, e_ctx);
+    thread_detach(thrd);
+    worker.cnt++;
+    condition_broadcast(&worker.cnd);
   }
 
-  mutex_lock(&workers.mtx);
-  while (workers.cnt > 0)
-    condition_wait(&workers.cnd, &workers.mtx);
-  mutex_unlock(&workers.mtx);
+  mutex_lock(&worker.mtx);
+  while (worker.cnt > 0)
+    condition_wait(&worker.cnd, &worker.mtx);
+  mutex_unlock(&worker.mtx);
 
   void *restrict const state_db = db_connect(String_chars(progname));
   struct MapIterator *restrict const it = MapIterator_new(market_trades);
