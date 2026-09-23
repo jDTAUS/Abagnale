@@ -42,7 +42,7 @@
 #include <string.h>
 
 #ifndef DEFAULT_ABAG_THREAD_TIMEOUT_SECONDS
-#define DEFAULT_ABAG_THREAD_TIMEOUT_SECONDS 60
+#define DEFAULT_ABAG_THREAD_TIMEOUT_SECONDS 20
 #endif
 
 #ifndef nitems
@@ -59,6 +59,9 @@
 
 #define MARKETS_MAP_CAPACITY 2048
 #define MARKETS_QUEUE_CAPACITY 2048
+#define MARKET_TRADE_QUEUE_CAPACITY 64
+#define MARKET_TICKER_QUEUE_CAPACITY 512
+#define MARKET_ORDER_QUEUE_CAPACITY 32
 
 struct thread_group {
   cnd_t cnd;
@@ -3850,7 +3853,9 @@ static int exchange_sample_func(void *restrict const arg) {
         Map_get(e_ctx->ticker_queues, sample->m_id);
 
     if (ticker_queue == NULL) {
-      ticker_queue = Queue_new(MARKETS_QUEUE_CAPACITY, thread_timeout_seconds);
+      ticker_queue =
+          Queue_new(MARKET_TICKER_QUEUE_CAPACITY, thread_timeout_seconds);
+
       Queue_start(ticker_queue);
       Map_put(e_ctx->ticker_queues, sample->m_id, ticker_queue);
       queue_init = true;
@@ -3908,7 +3913,9 @@ static int exchange_order_func(void *restrict const arg) {
         Map_get(e_ctx->order_queues, order->m_id);
 
     if (order_queue == NULL) {
-      order_queue = Queue_new(MARKETS_QUEUE_CAPACITY, thread_timeout_seconds);
+      order_queue =
+          Queue_new(MARKET_ORDER_QUEUE_CAPACITY, thread_timeout_seconds);
+
       Queue_start(order_queue);
       Map_put(e_ctx->order_queues, order->m_id, order_queue);
       queue_init = true;
@@ -3966,7 +3973,9 @@ static int exchange_trade_func(void *restrict const arg) {
         Map_get(e_ctx->trade_queues, trade->m_id);
 
     if (trade_queue == NULL) {
-      trade_queue = Queue_new(MARKETS_QUEUE_CAPACITY, thread_timeout_seconds);
+      trade_queue =
+          Queue_new(MARKET_TRADE_QUEUE_CAPACITY, thread_timeout_seconds);
+
       Queue_start(trade_queue);
       Map_put(e_ctx->trade_queues, trade->m_id, trade_queue);
       queue_init = true;
