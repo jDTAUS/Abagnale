@@ -42,7 +42,7 @@
 #include <string.h>
 
 #ifndef DEFAULT_ABAG_THREAD_TIMEOUT_MILLIS
-#define DEFAULT_ABAG_THREAD_TIMEOUT_MILLIS 500
+#define DEFAULT_ABAG_THREAD_TIMEOUT_MILLIS 100
 #endif
 
 #ifndef nitems
