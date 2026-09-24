@@ -1,5 +1,5 @@
 /* $SchulteIT: queue.c 15189 2025-10-27 05:41:45Z schulte $ */
-/* $JDTAUS$ */
+/* $JDTAUS: queue.c 9745 2026-09-24 06:13:07Z schulte $ */
 
 /*
  * Copyright (c) 2018 - 2026 Christian Schulte <cs@schulte.it>
