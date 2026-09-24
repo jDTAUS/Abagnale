@@ -66,7 +66,7 @@
 struct thread_group {
   cnd_t cnd;
   mtx_t mtx;
-  _Atomic size_t cnt;
+  size_t cnt;
 };
 
 struct worker_ctx {
@@ -327,6 +327,26 @@ thread_group_destroy(struct thread_group *restrict const tg) {
   condition_destroy(&tg->cnd);
   mutex_destroy(&tg->mtx);
   tg->cnt = 0;
+}
+
+inline static void
+thread_group_cnt_inc(struct thread_group *restrict const tg) {
+  mutex_lock(&tg->mtx);
+  if (tg->cnt == SIZE_MAX)
+    panic();
+  tg->cnt++;
+  mutex_unlock(&tg->mtx);
+  condition_broadcast(&tg->cnd);
+}
+
+inline static void
+thread_group_cnt_dec(struct thread_group *restrict const tg) {
+  mutex_lock(&tg->mtx);
+  if (tg->cnt == 0)
+    panic();
+  tg->cnt--;
+  mutex_unlock(&tg->mtx);
+  condition_broadcast(&tg->cnd);
 }
 
 inline static struct worker_ctx *
@@ -3436,8 +3456,7 @@ static int market_order_func(void *restrict const arg) {
   Map_unlock(w_ctx->order_queues);
   Queue_stop(w_ctx->order_queue);
   Queue_delete(w_ctx->order_queue, Order_delete);
-  w_ctx->threads->cnt--;
-  condition_broadcast(&w_ctx->threads->cnd);
+  thread_group_cnt_dec(w_ctx->threads);
   String_delete(w_ctx->m_id);
   heap_free(w_ctx);
   thread_exit(EXIT_SUCCESS);
@@ -3619,8 +3638,7 @@ static int market_sample_func(void *restrict const arg) {
   Map_unlock(w_ctx->ticker_queues);
   Queue_stop(w_ctx->ticker_queue);
   Queue_delete(w_ctx->ticker_queue, Sample_delete);
-  w_ctx->threads->cnt--;
-  condition_broadcast(&w_ctx->threads->cnd);
+  thread_group_cnt_dec(w_ctx->threads);
   String_delete(w_ctx->m_id);
   heap_free(w_ctx);
   Numeric_delete(q_return);
@@ -3766,8 +3784,7 @@ static int market_trade_func(void *restrict const arg) {
   Map_unlock(w_ctx->trade_queues);
   Queue_stop(w_ctx->trade_queue);
   Queue_delete(w_ctx->trade_queue, NULL);
-  w_ctx->threads->cnt--;
-  condition_broadcast(&w_ctx->threads->cnd);
+  thread_group_cnt_dec(w_ctx->threads);
   String_delete(w_ctx->m_id);
   heap_free(w_ctx);
   Numeric_delete(tp_pc);
@@ -3833,8 +3850,7 @@ static int exchange_stop_func(void *restrict const arg) {
   thread_group_destroy(e_ctx->threads);
   heap_free(e_ctx->threads);
   heap_free(e_ctx);
-  worker.cnt--;
-  condition_broadcast(&worker.cnd);
+  thread_group_cnt_dec(&worker);
   thread_exit(EXIT_SUCCESS);
 }
 
@@ -3873,8 +3889,7 @@ static int exchange_sample_func(void *restrict const arg) {
       m_ctx->db = db_connect(cname);
       m_ctx->m_id = String_copy(sample->m_id);
       m_ctx->ticker_queue = ticker_queue;
-      m_ctx->threads->cnt++;
-      condition_broadcast(&m_ctx->threads->cnd);
+      thread_group_cnt_inc(m_ctx->threads);
       thread_create(&thrd, market_sample_func, m_ctx);
       thread_detach(thrd);
     }
@@ -3892,8 +3907,7 @@ static int exchange_sample_func(void *restrict const arg) {
     }
   }
 
-  e_ctx->threads->cnt--;
-  condition_broadcast(&e_ctx->threads->cnd);
+  thread_group_cnt_dec(e_ctx->threads);
   thread_exit(EXIT_SUCCESS);
 }
 
@@ -3918,7 +3932,6 @@ static int exchange_order_func(void *restrict const arg) {
       Map_put(e_ctx->order_queues, order->m_id, order_queue);
       queue_init = true;
     }
-    Map_unlock(e_ctx->order_queues);
 
     if (queue_init) {
       char cname[DATABASE_CONNECTION_NAME_MAX_LENGTH + 1] = {0};
@@ -3933,11 +3946,12 @@ static int exchange_order_func(void *restrict const arg) {
       o_ctx->db = db_connect(cname);
       o_ctx->m_id = String_copy(order->m_id);
       o_ctx->order_queue = order_queue;
-      o_ctx->threads->cnt++;
-      condition_broadcast(&o_ctx->threads->cnd);
+      thread_group_cnt_inc(o_ctx->threads);
       thread_create(&thrd, market_order_func, o_ctx);
       thread_detach(thrd);
     }
+
+    Map_unlock(e_ctx->order_queues);
 
     Queue_enqueue_await(order_queue, order);
 
@@ -3950,8 +3964,7 @@ static int exchange_order_func(void *restrict const arg) {
     }
   }
 
-  e_ctx->threads->cnt--;
-  condition_broadcast(&e_ctx->threads->cnd);
+  thread_group_cnt_dec(e_ctx->threads);
   thread_exit(EXIT_SUCCESS);
 }
 
@@ -3977,7 +3990,6 @@ static int exchange_trade_func(void *restrict const arg) {
       Map_put(e_ctx->trade_queues, trade->m_id, trade_queue);
       queue_init = true;
     }
-    Map_unlock(e_ctx->trade_queues);
 
     if (queue_init) {
       char cname[DATABASE_CONNECTION_NAME_MAX_LENGTH + 1] = {0};
@@ -3992,11 +4004,12 @@ static int exchange_trade_func(void *restrict const arg) {
       t_ctx->db = db_connect(cname);
       t_ctx->m_id = String_copy(trade->m_id);
       t_ctx->trade_queue = trade_queue;
-      t_ctx->threads->cnt++;
-      condition_broadcast(&t_ctx->threads->cnd);
+      thread_group_cnt_inc(t_ctx->threads);
       thread_create(&thrd, market_trade_func, t_ctx);
       thread_detach(thrd);
     }
+
+    Map_unlock(e_ctx->trade_queues);
 
     Queue_enqueue_await(trade_queue, trade);
 
@@ -4006,8 +4019,7 @@ static int exchange_trade_func(void *restrict const arg) {
            (uintmax_t)thread_timeout.tv_sec, (uintmax_t)thread_timeout.tv_nsec);
   }
 
-  e_ctx->threads->cnt--;
-  condition_broadcast(&e_ctx->threads->cnd);
+  thread_group_cnt_dec(e_ctx->threads);
   thread_exit(EXIT_SUCCESS);
 }
 
@@ -4061,20 +4073,18 @@ int abagnale(int argc, char *argv[]) {
     thread_group_init(e_ctx->threads);
     Queue_start(e_ctx->trades_queue);
     e_ctx->e->start();
+    thread_group_cnt_inc(e_ctx->threads);
     thread_create(&thrd, exchange_sample_func, e_ctx);
     thread_detach(thrd);
-    e_ctx->threads->cnt++;
+    thread_group_cnt_inc(e_ctx->threads);
     thread_create(&thrd, exchange_order_func, e_ctx);
     thread_detach(thrd);
-    e_ctx->threads->cnt++;
+    thread_group_cnt_inc(e_ctx->threads);
     thread_create(&thrd, exchange_trade_func, e_ctx);
     thread_detach(thrd);
-    e_ctx->threads->cnt++;
-    condition_broadcast(&e_ctx->threads->cnd);
+    thread_group_cnt_inc(&worker);
     thread_create(&thrd, exchange_stop_func, e_ctx);
     thread_detach(thrd);
-    worker.cnt++;
-    condition_broadcast(&worker.cnd);
   }
 
   mutex_lock(&worker.mtx);
