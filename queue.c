@@ -98,6 +98,7 @@ inline void Queue_enqueue_await(struct Queue *restrict const q,
   struct timespec to;
 
   mutex_lock(&q->mtx);
+  q->enqueue_timedout = false;
 
   while (q->running && q->size == q->capacity) {
     if (q->timeout.tv_sec != 0 || q->timeout.tv_nsec != 0) {
@@ -112,6 +113,10 @@ inline void Queue_enqueue_await(struct Queue *restrict const q,
       }
 
       q->enqueue_timedout = !condition_timedwait(&q->not_full, &q->mtx, &to);
+
+      if (q->enqueue_timedout)
+        break;
+
     } else
       condition_wait(&q->not_full, &q->mtx);
   }
@@ -132,6 +137,7 @@ inline void *Queue_dequeue_await(struct Queue *restrict const q) {
   struct timespec to;
 
   mutex_lock(&q->mtx);
+  q->dequeue_timedout = false;
 
   while (q->running && q->size == 0) {
     if (q->timeout.tv_sec != 0 || q->timeout.tv_nsec != 0) {
@@ -146,6 +152,10 @@ inline void *Queue_dequeue_await(struct Queue *restrict const q) {
       }
 
       q->dequeue_timedout = !condition_timedwait(&q->not_empty, &q->mtx, &to);
+
+      if (q->dequeue_timedout)
+        break;
+
     } else
       condition_wait(&q->not_empty, &q->mtx);
   }
