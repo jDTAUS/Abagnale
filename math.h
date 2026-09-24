@@ -1,5 +1,5 @@
 /* $SchulteIT: math.h 15189 2025-10-27 05:41:45Z schulte $ */
-/* $JDTAUS$ */
+/* $JDTAUS: math.h 9703 2026-08-29 10:41:42Z schulte $ */
 
 /*
  * Copyright (c) 2018 - 2026 Christian Schulte <cs@schulte.it>
