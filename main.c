@@ -150,6 +150,9 @@ int main(int argc, char *argv[]) {
 
     char *restrict p_dot = strrchr(argv[0], '.');
 
+    if (p_dot != NULL && strcmp(p_dot, ".exe") != 0)
+      p_dot = NULL;
+
     if (p_dot != NULL)
       progname =
           String_cnnew(p_nm != NULL ? p_nm + 1 : argv[0],
