@@ -443,6 +443,10 @@ static void bitvavo_init(void) {
   bitvavo_ws_stall_ms =
       envul("BITVAVO_WS_STALL_MILLIS", DEFAULT_BITVAVO_WS_STALL_MILLIS);
 
+  struct timespec bitvavo_ws_stall_timeout = {0};
+  bitvavo_ws_stall_timeout.tv_sec = bitvavo_ws_stall_ms / 1000;
+  bitvavo_ws_stall_timeout.tv_nsec = bitvavo_ws_stall_ms % 1000L * 1000000L;
+
   const unsigned long ret_s =
       envul("BITVAVO_WS_RETRY_SECONDS", DEFAULT_BITVAVO_WS_RETRY_SECONDS);
 
@@ -480,9 +484,9 @@ static void bitvavo_init(void) {
 
   pricings_by_id = Map_new(StringMapOps, DEFAULT_BITVAVO_MARKETS_CAPACITY);
 
-  orders = Queue_new(128, (time_t)0);
-  samples = Queue_new(BITVAVO_TICKERS_DAY,
-                      (time_t)(bitvavo_ws_stall_ms / 1000L)); // 1MB/2MB
+  orders = Queue_new(128, NULL);
+  samples =
+      Queue_new(BITVAVO_TICKERS_DAY, &bitvavo_ws_stall_timeout); // 1MB/2MB
 
   for (size_t i = nitems(bitvavo_ws_msg_handlers); i-- > 0;)
     bitvavo_ws_msg_handlers[i].evt_ms = mg_millis();

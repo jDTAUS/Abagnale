@@ -1173,6 +1173,10 @@ static void coinbase_init(void) {
   coinbase_stall_ms =
       envul("CDP_HTTP_STALL_MILLIS", DEFAULT_CDP_HTTP_STALL_MILLIS);
 
+  struct timespec coinbase_stall_timeout = {0};
+  coinbase_stall_timeout.tv_sec = coinbase_stall_ms / 1000;
+  coinbase_stall_timeout.tv_nsec = coinbase_stall_ms % 1000L * 1000000L;
+
   if (verbose) {
     wout("\tCDP_REST_URI=%s\n", coinbase_rest_uri);
     wout("\tCDP_WS_URI=%s\n", coinbase_ws_uri);
@@ -1191,16 +1195,16 @@ static void coinbase_init(void) {
   running = false;
   coinbase_cnf = NULL;
   coinbase_db = NULL;
-  orders = Queue_new(128, (time_t)0);
-  samples = Queue_new(COINBASE_TICKERS_DAY,
-                      (time_t)(coinbase_stall_ms / 1000L)); // 64MB/128MB
+  orders = Queue_new(128, NULL);
+  samples =
+      Queue_new(COINBASE_TICKERS_DAY, &coinbase_stall_timeout); // 64MB/128MB
 
   markets = Array_new(DEFAULT_COINBASE_MARKETS_CAPACITY);
   markets_by_id = Map_new(StringMapOps, DEFAULT_COINBASE_MARKETS_CAPACITY);
   markets_by_symbol = Map_new(StringMapOps, DEFAULT_COINBASE_MARKETS_CAPACITY);
   market_prices = Map_new(StringMapOps, DEFAULT_COINBASE_MARKETS_CAPACITY);
-
   markets_reload = true;
+
   accounts = Array_new(DEFAULT_COINBASE_ACCOUNTS_CAPACITY);
   accounts_by_id = Map_new(StringMapOps, DEFAULT_COINBASE_ACCOUNTS_CAPACITY);
   accounts_by_symbol =

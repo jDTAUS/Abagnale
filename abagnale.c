@@ -41,8 +41,8 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifndef DEFAULT_ABAG_THREAD_TIMEOUT_SECONDS
-#define DEFAULT_ABAG_THREAD_TIMEOUT_SECONDS 5
+#ifndef DEFAULT_ABAG_THREAD_TIMEOUT_MILLIS
+#define DEFAULT_ABAG_THREAD_TIMEOUT_MILLIS 500
 #endif
 
 #ifndef nitems
@@ -209,7 +209,7 @@ static struct Map *restrict market_trades;
 static struct Map *restrict market_configs;
 static tss_t abag_tls_key;
 static struct thread_group worker;
-static unsigned long thread_timeout_seconds;
+static struct timespec thread_timeout;
 static struct Numeric *restrict ninety_percent_factor;
 
 int abagnale(int argc, char *argv[]);
@@ -3854,9 +3854,7 @@ static int exchange_sample_func(void *restrict const arg) {
         Map_get(e_ctx->ticker_queues, sample->m_id);
 
     if (ticker_queue == NULL) {
-      ticker_queue =
-          Queue_new(MARKET_TICKER_QUEUE_CAPACITY, thread_timeout_seconds);
-
+      ticker_queue = Queue_new(MARKET_TICKER_QUEUE_CAPACITY, &thread_timeout);
       Queue_start(ticker_queue);
       Map_put(e_ctx->ticker_queues, sample->m_id, ticker_queue);
       queue_init = true;
@@ -3886,9 +3884,9 @@ static int exchange_sample_func(void *restrict const arg) {
     Queue_enqueue_await(ticker_queue, sample);
 
     if (Queue_enqueue_timedout(ticker_queue)) {
-      werr("%s: Market: Tickers stalled: %s %" PRIuMAX "\n",
+      werr("%s: Market: Tickers stalled: %s %" PRIuMAX " %" PRIuMAX "\n",
            String_chars(e_ctx->e->nm), String_chars(sample->m_id),
-           (uintmax_t)thread_timeout_seconds);
+           (uintmax_t)thread_timeout.tv_sec, (uintmax_t)thread_timeout.tv_nsec);
 
       Sample_delete(sample);
     }
@@ -3915,9 +3913,7 @@ static int exchange_order_func(void *restrict const arg) {
         Map_get(e_ctx->order_queues, order->m_id);
 
     if (order_queue == NULL) {
-      order_queue =
-          Queue_new(MARKET_ORDER_QUEUE_CAPACITY, thread_timeout_seconds);
-
+      order_queue = Queue_new(MARKET_ORDER_QUEUE_CAPACITY, &thread_timeout);
       Queue_start(order_queue);
       Map_put(e_ctx->order_queues, order->m_id, order_queue);
       queue_init = true;
@@ -3946,9 +3942,9 @@ static int exchange_order_func(void *restrict const arg) {
     Queue_enqueue_await(order_queue, order);
 
     if (Queue_enqueue_timedout(order_queue)) {
-      werr("%s: Market: Orders stalled: %s %" PRIuMAX "\n",
+      werr("%s: Market: Orders stalled: %s %" PRIuMAX " %" PRIuMAX "\n",
            String_chars(e_ctx->e->nm), String_chars(order->m_id),
-           (uintmax_t)thread_timeout_seconds);
+           (uintmax_t)thread_timeout.tv_sec, (uintmax_t)thread_timeout.tv_nsec);
 
       Order_delete(order);
     }
@@ -3976,9 +3972,7 @@ static int exchange_trade_func(void *restrict const arg) {
         Map_get(e_ctx->trade_queues, trade->m_id);
 
     if (trade_queue == NULL) {
-      trade_queue =
-          Queue_new(MARKET_TRADE_QUEUE_CAPACITY, thread_timeout_seconds);
-
+      trade_queue = Queue_new(MARKET_TRADE_QUEUE_CAPACITY, &thread_timeout);
       Queue_start(trade_queue);
       Map_put(e_ctx->trade_queues, trade->m_id, trade_queue);
       queue_init = true;
@@ -4007,9 +4001,9 @@ static int exchange_trade_func(void *restrict const arg) {
     Queue_enqueue_await(trade_queue, trade);
 
     if (Queue_enqueue_timedout(trade_queue))
-      werr("%s: Market: Trades stalled: %s %" PRIuMAX "\n",
+      werr("%s: Market: Trades stalled: %s %" PRIuMAX " %" PRIuMAX "\n",
            String_chars(e_ctx->e->nm), String_chars(trade->m_id),
-           (uintmax_t)thread_timeout_seconds);
+           (uintmax_t)thread_timeout.tv_sec, (uintmax_t)thread_timeout.tv_nsec);
   }
 
   e_ctx->threads->cnt--;
@@ -4043,11 +4037,14 @@ int abagnale(int argc, char *argv[]) {
 
   thread_group_init(&worker);
 
-  thread_timeout_seconds =
-      envul("ABAG_THREAD_TIMEOUT_SECONDS", DEFAULT_ABAG_THREAD_TIMEOUT_SECONDS);
+  const unsigned long thread_timeout_millis =
+      envul("ABAG_THREAD_TIMEOUT_MILLIS", DEFAULT_ABAG_THREAD_TIMEOUT_MILLIS);
+
+  thread_timeout.tv_sec = thread_timeout_millis / 1000;
+  thread_timeout.tv_nsec = thread_timeout_millis % 1000L * 1000000L;
 
   if (verbose)
-    wout("\tABAG_THREAD_TIMEOUT_SECONDS=%lu\n", thread_timeout_seconds);
+    wout("\tABAG_THREAD_TIMEOUT_MILLIS=%lu\n", thread_timeout_millis);
 
   items = Array_items(exchanges);
   for (size_t i = Array_size(exchanges); i-- > 0 && !terminated;) {
@@ -4059,7 +4056,7 @@ int abagnale(int argc, char *argv[]) {
     e_ctx->order_queues = Map_new(StringMapOps, MARKETS_MAP_CAPACITY);
     e_ctx->ticker_queues = Map_new(StringMapOps, MARKETS_MAP_CAPACITY);
     e_ctx->trade_queues = Map_new(StringMapOps, MARKETS_MAP_CAPACITY);
-    e_ctx->trades_queue = Queue_new(MARKETS_QUEUE_CAPACITY, (time_t)0);
+    e_ctx->trades_queue = Queue_new(MARKETS_QUEUE_CAPACITY, NULL);
     e_ctx->threads = heap_calloc(1, sizeof(struct thread_group));
     thread_group_init(e_ctx->threads);
     Queue_start(e_ctx->trades_queue);

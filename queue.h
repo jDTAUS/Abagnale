@@ -30,7 +30,7 @@
 
 struct Queue;
 
-struct Queue *Queue_new(const size_t, const time_t);
+struct Queue *Queue_new(const size_t, const struct timespec *restrict const);
 void Queue_delete(struct Queue *restrict const,
                   void (*cb)(void *restrict const));
 

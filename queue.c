@@ -29,7 +29,7 @@
 struct Queue {
   void **items;
   size_t capacity;
-  time_t timeout;
+  struct timespec timeout;
   size_t size;
   size_t front;
   size_t rear;
@@ -41,20 +41,26 @@ struct Queue {
   cnd_t not_full;
 };
 
-inline struct Queue *Queue_new(const size_t capacity, const time_t timeout) {
+inline struct Queue *Queue_new(const size_t capacity,
+                               const struct timespec *restrict const timeout) {
   struct Queue *restrict q = heap_malloc(sizeof(struct Queue));
   q->items = heap_calloc(capacity, sizeof(void *));
   mutex_init(&q->mtx);
   condition_init(&q->not_empty);
   condition_init(&q->not_full);
   q->capacity = capacity;
-  q->timeout = timeout;
   q->size = 0;
   q->front = 0;
   q->rear = -1;
   q->running = false;
   q->enqueue_timedout = false;
   q->dequeue_timedout = false;
+  q->timeout.tv_sec = 0;
+  q->timeout.tv_nsec = 0;
+
+  if (timeout != NULL)
+    q->timeout = *timeout;
+
   return q;
 }
 
@@ -94,10 +100,16 @@ inline void Queue_enqueue_await(struct Queue *restrict const q,
   mutex_lock(&q->mtx);
 
   while (q->running && q->size == q->capacity) {
-    if (q->timeout) {
+    if (q->timeout.tv_sec != 0 || q->timeout.tv_nsec != 0) {
       time_now(&to);
 
-      to.tv_sec += q->timeout;
+      to.tv_sec += q->timeout.tv_sec;
+      to.tv_nsec += q->timeout.tv_nsec;
+
+      if (to.tv_nsec > 1000000000L) {
+        to.tv_sec++;
+        to.tv_nsec -= 1000000000L;
+      }
 
       q->enqueue_timedout = !condition_timedwait(&q->not_full, &q->mtx, &to);
     } else
@@ -122,10 +134,16 @@ inline void *Queue_dequeue_await(struct Queue *restrict const q) {
   mutex_lock(&q->mtx);
 
   while (q->running && q->size == 0) {
-    if (q->timeout) {
+    if (q->timeout.tv_sec != 0 || q->timeout.tv_nsec != 0) {
       time_now(&to);
 
-      to.tv_sec += q->timeout;
+      to.tv_sec += q->timeout.tv_sec;
+      to.tv_nsec += q->timeout.tv_nsec;
+
+      if (to.tv_nsec > 1000000000L) {
+        to.tv_sec++;
+        to.tv_nsec -= 1000000000L;
+      }
 
       q->dequeue_timedout = !condition_timedwait(&q->not_empty, &q->mtx, &to);
     } else
