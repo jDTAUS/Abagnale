@@ -3450,15 +3450,15 @@ static int market_order_func(void *restrict const arg) {
     Order_delete(order);
   } while (!terminated);
 
-  db_disconnect(w_ctx->db);
   Map_lock(w_ctx->order_queues);
+  db_disconnect(w_ctx->db);
   Map_remove(w_ctx->order_queues, w_ctx->m_id);
-  Map_unlock(w_ctx->order_queues);
   Queue_stop(w_ctx->order_queue);
   Queue_delete(w_ctx->order_queue, Order_delete);
   thread_group_cnt_dec(w_ctx->threads);
   String_delete(w_ctx->m_id);
   heap_free(w_ctx);
+  Map_unlock(w_ctx->order_queues);
   thread_exit(EXIT_SUCCESS);
 }
 
@@ -3632,10 +3632,9 @@ static int market_sample_func(void *restrict const arg) {
     Market_delete(w_ctx->m);
   } while (!terminated);
 
-  db_disconnect(w_ctx->db);
   Map_lock(w_ctx->ticker_queues);
+  db_disconnect(w_ctx->db);
   Map_remove(w_ctx->ticker_queues, w_ctx->m_id);
-  Map_unlock(w_ctx->ticker_queues);
   Queue_stop(w_ctx->ticker_queue);
   Queue_delete(w_ctx->ticker_queue, Sample_delete);
   thread_group_cnt_dec(w_ctx->threads);
@@ -3644,6 +3643,7 @@ static int market_sample_func(void *restrict const arg) {
   Numeric_delete(q_return);
   Numeric_delete(nanos);
   Numeric_delete(outdated_ns);
+  Map_unlock(w_ctx->ticker_queues);
   thread_exit(EXIT_SUCCESS);
 }
 
@@ -3778,10 +3778,9 @@ static int market_trade_func(void *restrict const arg) {
     Market_delete(w_ctx->m);
   } while (!terminated);
 
-  db_disconnect(w_ctx->db);
   Map_lock(w_ctx->trade_queues);
+  db_disconnect(w_ctx->db);
   Map_remove(w_ctx->trade_queues, w_ctx->m_id);
-  Map_unlock(w_ctx->trade_queues);
   Queue_stop(w_ctx->trade_queue);
   Queue_delete(w_ctx->trade_queue, NULL);
   thread_group_cnt_dec(w_ctx->threads);
@@ -3789,6 +3788,7 @@ static int market_trade_func(void *restrict const arg) {
   heap_free(w_ctx);
   Numeric_delete(tp_pc);
   Numeric_delete(r0);
+  Map_unlock(w_ctx->trade_queues);
   thread_exit(EXIT_SUCCESS);
 }
 
