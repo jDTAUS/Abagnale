@@ -54,8 +54,9 @@ const struct MapOps *const MutexMapOps = &(const struct MapOps){
 static tss_t thread_tls_key;
 
 const char *strthrd(const int r);
+struct thread_tls *const thread_tls(void);
 
-static struct thread_tls *const thread_tls(void) {
+struct thread_tls *const thread_tls(void) {
   struct thread_tls *restrict tls = tls_get(thread_tls_key);
   if (tls == NULL) {
     tls = heap_malloc(sizeof(struct thread_tls));
