@@ -29,6 +29,7 @@
 #include "http.h"
 #include "mongoose.h"
 #include "proc.h"
+#include "thread.h"
 #include "time.h"
 #include "version.h"
 
@@ -130,6 +131,7 @@ int main(int argc, char *argv[]) {
   const char *conffile = envs("ABAG_CONFIG_FILE", DEFAULT_ABAG_CONFIG_FILE);
 
   string_init();
+  thread_init();
   time_init();
 
   time_now(&ts);
@@ -338,6 +340,7 @@ int main(int argc, char *argv[]) {
   http_destroy();
   config_destroy();
   time_destroy();
+  thread_destroy();
   string_destroy();
   proc_destroy();
 

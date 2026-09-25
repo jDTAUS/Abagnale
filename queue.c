@@ -34,7 +34,6 @@ struct Queue {
   size_t size;
   size_t front;
   size_t rear;
-  bool locked;
   bool running;
   bool enqueue_timedout;
   bool dequeue_timedout;
@@ -54,7 +53,6 @@ inline struct Queue *Queue_new(const size_t capacity,
   q->size = 0;
   q->front = 0;
   q->rear = -1;
-  q->locked = false;
   q->running = false;
   q->enqueue_timedout = false;
   q->dequeue_timedout = false;
@@ -82,22 +80,26 @@ inline void Queue_delete(struct Queue *restrict const q,
 }
 
 inline void Queue_start(struct Queue *restrict const q) {
-  if (!q->locked)
+  const bool locked = thread_locked(&q->mtx);
+
+  if (!locked)
     mutex_lock(&q->mtx);
 
   q->running = true;
 
-  if (!q->locked)
+  if (!locked)
     mutex_unlock(&q->mtx);
 }
 
 inline void Queue_stop(struct Queue *restrict const q) {
-  if (!q->locked)
+  const bool locked = thread_locked(&q->mtx);
+
+  if (!locked)
     mutex_lock(&q->mtx);
 
   q->running = false;
 
-  if (!q->locked)
+  if (!locked)
     mutex_unlock(&q->mtx);
 
   condition_broadcast(&q->not_empty);
@@ -105,24 +107,28 @@ inline void Queue_stop(struct Queue *restrict const q) {
 }
 
 inline bool Queue_enqueue_timedout(struct Queue *restrict const q) {
-  if (!q->locked)
+  const bool locked = thread_locked(&q->mtx);
+
+  if (!locked)
     mutex_lock(&q->mtx);
 
   const bool timedout = q->enqueue_timedout;
 
-  if (!q->locked)
+  if (!locked)
     mutex_unlock(&q->mtx);
 
   return timedout;
 }
 
 inline bool Queue_dequeue_timedout(struct Queue *restrict const q) {
-  if (!q->locked)
+  const bool locked = thread_locked(&q->mtx);
+
+  if (!locked)
     mutex_lock(&q->mtx);
 
   const bool timedout = q->dequeue_timedout;
 
-  if (!q->locked)
+  if (!locked)
     mutex_unlock(&q->mtx);
 
   return timedout;
@@ -131,8 +137,9 @@ inline bool Queue_dequeue_timedout(struct Queue *restrict const q) {
 inline void Queue_enqueue_await(struct Queue *restrict const q,
                                 void *restrict const item) {
   struct timespec to;
+  const bool locked = thread_locked(&q->mtx);
 
-  if (!q->locked)
+  if (!locked)
     mutex_lock(&q->mtx);
 
   q->enqueue_timedout = false;
@@ -166,15 +173,16 @@ inline void Queue_enqueue_await(struct Queue *restrict const q,
     condition_signal(&q->not_empty);
   }
 
-  if (!q->locked)
+  if (!locked)
     mutex_unlock(&q->mtx);
 }
 
 inline void *Queue_dequeue_await(struct Queue *restrict const q) {
   void *restrict item = NULL;
   struct timespec to;
+  const bool locked = thread_locked(&q->mtx);
 
-  if (!q->locked)
+  if (!locked)
     mutex_lock(&q->mtx);
 
   q->dequeue_timedout = false;
@@ -209,22 +217,14 @@ inline void *Queue_dequeue_await(struct Queue *restrict const q) {
     condition_signal(&q->not_full);
   }
 
-  if (!q->locked)
+  if (!locked)
     mutex_unlock(&q->mtx);
 
   return item;
 }
 
-inline void Queue_lock(struct Queue *restrict const q) {
-  mutex_lock(&q->mtx);
-  if (q->locked)
-    panic();
-  q->locked = true;
-}
+inline void Queue_lock(struct Queue *restrict const q) { mutex_lock(&q->mtx); }
 
 inline void Queue_unlock(struct Queue *restrict const q) {
-  if (!q->locked)
-    panic();
-  q->locked = false;
   mutex_unlock(&q->mtx);
 }

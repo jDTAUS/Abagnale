@@ -21,10 +21,59 @@
 #include "host.h"
 #endif
 
+#include "heap.h"
+#include "map.h"
 #include "proc.h"
 #include "thread.h"
 
+#include <limits.h>
+#include <stdint.h>
+
+struct thread_tls {
+  struct thread_locked_vars {
+    struct Map *restrict mutexes;
+  } thread_locked;
+};
+
+static void *mtx_t_copy(void *restrict const k) { return k; }
+static void mtx_t_delete(void *restrict const k) { (void)k; }
+static size_t mtx_t_hash(const void *restrict const k) {
+  return (size_t)(uintptr_t)k;
+}
+static bool mtx_t_equals(const void *restrict k1, const void *restrict k2) {
+  return k1 == k2;
+}
+
+const struct MapOps *const MutexMapOps = &(const struct MapOps){
+    .k_copy = mtx_t_copy,
+    .k_delete = mtx_t_delete,
+    .k_hash = mtx_t_hash,
+    .k_equals = mtx_t_equals,
+};
+
+static tss_t thread_tls_key;
+
 const char *strthrd(const int r);
+
+static struct thread_tls *const thread_tls(void) {
+  struct thread_tls *restrict tls = tls_get(thread_tls_key);
+  if (tls == NULL) {
+    tls = heap_malloc(sizeof(struct thread_tls));
+    tls->thread_locked.mutexes = Map_new(MutexMapOps, 64);
+    tls_set(thread_tls_key, tls);
+  }
+  return tls;
+}
+
+static void thread_tls_dtor(void *e) {
+  struct thread_tls *restrict const tls = e;
+  Map_delete(tls->thread_locked.mutexes, NULL);
+  heap_free(tls);
+  tls_set(thread_tls_key, NULL);
+}
+
+void thread_init(void) { tls_create(&thread_tls_key, thread_tls_dtor); }
+void thread_destroy(void) { tls_delete(thread_tls_key); }
 
 inline const char *strthrd(const int r) {
   switch (r) {
@@ -83,6 +132,13 @@ inline void thread_sleep(const struct timespec *restrict const duration) {
   } while (r != 0 && (rmng.tv_sec != 0 || rmng.tv_nsec != 0));
 }
 
+inline bool thread_locked(const mtx_t *restrict const m) {
+  const struct thread_tls *restrict const tls = thread_tls();
+  struct Map *restrict const mutexes = tls->thread_locked.mutexes;
+
+  return Map_exists(mutexes, m);
+}
+
 _Noreturn void thread_exit(const int res) { thrd_exit(res); }
 
 inline void mutex_init(mtx_t *restrict const m) {
@@ -94,12 +150,27 @@ inline void mutex_init(mtx_t *restrict const m) {
 inline void mutex_destroy(mtx_t *restrict const m) { mtx_destroy(m); }
 
 inline void mutex_lock(mtx_t *restrict const m) {
+  const struct thread_tls *restrict const tls = thread_tls();
+  struct Map *restrict const mutexes = tls->thread_locked.mutexes;
+
   int r = mtx_lock(m);
   if (r != thrd_success)
     fatal("%s", strthrd(r));
+
+  if (Map_exists(mutexes, m)) {
+    unsigned depth = (unsigned)(uintptr_t)Map_get(mutexes, m);
+
+    if (depth == UINT_MAX)
+      panic();
+
+    Map_put(mutexes, m, (void *)(uintptr_t)(depth + 1));
+  } else
+    Map_put(mutexes, m, (void *)(uintptr_t)1);
 }
 
 inline bool mutex_trylock(mtx_t *restrict const m) {
+  const struct thread_tls *restrict const tls = thread_tls();
+  struct Map *restrict const mutexes = tls->thread_locked.mutexes;
   int r = mtx_trylock(m);
 
   if (r == thrd_busy)
@@ -108,10 +179,32 @@ inline bool mutex_trylock(mtx_t *restrict const m) {
   if (r != thrd_success)
     fatal("%s", strthrd(r));
 
+  if (Map_exists(mutexes, m)) {
+    unsigned depth = (unsigned)(uintptr_t)Map_get(mutexes, m);
+
+    if (depth == UINT_MAX)
+      panic();
+
+    Map_put(mutexes, m, (void *)(uintptr_t)(depth + 1));
+  } else
+    Map_put(mutexes, m, (void *)(uintptr_t)1);
+
   return true;
 }
 
 inline void mutex_unlock(mtx_t *restrict const m) {
+  const struct thread_tls *restrict const tls = thread_tls();
+  struct Map *restrict const mutexes = tls->thread_locked.mutexes;
+
+  if (Map_exists(mutexes, m)) {
+    unsigned depth = (unsigned)(uintptr_t)Map_get(mutexes, m);
+
+    if (depth == 1)
+      Map_remove(mutexes, m);
+    else
+      Map_put(mutexes, m, (void *)(uintptr_t)(depth - 1));
+  }
+
   int r = mtx_unlock(m);
   if (r != thrd_success)
     fatal("%s", strthrd(r));
@@ -156,6 +249,18 @@ inline void condition_signal(cnd_t *restrict const cond) {
 inline bool condition_timedwait(cnd_t *restrict const cond,
                                 mtx_t *restrict const mtx,
                                 const struct timespec *restrict const ts) {
+  const struct thread_tls *restrict const tls = thread_tls();
+  struct Map *restrict const mutexes = tls->thread_locked.mutexes;
+
+  if (Map_exists(mutexes, mtx)) {
+    unsigned depth = (unsigned)(uintptr_t)Map_get(mutexes, mtx);
+
+    if (depth != 1)
+      panic();
+
+    Map_remove(mutexes, mtx);
+  }
+
   int r = cnd_timedwait(cond, mtx, ts);
   switch (r) {
   case thrd_timedout:
@@ -164,12 +269,28 @@ inline bool condition_timedwait(cnd_t *restrict const cond,
     if (r != thrd_success)
       fatal("%s", strthrd(r));
   }
+
+  Map_put(mutexes, mtx, (void *)(uintptr_t)1);
   return true;
 }
 
 inline void condition_wait(cnd_t *restrict const cond,
                            mtx_t *restrict const mtx) {
+  const struct thread_tls *restrict const tls = thread_tls();
+  struct Map *restrict const mutexes = tls->thread_locked.mutexes;
+
+  if (Map_exists(mutexes, mtx)) {
+    unsigned depth = (unsigned)(uintptr_t)Map_get(mutexes, mtx);
+
+    if (depth != 1)
+      panic();
+
+    Map_remove(mutexes, mtx);
+  }
+
   int r = cnd_wait(cond, mtx);
   if (r != thrd_success)
     fatal("%s", strthrd(r));
+
+  Map_put(mutexes, mtx, (void *)(uintptr_t)1);
 }
