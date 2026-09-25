@@ -1,5 +1,5 @@
 /* $SchulteIT: main.c 15252 2025-11-03 01:36:59Z schulte $ */
-/* $JDTAUS$ */
+/* $JDTAUS: main.c 9757 2026-09-25 10:11:20Z schulte $ */
 
 /*
  * Copyright (c) 2018 - 2026 Christian Schulte <cs@schulte.it>
