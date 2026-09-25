@@ -3894,8 +3894,6 @@ static int exchange_sample_func(void *restrict const arg) {
       thread_detach(thrd);
     }
 
-    Map_unlock(e_ctx->ticker_queues);
-
     Queue_enqueue_await(ticker_queue, sample);
 
     if (Queue_enqueue_timedout(ticker_queue)) {
@@ -3905,6 +3903,8 @@ static int exchange_sample_func(void *restrict const arg) {
 
       Sample_delete(sample);
     }
+
+    Map_unlock(e_ctx->ticker_queues);
   }
 
   thread_group_cnt_dec(e_ctx->threads);
@@ -3951,8 +3951,6 @@ static int exchange_order_func(void *restrict const arg) {
       thread_detach(thrd);
     }
 
-    Map_unlock(e_ctx->order_queues);
-
     Queue_enqueue_await(order_queue, order);
 
     if (Queue_enqueue_timedout(order_queue)) {
@@ -3962,6 +3960,8 @@ static int exchange_order_func(void *restrict const arg) {
 
       Order_delete(order);
     }
+
+    Map_unlock(e_ctx->order_queues);
   }
 
   thread_group_cnt_dec(e_ctx->threads);
@@ -4009,14 +4009,14 @@ static int exchange_trade_func(void *restrict const arg) {
       thread_detach(thrd);
     }
 
-    Map_unlock(e_ctx->trade_queues);
-
     Queue_enqueue_await(trade_queue, trade);
 
     if (Queue_enqueue_timedout(trade_queue))
       werr("%s: Market: Trades stalled: %s %" PRIuMAX " %" PRIuMAX "\n",
            String_chars(e_ctx->e->nm), String_chars(trade->m_id),
            (uintmax_t)thread_timeout.tv_sec, (uintmax_t)thread_timeout.tv_nsec);
+
+    Map_unlock(e_ctx->trade_queues);
   }
 
   thread_group_cnt_dec(e_ctx->threads);
