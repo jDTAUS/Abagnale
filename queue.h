@@ -41,4 +41,7 @@ void Queue_start(struct Queue *restrict const);
 void Queue_stop(struct Queue *restrict const);
 bool Queue_enqueue_timedout(struct Queue *restrict const);
 bool Queue_dequeue_timedout(struct Queue *restrict const);
+
+void Queue_lock(struct Queue *restrict const);
+void Queue_unlock(struct Queue *restrict const);
 #endif
