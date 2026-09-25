@@ -126,12 +126,12 @@ int main(int argc, char *argv[]) {
   bool configtest = false;
   const uint64_t mg_ms = mg_millis();
 
+  thread_init();
   proc_init();
 
   const char *conffile = envs("ABAG_CONFIG_FILE", DEFAULT_ABAG_CONFIG_FILE);
 
   string_init();
-  thread_init();
   time_init();
 
   time_now(&ts);
@@ -340,9 +340,9 @@ int main(int argc, char *argv[]) {
   http_destroy();
   config_destroy();
   time_destroy();
-  thread_destroy();
   string_destroy();
   proc_destroy();
+  thread_destroy();
 
   Array_delete(algorithms, NULL);
   Array_delete(exchanges, NULL);
