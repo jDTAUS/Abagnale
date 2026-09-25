@@ -335,15 +335,6 @@ int main(int argc, char *argv[]) {
   for (size_t i = nitems(all_exchanges); i-- > 0;)
     all_exchanges[i]->destroy();
 
-  abagnale_destroy();
-  json_destroy();
-  http_destroy();
-  config_destroy();
-  time_destroy();
-  string_destroy();
-  proc_destroy();
-  thread_destroy();
-
   Array_delete(algorithms, NULL);
   Array_delete(exchanges, NULL);
   Array_delete(volatility_windows, Numeric_delete);
@@ -371,5 +362,15 @@ int main(int argc, char *argv[]) {
   String_delete(progname);
   String_delete(prog_abagnale);
   String_delete(prog_abagnalectl);
+
+  abagnale_destroy();
+  json_destroy();
+  http_destroy();
+  config_destroy();
+  time_destroy();
+  string_destroy();
+  proc_destroy();
+  thread_destroy();
+
   return r;
 }
