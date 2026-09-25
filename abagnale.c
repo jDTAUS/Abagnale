@@ -3317,11 +3317,15 @@ static int market_order_func(void *restrict const arg) {
     struct Array *restrict samples = NULL;
     size_t i;
     void *const *restrict items;
+
+    Queue_lock(w_ctx->order_queue);
     struct Order *restrict const order =
         Queue_dequeue_await(w_ctx->order_queue);
 
-    if (order == NULL || Queue_dequeue_timedout(w_ctx->order_queue))
+    if (order == NULL || Queue_dequeue_timedout(w_ctx->order_queue)) {
+      Queue_unlock(w_ctx->order_queue);
       break;
+    }
 
     struct Market *restrict const market = w_ctx->e->market(order->m_id);
 
@@ -3451,14 +3455,14 @@ static int market_order_func(void *restrict const arg) {
   } while (!terminated);
 
   Map_lock(w_ctx->order_queues);
-  db_disconnect(w_ctx->db);
   Map_remove(w_ctx->order_queues, w_ctx->m_id);
+  Map_unlock(w_ctx->order_queues);
   Queue_stop(w_ctx->order_queue);
   Queue_delete(w_ctx->order_queue, Order_delete);
-  thread_group_cnt_dec(w_ctx->threads);
+  db_disconnect(w_ctx->db);
   String_delete(w_ctx->m_id);
   heap_free(w_ctx);
-  Map_unlock(w_ctx->order_queues);
+  thread_group_cnt_dec(w_ctx->threads);
   thread_exit(EXIT_SUCCESS);
 }
 
@@ -3471,11 +3475,17 @@ static int market_sample_func(void *restrict const arg) {
 
   do {
     bool market_ready = true;
+
+    Queue_lock(w_ctx->ticker_queue);
     struct Sample *restrict const sample =
         Queue_dequeue_await(w_ctx->ticker_queue);
 
-    if (sample == NULL || Queue_dequeue_timedout(w_ctx->ticker_queue))
+    if (sample == NULL || Queue_dequeue_timedout(w_ctx->ticker_queue)) {
+      Queue_unlock(w_ctx->ticker_queue);
       break;
+    }
+
+    Queue_unlock(w_ctx->ticker_queue);
 
     struct Market *restrict const m = w_ctx->e->market(sample->m_id);
 
@@ -3633,17 +3643,17 @@ static int market_sample_func(void *restrict const arg) {
   } while (!terminated);
 
   Map_lock(w_ctx->ticker_queues);
-  db_disconnect(w_ctx->db);
   Map_remove(w_ctx->ticker_queues, w_ctx->m_id);
+  Map_unlock(w_ctx->ticker_queues);
   Queue_stop(w_ctx->ticker_queue);
   Queue_delete(w_ctx->ticker_queue, Sample_delete);
-  thread_group_cnt_dec(w_ctx->threads);
+  db_disconnect(w_ctx->db);
   String_delete(w_ctx->m_id);
   heap_free(w_ctx);
   Numeric_delete(q_return);
   Numeric_delete(nanos);
   Numeric_delete(outdated_ns);
-  Map_unlock(w_ctx->ticker_queues);
+  thread_group_cnt_dec(w_ctx->threads);
   thread_exit(EXIT_SUCCESS);
 }
 
@@ -3654,11 +3664,17 @@ static int market_trade_func(void *restrict const arg) {
   void *const *restrict items;
 
   do {
-    struct Trade *restrict const t = Queue_dequeue_await(w_ctx->trade_queue);
     bool err = false;
 
-    if (t == NULL || Queue_dequeue_timedout(w_ctx->trade_queue))
+    Queue_lock(w_ctx->trade_queue);
+    struct Trade *restrict const t = Queue_dequeue_await(w_ctx->trade_queue);
+
+    if (t == NULL || Queue_dequeue_timedout(w_ctx->trade_queue)) {
+      Queue_unlock(w_ctx->trade_queue);
       break;
+    }
+
+    Queue_unlock(w_ctx->trade_queue);
 
     if (!String_equals(t->e_id, w_ctx->e->id))
       panic();
@@ -3779,16 +3795,16 @@ static int market_trade_func(void *restrict const arg) {
   } while (!terminated);
 
   Map_lock(w_ctx->trade_queues);
-  db_disconnect(w_ctx->db);
   Map_remove(w_ctx->trade_queues, w_ctx->m_id);
+  Map_unlock(w_ctx->trade_queues);
   Queue_stop(w_ctx->trade_queue);
   Queue_delete(w_ctx->trade_queue, NULL);
-  thread_group_cnt_dec(w_ctx->threads);
+  db_disconnect(w_ctx->db);
   String_delete(w_ctx->m_id);
   heap_free(w_ctx);
   Numeric_delete(tp_pc);
   Numeric_delete(r0);
-  Map_unlock(w_ctx->trade_queues);
+  thread_group_cnt_dec(w_ctx->threads);
   thread_exit(EXIT_SUCCESS);
 }
 
@@ -3876,6 +3892,21 @@ static int exchange_sample_func(void *restrict const arg) {
       queue_init = true;
     }
 
+    Map_unlock(e_ctx->ticker_queues);
+    Queue_lock(ticker_queue);
+
+    Queue_enqueue_await(ticker_queue, sample);
+
+    if (Queue_enqueue_timedout(ticker_queue)) {
+      werr("%s: Market: Tickers stalled: %s %" PRIuMAX " %" PRIuMAX "\n",
+           String_chars(e_ctx->e->nm), String_chars(sample->m_id),
+           (uintmax_t)thread_timeout.tv_sec, (uintmax_t)thread_timeout.tv_nsec);
+
+      Sample_delete(sample);
+    }
+
+    Queue_unlock(ticker_queue);
+
     if (queue_init) {
       char cname[DATABASE_CONNECTION_NAME_MAX_LENGTH + 1] = {0};
       const int r =
@@ -3893,18 +3924,6 @@ static int exchange_sample_func(void *restrict const arg) {
       thread_create(&thrd, market_sample_func, m_ctx);
       thread_detach(thrd);
     }
-
-    Queue_enqueue_await(ticker_queue, sample);
-
-    if (Queue_enqueue_timedout(ticker_queue)) {
-      werr("%s: Market: Tickers stalled: %s %" PRIuMAX " %" PRIuMAX "\n",
-           String_chars(e_ctx->e->nm), String_chars(sample->m_id),
-           (uintmax_t)thread_timeout.tv_sec, (uintmax_t)thread_timeout.tv_nsec);
-
-      Sample_delete(sample);
-    }
-
-    Map_unlock(e_ctx->ticker_queues);
   }
 
   thread_group_cnt_dec(e_ctx->threads);
@@ -3933,6 +3952,21 @@ static int exchange_order_func(void *restrict const arg) {
       queue_init = true;
     }
 
+    Map_unlock(e_ctx->order_queues);
+    Queue_lock(order_queue);
+
+    Queue_enqueue_await(order_queue, order);
+
+    if (Queue_enqueue_timedout(order_queue)) {
+      werr("%s: Market: Orders stalled: %s %" PRIuMAX " %" PRIuMAX "\n",
+           String_chars(e_ctx->e->nm), String_chars(order->m_id),
+           (uintmax_t)thread_timeout.tv_sec, (uintmax_t)thread_timeout.tv_nsec);
+
+      Order_delete(order);
+    }
+
+    Queue_unlock(order_queue);
+
     if (queue_init) {
       char cname[DATABASE_CONNECTION_NAME_MAX_LENGTH + 1] = {0};
       const int r =
@@ -3950,18 +3984,6 @@ static int exchange_order_func(void *restrict const arg) {
       thread_create(&thrd, market_order_func, o_ctx);
       thread_detach(thrd);
     }
-
-    Queue_enqueue_await(order_queue, order);
-
-    if (Queue_enqueue_timedout(order_queue)) {
-      werr("%s: Market: Orders stalled: %s %" PRIuMAX " %" PRIuMAX "\n",
-           String_chars(e_ctx->e->nm), String_chars(order->m_id),
-           (uintmax_t)thread_timeout.tv_sec, (uintmax_t)thread_timeout.tv_nsec);
-
-      Order_delete(order);
-    }
-
-    Map_unlock(e_ctx->order_queues);
   }
 
   thread_group_cnt_dec(e_ctx->threads);
@@ -3991,6 +4013,18 @@ static int exchange_trade_func(void *restrict const arg) {
       queue_init = true;
     }
 
+    Map_unlock(e_ctx->trade_queues);
+    Queue_lock(trade_queue);
+
+    Queue_enqueue_await(trade_queue, trade);
+
+    if (Queue_enqueue_timedout(trade_queue))
+      werr("%s: Market: Trades stalled: %s %" PRIuMAX " %" PRIuMAX "\n",
+           String_chars(e_ctx->e->nm), String_chars(trade->m_id),
+           (uintmax_t)thread_timeout.tv_sec, (uintmax_t)thread_timeout.tv_nsec);
+
+    Queue_unlock(trade_queue);
+
     if (queue_init) {
       char cname[DATABASE_CONNECTION_NAME_MAX_LENGTH + 1] = {0};
       const int r =
@@ -4008,15 +4042,6 @@ static int exchange_trade_func(void *restrict const arg) {
       thread_create(&thrd, market_trade_func, t_ctx);
       thread_detach(thrd);
     }
-
-    Queue_enqueue_await(trade_queue, trade);
-
-    if (Queue_enqueue_timedout(trade_queue))
-      werr("%s: Market: Trades stalled: %s %" PRIuMAX " %" PRIuMAX "\n",
-           String_chars(e_ctx->e->nm), String_chars(trade->m_id),
-           (uintmax_t)thread_timeout.tv_sec, (uintmax_t)thread_timeout.tv_nsec);
-
-    Map_unlock(e_ctx->trade_queues);
   }
 
   thread_group_cnt_dec(e_ctx->threads);
