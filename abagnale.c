@@ -3461,8 +3461,8 @@ static int market_order_func(void *restrict const arg) {
   Queue_delete(w_ctx->order_queue, Order_delete);
   db_disconnect(w_ctx->db);
   String_delete(w_ctx->m_id);
-  heap_free(w_ctx);
   thread_group_cnt_dec(w_ctx->threads);
+  heap_free(w_ctx);
   thread_exit(EXIT_SUCCESS);
 }
 
@@ -3649,11 +3649,11 @@ static int market_sample_func(void *restrict const arg) {
   Queue_delete(w_ctx->ticker_queue, Sample_delete);
   db_disconnect(w_ctx->db);
   String_delete(w_ctx->m_id);
-  heap_free(w_ctx);
   Numeric_delete(q_return);
   Numeric_delete(nanos);
   Numeric_delete(outdated_ns);
   thread_group_cnt_dec(w_ctx->threads);
+  heap_free(w_ctx);
   thread_exit(EXIT_SUCCESS);
 }
 
@@ -3801,10 +3801,10 @@ static int market_trade_func(void *restrict const arg) {
   Queue_delete(w_ctx->trade_queue, NULL);
   db_disconnect(w_ctx->db);
   String_delete(w_ctx->m_id);
-  heap_free(w_ctx);
   Numeric_delete(tp_pc);
   Numeric_delete(r0);
   thread_group_cnt_dec(w_ctx->threads);
+  heap_free(w_ctx);
   thread_exit(EXIT_SUCCESS);
 }
 
