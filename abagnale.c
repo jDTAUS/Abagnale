@@ -83,6 +83,7 @@ struct worker_ctx {
   struct Queue *restrict trade_queue;
   struct Queue *restrict trades_queue;
   struct thread_group *restrict threads;
+  char db_name[DATABASE_CONNECTION_NAME_MAX_LENGTH + 1];
 };
 
 struct abag_tls {
@@ -3310,6 +3311,8 @@ static struct Array *trades_load(const struct worker_ctx *restrict const w_ctx,
 static int market_order_func(void *restrict const arg) {
   struct worker_ctx *restrict const w_ctx = arg;
 
+  w_ctx->db = db_connect(w_ctx->db_name);
+
   do {
     struct Trade *restrict t = NULL;
     struct Position *restrict p = NULL;
@@ -3455,9 +3458,12 @@ static int market_order_func(void *restrict const arg) {
   } while (!terminated);
 
   Map_lock(w_ctx->order_queues);
-  Map_remove(w_ctx->order_queues, w_ctx->m_id);
-  Map_unlock(w_ctx->order_queues);
+  Queue_lock(w_ctx->order_queue);
+  if (Map_get(w_ctx->order_queues, w_ctx->m_id) == w_ctx->order_queue)
+    Map_remove(w_ctx->order_queues, w_ctx->m_id);
   Queue_stop(w_ctx->order_queue);
+  Queue_unlock(w_ctx->order_queue);
+  Map_unlock(w_ctx->order_queues);
   Queue_delete(w_ctx->order_queue, Order_delete);
   db_disconnect(w_ctx->db);
   String_delete(w_ctx->m_id);
@@ -3472,6 +3478,8 @@ static int market_sample_func(void *restrict const arg) {
   struct Numeric *restrict const nanos = Numeric_new();
   struct Numeric *restrict const outdated_ns = Numeric_new();
   struct worker_ctx *restrict const w_ctx = arg;
+
+  w_ctx->db = db_connect(w_ctx->db_name);
 
   do {
     bool market_ready = true;
@@ -3643,9 +3651,12 @@ static int market_sample_func(void *restrict const arg) {
   } while (!terminated);
 
   Map_lock(w_ctx->ticker_queues);
-  Map_remove(w_ctx->ticker_queues, w_ctx->m_id);
-  Map_unlock(w_ctx->ticker_queues);
+  Queue_lock(w_ctx->ticker_queue);
+  if (Map_get(w_ctx->ticker_queues, w_ctx->m_id) == w_ctx->ticker_queue)
+    Map_remove(w_ctx->ticker_queues, w_ctx->m_id);
   Queue_stop(w_ctx->ticker_queue);
+  Queue_unlock(w_ctx->ticker_queue);
+  Map_unlock(w_ctx->ticker_queues);
   Queue_delete(w_ctx->ticker_queue, Sample_delete);
   db_disconnect(w_ctx->db);
   String_delete(w_ctx->m_id);
@@ -3662,6 +3673,8 @@ static int market_trade_func(void *restrict const arg) {
   struct Numeric *restrict const tp_pc = Numeric_new();
   struct Numeric *restrict const r0 = Numeric_new();
   void *const *restrict items;
+
+  w_ctx->db = db_connect(w_ctx->db_name);
 
   do {
     bool err = false;
@@ -3795,9 +3808,12 @@ static int market_trade_func(void *restrict const arg) {
   } while (!terminated);
 
   Map_lock(w_ctx->trade_queues);
-  Map_remove(w_ctx->trade_queues, w_ctx->m_id);
-  Map_unlock(w_ctx->trade_queues);
+  Queue_lock(w_ctx->trade_queue);
+  if (Map_get(w_ctx->trade_queues, w_ctx->m_id) == w_ctx->trade_queue)
+    Map_remove(w_ctx->trade_queues, w_ctx->m_id);
   Queue_stop(w_ctx->trade_queue);
+  Queue_unlock(w_ctx->trade_queue);
+  Map_unlock(w_ctx->trade_queues);
   Queue_delete(w_ctx->trade_queue, NULL);
   db_disconnect(w_ctx->db);
   String_delete(w_ctx->m_id);
@@ -3871,6 +3887,7 @@ static int exchange_stop_func(void *restrict const arg) {
 }
 
 static int exchange_sample_func(void *restrict const arg) {
+  static _Atomic unsigned db_cnt = 0;
   struct worker_ctx *restrict const e_ctx = arg;
   thrd_t thrd;
 
@@ -3892,8 +3909,8 @@ static int exchange_sample_func(void *restrict const arg) {
       queue_init = true;
     }
 
-    Map_unlock(e_ctx->ticker_queues);
     Queue_lock(ticker_queue);
+    Map_unlock(e_ctx->ticker_queues);
 
     Queue_enqueue_await(ticker_queue, sample);
 
@@ -3908,18 +3925,18 @@ static int exchange_sample_func(void *restrict const arg) {
     Queue_unlock(ticker_queue);
 
     if (queue_init) {
-      char cname[DATABASE_CONNECTION_NAME_MAX_LENGTH + 1] = {0};
-      const int r =
-          snprintf(cname, sizeof(cname), "%s-tickers-%s",
-                   String_chars(e_ctx->e->nm), String_chars(sample->m_id));
-
-      if (r < 0 || (size_t)r >= sizeof(cname))
-        panic();
-
       struct worker_ctx *restrict const m_ctx = worker_ctx_fork(e_ctx);
-      m_ctx->db = db_connect(cname);
+      m_ctx->db = NULL;
       m_ctx->m_id = String_copy(sample->m_id);
       m_ctx->ticker_queue = ticker_queue;
+
+      const int r = snprintf(m_ctx->db_name, sizeof(m_ctx->db_name),
+                             "%s-tickers-%s-%u", String_chars(e_ctx->e->nm),
+                             String_chars(sample->m_id), ++db_cnt);
+
+      if (r < 0 || (size_t)r >= sizeof(m_ctx->db_name))
+        panic();
+
       thread_group_cnt_inc(m_ctx->threads);
       thread_create(&thrd, market_sample_func, m_ctx);
       thread_detach(thrd);
@@ -3931,6 +3948,7 @@ static int exchange_sample_func(void *restrict const arg) {
 }
 
 static int exchange_order_func(void *restrict const arg) {
+  static _Atomic unsigned db_cnt = 0;
   struct worker_ctx *restrict const e_ctx = arg;
   thrd_t thrd;
 
@@ -3952,8 +3970,8 @@ static int exchange_order_func(void *restrict const arg) {
       queue_init = true;
     }
 
-    Map_unlock(e_ctx->order_queues);
     Queue_lock(order_queue);
+    Map_unlock(e_ctx->order_queues);
 
     Queue_enqueue_await(order_queue, order);
 
@@ -3968,18 +3986,18 @@ static int exchange_order_func(void *restrict const arg) {
     Queue_unlock(order_queue);
 
     if (queue_init) {
-      char cname[DATABASE_CONNECTION_NAME_MAX_LENGTH + 1] = {0};
-      const int r =
-          snprintf(cname, sizeof(cname), "%s-orders-%s",
-                   String_chars(e_ctx->e->nm), String_chars(order->m_id));
-
-      if (r < 0 || (size_t)r >= sizeof(cname))
-        panic();
-
       struct worker_ctx *restrict const o_ctx = worker_ctx_fork(e_ctx);
-      o_ctx->db = db_connect(cname);
+      o_ctx->db = NULL;
       o_ctx->m_id = String_copy(order->m_id);
       o_ctx->order_queue = order_queue;
+
+      const int r = snprintf(o_ctx->db_name, sizeof(o_ctx->db_name),
+                             "%s-orders-%s-%u", String_chars(e_ctx->e->nm),
+                             String_chars(order->m_id), ++db_cnt);
+
+      if (r < 0 || (size_t)r >= sizeof(o_ctx->db_name))
+        panic();
+
       thread_group_cnt_inc(o_ctx->threads);
       thread_create(&thrd, market_order_func, o_ctx);
       thread_detach(thrd);
@@ -3991,6 +4009,7 @@ static int exchange_order_func(void *restrict const arg) {
 }
 
 static int exchange_trade_func(void *restrict const arg) {
+  static _Atomic unsigned db_cnt = 0;
   struct worker_ctx *restrict const e_ctx = arg;
   thrd_t thrd;
 
@@ -4013,8 +4032,8 @@ static int exchange_trade_func(void *restrict const arg) {
       queue_init = true;
     }
 
-    Map_unlock(e_ctx->trade_queues);
     Queue_lock(trade_queue);
+    Map_unlock(e_ctx->trade_queues);
 
     Queue_enqueue_await(trade_queue, trade);
 
@@ -4026,18 +4045,18 @@ static int exchange_trade_func(void *restrict const arg) {
     Queue_unlock(trade_queue);
 
     if (queue_init) {
-      char cname[DATABASE_CONNECTION_NAME_MAX_LENGTH + 1] = {0};
-      const int r =
-          snprintf(cname, sizeof(cname), "%s-trades-%s",
-                   String_chars(e_ctx->e->nm), String_chars(trade->m_id));
-
-      if (r < 0 || (size_t)r >= sizeof(cname))
-        panic();
-
       struct worker_ctx *restrict const t_ctx = worker_ctx_fork(e_ctx);
-      t_ctx->db = db_connect(cname);
+      t_ctx->db = NULL;
       t_ctx->m_id = String_copy(trade->m_id);
       t_ctx->trade_queue = trade_queue;
+
+      const int r = snprintf(t_ctx->db_name, sizeof(t_ctx->db_name),
+                             "%s-trades-%s-%u", String_chars(e_ctx->e->nm),
+                             String_chars(trade->m_id), ++db_cnt);
+
+      if (r < 0 || (size_t)r >= sizeof(t_ctx->db_name))
+        panic();
+
       thread_group_cnt_inc(t_ctx->threads);
       thread_create(&thrd, market_trade_func, t_ctx);
       thread_detach(thrd);
