@@ -3842,6 +3842,7 @@ static int exchange_sample_func(void *restrict const arg) {
       m_ctx = worker_ctx_fork(e_ctx);
       m_ctx->m = Market_copy(m);
       mutex_unlock(m->mtx);
+      m = NULL;
 
       m_ctx->ticker_queue =
           Queue_new(MARKET_TICKER_QUEUE_CAPACITY, &thread_timeout);
@@ -3849,8 +3850,8 @@ static int exchange_sample_func(void *restrict const arg) {
       Queue_start(m_ctx->ticker_queue);
 
       const int r =
-          snprintf(m_ctx->db_name, sizeof(m_ctx->db_name), "%s-tickers-%s",
-                   String_chars(e_ctx->e->nm), String_chars(sample->m_id));
+          snprintf(m_ctx->db_name, sizeof(m_ctx->db_name), "%s-%s-tickers",
+                   String_chars(e_ctx->e->nm), String_chars(m_ctx->m->nm));
 
       if (r < 0 || (size_t)r >= sizeof(m_ctx->db_name))
         panic();
@@ -3934,9 +3935,9 @@ static int exchange_order_func(void *restrict const arg) {
     }
 
     if (m_ctx == NULL) {
-      struct Market *restrict const market = e_ctx->e->market(order->m_id);
+      struct Market *restrict const m = e_ctx->e->market(order->m_id);
 
-      if (market == NULL) {
+      if (m == NULL) {
         werr("%s: Market: Not available: %s\n", String_chars(e_ctx->e->nm),
              String_chars(order->m_id));
 
@@ -3945,8 +3946,9 @@ static int exchange_order_func(void *restrict const arg) {
       }
 
       m_ctx = worker_ctx_fork(e_ctx);
-      m_ctx->m = Market_copy(market);
-      mutex_unlock(market->mtx);
+      m_ctx->m = Market_copy(m);
+      mutex_unlock(m->mtx);
+      m = NULL;
 
       m_ctx->order_queue =
           Queue_new(MARKET_ORDER_QUEUE_CAPACITY, &thread_timeout);
@@ -3954,8 +3956,8 @@ static int exchange_order_func(void *restrict const arg) {
       Queue_start(m_ctx->order_queue);
 
       const int r =
-          snprintf(m_ctx->db_name, sizeof(m_ctx->db_name), "%s-orders-%s",
-                   String_chars(e_ctx->e->nm), String_chars(order->m_id));
+          snprintf(m_ctx->db_name, sizeof(m_ctx->db_name), "%s-%s-orders",
+                   String_chars(e_ctx->e->nm), String_chars(m_ctx->m->nm));
 
       if (r < 0 || (size_t)r >= sizeof(m_ctx->db_name))
         panic();
@@ -4071,6 +4073,7 @@ static int exchange_trade_func(void *restrict const arg) {
       m_ctx = worker_ctx_fork(e_ctx);
       m_ctx->m = Market_copy(m);
       mutex_unlock(m->mtx);
+      m = NULL;
 
       m_ctx->trade_queue =
           Queue_new(MARKET_TRADE_QUEUE_CAPACITY, &thread_timeout);
@@ -4078,8 +4081,8 @@ static int exchange_trade_func(void *restrict const arg) {
       Queue_start(m_ctx->trade_queue);
 
       const int r =
-          snprintf(m_ctx->db_name, sizeof(m_ctx->db_name), "%s-trades-%s",
-                   String_chars(e_ctx->e->nm), String_chars(trade->m_id));
+          snprintf(m_ctx->db_name, sizeof(m_ctx->db_name), "%s-%s-trades",
+                   String_chars(e_ctx->e->nm), String_chars(m_ctx->m->nm));
 
       if (r < 0 || (size_t)r >= sizeof(m_ctx->db_name))
         panic();
