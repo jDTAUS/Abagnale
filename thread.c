@@ -35,22 +35,6 @@ struct thread_tls {
   } thread_locked;
 };
 
-static void *mtx_t_copy(void *restrict const k) { return k; }
-static void mtx_t_delete(void *restrict const k) { (void)k; }
-static size_t mtx_t_hash(const void *restrict const k) {
-  return (size_t)(uintptr_t)k;
-}
-static bool mtx_t_equals(const void *restrict k1, const void *restrict k2) {
-  return k1 == k2;
-}
-
-const struct MapOps *const MutexMapOps = &(const struct MapOps){
-    .k_copy = mtx_t_copy,
-    .k_delete = mtx_t_delete,
-    .k_hash = mtx_t_hash,
-    .k_equals = mtx_t_equals,
-};
-
 static tss_t thread_tls_key;
 
 const char *strthrd(const int r);
@@ -60,7 +44,7 @@ struct thread_tls *const thread_tls(void) {
   struct thread_tls *restrict tls = tls_get(thread_tls_key);
   if (tls == NULL) {
     tls = heap_malloc(sizeof(struct thread_tls));
-    tls->thread_locked.mutexes = Map_new(MutexMapOps, 64);
+    tls->thread_locked.mutexes = Map_new(IdentityMapOps, 64);
     tls_set(thread_tls_key, tls);
   }
   return tls;

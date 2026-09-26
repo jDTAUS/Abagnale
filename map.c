@@ -28,6 +28,8 @@
 #include "heap.h"
 #include "map.h"
 
+#include <stdint.h>
+
 struct Entry {
   void *restrict key;
   void *restrict value;
@@ -48,6 +50,23 @@ struct MapIterator {
   size_t i;
   struct Entry *restrict e;
   const struct Map *restrict m;
+};
+
+inline static void *id_copy(void *restrict const k) { return k; }
+inline static void id_delete(void *restrict const k) { (void)k; }
+inline static size_t id_hash(const void *restrict const k) {
+  return (size_t)(uintptr_t)k;
+}
+inline static bool id_equals(const void *restrict const k1,
+                             const void *restrict const k2) {
+  return k1 == k2;
+}
+
+const struct MapOps *const IdentityMapOps = &(const struct MapOps){
+    .k_copy = id_copy,
+    .k_delete = id_delete,
+    .k_hash = id_hash,
+    .k_equals = id_equals,
 };
 
 inline struct Map *Map_new(const struct MapOps *restrict const ops,

@@ -41,6 +41,8 @@ struct MapOps {
   bool (*k_equals)(const void *restrict const, const void *restrict const);
 };
 
+extern const struct MapOps *const IdentityMapOps;
+
 struct Map *Map_new(const struct MapOps *restrict const, const size_t);
 
 void Map_delete(struct Map *restrict const,
