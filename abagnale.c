@@ -3823,7 +3823,7 @@ static int exchange_sample_func(void *restrict const arg) {
     }
 
     if (m_ctx == NULL) {
-      struct Market *restrict const m = e_ctx->e->market(sample->m_id);
+      struct Market *restrict m = e_ctx->e->market(sample->m_id);
 
       if (m == NULL) {
         werr("%s: Market: Not available: %s\n", String_chars(e_ctx->e->nm),
@@ -3935,7 +3935,7 @@ static int exchange_order_func(void *restrict const arg) {
     }
 
     if (m_ctx == NULL) {
-      struct Market *restrict const m = e_ctx->e->market(order->m_id);
+      struct Market *restrict m = e_ctx->e->market(order->m_id);
 
       if (m == NULL) {
         werr("%s: Market: Not available: %s\n", String_chars(e_ctx->e->nm),
@@ -4053,7 +4053,7 @@ static int exchange_trade_func(void *restrict const arg) {
     }
 
     if (m_ctx == NULL) {
-      struct Market *restrict const m = e_ctx->e->market(trade->m_id);
+      struct Market *restrict m = e_ctx->e->market(trade->m_id);
 
       if (m == NULL) {
         werr("%s: Market: Not available: %s\n", String_chars(e_ctx->e->nm),
