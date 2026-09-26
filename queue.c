@@ -99,11 +99,25 @@ inline void Queue_stop(struct Queue *restrict const q) {
 
   q->running = false;
 
+  condition_broadcast(&q->not_empty);
+  condition_broadcast(&q->not_full);
+
+  if (!locked)
+    mutex_unlock(&q->mtx);
+}
+
+inline size_t Queue_size(struct Queue *restrict const q) {
+  const bool locked = thread_locked(&q->mtx);
+
+  if (!locked)
+    mutex_lock(&q->mtx);
+
+  const size_t s = q->size;
+
   if (!locked)
     mutex_unlock(&q->mtx);
 
-  condition_broadcast(&q->not_empty);
-  condition_broadcast(&q->not_full);
+  return s;
 }
 
 inline bool Queue_enqueue_timedout(struct Queue *restrict const q) {
