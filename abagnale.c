@@ -3338,19 +3338,6 @@ static int market_order_func(void *restrict const arg) {
 
     Queue_unlock(w_ctx->order_queue);
 
-    struct Market *restrict const market = w_ctx->e->market(order->m_id);
-
-    if (market == NULL) {
-      werr("%s: Market: Not available: %s\n", String_chars(w_ctx->e->nm),
-           String_chars(order->m_id));
-
-      Order_delete(order);
-      continue;
-    }
-
-    w_ctx->m = Market_copy(market);
-    mutex_unlock(market->mtx);
-
     w_ctx->m_cnf = marketconfig(w_ctx->e->nm, w_ctx->m->nm);
 
     Map_lock(market_samples);
@@ -3359,7 +3346,6 @@ static int market_order_func(void *restrict const arg) {
 
     if (samples == NULL) {
       Order_delete(order);
-      Market_delete(w_ctx->m);
       continue;
     }
 
@@ -3367,7 +3353,6 @@ static int market_order_func(void *restrict const arg) {
 
     if (Array_size(samples) < 2) {
       Array_unlock(samples);
-      Market_delete(w_ctx->m);
       Order_delete(order);
       continue;
     }
@@ -3378,7 +3363,6 @@ static int market_order_func(void *restrict const arg) {
 
     if (trades == NULL) {
       Array_unlock(samples);
-      Market_delete(w_ctx->m);
       Order_delete(order);
       continue;
     }
@@ -3406,7 +3390,6 @@ static int market_order_func(void *restrict const arg) {
 
     if (t == NULL) {
       Array_unlock(trades);
-      Market_delete(w_ctx->m);
       Order_delete(order);
       continue;
     }
@@ -3461,7 +3444,6 @@ static int market_order_func(void *restrict const arg) {
     }
 
     Array_unlock(trades);
-    Market_delete(w_ctx->m);
     Order_delete(order);
   } while (!terminated);
 
@@ -3506,31 +3488,7 @@ static int market_sample_func(void *restrict const arg) {
 
     Queue_unlock(w_ctx->ticker_queue);
 
-    struct Market *restrict const m = w_ctx->e->market(sample->m_id);
-
-    if (m == NULL) {
-      werr("%s: %s: Market: Not available\n", String_chars(w_ctx->e->nm),
-           String_chars(sample->m_id));
-
-      Sample_delete(sample);
-      continue;
-    }
-
-    w_ctx->m = Market_copy(m);
-    mutex_unlock(m->mtx);
-
     w_ctx->m_cnf = marketconfig(w_ctx->e->nm, w_ctx->m->nm);
-
-    if (ticker_exporter)
-      db_sample_create(w_ctx->db, String_chars(w_ctx->e->id),
-                       String_chars(w_ctx->m->id), sample->nanos,
-                       sample->price);
-
-    if (!w_ctx->m->is_tradeable) {
-      Sample_delete(sample);
-      Market_delete(w_ctx->m);
-      continue;
-    }
 
     bool samples_init = false;
     Map_lock(market_samples);
@@ -3551,7 +3509,6 @@ static int market_sample_func(void *restrict const arg) {
 
     if (Array_size(samples) < 2 || terminated) {
       Array_unlock(samples);
-      Market_delete(w_ctx->m);
       continue;
     }
 
@@ -3575,12 +3532,6 @@ static int market_sample_func(void *restrict const arg) {
 
     } else
       Array_cut(samples, 0, 2, Sample_delete);
-
-    if (!w_ctx->m->is_active) {
-      Array_unlock(samples);
-      Market_delete(w_ctx->m);
-      continue;
-    }
 
     Array_unlock(samples);
 
@@ -3658,7 +3609,6 @@ static int market_sample_func(void *restrict const arg) {
     }
 
     Array_unlock(trades);
-    Market_delete(w_ctx->m);
   } while (!terminated);
 
   db_disconnect(w_ctx->db);
@@ -3706,26 +3656,6 @@ static int market_trade_func(void *restrict const arg) {
     if (!String_equals(t->e_id, w_ctx->e->id))
       panic();
 
-    struct Market *restrict const m = w_ctx->e->market(t->m_id);
-
-    if (m == NULL) {
-      werr("%s: %s: Market: Not available\n", String_chars(w_ctx->e->nm),
-           String_chars(t->m_id));
-
-      mutex_lock(&t->mtx);
-      if (TRADE_IS_DELETED(t)) {
-        mutex_unlock(&t->mtx);
-        trade_delete(t);
-      } else {
-        TRADE_UNSET_ENQUEUED(t);
-        mutex_unlock(&t->mtx);
-      }
-      continue;
-    }
-
-    w_ctx->m = Market_copy(m);
-    mutex_unlock(m->mtx);
-
     w_ctx->m_cnf = marketconfig(w_ctx->e->nm, w_ctx->m->nm);
 
     if (w_ctx->m_cnf == NULL || w_ctx->m_cnf->v_pc != NULL) {
@@ -3737,7 +3667,6 @@ static int market_trade_func(void *restrict const arg) {
         TRADE_UNSET_ENQUEUED(t);
         mutex_unlock(&t->mtx);
       }
-      Market_delete(w_ctx->m);
       continue;
     }
 
@@ -3764,7 +3693,6 @@ static int market_trade_func(void *restrict const arg) {
           TRADE_UNSET_ENQUEUED(t);
           mutex_unlock(&t->mtx);
         }
-        Market_delete(w_ctx->m);
         db_volatility_close(w_ctx->db);
         continue;
       }
@@ -3818,7 +3746,6 @@ static int market_trade_func(void *restrict const arg) {
       trade_state_save(w_ctx->db, t);
       mutex_unlock(&t->mtx);
     }
-    Market_delete(w_ctx->m);
   } while (!terminated);
 
   db_disconnect(w_ctx->db);
@@ -3852,6 +3779,7 @@ static int exchange_stop_func(void *restrict const arg) {
 inline static void ticker_worker_delete(void *restrict const entry) {
   struct worker_ctx *restrict const w_ctx = entry;
   Queue_delete(w_ctx->ticker_queue, Sample_delete);
+  Market_delete(w_ctx->m);
   heap_free(w_ctx);
 }
 
@@ -3864,11 +3792,19 @@ static int exchange_sample_func(void *restrict const arg) {
   e_ctx->threads = heap_calloc(1, sizeof(struct thread_group));
   thread_group_init(e_ctx->threads);
 
+  if (ticker_exporter)
+    e_ctx->db = db_connect(e_ctx->db_name);
+
   while (!terminated) {
     struct Sample *restrict const sample = e_ctx->e->sample_await();
 
     if (sample == NULL)
       continue;
+
+    if (ticker_exporter)
+      db_sample_create(e_ctx->db, String_chars(e_ctx->e->id),
+                       String_chars(sample->m_id), sample->nanos,
+                       sample->price);
 
     struct worker_ctx *restrict m_ctx = Map_get(ticker_workers, sample->m_id);
 
@@ -3880,13 +3816,33 @@ static int exchange_sample_func(void *restrict const arg) {
         Queue_stop(m_ctx->ticker_queue);
         Queue_unlock(m_ctx->ticker_queue);
         Queue_delete(m_ctx->ticker_queue, Sample_delete);
+        Market_delete(m_ctx->m);
         heap_free(m_ctx);
         m_ctx = NULL;
       }
     }
 
     if (m_ctx == NULL) {
+      struct Market *restrict const m = e_ctx->e->market(sample->m_id);
+
+      if (m == NULL) {
+        werr("%s: Market: Not available: %s\n", String_chars(e_ctx->e->nm),
+             String_chars(sample->m_id));
+
+        Sample_delete(sample);
+        continue;
+      }
+
+      if (!(m->is_tradeable && m->is_active)) {
+        mutex_unlock(m->mtx);
+        Sample_delete(sample);
+        continue;
+      }
+
       m_ctx = worker_ctx_fork(e_ctx);
+      m_ctx->m = Market_copy(m);
+      mutex_unlock(m->mtx);
+
       m_ctx->ticker_queue =
           Queue_new(MARKET_TICKER_QUEUE_CAPACITY, &thread_timeout);
 
@@ -3931,6 +3887,10 @@ static int exchange_sample_func(void *restrict const arg) {
   heap_free(e_ctx);
 
   Map_delete(ticker_workers, ticker_worker_delete);
+
+  if (ticker_exporter)
+    db_disconnect(e_ctx->db);
+
   thread_group_cnt_dec(&worker);
   thread_exit(EXIT_SUCCESS);
 }
@@ -3938,6 +3898,7 @@ static int exchange_sample_func(void *restrict const arg) {
 inline static void order_worker_delete(void *restrict const entry) {
   struct worker_ctx *restrict const w_ctx = entry;
   Queue_delete(w_ctx->order_queue, Order_delete);
+  Market_delete(w_ctx->m);
   heap_free(w_ctx);
 }
 
@@ -3966,13 +3927,27 @@ static int exchange_order_func(void *restrict const arg) {
         Queue_stop(m_ctx->order_queue);
         Queue_unlock(m_ctx->order_queue);
         Queue_delete(m_ctx->order_queue, Order_delete);
+        Market_delete(m_ctx->m);
         heap_free(m_ctx);
         m_ctx = NULL;
       }
     }
 
     if (m_ctx == NULL) {
+      struct Market *restrict const market = e_ctx->e->market(order->m_id);
+
+      if (market == NULL) {
+        werr("%s: Market: Not available: %s\n", String_chars(e_ctx->e->nm),
+             String_chars(order->m_id));
+
+        Order_delete(order);
+        continue;
+      }
+
       m_ctx = worker_ctx_fork(e_ctx);
+      m_ctx->m = Market_copy(market);
+      mutex_unlock(market->mtx);
+
       m_ctx->order_queue =
           Queue_new(MARKET_ORDER_QUEUE_CAPACITY, &thread_timeout);
 
@@ -4039,6 +4014,7 @@ static inline void trade_queue_entry_delete(void *restrict const entry) {
 inline static void trade_worker_delete(void *restrict const entry) {
   struct worker_ctx *restrict const w_ctx = entry;
   Queue_delete(w_ctx->trade_queue, trade_queue_entry_delete);
+  Market_delete(w_ctx->m);
   heap_free(w_ctx);
 }
 
@@ -4068,13 +4044,34 @@ static int exchange_trade_func(void *restrict const arg) {
         Queue_stop(m_ctx->trade_queue);
         Queue_unlock(m_ctx->trade_queue);
         Queue_delete(m_ctx->trade_queue, trade_queue_entry_delete);
+        Market_delete(m_ctx->m);
         heap_free(m_ctx);
         m_ctx = NULL;
       }
     }
 
     if (m_ctx == NULL) {
+      struct Market *restrict const m = e_ctx->e->market(trade->m_id);
+
+      if (m == NULL) {
+        werr("%s: Market: Not available: %s\n", String_chars(e_ctx->e->nm),
+             String_chars(trade->m_id));
+
+        mutex_lock(&trade->mtx);
+        if (TRADE_IS_DELETED(trade)) {
+          mutex_unlock(&trade->mtx);
+          trade_delete(trade);
+        } else {
+          TRADE_UNSET_ENQUEUED(trade);
+          mutex_unlock(&trade->mtx);
+        }
+        continue;
+      }
+
       m_ctx = worker_ctx_fork(e_ctx);
+      m_ctx->m = Market_copy(m);
+      mutex_unlock(m->mtx);
+
       m_ctx->trade_queue =
           Queue_new(MARKET_TRADE_QUEUE_CAPACITY, &thread_timeout);
 
@@ -4186,6 +4183,12 @@ int abagnale(int argc, char *argv[]) {
     struct worker_ctx *restrict const o_ctx = worker_ctx_fork(e_ctx);
     struct worker_ctx *restrict const s_ctx = worker_ctx_fork(e_ctx);
     struct worker_ctx *restrict const t_ctx = worker_ctx_fork(e_ctx);
+
+    const int r = snprintf(s_ctx->db_name, sizeof(s_ctx->db_name), "%s-tickers",
+                           String_chars(s_ctx->e->nm));
+
+    if (r < 0 || (size_t)r >= sizeof(s_ctx->db_name))
+      panic();
 
     thread_group_cnt_inc(&worker);
     thread_create(&thrd, exchange_order_func, o_ctx);
