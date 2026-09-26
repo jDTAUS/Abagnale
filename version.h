@@ -1,3 +1,8 @@
+#ifndef VERSION_H
+#define VERSION_H
+
+#define ABAG_REVISION "$Abagnale$"
+
 /*
  * Copyright (c) 2018 - 2026 Christian Schulte <cs@schulte.it>
  *
@@ -14,10 +19,6 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#ifndef VERSION_H
-#define VERSION_H
-
-#define ABAG_REVISION "$Abagnale$"
 #define ABAG_USER_AGENT "Abagnale; " ABAG_REVISION
 
 #endif
