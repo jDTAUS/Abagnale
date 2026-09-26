@@ -4022,6 +4022,9 @@ static int exchange_order_func(void *restrict const arg) {
 }
 
 static inline void trade_queue_entry_delete(void *restrict const entry) {
+  if (entry == NULL)
+    return;
+
   struct Trade *restrict const t = entry;
   mutex_lock(&t->mtx);
   if (TRADE_IS_DELETED(t)) {
