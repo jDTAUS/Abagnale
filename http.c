@@ -109,9 +109,9 @@ static void http_evt_handler(struct mg_connection *c, int ev, void *ev_data) {
               "Content-Type: application/json\r\n"
               "Content-Length: %u\r\n"
               "Connection: close\r\n"
-              "User-Agent: Abagnale; %s\r\n"
+              "User-Agent: %s\r\n"
               "\r\n",
-              (int)host.len, host.buf, http_ctx->body_len, ABAG_REVISION);
+              (int)host.len, host.buf, http_ctx->body_len, ABAG_USER_AGENT);
 
     if (!mg_send(c, http_ctx->body, http_ctx->body_len))
       mg_error(c, "OOM");

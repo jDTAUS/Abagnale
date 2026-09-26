@@ -18,5 +18,6 @@
 #define VERSION_H
 
 #define ABAG_REVISION "$Abagnale$"
+#define ABAG_USER_AGENT "Abagnale; " ABAG_REVISION
 
 #endif

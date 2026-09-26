@@ -541,7 +541,7 @@ static void bitvavo_start(void) {
 
   struct mg_connection *restrict const c =
       mg_ws_connect(mgr, url, bitvavo_ws_evt_handler, NULL,
-                    "User-Agent: Abagnale; %s\r\n", ABAG_REVISION);
+                    "User-Agent: %s\r\n", ABAG_USER_AGENT);
 
   if (!c)
     fatal("%s: Failure starting websocket\n", url);
@@ -1882,8 +1882,9 @@ static void bitvavo_ws_evt_handler(struct mg_connection *c, int ev,
       do {
         thread_sleep(&bitvavo_ws_retry_rate);
         c = mg_ws_connect(mgr, String_chars(mgr->userdata),
-                          bitvavo_ws_evt_handler, NULL,
-                          "User-Agent: Abagnale; %s\r\n", ABAG_REVISION);
+                          bitvavo_ws_evt_handler, NULL, "User-Agent: %s\r\n",
+                          ABAG_USER_AGENT);
+
         if (!c)
           werr("%s: Failure reconnecting\n", String_chars(mgr->userdata));
 

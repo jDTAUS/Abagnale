@@ -1043,7 +1043,7 @@ static void ws_evt_handler(struct mg_connection *c, int ev, void *ev_data) {
       do {
         thread_sleep(&coinbase_retry_rate);
         c = mg_ws_connect(mgr, coinbase_ws_uri, ws_evt_handler, channel,
-                          "User-Agent: Abagnale; %s\r\n", ABAG_REVISION);
+                          "User-Agent: %s\r\n", ABAG_USER_AGENT);
 
         if (!c)
           werr("%s: %s: Failure reconnecting\n", coinbase_ws_uri,
@@ -1256,7 +1256,7 @@ static void coinbase_start(void) {
     if (ws_channels[i].items != NULL) {
       struct mg_connection *restrict const c =
           mg_ws_connect(mgr, coinbase_ws_uri, ws_evt_handler, &ws_channels[i],
-                        "User-Agent: Abagnale; %s\r\n", ABAG_REVISION);
+                        "User-Agent: %s\r\n", ABAG_USER_AGENT);
 
       ws_channels[i].last_message = mg_millis();
 
