@@ -247,6 +247,9 @@ inline bool condition_timedwait(cnd_t *restrict const cond,
   }
 
   int r = cnd_timedwait(cond, mtx, ts);
+
+  Map_put(mutexes, mtx, (void *)(uintptr_t)1);
+
   switch (r) {
   case thrd_timedout:
     return false;
@@ -255,7 +258,6 @@ inline bool condition_timedwait(cnd_t *restrict const cond,
       fatal("%s", strthrd(r));
   }
 
-  Map_put(mutexes, mtx, (void *)(uintptr_t)1);
   return true;
 }
 
@@ -274,8 +276,9 @@ inline void condition_wait(cnd_t *restrict const cond,
   }
 
   int r = cnd_wait(cond, mtx);
-  if (r != thrd_success)
-    fatal("%s", strthrd(r));
 
   Map_put(mutexes, mtx, (void *)(uintptr_t)1);
+
+  if (r != thrd_success)
+    fatal("%s", strthrd(r));
 }
