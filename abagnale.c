@@ -73,17 +73,14 @@ struct worker_ctx {
   void *restrict db;
   const struct Exchange *restrict e;
   struct Market *restrict m;
-  struct String *restrict m_id;
   const struct MarketConfig *restrict m_cnf;
-  struct Map *restrict order_queues;
   struct Queue *restrict order_queue;
-  struct Map *restrict ticker_queues;
   struct Queue *restrict ticker_queue;
-  struct Map *restrict trade_queues;
   struct Queue *restrict trade_queue;
   struct Queue *restrict trades_queue;
   struct thread_group *restrict threads;
   char db_name[DATABASE_CONNECTION_NAME_MAX_LENGTH + 1];
+  bool running;
 };
 
 struct abag_tls {
@@ -350,24 +347,24 @@ thread_group_cnt_dec(struct thread_group *restrict const tg) {
   condition_broadcast(&tg->cnd);
 }
 
+inline static void thread_group_join(struct thread_group *restrict const tg) {
+  mutex_lock(&tg->mtx);
+  while (tg->cnt > 0)
+    condition_wait(&tg->cnd, &tg->mtx);
+  mutex_unlock(&tg->mtx);
+}
+
 inline static struct worker_ctx *
 worker_ctx_fork(struct worker_ctx *restrict const w_ctx) {
   struct worker_ctx *restrict const f_ctx =
       heap_calloc(1, sizeof(struct worker_ctx));
 
-  f_ctx->db = w_ctx->db;
   f_ctx->e = w_ctx->e;
-  f_ctx->m = w_ctx->m;
-  f_ctx->m_id = w_ctx->m_id;
-  f_ctx->m_cnf = w_ctx->m_cnf;
-  f_ctx->order_queues = w_ctx->order_queues;
+  f_ctx->threads = w_ctx->threads;
   f_ctx->order_queue = w_ctx->order_queue;
-  f_ctx->ticker_queues = w_ctx->ticker_queues;
   f_ctx->ticker_queue = w_ctx->ticker_queue;
-  f_ctx->trade_queues = w_ctx->trade_queues;
   f_ctx->trade_queue = w_ctx->trade_queue;
   f_ctx->trades_queue = w_ctx->trades_queue;
-  f_ctx->threads = w_ctx->threads;
 
   return f_ctx;
 }
@@ -3322,13 +3319,24 @@ static int market_order_func(void *restrict const arg) {
     void *const *restrict items;
 
     Queue_lock(w_ctx->order_queue);
+    w_ctx->running = true;
+
     struct Order *restrict const order =
         Queue_dequeue_await(w_ctx->order_queue);
 
-    if (order == NULL || Queue_dequeue_timedout(w_ctx->order_queue)) {
-      Queue_unlock(w_ctx->order_queue);
+    if (order == NULL) {
+      if (Queue_dequeue_timedout(w_ctx->order_queue) &&
+          Queue_size(w_ctx->order_queue) > 0) {
+        // exchange_order_func may have enqueued during await
+        Queue_unlock(w_ctx->order_queue);
+        continue;
+      }
+
+      w_ctx->running = false;
       break;
     }
+
+    Queue_unlock(w_ctx->order_queue);
 
     struct Market *restrict const market = w_ctx->e->market(order->m_id);
 
@@ -3457,18 +3465,12 @@ static int market_order_func(void *restrict const arg) {
     Order_delete(order);
   } while (!terminated);
 
-  Map_lock(w_ctx->order_queues);
-  Queue_lock(w_ctx->order_queue);
-  if (Map_get(w_ctx->order_queues, w_ctx->m_id) == w_ctx->order_queue)
-    Map_remove(w_ctx->order_queues, w_ctx->m_id);
-  Queue_stop(w_ctx->order_queue);
-  Queue_unlock(w_ctx->order_queue);
-  Map_unlock(w_ctx->order_queues);
-  Queue_delete(w_ctx->order_queue, Order_delete);
   db_disconnect(w_ctx->db);
-  String_delete(w_ctx->m_id);
+
+  if (!w_ctx->running)
+    Queue_unlock(w_ctx->order_queue);
+
   thread_group_cnt_dec(w_ctx->threads);
-  heap_free(w_ctx);
   thread_exit(EXIT_SUCCESS);
 }
 
@@ -3485,11 +3487,20 @@ static int market_sample_func(void *restrict const arg) {
     bool market_ready = true;
 
     Queue_lock(w_ctx->ticker_queue);
+    w_ctx->running = true;
+
     struct Sample *restrict const sample =
         Queue_dequeue_await(w_ctx->ticker_queue);
 
-    if (sample == NULL || Queue_dequeue_timedout(w_ctx->ticker_queue)) {
-      Queue_unlock(w_ctx->ticker_queue);
+    if (sample == NULL) {
+      if (Queue_dequeue_timedout(w_ctx->ticker_queue) &&
+          Queue_size(w_ctx->ticker_queue) > 0) {
+        // exchange_sample_func may have enqueued during await
+        Queue_unlock(w_ctx->ticker_queue);
+        continue;
+      }
+
+      w_ctx->running = false;
       break;
     }
 
@@ -3650,21 +3661,15 @@ static int market_sample_func(void *restrict const arg) {
     Market_delete(w_ctx->m);
   } while (!terminated);
 
-  Map_lock(w_ctx->ticker_queues);
-  Queue_lock(w_ctx->ticker_queue);
-  if (Map_get(w_ctx->ticker_queues, w_ctx->m_id) == w_ctx->ticker_queue)
-    Map_remove(w_ctx->ticker_queues, w_ctx->m_id);
-  Queue_stop(w_ctx->ticker_queue);
-  Queue_unlock(w_ctx->ticker_queue);
-  Map_unlock(w_ctx->ticker_queues);
-  Queue_delete(w_ctx->ticker_queue, Sample_delete);
   db_disconnect(w_ctx->db);
-  String_delete(w_ctx->m_id);
+
+  if (!w_ctx->running)
+    Queue_unlock(w_ctx->ticker_queue);
+
   Numeric_delete(q_return);
   Numeric_delete(nanos);
   Numeric_delete(outdated_ns);
   thread_group_cnt_dec(w_ctx->threads);
-  heap_free(w_ctx);
   thread_exit(EXIT_SUCCESS);
 }
 
@@ -3680,10 +3685,19 @@ static int market_trade_func(void *restrict const arg) {
     bool err = false;
 
     Queue_lock(w_ctx->trade_queue);
+    w_ctx->running = true;
+
     struct Trade *restrict const t = Queue_dequeue_await(w_ctx->trade_queue);
 
-    if (t == NULL || Queue_dequeue_timedout(w_ctx->trade_queue)) {
-      Queue_unlock(w_ctx->trade_queue);
+    if (t == NULL) {
+      if (Queue_dequeue_timedout(w_ctx->trade_queue) &&
+          Queue_size(w_ctx->trade_queue) > 0) {
+        // exchange_trade_func may have enqueued during await
+        Queue_unlock(w_ctx->trade_queue);
+        continue;
+      }
+
+      w_ctx->running = false;
       break;
     }
 
@@ -3807,33 +3821,15 @@ static int market_trade_func(void *restrict const arg) {
     Market_delete(w_ctx->m);
   } while (!terminated);
 
-  Map_lock(w_ctx->trade_queues);
-  Queue_lock(w_ctx->trade_queue);
-  if (Map_get(w_ctx->trade_queues, w_ctx->m_id) == w_ctx->trade_queue)
-    Map_remove(w_ctx->trade_queues, w_ctx->m_id);
-  Queue_stop(w_ctx->trade_queue);
-  Queue_unlock(w_ctx->trade_queue);
-  Map_unlock(w_ctx->trade_queues);
-  Queue_delete(w_ctx->trade_queue, NULL);
   db_disconnect(w_ctx->db);
-  String_delete(w_ctx->m_id);
+
+  if (!w_ctx->running)
+    Queue_unlock(w_ctx->trade_queue);
+
   Numeric_delete(tp_pc);
   Numeric_delete(r0);
   thread_group_cnt_dec(w_ctx->threads);
-  heap_free(w_ctx);
   thread_exit(EXIT_SUCCESS);
-}
-
-static inline void ticker_queue_delete(void *restrict const entry) {
-  Queue_delete(entry, Sample_delete);
-}
-
-static inline void trade_queue_delete(void *restrict const entry) {
-  Queue_delete(entry, NULL);
-}
-
-static inline void order_queue_delete(void *restrict const entry) {
-  Queue_delete(entry, Order_delete);
 }
 
 static int exchange_stop_func(void *restrict const arg) {
@@ -3848,48 +3844,25 @@ static int exchange_stop_func(void *restrict const arg) {
 
   e_ctx->e->stop();
   Queue_stop(e_ctx->trades_queue);
-
-  Map_lock(e_ctx->ticker_queues);
-  struct MapIterator *restrict it = MapIterator_new(e_ctx->ticker_queues);
-  while (MapIterator_next(it))
-    Queue_stop(MapIterator_value(it));
-  MapIterator_delete(it);
-  Map_unlock(e_ctx->ticker_queues);
-
-  Map_lock(e_ctx->order_queues);
-  it = MapIterator_new(e_ctx->order_queues);
-  while (MapIterator_next(it))
-    Queue_stop(MapIterator_value(it));
-  MapIterator_delete(it);
-  Map_unlock(e_ctx->order_queues);
-
-  Map_lock(e_ctx->trade_queues);
-  it = MapIterator_new(e_ctx->trade_queues);
-  while (MapIterator_next(it))
-    Queue_stop(MapIterator_value(it));
-  MapIterator_delete(it);
-  Map_unlock(e_ctx->trade_queues);
-
-  mutex_lock(&e_ctx->threads->mtx);
-  while (e_ctx->threads->cnt > 0)
-    condition_wait(&e_ctx->threads->cnd, &e_ctx->threads->mtx);
-  mutex_unlock(&e_ctx->threads->mtx);
-
-  Map_delete(e_ctx->order_queues, order_queue_delete);
-  Map_delete(e_ctx->ticker_queues, ticker_queue_delete);
-  Map_delete(e_ctx->trade_queues, trade_queue_delete);
-  Queue_delete(e_ctx->trades_queue, NULL);
-  thread_group_destroy(e_ctx->threads);
-  heap_free(e_ctx->threads);
   heap_free(e_ctx);
   thread_group_cnt_dec(&worker);
   thread_exit(EXIT_SUCCESS);
 }
 
+inline static void ticker_worker_delete(void *restrict const entry) {
+  struct worker_ctx *restrict const w_ctx = entry;
+  Queue_delete(w_ctx->ticker_queue, Sample_delete);
+  heap_free(w_ctx);
+}
+
 static int exchange_sample_func(void *restrict const arg) {
-  static _Atomic unsigned db_cnt = 0;
-  struct worker_ctx *restrict const e_ctx = arg;
   thrd_t thrd;
+  struct worker_ctx *restrict const e_ctx = arg;
+  struct Map *restrict const ticker_workers =
+      Map_new(StringMapOps, MARKETS_MAP_CAPACITY);
+
+  e_ctx->threads = heap_calloc(1, sizeof(struct thread_group));
+  thread_group_init(e_ctx->threads);
 
   while (!terminated) {
     struct Sample *restrict const sample = e_ctx->e->sample_await();
@@ -3897,60 +3870,85 @@ static int exchange_sample_func(void *restrict const arg) {
     if (sample == NULL)
       continue;
 
-    Map_lock(e_ctx->ticker_queues);
-    bool queue_init = false;
-    struct Queue *restrict ticker_queue =
-        Map_get(e_ctx->ticker_queues, sample->m_id);
+    struct worker_ctx *restrict m_ctx = Map_get(ticker_workers, sample->m_id);
 
-    if (ticker_queue == NULL) {
-      ticker_queue = Queue_new(MARKET_TICKER_QUEUE_CAPACITY, &thread_timeout);
-      Queue_start(ticker_queue);
-      Map_put(e_ctx->ticker_queues, sample->m_id, ticker_queue);
-      queue_init = true;
+    if (m_ctx != NULL) {
+      Queue_lock(m_ctx->ticker_queue);
+
+      if (!m_ctx->running) {
+        Map_remove(ticker_workers, sample->m_id);
+        Queue_stop(m_ctx->ticker_queue);
+        Queue_unlock(m_ctx->ticker_queue);
+        Queue_delete(m_ctx->ticker_queue, Sample_delete);
+        heap_free(m_ctx);
+        m_ctx = NULL;
+      }
     }
 
-    Queue_lock(ticker_queue);
-    Map_unlock(e_ctx->ticker_queues);
+    if (m_ctx == NULL) {
+      m_ctx = worker_ctx_fork(e_ctx);
+      m_ctx->ticker_queue =
+          Queue_new(MARKET_TICKER_QUEUE_CAPACITY, &thread_timeout);
 
-    Queue_enqueue_await(ticker_queue, sample);
+      Queue_start(m_ctx->ticker_queue);
 
-    if (Queue_enqueue_timedout(ticker_queue)) {
-      werr("%s: Market: Tickers stalled: %s %" PRIuMAX " %" PRIuMAX "\n",
+      const int r =
+          snprintf(m_ctx->db_name, sizeof(m_ctx->db_name), "%s-tickers-%s",
+                   String_chars(e_ctx->e->nm), String_chars(sample->m_id));
+
+      if (r < 0 || (size_t)r >= sizeof(m_ctx->db_name))
+        panic();
+
+      Map_put(ticker_workers, sample->m_id, m_ctx);
+      Queue_lock(m_ctx->ticker_queue);
+      m_ctx->running = true;
+      thread_group_cnt_inc(e_ctx->threads);
+      thread_create(&thrd, market_sample_func, m_ctx);
+      thread_detach(thrd);
+    }
+
+    Queue_enqueue_await(m_ctx->ticker_queue, sample);
+
+    if (Queue_enqueue_timedout(m_ctx->ticker_queue)) {
+      werr("%s: Market: Ticker stalled: %s %" PRIuMAX " %" PRIuMAX "\n",
            String_chars(e_ctx->e->nm), String_chars(sample->m_id),
            (uintmax_t)thread_timeout.tv_sec, (uintmax_t)thread_timeout.tv_nsec);
 
       Sample_delete(sample);
     }
 
-    Queue_unlock(ticker_queue);
-
-    if (queue_init) {
-      struct worker_ctx *restrict const m_ctx = worker_ctx_fork(e_ctx);
-      m_ctx->db = NULL;
-      m_ctx->m_id = String_copy(sample->m_id);
-      m_ctx->ticker_queue = ticker_queue;
-
-      const int r = snprintf(m_ctx->db_name, sizeof(m_ctx->db_name),
-                             "%s-tickers-%s-%u", String_chars(e_ctx->e->nm),
-                             String_chars(sample->m_id), ++db_cnt);
-
-      if (r < 0 || (size_t)r >= sizeof(m_ctx->db_name))
-        panic();
-
-      thread_group_cnt_inc(m_ctx->threads);
-      thread_create(&thrd, market_sample_func, m_ctx);
-      thread_detach(thrd);
-    }
+    Queue_unlock(m_ctx->ticker_queue);
   }
 
-  thread_group_cnt_dec(e_ctx->threads);
+  struct MapIterator *restrict it = MapIterator_new(ticker_workers);
+  while (MapIterator_next(it))
+    Queue_stop(((struct worker_ctx *)MapIterator_value(it))->ticker_queue);
+  MapIterator_delete(it);
+
+  thread_group_join(e_ctx->threads);
+  thread_group_destroy(e_ctx->threads);
+  heap_free(e_ctx->threads);
+  heap_free(e_ctx);
+
+  Map_delete(ticker_workers, ticker_worker_delete);
+  thread_group_cnt_dec(&worker);
   thread_exit(EXIT_SUCCESS);
 }
 
+inline static void order_worker_delete(void *restrict const entry) {
+  struct worker_ctx *restrict const w_ctx = entry;
+  Queue_delete(w_ctx->order_queue, Order_delete);
+  heap_free(w_ctx);
+}
+
 static int exchange_order_func(void *restrict const arg) {
-  static _Atomic unsigned db_cnt = 0;
-  struct worker_ctx *restrict const e_ctx = arg;
   thrd_t thrd;
+  struct worker_ctx *restrict const e_ctx = arg;
+  struct Map *restrict const order_workers =
+      Map_new(StringMapOps, MARKETS_MAP_CAPACITY);
+
+  e_ctx->threads = heap_calloc(1, sizeof(struct thread_group));
+  thread_group_init(e_ctx->threads);
 
   while (!terminated) {
     struct Order *restrict const order = e_ctx->e->order_await();
@@ -3958,60 +3956,97 @@ static int exchange_order_func(void *restrict const arg) {
     if (order == NULL)
       continue;
 
-    bool queue_init = false;
-    Map_lock(e_ctx->order_queues);
-    struct Queue *restrict order_queue =
-        Map_get(e_ctx->order_queues, order->m_id);
+    struct worker_ctx *restrict m_ctx = Map_get(order_workers, order->m_id);
 
-    if (order_queue == NULL) {
-      order_queue = Queue_new(MARKET_ORDER_QUEUE_CAPACITY, &thread_timeout);
-      Queue_start(order_queue);
-      Map_put(e_ctx->order_queues, order->m_id, order_queue);
-      queue_init = true;
+    if (m_ctx != NULL) {
+      Queue_lock(m_ctx->order_queue);
+
+      if (!m_ctx->running) {
+        Map_remove(order_workers, order->m_id);
+        Queue_stop(m_ctx->order_queue);
+        Queue_unlock(m_ctx->order_queue);
+        Queue_delete(m_ctx->order_queue, Order_delete);
+        heap_free(m_ctx);
+        m_ctx = NULL;
+      }
     }
 
-    Queue_lock(order_queue);
-    Map_unlock(e_ctx->order_queues);
+    if (m_ctx == NULL) {
+      m_ctx = worker_ctx_fork(e_ctx);
+      m_ctx->order_queue =
+          Queue_new(MARKET_ORDER_QUEUE_CAPACITY, &thread_timeout);
 
-    Queue_enqueue_await(order_queue, order);
+      Queue_start(m_ctx->order_queue);
 
-    if (Queue_enqueue_timedout(order_queue)) {
-      werr("%s: Market: Orders stalled: %s %" PRIuMAX " %" PRIuMAX "\n",
+      const int r =
+          snprintf(m_ctx->db_name, sizeof(m_ctx->db_name), "%s-orders-%s",
+                   String_chars(e_ctx->e->nm), String_chars(order->m_id));
+
+      if (r < 0 || (size_t)r >= sizeof(m_ctx->db_name))
+        panic();
+
+      Map_put(order_workers, order->m_id, m_ctx);
+      Queue_lock(m_ctx->order_queue);
+      m_ctx->running = true;
+      thread_group_cnt_inc(e_ctx->threads);
+      thread_create(&thrd, market_order_func, m_ctx);
+      thread_detach(thrd);
+    }
+
+    Queue_enqueue_await(m_ctx->order_queue, order);
+
+    if (Queue_enqueue_timedout(m_ctx->order_queue)) {
+      werr("%s: Market: Order stalled: %s %" PRIuMAX " %" PRIuMAX "\n",
            String_chars(e_ctx->e->nm), String_chars(order->m_id),
            (uintmax_t)thread_timeout.tv_sec, (uintmax_t)thread_timeout.tv_nsec);
 
       Order_delete(order);
     }
 
-    Queue_unlock(order_queue);
-
-    if (queue_init) {
-      struct worker_ctx *restrict const o_ctx = worker_ctx_fork(e_ctx);
-      o_ctx->db = NULL;
-      o_ctx->m_id = String_copy(order->m_id);
-      o_ctx->order_queue = order_queue;
-
-      const int r = snprintf(o_ctx->db_name, sizeof(o_ctx->db_name),
-                             "%s-orders-%s-%u", String_chars(e_ctx->e->nm),
-                             String_chars(order->m_id), ++db_cnt);
-
-      if (r < 0 || (size_t)r >= sizeof(o_ctx->db_name))
-        panic();
-
-      thread_group_cnt_inc(o_ctx->threads);
-      thread_create(&thrd, market_order_func, o_ctx);
-      thread_detach(thrd);
-    }
+    Queue_unlock(m_ctx->order_queue);
   }
 
-  thread_group_cnt_dec(e_ctx->threads);
+  struct MapIterator *restrict it = MapIterator_new(order_workers);
+  while (MapIterator_next(it))
+    Queue_stop(((struct worker_ctx *)MapIterator_value(it))->order_queue);
+  MapIterator_delete(it);
+
+  thread_group_join(e_ctx->threads);
+  thread_group_destroy(e_ctx->threads);
+  heap_free(e_ctx->threads);
+  heap_free(e_ctx);
+
+  Map_delete(order_workers, order_worker_delete);
+  thread_group_cnt_dec(&worker);
   thread_exit(EXIT_SUCCESS);
 }
 
+static inline void trade_queue_entry_delete(void *restrict const entry) {
+  struct Trade *restrict const t = entry;
+  mutex_lock(&t->mtx);
+  if (TRADE_IS_DELETED(t)) {
+    mutex_unlock(&t->mtx);
+    trade_delete(t);
+  } else {
+    TRADE_UNSET_ENQUEUED(t);
+    mutex_unlock(&t->mtx);
+  }
+}
+
+inline static void trade_worker_delete(void *restrict const entry) {
+  struct worker_ctx *restrict const w_ctx = entry;
+  Queue_delete(w_ctx->trade_queue, trade_queue_entry_delete);
+  heap_free(w_ctx);
+}
+
 static int exchange_trade_func(void *restrict const arg) {
-  static _Atomic unsigned db_cnt = 0;
-  struct worker_ctx *restrict const e_ctx = arg;
   thrd_t thrd;
+  struct worker_ctx *restrict const e_ctx = arg;
+  struct Map *restrict const trade_workers =
+      Map_new(StringMapOps, MARKETS_MAP_CAPACITY);
+
+  e_ctx->threads = heap_calloc(1, sizeof(struct thread_group));
+  thread_group_init(e_ctx->threads);
 
   while (!terminated) {
     struct Trade *restrict const trade =
@@ -4020,50 +4055,68 @@ static int exchange_trade_func(void *restrict const arg) {
     if (trade == NULL)
       continue;
 
-    bool queue_init = false;
-    Map_lock(e_ctx->trade_queues);
-    struct Queue *restrict trade_queue =
-        Map_get(e_ctx->trade_queues, trade->m_id);
+    struct worker_ctx *restrict m_ctx = Map_get(trade_workers, trade->m_id);
 
-    if (trade_queue == NULL) {
-      trade_queue = Queue_new(MARKET_TRADE_QUEUE_CAPACITY, &thread_timeout);
-      Queue_start(trade_queue);
-      Map_put(e_ctx->trade_queues, trade->m_id, trade_queue);
-      queue_init = true;
+    if (m_ctx != NULL) {
+      Queue_lock(m_ctx->trade_queue);
+
+      if (!m_ctx->running) {
+        Map_remove(trade_workers, trade->m_id);
+        Queue_stop(m_ctx->trade_queue);
+        Queue_unlock(m_ctx->trade_queue);
+        Queue_delete(m_ctx->trade_queue, trade_queue_entry_delete);
+        heap_free(m_ctx);
+        m_ctx = NULL;
+      }
     }
 
-    Queue_lock(trade_queue);
-    Map_unlock(e_ctx->trade_queues);
+    if (m_ctx == NULL) {
+      m_ctx = worker_ctx_fork(e_ctx);
+      m_ctx->trade_queue =
+          Queue_new(MARKET_TRADE_QUEUE_CAPACITY, &thread_timeout);
 
-    Queue_enqueue_await(trade_queue, trade);
+      Queue_start(m_ctx->trade_queue);
 
-    if (Queue_enqueue_timedout(trade_queue))
-      werr("%s: Market: Trades stalled: %s %" PRIuMAX " %" PRIuMAX "\n",
+      const int r =
+          snprintf(m_ctx->db_name, sizeof(m_ctx->db_name), "%s-trades-%s",
+                   String_chars(e_ctx->e->nm), String_chars(trade->m_id));
+
+      if (r < 0 || (size_t)r >= sizeof(m_ctx->db_name))
+        panic();
+
+      Map_put(trade_workers, trade->m_id, m_ctx);
+      Queue_lock(m_ctx->trade_queue);
+      m_ctx->running = true;
+      thread_group_cnt_inc(e_ctx->threads);
+      thread_create(&thrd, market_trade_func, m_ctx);
+      thread_detach(thrd);
+    }
+
+    Queue_enqueue_await(m_ctx->trade_queue, trade);
+
+    if (Queue_enqueue_timedout(m_ctx->trade_queue)) {
+      werr("%s: Market: Trade stalled: %s %" PRIuMAX " %" PRIuMAX "\n",
            String_chars(e_ctx->e->nm), String_chars(trade->m_id),
            (uintmax_t)thread_timeout.tv_sec, (uintmax_t)thread_timeout.tv_nsec);
 
-    Queue_unlock(trade_queue);
-
-    if (queue_init) {
-      struct worker_ctx *restrict const t_ctx = worker_ctx_fork(e_ctx);
-      t_ctx->db = NULL;
-      t_ctx->m_id = String_copy(trade->m_id);
-      t_ctx->trade_queue = trade_queue;
-
-      const int r = snprintf(t_ctx->db_name, sizeof(t_ctx->db_name),
-                             "%s-trades-%s-%u", String_chars(e_ctx->e->nm),
-                             String_chars(trade->m_id), ++db_cnt);
-
-      if (r < 0 || (size_t)r >= sizeof(t_ctx->db_name))
-        panic();
-
-      thread_group_cnt_inc(t_ctx->threads);
-      thread_create(&thrd, market_trade_func, t_ctx);
-      thread_detach(thrd);
+      trade_queue_entry_delete(trade);
     }
+
+    Queue_unlock(m_ctx->trade_queue);
   }
 
-  thread_group_cnt_dec(e_ctx->threads);
+  struct MapIterator *restrict it = MapIterator_new(trade_workers);
+  while (MapIterator_next(it))
+    Queue_stop(((struct worker_ctx *)MapIterator_value(it))->trade_queue);
+  MapIterator_delete(it);
+
+  thread_group_join(e_ctx->threads);
+  thread_group_destroy(e_ctx->threads);
+  heap_free(e_ctx->threads);
+  heap_free(e_ctx);
+
+  Map_delete(trade_workers, trade_worker_delete);
+  thread_group_cnt_dec(&worker);
   thread_exit(EXIT_SUCCESS);
 }
 
@@ -4071,13 +4124,23 @@ static inline void sample_array_delete(void *restrict const entry) {
   Array_delete(entry, Sample_delete);
 }
 
+static inline void trade_array_entry_delete(void *restrict const entry) {
+  struct Trade *restrict const t = entry;
+  if (t != NULL && !TRADE_IS_ENQUEUED(t))
+    trade_delete(t);
+}
+
 static inline void trade_array_delete(void *restrict const entry) {
-  Array_delete(entry, trade_delete);
+  Array_delete(entry, trade_array_entry_delete);
+}
+
+static inline void trade_queue_delete(void *restrict const entry) {
+  Queue_delete(entry, trade_delete);
 }
 
 int abagnale(int argc, char *argv[]) {
-  void *const *restrict items;
   thrd_t thrd;
+  void *const *restrict items;
 
   if (Array_size(exchanges) == 0) {
     werr("%s: No exchanges configured\n", String_chars(progname));
@@ -4102,6 +4165,9 @@ int abagnale(int argc, char *argv[]) {
   if (verbose)
     wout("\tABAG_THREAD_TIMEOUT_MILLIS=%lu\n", thread_timeout_millis);
 
+  struct Map *restrict const trade_queues =
+      Map_new(StringMapOps, Array_size(exchanges));
+
   items = Array_items(exchanges);
   for (size_t i = Array_size(exchanges); i-- > 0 && !terminated;) {
     struct Exchange *restrict const e = items[i];
@@ -4109,32 +4175,34 @@ int abagnale(int argc, char *argv[]) {
         heap_calloc(1, sizeof(struct worker_ctx));
 
     e_ctx->e = e;
-    e_ctx->order_queues = Map_new(StringMapOps, MARKETS_MAP_CAPACITY);
-    e_ctx->ticker_queues = Map_new(StringMapOps, MARKETS_MAP_CAPACITY);
-    e_ctx->trade_queues = Map_new(StringMapOps, MARKETS_MAP_CAPACITY);
-    e_ctx->trades_queue = Queue_new(MARKETS_QUEUE_CAPACITY, NULL);
-    e_ctx->threads = heap_calloc(1, sizeof(struct thread_group));
-    thread_group_init(e_ctx->threads);
-    Queue_start(e_ctx->trades_queue);
     e_ctx->e->start();
-    thread_group_cnt_inc(e_ctx->threads);
-    thread_create(&thrd, exchange_sample_func, e_ctx);
+    e_ctx->trades_queue = Queue_new(MARKETS_QUEUE_CAPACITY, NULL);
+    Queue_start(e_ctx->trades_queue);
+    Map_put(trade_queues, e->id, e_ctx->trades_queue);
+
+    struct worker_ctx *restrict const o_ctx = worker_ctx_fork(e_ctx);
+    struct worker_ctx *restrict const s_ctx = worker_ctx_fork(e_ctx);
+    struct worker_ctx *restrict const t_ctx = worker_ctx_fork(e_ctx);
+
+    thread_group_cnt_inc(&worker);
+    thread_create(&thrd, exchange_order_func, o_ctx);
     thread_detach(thrd);
-    thread_group_cnt_inc(e_ctx->threads);
-    thread_create(&thrd, exchange_order_func, e_ctx);
+
+    thread_group_cnt_inc(&worker);
+    thread_create(&thrd, exchange_sample_func, s_ctx);
     thread_detach(thrd);
-    thread_group_cnt_inc(e_ctx->threads);
-    thread_create(&thrd, exchange_trade_func, e_ctx);
+
+    thread_group_cnt_inc(&worker);
+    thread_create(&thrd, exchange_trade_func, t_ctx);
     thread_detach(thrd);
+
     thread_group_cnt_inc(&worker);
     thread_create(&thrd, exchange_stop_func, e_ctx);
     thread_detach(thrd);
   }
 
-  mutex_lock(&worker.mtx);
-  while (worker.cnt > 0)
-    condition_wait(&worker.cnd, &worker.mtx);
-  mutex_unlock(&worker.mtx);
+  thread_group_join(&worker);
+  thread_group_destroy(&worker);
 
   void *restrict const state_db = db_connect(String_chars(progname));
   struct MapIterator *restrict const it = MapIterator_new(market_trades);
@@ -4151,6 +4219,7 @@ int abagnale(int argc, char *argv[]) {
 
   Map_delete(market_samples, sample_array_delete);
   Map_delete(market_trades, trade_array_delete);
+  Map_delete(trade_queues, trade_queue_delete);
   tls_delete(abag_tls_key);
 
   return EXIT_SUCCESS;
