@@ -3844,7 +3844,6 @@ static int exchange_sample_func(void *restrict const arg) {
   if (ticker_exporter)
     db_disconnect(e_ctx->db);
 
-  heap_free(e_ctx->threads);
   heap_free(e_ctx);
 
   Map_delete(ticker_workers, ticker_worker_delete);
@@ -3954,7 +3953,6 @@ static int exchange_order_func(void *restrict const arg) {
 
   thread_group_join(e_ctx->threads);
   thread_group_delete(e_ctx->threads);
-  heap_free(e_ctx->threads);
   heap_free(e_ctx);
 
   Map_delete(order_workers, order_worker_delete);
@@ -4097,7 +4095,6 @@ static int trade_volatility_func(void *restrict const arg) {
 
   thread_group_join(v_ctx->threads);
   thread_group_delete(v_ctx->threads);
-  heap_free(v_ctx->threads);
   heap_free(v_ctx);
 
   Map_delete(trade_workers, trade_volatility_worker_delete);
