@@ -35,9 +35,9 @@ Environment=LC_CTYPE=C.UTF-8
 #Environment=CDP_ACCOUNT_PATH=/api/v3/brokerage/accounts/
 #Environment=CDP_ACCOUNTS_PATH=/api/v3/brokerage/accounts
 #Environment=CDP_FEES_PATH=/api/v3/brokerage/transaction_summary
-#Environemnt=CDP_ORDER_PATH=/api/v3/brokerage/orders/historical/
-#Environemnt=CDP_ORDER_CANCEL_PATH=/api/v3/brokerage/orders/batch_cancel
-#Environemnt=CDP_ORDER_CREATE_PATH=/api/v3/brokerage/orders
+#Environment=CDP_ORDER_PATH=/api/v3/brokerage/orders/historical/
+#Environment=CDP_ORDER_CANCEL_PATH=/api/v3/brokerage/orders/batch_cancel
+#Environment=CDP_ORDER_CREATE_PATH=/api/v3/brokerage/orders
 #Environment=CDP_PRODUCTS_PATH=/api/v3/brokerage/products
 #Environment=CDP_HTTP_REQUESTS_PER_SECOND=30
 #Environment=CDP_HTTP_RETRY_SECONDS=3

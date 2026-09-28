@@ -3605,7 +3605,7 @@ static int market_trade_volatility_func(void *restrict const arg) {
     if (t == NULL) {
       if (Queue_dequeue_timedout(w_ctx->market_queue) &&
           Queue_size(w_ctx->market_queue) > 0) {
-        // exchange_trade_func may have enqueued during await
+        // trade_volatility_func may have enqueued during await
         Queue_unlock(w_ctx->market_queue);
         continue;
       }
