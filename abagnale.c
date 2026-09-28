@@ -63,12 +63,6 @@
 #define MARKET_TICKER_QUEUE_CAPACITY 512
 #define MARKET_ORDER_QUEUE_CAPACITY 32
 
-struct thread_group {
-  cnd_t cnd;
-  mtx_t mtx;
-  size_t cnt;
-};
-
 struct worker_ctx {
   void *restrict db;
   const struct Exchange *restrict e;
@@ -320,46 +314,6 @@ const struct MarketConfig *marketconfig(struct String *restrict const e_nm,
 
   Map_unlock(market_configs);
   return m_cnf;
-}
-
-inline static void thread_group_init(struct thread_group *restrict const tg) {
-  mutex_init(&tg->mtx);
-  condition_init(&tg->cnd);
-  tg->cnt = 0;
-}
-
-inline static void
-thread_group_destroy(struct thread_group *restrict const tg) {
-  condition_destroy(&tg->cnd);
-  mutex_destroy(&tg->mtx);
-  tg->cnt = 0;
-}
-
-inline static void
-thread_group_cnt_inc(struct thread_group *restrict const tg) {
-  mutex_lock(&tg->mtx);
-  if (tg->cnt == SIZE_MAX)
-    panic();
-  tg->cnt++;
-  mutex_unlock(&tg->mtx);
-  condition_broadcast(&tg->cnd);
-}
-
-inline static void
-thread_group_cnt_dec(struct thread_group *restrict const tg) {
-  mutex_lock(&tg->mtx);
-  if (tg->cnt == 0)
-    panic();
-  tg->cnt--;
-  mutex_unlock(&tg->mtx);
-  condition_broadcast(&tg->cnd);
-}
-
-inline static void thread_group_join(struct thread_group *restrict const tg) {
-  mutex_lock(&tg->mtx);
-  while (tg->cnt > 0)
-    condition_wait(&tg->cnd, &tg->mtx);
-  mutex_unlock(&tg->mtx);
 }
 
 inline static struct worker_ctx *
@@ -3455,7 +3409,7 @@ static int market_order_func(void *restrict const arg) {
 
   db_disconnect(w_ctx->db);
 
-  thread_group_cnt_dec(w_ctx->threads);
+  thread_group_end_thread(w_ctx->threads);
 
   if (!w_ctx->running)
     Queue_unlock(w_ctx->market_queue);
@@ -3621,7 +3575,7 @@ static int market_sample_func(void *restrict const arg) {
 
   db_disconnect(w_ctx->db);
 
-  thread_group_cnt_dec(w_ctx->threads);
+  thread_group_end_thread(w_ctx->threads);
 
   if (!w_ctx->running)
     Queue_unlock(w_ctx->market_queue);
@@ -3760,7 +3714,7 @@ static int market_trade_volatility_func(void *restrict const arg) {
 
   db_disconnect(w_ctx->db);
 
-  thread_group_cnt_dec(w_ctx->threads);
+  thread_group_end_thread(w_ctx->threads);
 
   if (!w_ctx->running)
     Queue_unlock(w_ctx->market_queue);
@@ -3853,7 +3807,7 @@ static int exchange_sample_func(void *restrict const arg) {
       Map_put(ticker_workers, sample->m_id, m_ctx);
       Queue_lock(m_ctx->market_queue);
       m_ctx->running = true;
-      thread_group_cnt_inc(e_ctx->threads);
+      thread_group_begin_thread(e_ctx->threads);
       thread_create(&thrd, market_sample_func, m_ctx);
       thread_detach(thrd);
     }
@@ -3896,7 +3850,7 @@ static int exchange_sample_func(void *restrict const arg) {
 
   Map_delete(ticker_workers, ticker_worker_delete);
 
-  thread_group_cnt_dec(&worker);
+  thread_group_end_thread(&worker);
   thread_exit(EXIT_SUCCESS);
 }
 
@@ -3969,7 +3923,7 @@ static int exchange_order_func(void *restrict const arg) {
       Map_put(order_workers, order->m_id, m_ctx);
       Queue_lock(m_ctx->market_queue);
       m_ctx->running = true;
-      thread_group_cnt_inc(e_ctx->threads);
+      thread_group_begin_thread(e_ctx->threads);
       thread_create(&thrd, market_order_func, m_ctx);
       thread_detach(thrd);
     }
@@ -4006,7 +3960,7 @@ static int exchange_order_func(void *restrict const arg) {
   heap_free(e_ctx);
 
   Map_delete(order_workers, order_worker_delete);
-  thread_group_cnt_dec(&worker);
+  thread_group_end_thread(&worker);
   thread_exit(EXIT_SUCCESS);
 }
 
@@ -4111,7 +4065,7 @@ static int trade_volatility_func(void *restrict const arg) {
       Map_put(trade_workers, trade->m_id, m_ctx);
       Queue_lock(m_ctx->market_queue);
       m_ctx->running = true;
-      thread_group_cnt_inc(v_ctx->threads);
+      thread_group_begin_thread(v_ctx->threads);
       thread_create(&thrd, market_trade_volatility_func, m_ctx);
       thread_detach(thrd);
     }
@@ -4150,7 +4104,7 @@ static int trade_volatility_func(void *restrict const arg) {
   heap_free(v_ctx);
 
   Map_delete(trade_workers, trade_volatility_worker_delete);
-  thread_group_cnt_dec(&worker);
+  thread_group_end_thread(&worker);
   thread_exit(EXIT_SUCCESS);
 }
 
@@ -4169,7 +4123,7 @@ static int stop_func(void *restrict const arg) {
     ((struct Exchange *)items[i])->stop();
 
   Queue_stop(trade_volatility_queue);
-  thread_group_cnt_dec(&worker);
+  thread_group_end_thread(&worker);
   thread_exit(EXIT_SUCCESS);
 }
 
@@ -4234,20 +4188,20 @@ int abagnale(int argc, char *argv[]) {
     if (r < 0 || (size_t)r >= sizeof(s_ctx->db_name))
       panic();
 
-    thread_group_cnt_inc(&worker);
+    thread_group_begin_thread(&worker);
     thread_create(&thrd, exchange_order_func, o_ctx);
     thread_detach(thrd);
 
-    thread_group_cnt_inc(&worker);
+    thread_group_begin_thread(&worker);
     thread_create(&thrd, exchange_sample_func, s_ctx);
     thread_detach(thrd);
   }
 
-  thread_group_cnt_inc(&worker);
+  thread_group_begin_thread(&worker);
   thread_create(&thrd, trade_volatility_func, NULL);
   thread_detach(thrd);
 
-  thread_group_cnt_inc(&worker);
+  thread_group_begin_thread(&worker);
   thread_create(&thrd, stop_func, NULL);
   thread_detach(thrd);
 

@@ -60,6 +60,41 @@ static void thread_tls_dtor(void *e) {
 void thread_init(void) { tls_create(&thread_tls_key, thread_tls_dtor); }
 void thread_destroy(void) { tls_delete(thread_tls_key); }
 
+inline void thread_group_init(struct thread_group *restrict const tg) {
+  mutex_init(&tg->mtx);
+  condition_init(&tg->cnd);
+  tg->cnt = 0;
+}
+
+inline void thread_group_destroy(struct thread_group *restrict const tg) {
+  condition_destroy(&tg->cnd);
+  mutex_destroy(&tg->mtx);
+  tg->cnt = 0;
+}
+
+inline void thread_group_begin_thread(struct thread_group *restrict const tg) {
+  mutex_lock(&tg->mtx);
+  if (tg->cnt++ == SIZE_MAX)
+    panic();
+  condition_broadcast(&tg->cnd);
+  mutex_unlock(&tg->mtx);
+}
+
+inline void thread_group_end_thread(struct thread_group *restrict const tg) {
+  mutex_lock(&tg->mtx);
+  if (tg->cnt-- == 0)
+    panic();
+  condition_broadcast(&tg->cnd);
+  mutex_unlock(&tg->mtx);
+}
+
+inline void thread_group_join(struct thread_group *restrict const tg) {
+  mutex_lock(&tg->mtx);
+  while (tg->cnt > 0)
+    condition_wait(&tg->cnd, &tg->mtx);
+  mutex_unlock(&tg->mtx);
+}
+
 inline const char *strthrd(const int r) {
   switch (r) {
   case thrd_success:

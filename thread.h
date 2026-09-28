@@ -28,6 +28,12 @@
 #include <threads.h>
 #include <time.h>
 
+struct thread_group {
+  cnd_t cnd;
+  mtx_t mtx;
+  size_t cnt;
+};
+
 void thread_init(void);
 void thread_destroy(void);
 
@@ -56,4 +62,11 @@ void condition_signal(cnd_t *restrict const);
 bool condition_timedwait(cnd_t *restrict const, mtx_t *restrict const,
                          const struct timespec *restrict const);
 void condition_wait(cnd_t *restrict const, mtx_t *restrict const);
+
+void thread_group_init(struct thread_group *restrict const);
+void thread_group_destroy(struct thread_group *restrict const);
+void thread_group_begin_thread(struct thread_group *restrict const);
+void thread_group_end_thread(struct thread_group *restrict const);
+void thread_group_join(struct thread_group *restrict const);
+
 #endif
