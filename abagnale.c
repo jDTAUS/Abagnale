@@ -4200,15 +4200,14 @@ int abagnale(int argc, char *argv[]) {
   items = Array_items(exchanges);
   for (size_t i = Array_size(exchanges); i-- > 0 && !terminated;) {
     struct Exchange *restrict const e = items[i];
-    struct worker_ctx *restrict const e_ctx =
+    struct worker_ctx *restrict const o_ctx =
         heap_calloc(1, sizeof(struct worker_ctx));
 
-    e_ctx->e = e;
-    e_ctx->e->start();
+    o_ctx->e = e;
+    o_ctx->e->start();
 
-    struct worker_ctx *restrict const o_ctx = worker_ctx_fork(e_ctx);
-    struct worker_ctx *restrict const s_ctx = worker_ctx_fork(e_ctx);
-    struct worker_ctx *restrict const v_ctx = worker_ctx_fork(e_ctx);
+    struct worker_ctx *restrict const s_ctx = worker_ctx_fork(o_ctx);
+    struct worker_ctx *restrict const v_ctx = worker_ctx_fork(o_ctx);
 
     const int r = snprintf(s_ctx->db_name, sizeof(s_ctx->db_name), "%s-tickers",
                            String_chars(s_ctx->e->nm));
