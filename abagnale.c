@@ -228,6 +228,16 @@ const struct Exchange *exchange(const struct String *restrict const nm) {
   return NULL;
 }
 
+static const struct Exchange *
+exchange_id(const struct String *restrict const id) {
+  void *const *restrict items = Array_items(exchanges);
+  for (size_t i = Array_size(exchanges); i-- > 0;)
+    if (String_equals(id, ((struct Exchange *)items[i])->id))
+      return items[i];
+
+  return NULL;
+}
+
 struct MarketConfigKey {
   struct String *restrict e_nm;
   struct String *restrict m_nm;
@@ -4025,12 +4035,12 @@ inline static void trade_volatility_worker_delete(void *restrict const entry) {
 
 static int trade_volatility_func(void *restrict const arg) {
   thrd_t thrd;
-  struct worker_ctx *restrict const e_ctx = arg;
+  struct worker_ctx *restrict const v_ctx = arg;
   struct Map *restrict const trade_workers =
       Map_new(StringMapOps, MARKETS_MAP_CAPACITY);
 
-  e_ctx->threads = heap_calloc(1, sizeof(struct thread_group));
-  thread_group_init(e_ctx->threads);
+  v_ctx->threads = heap_calloc(1, sizeof(struct thread_group));
+  thread_group_init(v_ctx->threads);
 
   while (!terminated) {
     struct Trade *restrict const trade =
@@ -4056,10 +4066,15 @@ static int trade_volatility_func(void *restrict const arg) {
     }
 
     if (m_ctx == NULL) {
-      struct Market *restrict m = e_ctx->e->market(trade->m_id);
+      const struct Exchange *restrict const e = exchange_id(trade->e_id);
+
+      if (e == NULL)
+        panic();
+
+      struct Market *restrict m = e->market(trade->m_id);
 
       if (m == NULL) {
-        werr("%s: Market: Not available: %s\n", String_chars(e_ctx->e->nm),
+        werr("%s: Market: Not available: %s\n", String_chars(e->nm),
              String_chars(trade->m_id));
 
         mutex_lock(&trade->mtx);
@@ -4073,7 +4088,8 @@ static int trade_volatility_func(void *restrict const arg) {
         continue;
       }
 
-      m_ctx = worker_ctx_fork(e_ctx);
+      m_ctx = worker_ctx_fork(v_ctx);
+      m_ctx->e = e;
       m_ctx->m = Market_copy(m);
       mutex_unlock(m->mtx);
       m = NULL;
@@ -4085,7 +4101,7 @@ static int trade_volatility_func(void *restrict const arg) {
 
       const int r =
           snprintf(m_ctx->db_name, sizeof(m_ctx->db_name), "%s-%s-trades",
-                   String_chars(e_ctx->e->nm), String_chars(m_ctx->m->nm));
+                   String_chars(m_ctx->e->nm), String_chars(m_ctx->m->nm));
 
       if (r < 0 || (size_t)r >= sizeof(m_ctx->db_name))
         panic();
@@ -4093,7 +4109,7 @@ static int trade_volatility_func(void *restrict const arg) {
       Map_put(trade_workers, trade->m_id, m_ctx);
       Queue_lock(m_ctx->market_queue);
       m_ctx->running = true;
-      thread_group_cnt_inc(e_ctx->threads);
+      thread_group_cnt_inc(v_ctx->threads);
       thread_create(&thrd, market_trade_volatility_func, m_ctx);
       thread_detach(thrd);
     }
@@ -4107,10 +4123,12 @@ static int trade_volatility_func(void *restrict const arg) {
     }
 
     if (Queue_enqueue_timedout(m_ctx->market_queue)) {
-      wout("%s: %s: Positions: Stalled: %zu/%zu %" PRIuMAX "s %" PRIuMAX "ns\n",
-           String_chars(e_ctx->e->nm), String_chars(m_ctx->m->nm),
-           (size_t)MARKET_TRADE_QUEUE_CAPACITY, Queue_size(m_ctx->market_queue),
-           (uintmax_t)thread_timeout.tv_sec, (uintmax_t)thread_timeout.tv_nsec);
+      wout("%s: %s: Position: Stalled: %s %zu/%zu %" PRIuMAX "s %" PRIuMAX
+           "ns\n",
+           String_chars(m_ctx->e->nm), String_chars(m_ctx->m->nm),
+           String_chars(trade->id), (size_t)MARKET_TRADE_QUEUE_CAPACITY,
+           Queue_size(m_ctx->market_queue), (uintmax_t)thread_timeout.tv_sec,
+           (uintmax_t)thread_timeout.tv_nsec);
 
       Queue_unlock(m_ctx->market_queue);
       goto again;
@@ -4124,10 +4142,10 @@ static int trade_volatility_func(void *restrict const arg) {
     Queue_stop(((struct worker_ctx *)MapIterator_value(it))->market_queue);
   MapIterator_delete(it);
 
-  thread_group_join(e_ctx->threads);
-  thread_group_destroy(e_ctx->threads);
-  heap_free(e_ctx->threads);
-  heap_free(e_ctx);
+  thread_group_join(v_ctx->threads);
+  thread_group_destroy(v_ctx->threads);
+  heap_free(v_ctx->threads);
+  heap_free(v_ctx);
 
   Map_delete(trade_workers, trade_volatility_worker_delete);
   thread_group_cnt_dec(&worker);
@@ -4207,7 +4225,6 @@ int abagnale(int argc, char *argv[]) {
     o_ctx->e->start();
 
     struct worker_ctx *restrict const s_ctx = worker_ctx_fork(o_ctx);
-    struct worker_ctx *restrict const v_ctx = worker_ctx_fork(o_ctx);
 
     const int r = snprintf(s_ctx->db_name, sizeof(s_ctx->db_name), "%s-tickers",
                            String_chars(s_ctx->e->nm));
@@ -4222,11 +4239,14 @@ int abagnale(int argc, char *argv[]) {
     thread_group_cnt_inc(&worker);
     thread_create(&thrd, exchange_sample_func, s_ctx);
     thread_detach(thrd);
-
-    thread_group_cnt_inc(&worker);
-    thread_create(&thrd, trade_volatility_func, v_ctx);
-    thread_detach(thrd);
   }
+
+  struct worker_ctx *restrict const v_ctx =
+      heap_calloc(1, sizeof(struct worker_ctx));
+
+  thread_group_cnt_inc(&worker);
+  thread_create(&thrd, trade_volatility_func, v_ctx);
+  thread_detach(thrd);
 
   thread_group_cnt_inc(&worker);
   thread_create(&thrd, stop_func, NULL);
