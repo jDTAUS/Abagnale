@@ -75,7 +75,6 @@ struct worker_ctx {
   struct Market *restrict m;
   const struct MarketConfig *restrict m_cnf;
   struct Queue *restrict market_queue;
-  struct Queue *restrict trades_queue;
   struct thread_group *restrict threads;
   char db_name[DATABASE_CONNECTION_NAME_MAX_LENGTH + 1];
   bool running;
@@ -207,6 +206,7 @@ static tss_t abag_tls_key;
 static struct thread_group worker;
 static struct timespec thread_timeout;
 static struct Numeric *restrict ninety_percent_factor;
+static struct Queue *restrict trade_volatility_queue;
 
 int abagnale(int argc, char *argv[]);
 
@@ -360,7 +360,6 @@ worker_ctx_fork(struct worker_ctx *restrict const w_ctx) {
   f_ctx->e = w_ctx->e;
   f_ctx->threads = w_ctx->threads;
   f_ctx->market_queue = w_ctx->market_queue;
-  f_ctx->trades_queue = w_ctx->trades_queue;
 
   return f_ctx;
 }
@@ -2723,7 +2722,7 @@ static void trade_pricing(const struct worker_ctx *restrict const w_ctx,
   if (w_ctx->m_cnf->v_pc == NULL) {
     if (!TRADE_IS_ENQUEUED(t) && !TRADE_IS_DELETED(t)) {
       TRADE_SET_ENQUEUED(t);
-      Queue_enqueue_await(w_ctx->trades_queue, t);
+      Queue_enqueue_await(trade_volatility_queue, t);
     }
     goto ret;
   } else
@@ -3619,7 +3618,7 @@ static int market_sample_func(void *restrict const arg) {
   thread_exit(EXIT_SUCCESS);
 }
 
-static int market_trade_func(void *restrict const arg) {
+static int market_trade_volatility_func(void *restrict const arg) {
   struct worker_ctx *restrict const w_ctx = arg;
   struct Numeric *restrict const tp_pc = Numeric_new();
   struct Numeric *restrict const r0 = Numeric_new();
@@ -3766,7 +3765,7 @@ static int exchange_stop_func(void *restrict const arg) {
     thread_sleep(&sleep_rate);
 
   e_ctx->e->stop();
-  Queue_stop(e_ctx->trades_queue);
+  Queue_stop(trade_volatility_queue);
   heap_free(e_ctx);
   thread_group_cnt_dec(&worker);
   thread_exit(EXIT_SUCCESS);
@@ -3863,8 +3862,8 @@ static int exchange_sample_func(void *restrict const arg) {
 
     Queue_enqueue_await(m_ctx->market_queue, sample);
 
-    // market_sample_func may have stopped during await
     if (!m_ctx->running) {
+      // market_sample_func may have stopped during await
       Queue_unlock(m_ctx->market_queue);
       goto again;
     }
@@ -3979,8 +3978,8 @@ static int exchange_order_func(void *restrict const arg) {
 
     Queue_enqueue_await(m_ctx->market_queue, order);
 
-    // market_order_func may have stopped during await
     if (!m_ctx->running) {
+      // market_order_func may have stopped during await
       Queue_unlock(m_ctx->market_queue);
       goto again;
     }
@@ -4013,7 +4012,8 @@ static int exchange_order_func(void *restrict const arg) {
   thread_exit(EXIT_SUCCESS);
 }
 
-static inline void trade_queue_entry_delete(void *restrict const entry) {
+static inline void
+trade_volatility_queue_entry_delete(void *restrict const entry) {
   if (entry == NULL)
     return;
 
@@ -4028,14 +4028,14 @@ static inline void trade_queue_entry_delete(void *restrict const entry) {
   }
 }
 
-inline static void trade_worker_delete(void *restrict const entry) {
+inline static void trade_volatility_worker_delete(void *restrict const entry) {
   struct worker_ctx *restrict const w_ctx = entry;
-  Queue_delete(w_ctx->market_queue, trade_queue_entry_delete);
+  Queue_delete(w_ctx->market_queue, trade_volatility_queue_entry_delete);
   Market_delete(w_ctx->m);
   heap_free(w_ctx);
 }
 
-static int exchange_trade_func(void *restrict const arg) {
+static int trade_volatility_func(void *restrict const arg) {
   thrd_t thrd;
   struct worker_ctx *restrict const e_ctx = arg;
   struct Map *restrict const trade_workers =
@@ -4046,7 +4046,7 @@ static int exchange_trade_func(void *restrict const arg) {
 
   while (!terminated) {
     struct Trade *restrict const trade =
-        Queue_dequeue_await(e_ctx->trades_queue);
+        Queue_dequeue_await(trade_volatility_queue);
 
     if (trade == NULL)
       continue;
@@ -4061,7 +4061,7 @@ static int exchange_trade_func(void *restrict const arg) {
         Map_remove(trade_workers, trade->m_id);
         Queue_stop(m_ctx->market_queue);
         Queue_unlock(m_ctx->market_queue);
-        Queue_delete(m_ctx->market_queue, trade_queue_entry_delete);
+        Queue_delete(m_ctx->market_queue, trade_volatility_queue_entry_delete);
         Market_delete(m_ctx->m);
         heap_free(m_ctx);
         m_ctx = NULL;
@@ -4107,14 +4107,14 @@ static int exchange_trade_func(void *restrict const arg) {
       Queue_lock(m_ctx->market_queue);
       m_ctx->running = true;
       thread_group_cnt_inc(e_ctx->threads);
-      thread_create(&thrd, market_trade_func, m_ctx);
+      thread_create(&thrd, market_trade_volatility_func, m_ctx);
       thread_detach(thrd);
     }
 
     Queue_enqueue_await(m_ctx->market_queue, trade);
 
-    // market_trade_func may have stopped during await
     if (!m_ctx->running) {
+      // market_trade_volatility_func may have stopped during await
       Queue_unlock(m_ctx->market_queue);
       goto again;
     }
@@ -4142,7 +4142,7 @@ static int exchange_trade_func(void *restrict const arg) {
   heap_free(e_ctx->threads);
   heap_free(e_ctx);
 
-  Map_delete(trade_workers, trade_worker_delete);
+  Map_delete(trade_workers, trade_volatility_worker_delete);
   thread_group_cnt_dec(&worker);
   thread_exit(EXIT_SUCCESS);
 }
@@ -4159,10 +4159,6 @@ static inline void trade_array_entry_delete(void *restrict const entry) {
 
 static inline void trade_array_delete(void *restrict const entry) {
   Array_delete(entry, trade_array_entry_delete);
-}
-
-static inline void trade_queue_delete(void *restrict const entry) {
-  Queue_delete(entry, trade_delete);
 }
 
 int abagnale(int argc, char *argv[]) {
@@ -4183,6 +4179,9 @@ int abagnale(int argc, char *argv[]) {
 
   thread_group_init(&worker);
 
+  trade_volatility_queue = Queue_new(MARKETS_QUEUE_CAPACITY, NULL);
+  Queue_start(trade_volatility_queue);
+
   const unsigned long thread_timeout_millis =
       envul("ABAG_THREAD_TIMEOUT_MILLIS", DEFAULT_ABAG_THREAD_TIMEOUT_MILLIS);
 
@@ -4192,9 +4191,6 @@ int abagnale(int argc, char *argv[]) {
   if (verbose)
     wout("\tABAG_THREAD_TIMEOUT_MILLIS=%lu\n", thread_timeout_millis);
 
-  struct Map *restrict const trade_queues =
-      Map_new(StringMapOps, Array_size(exchanges));
-
   items = Array_items(exchanges);
   for (size_t i = Array_size(exchanges); i-- > 0 && !terminated;) {
     struct Exchange *restrict const e = items[i];
@@ -4203,13 +4199,10 @@ int abagnale(int argc, char *argv[]) {
 
     e_ctx->e = e;
     e_ctx->e->start();
-    e_ctx->trades_queue = Queue_new(MARKETS_QUEUE_CAPACITY, NULL);
-    Queue_start(e_ctx->trades_queue);
-    Map_put(trade_queues, e->id, e_ctx->trades_queue);
 
     struct worker_ctx *restrict const o_ctx = worker_ctx_fork(e_ctx);
     struct worker_ctx *restrict const s_ctx = worker_ctx_fork(e_ctx);
-    struct worker_ctx *restrict const t_ctx = worker_ctx_fork(e_ctx);
+    struct worker_ctx *restrict const v_ctx = worker_ctx_fork(e_ctx);
 
     const int r = snprintf(s_ctx->db_name, sizeof(s_ctx->db_name), "%s-tickers",
                            String_chars(s_ctx->e->nm));
@@ -4226,7 +4219,7 @@ int abagnale(int argc, char *argv[]) {
     thread_detach(thrd);
 
     thread_group_cnt_inc(&worker);
-    thread_create(&thrd, exchange_trade_func, t_ctx);
+    thread_create(&thrd, trade_volatility_func, v_ctx);
     thread_detach(thrd);
 
     thread_group_cnt_inc(&worker);
@@ -4252,7 +4245,7 @@ int abagnale(int argc, char *argv[]) {
 
   Map_delete(market_samples, sample_array_delete);
   Map_delete(market_trades, trade_array_delete);
-  Map_delete(trade_queues, trade_queue_delete);
+  Queue_delete(trade_volatility_queue, trade_delete);
   tls_delete(abag_tls_key);
 
   return EXIT_SUCCESS;
