@@ -4035,7 +4035,9 @@ inline static void trade_volatility_worker_delete(void *restrict const entry) {
 
 static int trade_volatility_func(void *restrict const arg) {
   thrd_t thrd;
-  struct worker_ctx *restrict const v_ctx = arg;
+  struct worker_ctx *restrict const v_ctx =
+      heap_calloc(1, sizeof(struct worker_ctx));
+
   struct Map *restrict const trade_workers =
       Map_new(StringMapOps, MARKETS_MAP_CAPACITY);
 
@@ -4100,7 +4102,7 @@ static int trade_volatility_func(void *restrict const arg) {
       Queue_start(m_ctx->market_queue);
 
       const int r =
-          snprintf(m_ctx->db_name, sizeof(m_ctx->db_name), "%s-%s-trades",
+          snprintf(m_ctx->db_name, sizeof(m_ctx->db_name), "%s-%s-positions",
                    String_chars(m_ctx->e->nm), String_chars(m_ctx->m->nm));
 
       if (r < 0 || (size_t)r >= sizeof(m_ctx->db_name))
@@ -4241,11 +4243,8 @@ int abagnale(int argc, char *argv[]) {
     thread_detach(thrd);
   }
 
-  struct worker_ctx *restrict const v_ctx =
-      heap_calloc(1, sizeof(struct worker_ctx));
-
   thread_group_cnt_inc(&worker);
-  thread_create(&thrd, trade_volatility_func, v_ctx);
+  thread_create(&thrd, trade_volatility_func, NULL);
   thread_detach(thrd);
 
   thread_group_cnt_inc(&worker);
