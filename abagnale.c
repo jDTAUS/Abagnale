@@ -3328,6 +3328,7 @@ static int market_order_func(void *restrict const arg) {
       }
 
       w_ctx->running = false;
+      Queue_stop(w_ctx->market_queue);
       break;
     }
 
@@ -3444,10 +3445,11 @@ static int market_order_func(void *restrict const arg) {
 
   db_disconnect(w_ctx->db);
 
+  thread_group_cnt_dec(w_ctx->threads);
+
   if (!w_ctx->running)
     Queue_unlock(w_ctx->market_queue);
 
-  thread_group_cnt_dec(w_ctx->threads);
   thread_exit(EXIT_SUCCESS);
 }
 
@@ -3478,6 +3480,7 @@ static int market_sample_func(void *restrict const arg) {
       }
 
       w_ctx->running = false;
+      Queue_stop(w_ctx->market_queue);
       break;
     }
 
@@ -3608,13 +3611,14 @@ static int market_sample_func(void *restrict const arg) {
 
   db_disconnect(w_ctx->db);
 
+  thread_group_cnt_dec(w_ctx->threads);
+
   if (!w_ctx->running)
     Queue_unlock(w_ctx->market_queue);
 
   Numeric_delete(q_return);
   Numeric_delete(nanos);
   Numeric_delete(outdated_ns);
-  thread_group_cnt_dec(w_ctx->threads);
   thread_exit(EXIT_SUCCESS);
 }
 
@@ -3643,6 +3647,7 @@ static int market_trade_volatility_func(void *restrict const arg) {
       }
 
       w_ctx->running = false;
+      Queue_stop(w_ctx->market_queue);
       break;
     }
 
@@ -3745,29 +3750,13 @@ static int market_trade_volatility_func(void *restrict const arg) {
 
   db_disconnect(w_ctx->db);
 
+  thread_group_cnt_dec(w_ctx->threads);
+
   if (!w_ctx->running)
     Queue_unlock(w_ctx->market_queue);
 
   Numeric_delete(tp_pc);
   Numeric_delete(r0);
-  thread_group_cnt_dec(w_ctx->threads);
-  thread_exit(EXIT_SUCCESS);
-}
-
-static int exchange_stop_func(void *restrict const arg) {
-  struct worker_ctx *restrict const e_ctx = arg;
-  struct timespec sleep_rate = {
-      .tv_sec = 15,
-      .tv_nsec = 0L,
-  };
-
-  while (!terminated)
-    thread_sleep(&sleep_rate);
-
-  e_ctx->e->stop();
-  Queue_stop(trade_volatility_queue);
-  heap_free(e_ctx);
-  thread_group_cnt_dec(&worker);
   thread_exit(EXIT_SUCCESS);
 }
 
@@ -3809,7 +3798,6 @@ static int exchange_sample_func(void *restrict const arg) {
 
       if (!m_ctx->running) {
         Map_remove(ticker_workers, sample->m_id);
-        Queue_stop(m_ctx->market_queue);
         Queue_unlock(m_ctx->market_queue);
         Queue_delete(m_ctx->market_queue, Sample_delete);
         Market_delete(m_ctx->m);
@@ -3889,13 +3877,14 @@ static int exchange_sample_func(void *restrict const arg) {
 
   thread_group_join(e_ctx->threads);
   thread_group_destroy(e_ctx->threads);
+
+  if (ticker_exporter)
+    db_disconnect(e_ctx->db);
+
   heap_free(e_ctx->threads);
   heap_free(e_ctx);
 
   Map_delete(ticker_workers, ticker_worker_delete);
-
-  if (ticker_exporter)
-    db_disconnect(e_ctx->db);
 
   thread_group_cnt_dec(&worker);
   thread_exit(EXIT_SUCCESS);
@@ -3931,7 +3920,6 @@ static int exchange_order_func(void *restrict const arg) {
 
       if (!m_ctx->running) {
         Map_remove(order_workers, order->m_id);
-        Queue_stop(m_ctx->market_queue);
         Queue_unlock(m_ctx->market_queue);
         Queue_delete(m_ctx->market_queue, Order_delete);
         Market_delete(m_ctx->m);
@@ -4059,7 +4047,6 @@ static int trade_volatility_func(void *restrict const arg) {
 
       if (!m_ctx->running) {
         Map_remove(trade_workers, trade->m_id);
-        Queue_stop(m_ctx->market_queue);
         Queue_unlock(m_ctx->market_queue);
         Queue_delete(m_ctx->market_queue, trade_volatility_queue_entry_delete);
         Market_delete(m_ctx->m);
@@ -4147,6 +4134,25 @@ static int trade_volatility_func(void *restrict const arg) {
   thread_exit(EXIT_SUCCESS);
 }
 
+static int stop_func(void *restrict const arg) {
+  void *const *restrict items;
+  struct timespec sleep_rate = {
+      .tv_sec = 15,
+      .tv_nsec = 0L,
+  };
+
+  while (!terminated)
+    thread_sleep(&sleep_rate);
+
+  items = Array_items(exchanges);
+  for (size_t i = Array_size(exchanges); i-- > 0;)
+    ((struct Exchange *)items[i])->stop();
+
+  Queue_stop(trade_volatility_queue);
+  thread_group_cnt_dec(&worker);
+  thread_exit(EXIT_SUCCESS);
+}
+
 static inline void sample_array_delete(void *restrict const entry) {
   Array_delete(entry, Sample_delete);
 }
@@ -4221,11 +4227,11 @@ int abagnale(int argc, char *argv[]) {
     thread_group_cnt_inc(&worker);
     thread_create(&thrd, trade_volatility_func, v_ctx);
     thread_detach(thrd);
-
-    thread_group_cnt_inc(&worker);
-    thread_create(&thrd, exchange_stop_func, e_ctx);
-    thread_detach(thrd);
   }
+
+  thread_group_cnt_inc(&worker);
+  thread_create(&thrd, stop_func, NULL);
+  thread_detach(thrd);
 
   thread_group_join(&worker);
   thread_group_destroy(&worker);
