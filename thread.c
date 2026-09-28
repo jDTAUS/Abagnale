@@ -29,6 +29,12 @@
 #include <limits.h>
 #include <stdint.h>
 
+struct thread_group {
+  cnd_t cnd;
+  mtx_t mtx;
+  size_t cnt;
+};
+
 struct thread_tls {
   struct thread_locked_vars {
     struct Map *restrict mutexes;
@@ -59,41 +65,6 @@ static void thread_tls_dtor(void *e) {
 
 void thread_init(void) { tls_create(&thread_tls_key, thread_tls_dtor); }
 void thread_destroy(void) { tls_delete(thread_tls_key); }
-
-inline void thread_group_init(struct thread_group *restrict const tg) {
-  mutex_init(&tg->mtx);
-  condition_init(&tg->cnd);
-  tg->cnt = 0;
-}
-
-inline void thread_group_destroy(struct thread_group *restrict const tg) {
-  condition_destroy(&tg->cnd);
-  mutex_destroy(&tg->mtx);
-  tg->cnt = 0;
-}
-
-inline void thread_group_begin_thread(struct thread_group *restrict const tg) {
-  mutex_lock(&tg->mtx);
-  if (tg->cnt++ == SIZE_MAX)
-    panic();
-  condition_broadcast(&tg->cnd);
-  mutex_unlock(&tg->mtx);
-}
-
-inline void thread_group_end_thread(struct thread_group *restrict const tg) {
-  mutex_lock(&tg->mtx);
-  if (tg->cnt-- == 0)
-    panic();
-  condition_broadcast(&tg->cnd);
-  mutex_unlock(&tg->mtx);
-}
-
-inline void thread_group_join(struct thread_group *restrict const tg) {
-  mutex_lock(&tg->mtx);
-  while (tg->cnt > 0)
-    condition_wait(&tg->cnd, &tg->mtx);
-  mutex_unlock(&tg->mtx);
-}
 
 inline const char *strthrd(const int r) {
   switch (r) {
@@ -316,4 +287,47 @@ inline void condition_wait(cnd_t *restrict const cond,
 
   if (r != thrd_success)
     fatal("%s", strthrd(r));
+}
+
+inline struct thread_group *thread_group_new(void) {
+  struct thread_group *restrict const tg =
+      heap_calloc(1, sizeof(struct thread_group));
+  mutex_init(&tg->mtx);
+  condition_init(&tg->cnd);
+  tg->cnt = 0;
+
+  return tg;
+}
+
+inline void thread_group_delete(void *restrict const arg) {
+  struct thread_group *restrict const tg = arg;
+
+  condition_destroy(&tg->cnd);
+  mutex_destroy(&tg->mtx);
+  tg->cnt = 0;
+
+  heap_free(tg);
+}
+
+inline void thread_group_begin_thread(struct thread_group *restrict const tg) {
+  mutex_lock(&tg->mtx);
+  if (tg->cnt++ == SIZE_MAX)
+    panic();
+  condition_broadcast(&tg->cnd);
+  mutex_unlock(&tg->mtx);
+}
+
+inline void thread_group_end_thread(struct thread_group *restrict const tg) {
+  mutex_lock(&tg->mtx);
+  if (tg->cnt-- == 0)
+    panic();
+  condition_broadcast(&tg->cnd);
+  mutex_unlock(&tg->mtx);
+}
+
+inline void thread_group_join(struct thread_group *restrict const tg) {
+  mutex_lock(&tg->mtx);
+  while (tg->cnt > 0)
+    condition_wait(&tg->cnd, &tg->mtx);
+  mutex_unlock(&tg->mtx);
 }

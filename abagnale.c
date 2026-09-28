@@ -197,7 +197,7 @@ static struct Map *restrict market_samples;
 static struct Map *restrict market_trades;
 static struct Map *restrict market_configs;
 static tss_t abag_tls_key;
-static struct thread_group worker;
+static struct thread_group *restrict worker;
 static struct timespec thread_timeout;
 static struct Numeric *restrict ninety_percent_factor;
 static struct Queue *restrict trade_volatility_queue;
@@ -3737,8 +3737,7 @@ static int exchange_sample_func(void *restrict const arg) {
   struct Map *restrict const ticker_workers =
       Map_new(StringMapOps, MARKETS_MAP_CAPACITY);
 
-  e_ctx->threads = heap_calloc(1, sizeof(struct thread_group));
-  thread_group_init(e_ctx->threads);
+  e_ctx->threads = thread_group_new();
 
   if (ticker_exporter)
     e_ctx->db = db_connect(e_ctx->db_name);
@@ -3840,7 +3839,7 @@ static int exchange_sample_func(void *restrict const arg) {
   MapIterator_delete(it);
 
   thread_group_join(e_ctx->threads);
-  thread_group_destroy(e_ctx->threads);
+  thread_group_delete(e_ctx->threads);
 
   if (ticker_exporter)
     db_disconnect(e_ctx->db);
@@ -3850,7 +3849,7 @@ static int exchange_sample_func(void *restrict const arg) {
 
   Map_delete(ticker_workers, ticker_worker_delete);
 
-  thread_group_end_thread(&worker);
+  thread_group_end_thread(worker);
   thread_exit(EXIT_SUCCESS);
 }
 
@@ -3867,8 +3866,7 @@ static int exchange_order_func(void *restrict const arg) {
   struct Map *restrict const order_workers =
       Map_new(StringMapOps, MARKETS_MAP_CAPACITY);
 
-  e_ctx->threads = heap_calloc(1, sizeof(struct thread_group));
-  thread_group_init(e_ctx->threads);
+  e_ctx->threads = thread_group_new();
 
   while (!terminated) {
     struct Order *restrict const order = e_ctx->e->order_await();
@@ -3955,12 +3953,12 @@ static int exchange_order_func(void *restrict const arg) {
   MapIterator_delete(it);
 
   thread_group_join(e_ctx->threads);
-  thread_group_destroy(e_ctx->threads);
+  thread_group_delete(e_ctx->threads);
   heap_free(e_ctx->threads);
   heap_free(e_ctx);
 
   Map_delete(order_workers, order_worker_delete);
-  thread_group_end_thread(&worker);
+  thread_group_end_thread(worker);
   thread_exit(EXIT_SUCCESS);
 }
 
@@ -3995,8 +3993,7 @@ static int trade_volatility_func(void *restrict const arg) {
   struct Map *restrict const trade_workers =
       Map_new(StringMapOps, MARKETS_MAP_CAPACITY);
 
-  v_ctx->threads = heap_calloc(1, sizeof(struct thread_group));
-  thread_group_init(v_ctx->threads);
+  v_ctx->threads = thread_group_new();
 
   while (!terminated) {
     struct Trade *restrict const trade =
@@ -4099,12 +4096,12 @@ static int trade_volatility_func(void *restrict const arg) {
   MapIterator_delete(it);
 
   thread_group_join(v_ctx->threads);
-  thread_group_destroy(v_ctx->threads);
+  thread_group_delete(v_ctx->threads);
   heap_free(v_ctx->threads);
   heap_free(v_ctx);
 
   Map_delete(trade_workers, trade_volatility_worker_delete);
-  thread_group_end_thread(&worker);
+  thread_group_end_thread(worker);
   thread_exit(EXIT_SUCCESS);
 }
 
@@ -4123,7 +4120,7 @@ static int stop_func(void *restrict const arg) {
     ((struct Exchange *)items[i])->stop();
 
   Queue_stop(trade_volatility_queue);
-  thread_group_end_thread(&worker);
+  thread_group_end_thread(worker);
   thread_exit(EXIT_SUCCESS);
 }
 
@@ -4157,7 +4154,7 @@ int abagnale(int argc, char *argv[]) {
 
   tls_create(&abag_tls_key, abag_tls_dtor);
 
-  thread_group_init(&worker);
+  worker = thread_group_new();
 
   trade_volatility_queue = Queue_new(MARKETS_QUEUE_CAPACITY, NULL);
   Queue_start(trade_volatility_queue);
@@ -4188,25 +4185,25 @@ int abagnale(int argc, char *argv[]) {
     if (r < 0 || (size_t)r >= sizeof(s_ctx->db_name))
       panic();
 
-    thread_group_begin_thread(&worker);
+    thread_group_begin_thread(worker);
     thread_create(&thrd, exchange_order_func, o_ctx);
     thread_detach(thrd);
 
-    thread_group_begin_thread(&worker);
+    thread_group_begin_thread(worker);
     thread_create(&thrd, exchange_sample_func, s_ctx);
     thread_detach(thrd);
   }
 
-  thread_group_begin_thread(&worker);
+  thread_group_begin_thread(worker);
   thread_create(&thrd, trade_volatility_func, NULL);
   thread_detach(thrd);
 
-  thread_group_begin_thread(&worker);
+  thread_group_begin_thread(worker);
   thread_create(&thrd, stop_func, NULL);
   thread_detach(thrd);
 
-  thread_group_join(&worker);
-  thread_group_destroy(&worker);
+  thread_group_join(worker);
+  thread_group_delete(worker);
 
   void *restrict const state_db = db_connect(String_chars(progname));
   struct MapIterator *restrict const it = MapIterator_new(market_trades);
