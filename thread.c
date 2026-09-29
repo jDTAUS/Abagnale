@@ -301,6 +301,9 @@ inline struct thread_group *thread_group_new(void) {
 }
 
 inline void thread_group_delete(void *restrict const arg) {
+  if (arg == NULL)
+    return;
+
   struct thread_group *restrict const tg = arg;
 
   condition_destroy(&tg->cnd);
