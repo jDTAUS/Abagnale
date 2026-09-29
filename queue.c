@@ -106,6 +106,20 @@ inline void Queue_stop(struct Queue *restrict const q) {
     mutex_unlock(&q->mtx);
 }
 
+inline size_t Queue_capacity(struct Queue *restrict const q) {
+  const bool locked = thread_locked(&q->mtx);
+
+  if (!locked)
+    mutex_lock(&q->mtx);
+
+  const size_t c = q->capacity;
+
+  if (!locked)
+    mutex_unlock(&q->mtx);
+
+  return c;
+}
+
 inline size_t Queue_size(struct Queue *restrict const q) {
   const bool locked = thread_locked(&q->mtx);
 
