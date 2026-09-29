@@ -4132,31 +4132,34 @@ trade_volatility_enqueue_await(const struct Exchange *restrict const e,
   Queue_lock(trade_volatility_queue);
 
 again:
-  if (!(trade_volatility_queue_dequeueing || terminated)) {
-    trade_volatility_queue_dequeueing = true;
-    Queue_start(trade_volatility_queue);
-    thread_group_begin_thread(worker);
-    thread_create(&thrd, trade_volatility_func, NULL);
-    thread_detach(thrd);
-  }
+  if (!terminated) {
+    if (!trade_volatility_queue_dequeueing) {
+      trade_volatility_queue_dequeueing = true;
+      Queue_start(trade_volatility_queue);
+      thread_group_begin_thread(worker);
+      thread_create(&thrd, trade_volatility_func, NULL);
+      thread_detach(thrd);
+    }
 
-  Queue_enqueue_await(trade_volatility_queue, t);
+    Queue_enqueue_await(trade_volatility_queue, t);
 
-  if (!trade_volatility_queue_dequeueing) {
-    // trade_volatility_func may have stopped during await
-    Queue_unlock(trade_volatility_queue);
-    goto again;
-  }
+    if (!trade_volatility_queue_dequeueing) {
+      // trade_volatility_func may have stopped during await
+      Queue_unlock(trade_volatility_queue);
+      goto again;
+    }
 
-  if (Queue_enqueue_timedout(trade_volatility_queue)) {
-    wout("%s: %s: Position: Stalled: %s %zu/%zu %" PRIuMAX "s %" PRIuMAX "ns\n",
-         String_chars(e->nm), String_chars(m->nm), String_chars(t->id),
-         Queue_size(trade_volatility_queue),
-         Queue_capacity(trade_volatility_queue),
-         (uintmax_t)thread_timeout.tv_sec, (uintmax_t)thread_timeout.tv_nsec);
+    if (Queue_enqueue_timedout(trade_volatility_queue)) {
+      wout("%s: %s: Position: Stalled: %s %zu/%zu %" PRIuMAX "s %" PRIuMAX
+           "ns\n",
+           String_chars(e->nm), String_chars(m->nm), String_chars(t->id),
+           Queue_size(trade_volatility_queue),
+           Queue_capacity(trade_volatility_queue),
+           (uintmax_t)thread_timeout.tv_sec, (uintmax_t)thread_timeout.tv_nsec);
 
-    Queue_unlock(trade_volatility_queue);
-    goto again;
+      Queue_unlock(trade_volatility_queue);
+      goto again;
+    }
   }
 
   Queue_unlock(trade_volatility_queue);
