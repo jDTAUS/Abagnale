@@ -4134,6 +4134,7 @@ trade_volatility_enqueue_await(const struct Exchange *restrict const e,
 again:
   if (!trade_volatility_queue_dequeueing) {
     trade_volatility_queue_dequeueing = true;
+    Queue_start(trade_volatility_queue);
     thread_group_begin_thread(worker);
     thread_create(&thrd, trade_volatility_func, NULL);
     thread_detach(thrd);
@@ -4214,7 +4215,6 @@ int abagnale(int argc, char *argv[]) {
   worker = thread_group_new();
 
   trade_volatility_queue = Queue_new(MARKETS_QUEUE_CAPACITY, &thread_timeout);
-  Queue_start(trade_volatility_queue);
   trade_volatility_queue_dequeueing = false;
 
   const unsigned long thread_timeout_millis =
