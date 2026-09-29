@@ -4145,7 +4145,6 @@ again:
 
     if (!trade_volatility_queue_dequeueing) {
       // trade_volatility_func may have stopped during await
-      Queue_unlock(trade_volatility_queue);
       goto again;
     }
 
@@ -4157,7 +4156,6 @@ again:
            Queue_capacity(trade_volatility_queue),
            (uintmax_t)thread_timeout.tv_sec, (uintmax_t)thread_timeout.tv_nsec);
 
-      Queue_unlock(trade_volatility_queue);
       goto again;
     }
   }
