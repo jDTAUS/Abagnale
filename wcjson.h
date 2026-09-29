@@ -15,7 +15,7 @@
  */
 
 /*
- * $JDTAUS$
+ * $JDTAUS: wcjson.h 9634 2026-07-22 02:43:37Z schulte $
  * Origin: https://github.com/wcjson/wcjson v0.40
  * Modifications: None.
  */
