@@ -1,5 +1,5 @@
 /* $SchulteIT: exchange-coinbase.c 15282 2025-11-05 22:54:21Z schulte $ */
-/* $JDTAUS$ */
+/* $JDTAUS: exchange-coinbase.c 9764 2026-09-26 08:22:36Z schulte $ */
 
 /*
  * Copyright (c) 2018 - 2026 Christian Schulte <cs@schulte.it>
