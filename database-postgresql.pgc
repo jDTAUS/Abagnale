@@ -410,7 +410,7 @@ void db_volatility_open(const void *const db, const char *const e_id,
   EXEC SQL WHENEVER NOT FOUND GOTO fatal;
   EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL REPEATABLE READ;
   EXEC SQL AT :con
-    CREATE TEMPORARY TABLE returns ON COMMIT DROP AS
+    CREATE TEMPORARY TABLE pg_temp.returns ON COMMIT PRESERVE ROWS AS
       WITH price_changes AS (
         SELECT
           "NANOS",
@@ -433,7 +433,9 @@ void db_volatility_open(const void *const db, const char *const e_id,
       FROM price_changes;
 
   EXEC SQL AT :con
-    CREATE INDEX ON returns USING btree("NANOS") INCLUDE ("RETURN");
+    CREATE INDEX ON pg_temp.returns USING btree("NANOS") INCLUDE ("RETURN");
+  EXEC SQL AT :con ANALYZE pg_temp.returns;
+  EXEC SQL AT :con COMMIT;
   // clang-format on
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(0, stdout);
@@ -460,6 +462,7 @@ void db_volatility(struct Numeric *const stddev, const void *const db,
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
   EXEC SQL WHENEVER SQLERROR GOTO fatal;
   EXEC SQL WHENEVER NOT FOUND GOTO fatal;
+  EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
   EXEC SQL AT :con
     WITH stddev AS (
       SELECT
@@ -467,9 +470,10 @@ void db_volatility(struct Numeric *const stddev, const void *const db,
           (ORDER BY "NANOS"
             RANGE BETWEEN :sql_wnanos PRECEDING AND CURRENT ROW) * 100
             AS "VOLATILITY_PERCENT"
-      FROM returns
+      FROM pg_temp.returns
     )
     SELECT max("VOLATILITY_PERCENT") INTO :sql_stddev :sql_stddev_ind FROM stddev;
+  EXEC SQL AT :con COMMIT;
   // clang-format on
   if (sql_stddev_ind[0] != 0)
     Numeric_copy_to(zero, stddev);
@@ -493,6 +497,8 @@ void db_volatility_close(const void *const db) {
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
   EXEC SQL WHENEVER SQLERROR GOTO fatal;
   EXEC SQL WHENEVER NOT FOUND GOTO fatal;
+  EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
+  EXEC SQL AT :con DROP TABLE pg_temp.returns;
   EXEC SQL AT :con COMMIT;
   // clang-format on
 #ifdef ABAG_SQL_DEBUG
