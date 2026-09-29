@@ -201,8 +201,13 @@ static struct thread_group *restrict worker;
 static struct timespec thread_timeout;
 static struct Numeric *restrict ninety_percent_factor;
 static struct Queue *restrict trade_volatility_queue;
+static _Atomic bool trade_volatility_queue_dequeueing;
 
 int abagnale(int argc, char *argv[]);
+static void
+trade_volatility_enqueue_await(const struct Exchange *restrict const,
+                               const struct Market *restrict const m,
+                               struct Trade *restrict const);
 
 const struct Algorithm *algorithm(const struct String *restrict const nm) {
   void *const *restrict items = Array_items(algorithms);
@@ -2686,7 +2691,7 @@ static void trade_pricing(const struct worker_ctx *restrict const w_ctx,
   if (w_ctx->m_cnf->v_pc == NULL) {
     if (!TRADE_IS_ENQUEUED(t) && !TRADE_IS_DELETED(t)) {
       TRADE_SET_ENQUEUED(t);
-      Queue_enqueue_await(trade_volatility_queue, t);
+      trade_volatility_enqueue_await(w_ctx->e, w_ctx->m, t);
     }
     goto ret;
   } else
@@ -3822,9 +3827,8 @@ static int exchange_sample_func(void *restrict const arg) {
     if (Queue_enqueue_timedout(m_ctx->market_queue)) {
       wout("%s: %s: Tickers: Stalled: %zu/%zu %" PRIuMAX "s %" PRIuMAX "ns\n",
            String_chars(e_ctx->e->nm), String_chars(m_ctx->m->nm),
-           (size_t)MARKET_TICKER_QUEUE_CAPACITY,
-           Queue_size(m_ctx->market_queue), (uintmax_t)thread_timeout.tv_sec,
-           (uintmax_t)thread_timeout.tv_nsec);
+           Queue_size(m_ctx->market_queue), Queue_capacity(m_ctx->market_queue),
+           (uintmax_t)thread_timeout.tv_sec, (uintmax_t)thread_timeout.tv_nsec);
 
       Queue_unlock(m_ctx->market_queue);
       goto again;
@@ -3936,7 +3940,7 @@ static int exchange_order_func(void *restrict const arg) {
     if (Queue_enqueue_timedout(m_ctx->market_queue)) {
       wout("%s: %s: Orders: Stalled: %zu/%zu %" PRIuMAX "s %" PRIuMAX "ns\n",
            String_chars(e_ctx->e->nm), String_chars(m_ctx->m->nm),
-           (size_t)MARKET_ORDER_QUEUE_CAPACITY, Queue_size(m_ctx->market_queue),
+           Queue_size(m_ctx->market_queue), Queue_capacity(m_ctx->market_queue),
            (uintmax_t)thread_timeout.tv_sec, (uintmax_t)thread_timeout.tv_nsec);
 
       Queue_unlock(m_ctx->market_queue);
@@ -3994,11 +3998,25 @@ static int trade_volatility_func(void *restrict const arg) {
   v_ctx->threads = thread_group_new();
 
   while (!terminated) {
+    Queue_lock(trade_volatility_queue);
+
     struct Trade *restrict const trade =
         Queue_dequeue_await(trade_volatility_queue);
 
-    if (trade == NULL)
-      continue;
+    if (trade == NULL) {
+      if (Queue_dequeue_timedout(trade_volatility_queue) &&
+          Queue_size(trade_volatility_queue) > 0) {
+        // trade_volatility_enqueue_await may have enqueued during await
+        Queue_unlock(trade_volatility_queue);
+        continue;
+      }
+
+      trade_volatility_queue_dequeueing = false;
+      Queue_stop(trade_volatility_queue);
+      break;
+    }
+
+    Queue_unlock(trade_volatility_queue);
 
   again:
     struct worker_ctx *restrict m_ctx = Map_get(trade_workers, trade->m_id);
@@ -4077,9 +4095,9 @@ static int trade_volatility_func(void *restrict const arg) {
       wout("%s: %s: Position: Stalled: %s %zu/%zu %" PRIuMAX "s %" PRIuMAX
            "ns\n",
            String_chars(m_ctx->e->nm), String_chars(m_ctx->m->nm),
-           String_chars(trade->id), (size_t)MARKET_TRADE_QUEUE_CAPACITY,
-           Queue_size(m_ctx->market_queue), (uintmax_t)thread_timeout.tv_sec,
-           (uintmax_t)thread_timeout.tv_nsec);
+           String_chars(trade->id), Queue_size(m_ctx->market_queue),
+           Queue_capacity(m_ctx->market_queue),
+           (uintmax_t)thread_timeout.tv_sec, (uintmax_t)thread_timeout.tv_nsec);
 
       Queue_unlock(m_ctx->market_queue);
       goto again;
@@ -4087,6 +4105,9 @@ static int trade_volatility_func(void *restrict const arg) {
 
     Queue_unlock(m_ctx->market_queue);
   }
+
+  if (!trade_volatility_queue_dequeueing)
+    Queue_unlock(trade_volatility_queue);
 
   struct MapIterator *restrict it = MapIterator_new(trade_workers);
   while (MapIterator_next(it))
@@ -4100,6 +4121,45 @@ static int trade_volatility_func(void *restrict const arg) {
   Map_delete(trade_workers, trade_volatility_worker_delete);
   thread_group_end_thread(worker);
   thread_exit(EXIT_SUCCESS);
+}
+
+inline static void
+trade_volatility_enqueue_await(const struct Exchange *restrict const e,
+                               const struct Market *restrict const m,
+                               struct Trade *restrict const t) {
+  thrd_t thrd;
+
+  Queue_lock(trade_volatility_queue);
+
+again:
+  if (!trade_volatility_queue_dequeueing) {
+    trade_volatility_queue_dequeueing = true;
+    thread_group_begin_thread(worker);
+    thread_create(&thrd, trade_volatility_func, NULL);
+    thread_detach(thrd);
+  }
+
+  Queue_enqueue_await(trade_volatility_queue, t);
+
+  if (!trade_volatility_queue_dequeueing) {
+    // trade_volatility_func may have stopped during await
+    Queue_start(trade_volatility_queue);
+    Queue_unlock(trade_volatility_queue);
+    goto again;
+  }
+
+  if (Queue_enqueue_timedout(trade_volatility_queue)) {
+    wout("%s: %s: Position: Stalled: %s %zu/%zu %" PRIuMAX "s %" PRIuMAX "ns\n",
+         String_chars(e->nm), String_chars(m->nm), String_chars(t->id),
+         Queue_size(trade_volatility_queue),
+         Queue_capacity(trade_volatility_queue),
+         (uintmax_t)thread_timeout.tv_sec, (uintmax_t)thread_timeout.tv_nsec);
+
+    Queue_unlock(trade_volatility_queue);
+    goto again;
+  }
+
+  Queue_unlock(trade_volatility_queue);
 }
 
 static int stop_func(void *restrict const arg) {
@@ -4153,8 +4213,9 @@ int abagnale(int argc, char *argv[]) {
 
   worker = thread_group_new();
 
-  trade_volatility_queue = Queue_new(MARKETS_QUEUE_CAPACITY, NULL);
+  trade_volatility_queue = Queue_new(MARKETS_QUEUE_CAPACITY, &thread_timeout);
   Queue_start(trade_volatility_queue);
+  trade_volatility_queue_dequeueing = false;
 
   const unsigned long thread_timeout_millis =
       envul("ABAG_THREAD_TIMEOUT_MILLIS", DEFAULT_ABAG_THREAD_TIMEOUT_MILLIS);
@@ -4190,10 +4251,6 @@ int abagnale(int argc, char *argv[]) {
     thread_create(&thrd, exchange_sample_func, s_ctx);
     thread_detach(thrd);
   }
-
-  thread_group_begin_thread(worker);
-  thread_create(&thrd, trade_volatility_func, NULL);
-  thread_detach(thrd);
 
   thread_group_begin_thread(worker);
   thread_create(&thrd, stop_func, NULL);
