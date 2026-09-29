@@ -292,6 +292,7 @@ inline void condition_wait(cnd_t *restrict const cond,
 inline struct thread_group *thread_group_new(void) {
   struct thread_group *restrict const tg =
       heap_calloc(1, sizeof(struct thread_group));
+
   mutex_init(&tg->mtx);
   condition_init(&tg->cnd);
   tg->cnt = 0;
