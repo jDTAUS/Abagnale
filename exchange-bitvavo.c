@@ -297,6 +297,7 @@ static struct timespec bitvavo_ws_retry_rate;
 static struct String *restrict bitvavo_access_key;
 static struct String *restrict bitvavo_access_timestamp;
 static struct String *restrict bitvavo_access_signature;
+static struct String *restrict bitvavo_access_window;
 
 static tss_t bitvavo_tls_key;
 
@@ -398,6 +399,7 @@ static void bitvavo_init(void) {
   bitvavo_access_key = String_cnew("Bitvavo-Access-Key");
   bitvavo_access_timestamp = String_cnew("Bitvavo-Access-Timestamp");
   bitvavo_access_signature = String_cnew("Bitvavo-Access-Signature");
+  bitvavo_access_window = String_cnew("Bitvavo-Access-Window");
 
   envurl(bitvavo_rest_uri, sizeof(bitvavo_rest_uri) - 1, "BITVAVO_REST_URI",
          DEFAULT_BITVAVO_REST_URI);
@@ -509,6 +511,7 @@ static void bitvavo_destroy(void) {
   String_delete(bitvavo_access_key);
   String_delete(bitvavo_access_timestamp);
   String_delete(bitvavo_access_signature);
+  String_delete(bitvavo_access_window);
   tss_delete(bitvavo_tls_key);
   Array_delete(markets, Market_delete);
   Map_delete(markets_by_id, NULL);
@@ -605,6 +608,7 @@ static int bitvavo_rest_query(struct wcjson_document *restrict rsp_doc,
 
   Map_put(headers, bitvavo_access_signature, signature);
   Map_put(headers, bitvavo_access_timestamp, timestamp);
+  Map_put(headers, bitvavo_access_window, "60000");
 
   rsp_doc->v_next = 0;
   rsp_doc->s_next = 0;
