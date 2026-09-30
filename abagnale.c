@@ -55,7 +55,7 @@
 #define TRADE_SET_DELETED(t) (Numeric_copy_to(n_one, (t)->tp_pc))
 #define TRADE_IS_ENQUEUED(t) (Numeric_cmp((t)->tp_pc, n_two) == 0)
 #define TRADE_SET_ENQUEUED(t) (Numeric_copy_to(n_two, (t)->tp_pc))
-#define TRADE_UNSET_ENQUEUED(t) (Numeric_copy_to(zero, (t)->tp_pc))
+#define TRADE_RESET(t) (Numeric_copy_to(zero, (t)->tp_pc))
 
 #define MARKETS_MAP_CAPACITY 2048
 #define MARKETS_QUEUE_CAPACITY 2048
@@ -2671,6 +2671,16 @@ static void trade_pricing(const struct worker_ctx *restrict const w_ctx,
   struct Numeric *restrict const ef_pc = tls->trade_pricing.ef_pc;
   struct Numeric *restrict const r0 = tls->trade_pricing.r0;
   const struct Pricing *restrict const pricing = w_ctx->e->pricing(w_ctx->m);
+
+  if (pricing == NULL) {
+    if (!(TRADE_IS_ENQUEUED(t) || TRADE_IS_DELETED(t)))
+      TRADE_RESET(t);
+
+    werr("%s: %s: Pricing: Failure requesting pricing\n",
+         String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm));
+    return;
+  }
+
   bool err = false;
 
   Numeric_copy_to(pricing->ef_pc, ef_pc);
@@ -2681,7 +2691,7 @@ static void trade_pricing(const struct worker_ctx *restrict const w_ctx,
       Numeric_cmp(t->pr_samples, zero) > 0 && TRADE_IS_READY(t))
     goto ret;
 
-  if (!TRADE_IS_ENQUEUED(t) && !TRADE_IS_DELETED(t))
+  if (!(TRADE_IS_ENQUEUED(t) || TRADE_IS_DELETED(t)))
     trade_timeout(w_ctx, t, samples, sample);
 
   Numeric_copy_to(ef_pc, t->fee_pc);
@@ -2689,7 +2699,7 @@ static void trade_pricing(const struct worker_ctx *restrict const w_ctx,
   Numeric_add_to(r0, one, t->fee_pf);
 
   if (w_ctx->m_cnf->v_pc == NULL) {
-    if (!TRADE_IS_ENQUEUED(t) && !TRADE_IS_DELETED(t)) {
+    if (!(TRADE_IS_ENQUEUED(t) || TRADE_IS_DELETED(t))) {
       TRADE_SET_ENQUEUED(t);
       trade_volatility_enqueue_await(w_ctx->e, w_ctx->m, t);
     }
@@ -3381,7 +3391,7 @@ static int market_order_func(void *restrict const arg) {
           t->status == TRADE_STATUS_DONE) {
         mutex_lock(&t->mtx);
 
-        if (!TRADE_IS_ENQUEUED(t) && !TRADE_IS_DELETED(t)) {
+        if (!(TRADE_IS_ENQUEUED(t) || TRADE_IS_DELETED(t))) {
           mutex_unlock(&t->mtx);
           trade_delete(t);
         } else {
@@ -3397,7 +3407,7 @@ static int market_order_func(void *restrict const arg) {
 
       mutex_lock(&t->mtx);
 
-      if (!TRADE_IS_ENQUEUED(t) && !TRADE_IS_DELETED(t)) {
+      if (!(TRADE_IS_ENQUEUED(t) || TRADE_IS_DELETED(t))) {
         mutex_unlock(&t->mtx);
         trade_delete(t);
       } else {
@@ -3540,7 +3550,7 @@ static int market_sample_func(void *restrict const arg) {
             t->status == TRADE_STATUS_DONE) {
           mutex_lock(&t->mtx);
 
-          if (!TRADE_IS_ENQUEUED(t) && !TRADE_IS_DELETED(t)) {
+          if (!(TRADE_IS_ENQUEUED(t) || TRADE_IS_DELETED(t))) {
             mutex_unlock(&t->mtx);
             trade_delete(t);
           } else {
@@ -3633,7 +3643,7 @@ static int market_trade_volatility_func(void *restrict const arg) {
         mutex_unlock(&t->mtx);
         trade_delete(t);
       } else {
-        TRADE_UNSET_ENQUEUED(t);
+        TRADE_RESET(t);
         mutex_unlock(&t->mtx);
       }
       continue;
@@ -3659,7 +3669,7 @@ static int market_trade_volatility_func(void *restrict const arg) {
           mutex_unlock(&t->mtx);
           trade_delete(t);
         } else {
-          TRADE_UNSET_ENQUEUED(t);
+          TRADE_RESET(t);
           mutex_unlock(&t->mtx);
         }
         db_volatility_close(w_ctx->db);
@@ -3975,7 +3985,7 @@ trade_volatility_queue_entry_delete(void *restrict const entry) {
     mutex_unlock(&t->mtx);
     trade_delete(t);
   } else {
-    TRADE_UNSET_ENQUEUED(t);
+    TRADE_RESET(t);
     mutex_unlock(&t->mtx);
   }
 }
@@ -4051,7 +4061,7 @@ static int trade_volatility_func(void *restrict const arg) {
           mutex_unlock(&trade->mtx);
           trade_delete(trade);
         } else {
-          TRADE_UNSET_ENQUEUED(trade);
+          TRADE_RESET(trade);
           mutex_unlock(&trade->mtx);
         }
         continue;

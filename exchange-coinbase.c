@@ -2414,11 +2414,6 @@ ret:
     String_delete(j_pricing_tier);
     Numeric_delete(j_taker_fee_rate);
     Numeric_delete(j_maker_fee_rate);
-    p = Pricing_new();
-    p->nm = String_cnew("fallback");
-    p->tf_pc = Numeric_from_char("1.2");
-    p->mf_pc = Numeric_from_char("1.2");
-    p->ef_pc = Numeric_from_char("1.2");
   }
 
   if (errno)
@@ -2435,10 +2430,8 @@ static struct Pricing *coinbase_pricing(const struct Market *restrict const m) {
 
   mutex_lock(&pricing_mutex);
 
-  if (pricing != NULL) {
-    pricing->mtx = &pricing_mutex;
-    return pricing;
-  }
+  if (pricing != NULL)
+    goto ret;
 
   int r = snprintf(url, sizeof(url), "%s%s?product_type=SPOT",
                    coinbase_rest_uri, coinbase_fees_path);
@@ -2446,11 +2439,18 @@ static struct Pricing *coinbase_pricing(const struct Market *restrict const m) {
   if (r < 0 || (size_t)r >= sizeof(url))
     panic();
 
-  if (coinbase_rest_query(rsp_doc, url, "GET", coinbase_fees_path, NULL, 0) < 0)
+  if (coinbase_rest_query(rsp_doc, url, "GET", coinbase_fees_path, NULL, 0) <
+      0) {
+    pricing = NULL;
     goto ret;
+  }
 
   pricing = parse_pricing(rsp_doc, rsp_doc->values);
-  pricing->mtx = &pricing_mutex;
 ret:
+  if (pricing != NULL)
+    pricing->mtx = &pricing_mutex;
+  else
+    mutex_unlock(&pricing_mutex);
+
   return pricing;
 }

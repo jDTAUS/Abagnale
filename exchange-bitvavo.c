@@ -1353,16 +1353,12 @@ static struct Pricing *bitvavo_pricing(const struct Market *restrict const m) {
 
   p = bitvavo_parse_fee(rsp_doc);
 ret:
-  if (p == NULL) {
-    p = Pricing_new();
-    p->nm = String_cnew("fallback");
-    p->tf_pc = Numeric_from_char("0.25");
-    p->mf_pc = Numeric_from_char("0.25");
-    p->ef_pc = Numeric_from_char("0.25");
-  }
+  if (p != NULL) {
+    Map_put(pricings_by_id, m->id, p);
+    p->mtx = Map_mutex(pricings_by_id);
+  } else
+    Map_unlock(pricings_by_id);
 
-  Map_put(pricings_by_id, m->id, p);
-  p->mtx = Map_mutex(pricings_by_id);
   return p;
 }
 
