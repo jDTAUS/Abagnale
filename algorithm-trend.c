@@ -795,6 +795,8 @@ static struct Position *trend_position_open(
         heap_calloc(1, sizeof(*plot_arg));
 
     struct Sample *restrict const head = Array_head(samples);
+    plot_arg->e_id = String_copy(e->id);
+    plot_arg->m_id = String_copy(m->id);
     plot_arg->s_ns = Numeric_copy(head->nanos);
     plot_arg->s_pr = Numeric_copy(head->price);
     plot_arg->e_ns = Numeric_copy(sample->nanos);
