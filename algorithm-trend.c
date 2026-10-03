@@ -542,7 +542,7 @@ static int plot_func(void *restrict const a) {
     }
 
     if (Queue_enqueue_timedout(p_ctx->market_queue)) {
-      wout("%s: %s: Plot: Stalled: %zu/%zu %" PRIuMAX "s %" PRIuMAX "ns\n",
+      wout("%s: %s: Plots: Stalled: %zu/%zu %" PRIuMAX "s %" PRIuMAX "ns\n",
            String_chars(p_ctx->e->nm), String_chars(p_ctx->m->nm),
            Queue_size(p_ctx->market_queue), Queue_capacity(p_ctx->market_queue),
            (uintmax_t)thread_timeout.tv_sec, (uintmax_t)thread_timeout.tv_nsec);
@@ -595,7 +595,7 @@ again:
     }
 
     if (Queue_enqueue_timedout(plot_queue)) {
-      wout("%s: %s: Plot: Stalled: %zu/%zu %" PRIuMAX "s %" PRIuMAX "ns\n",
+      wout("%s: %s: Plots: Stalled: %zu/%zu %" PRIuMAX "s %" PRIuMAX "ns\n",
            String_chars(e->nm), String_chars(m->nm), Queue_size(plot_queue),
            Queue_capacity(plot_queue), (uintmax_t)thread_timeout.tv_sec,
            (uintmax_t)thread_timeout.tv_nsec);
