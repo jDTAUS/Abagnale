@@ -26,10 +26,12 @@
 #include "database.h"
 #include "heap.h"
 #include "proc.h"
+#include "queue.h"
 #include "thread.h"
 #include "time.h"
 
 #include <errno.h>
+#include <inttypes.h>
 #include <signal.h>
 #include <stdio.h>
 #include <string.h>
@@ -45,6 +47,27 @@ struct trend_state {
   struct Numeric *restrict cd_lnanos;
   struct Numeric *restrict cd_langle;
   enum candle_trend cd_ltrend;
+};
+
+struct market_plot_ctx {
+  void *restrict db;
+  const struct Exchange *restrict e;
+  struct Market *restrict m;
+  struct Queue *restrict market_queue;
+  struct thread_group *restrict threads;
+  char db_name[DATABASE_CONNECTION_NAME_MAX_LENGTH + 1];
+  bool running;
+};
+
+struct market_plot_arg {
+  struct String *restrict e_id;
+  struct String *restrict m_id;
+  struct Numeric *restrict s_ns;
+  struct Numeric *restrict s_pr;
+  struct Numeric *restrict e_ns;
+  struct Numeric *restrict e_pr;
+  struct Candle *restrict cd;
+  struct Array *restrict dp;
 };
 
 struct trend_tls {
@@ -64,7 +87,6 @@ struct trend_tls {
     struct Candle *restrict cd_cur;
     struct Candle *restrict cd_first;
     struct Candle *restrict cd_last;
-    struct db_plot_rec *restrict db_plot;
     struct db_trend_state_rec *restrict db_st;
   } trend_position_open;
   struct trend_market_plot_vars {
@@ -91,10 +113,14 @@ extern const struct Numeric *restrict const hundred;
 
 extern const struct Config *restrict const cnf;
 extern const bool verbose;
+extern const struct timespec thread_timeout;
 extern const size_t all_exchanges_nitems;
 
 static tss_t trend_tls_key;
 static struct Map *restrict states;
+static struct Queue *restrict plot_queue;
+static _Atomic bool plot_queue_dequeueing;
+static struct thread_group *restrict threads;
 
 static void trend_state_delete(void *restrict const e) {
   if (e == NULL)
@@ -105,6 +131,32 @@ static void trend_state_delete(void *restrict const e) {
   Numeric_delete(st->cd_langle);
   mutex_destroy(&st->mtx);
   heap_free(e);
+}
+
+static void db_datapoint_rec_delete(void *restrict const e) {
+  if (e == NULL)
+    return;
+
+  struct db_datapoint_rec *restrict rec = e;
+  Numeric_delete(rec->x);
+  Numeric_delete(rec->y);
+  heap_free(rec);
+}
+
+static void market_plot_arg_delete(void *restrict const e) {
+  if (e == NULL)
+    return;
+
+  struct market_plot_arg *restrict arg = e;
+  String_delete(arg->e_id);
+  String_delete(arg->m_id);
+  Numeric_delete(arg->s_ns);
+  Numeric_delete(arg->s_pr);
+  Numeric_delete(arg->e_ns);
+  Numeric_delete(arg->e_pr);
+  Candle_delete(arg->cd);
+  Array_delete(arg->dp, db_datapoint_rec_delete);
+  heap_free(arg);
 }
 
 static struct trend_tls *const trend_tls(void) {
@@ -126,9 +178,6 @@ static struct trend_tls *const trend_tls(void) {
     tls->trend_position_open.cd_cur = Candle_new();
     tls->trend_position_open.cd_first = Candle_new();
     tls->trend_position_open.cd_last = Candle_new();
-    tls->trend_position_open.db_plot = heap_malloc(sizeof(struct db_plot_rec));
-    tls->trend_position_open.db_plot->snanos = Numeric_from_int(0);
-    tls->trend_position_open.db_plot->enanos = Numeric_from_int(0);
     tls->trend_position_open.db_st =
         heap_malloc(sizeof(struct db_trend_state_rec));
     tls->trend_position_open.db_st->cd_lnanos = Numeric_new();
@@ -170,9 +219,6 @@ static void trend_tls_dtor(void *e) {
   Candle_delete(tls->trend_position_open.cd_cur);
   Candle_delete(tls->trend_position_open.cd_first);
   Candle_delete(tls->trend_position_open.cd_last);
-  Numeric_delete(tls->trend_position_open.db_plot->snanos);
-  Numeric_delete(tls->trend_position_open.db_plot->enanos);
-  heap_free(tls->trend_position_open.db_plot);
   Numeric_delete(tls->trend_position_open.db_st->cd_lnanos);
   Numeric_delete(tls->trend_position_open.db_st->cd_langle);
   heap_free(tls->trend_position_open.db_st);
@@ -243,13 +289,21 @@ static void trend_init(void) {
   algorithm_trend.nm = String_cnew("trend");
   tls_create(&trend_tls_key, trend_tls_dtor);
   states = Map_new(StringMapOps, all_exchanges_nitems * 2048);
+  plot_queue = Queue_new(MARKETS_QUEUE_CAPACITY, &thread_timeout);
+  plot_queue_dequeueing = false;
+  threads = thread_group_new();
 }
 
 static void trend_destroy(void) {
+  Queue_stop(plot_queue);
+  thread_group_join(threads);
+  thread_group_delete(threads);
+
   String_delete(algorithm_trend.id);
   String_delete(algorithm_trend.nm);
   tls_delete(trend_tls_key);
   Map_delete(states, trend_state_delete);
+  Queue_delete(plot_queue, market_plot_arg_delete);
 }
 
 static struct trend_state *trend_state(const void *restrict const db,
@@ -279,6 +333,280 @@ static struct trend_state *trend_state(const void *restrict const db,
   return st;
 }
 
+static int market_plot_func(void *restrict const a) {
+  struct market_plot_ctx *restrict const p_ctx = a;
+  void *const *restrict items;
+
+  struct db_candle_rec db_candle = {0};
+  struct db_plot_rec db_plot = {0};
+  char plot_fn[BUFSIZ] = {0};
+
+  p_ctx->db = db_connect(p_ctx->db_name);
+
+  db_plot.snanos = Numeric_new();
+  db_plot.enanos = Numeric_new();
+
+  do {
+    Queue_lock(p_ctx->market_queue);
+    p_ctx->running = true;
+
+    struct market_plot_arg *restrict const arg =
+        Queue_dequeue_await(p_ctx->market_queue);
+
+    if (arg == NULL) {
+      if (Queue_dequeue_timedout(p_ctx->market_queue) &&
+          Queue_size(p_ctx->market_queue) > 0) {
+        // plot_func may have enqueued during await
+        Queue_unlock(p_ctx->market_queue);
+        continue;
+      }
+
+      p_ctx->running = false;
+      Queue_stop(p_ctx->market_queue);
+      break;
+    }
+
+    Queue_unlock(p_ctx->market_queue);
+
+    Numeric_copy_to(arg->s_ns, db_plot.snanos);
+    Numeric_copy_to(arg->e_ns, db_plot.enanos);
+
+    db_tx_begin(p_ctx->db);
+    db_tx_trend_plot(&db_plot, p_ctx->db, String_chars(p_ctx->e->id),
+                     String_chars(p_ctx->m->id));
+
+    items = Array_items(arg->dp);
+    for (size_t i = Array_size(arg->dp);
+         i-- > 0 && Numeric_cmp(((struct db_datapoint_rec *)items[i])->x,
+                                db_plot.enanos) > 0;) {
+      db_tx_plot_datapoint(p_ctx->db, db_plot.id,
+                           ((struct db_datapoint_rec *)items[i])->x,
+                           ((struct db_datapoint_rec *)items[i])->y);
+    }
+
+    db_tx_plot_enanos(p_ctx->db, db_plot.id, arg->e_ns);
+
+    db_candle.o = arg->cd->o;
+    db_candle.h = arg->cd->h;
+    db_candle.l = arg->cd->l;
+    db_candle.c = arg->cd->c;
+    db_candle.onanos = arg->cd->onanos;
+    db_candle.hnanos = arg->cd->hnanos;
+    db_candle.lnanos = arg->cd->lnanos;
+    db_candle.cnanos = arg->cd->cnanos;
+
+    db_tx_trend_plot_candle(p_ctx->db, String_chars(p_ctx->e->id),
+                            String_chars(p_ctx->m->id), &db_candle);
+
+    db_tx_trend_plot_marker(p_ctx->db, String_chars(p_ctx->e->id),
+                            String_chars(p_ctx->m->id), arg->cd->hnanos,
+                            arg->cd->h, "UP");
+
+    db_tx_trend_plot_marker(p_ctx->db, String_chars(p_ctx->e->id),
+                            String_chars(p_ctx->m->id), arg->cd->lnanos,
+                            arg->cd->l, "DOWN");
+
+    db_tx_trend_plot_marker(p_ctx->db, String_chars(p_ctx->e->id),
+                            String_chars(p_ctx->m->id), arg->s_ns, arg->s_pr,
+                            "LEFT");
+
+    db_tx_trend_plot_marker(p_ctx->db, String_chars(p_ctx->e->id),
+                            String_chars(p_ctx->m->id), arg->e_ns, arg->s_pr,
+                            "RIGHT");
+
+    db_tx_commit(p_ctx->db);
+
+    int r =
+        snprintf(plot_fn, sizeof(plot_fn), "%s/%s/%s/%s.m",
+                 String_chars(cnf->plts_dir), String_chars(p_ctx->e->nm),
+                 String_chars(algorithm_trend.nm), String_chars(p_ctx->m->nm));
+
+    if (r < 0 || (size_t)r >= sizeof(plot_fn))
+      panic();
+
+    trend_market_plot(p_ctx->db, p_ctx->e, p_ctx->m, plot_fn);
+  } while (!terminated);
+
+  db_disconnect(p_ctx->db);
+
+  thread_group_end_thread(p_ctx->threads);
+
+  if (!p_ctx->running)
+    Queue_unlock(p_ctx->market_queue);
+
+  Numeric_delete(db_plot.snanos);
+  Numeric_delete(db_plot.enanos);
+  thread_exit(EXIT_SUCCESS);
+}
+
+inline static void market_plot_worker_delete(void *restrict const e) {
+  if (e == NULL)
+    return;
+
+  struct market_plot_ctx *restrict p_ctx = e;
+  Queue_delete(p_ctx->market_queue, market_plot_arg_delete);
+  Market_delete(p_ctx->m);
+  heap_free(p_ctx);
+}
+
+static int plot_func(void *restrict const a) {
+  thrd_t thrd;
+
+  struct thread_group *restrict const p_threads = thread_group_new();
+  struct Map *restrict const plot_workers =
+      Map_new(StringMapOps, MARKETS_MAP_CAPACITY);
+
+  while (!terminated) {
+    Queue_lock(plot_queue);
+
+    struct market_plot_arg *restrict const arg =
+        Queue_dequeue_await(plot_queue);
+
+    if (arg == NULL) {
+      if (Queue_dequeue_timedout(plot_queue) && Queue_size(plot_queue) > 0) {
+        // market_plot_enqueue may have enqueued during await
+        Queue_unlock(plot_queue);
+        continue;
+      }
+
+      plot_queue_dequeueing = false;
+      Queue_stop(plot_queue);
+      break;
+    }
+
+    Queue_unlock(plot_queue);
+
+  again:
+    struct market_plot_ctx *restrict p_ctx = Map_get(plot_workers, arg->m_id);
+
+    if (p_ctx != NULL) {
+      Queue_lock(p_ctx->market_queue);
+
+      if (!p_ctx->running) {
+        Map_remove(plot_workers, arg->m_id);
+        Queue_unlock(p_ctx->market_queue);
+        market_plot_worker_delete(p_ctx);
+        p_ctx = NULL;
+      }
+    }
+
+    if (p_ctx == NULL) {
+      const struct Exchange *restrict const e = exchange_id(arg->e_id);
+
+      if (e == NULL)
+        panic();
+
+      struct Market *restrict m = e->market(arg->m_id);
+
+      if (m == NULL) {
+        werr("%s: Market: Not available: %s\n", String_chars(e->nm),
+             String_chars(arg->m_id));
+
+        market_plot_arg_delete(arg);
+        continue;
+      }
+
+      p_ctx = heap_calloc(1, sizeof(struct market_plot_ctx));
+      p_ctx->e = e;
+      p_ctx->m = Market_copy(m);
+      p_ctx->threads = p_threads;
+      mutex_unlock(m->mtx);
+      m = NULL;
+
+      p_ctx->market_queue =
+          Queue_new(MARKET_PLOT_QUEUE_CAPACITY, &thread_timeout);
+
+      Queue_start(p_ctx->market_queue);
+
+      const int r =
+          snprintf(p_ctx->db_name, sizeof(p_ctx->db_name), "%s-%s-trend-plots",
+                   String_chars(p_ctx->e->nm), String_chars(p_ctx->m->nm));
+
+      if (r < 0 || (size_t)r >= sizeof(p_ctx->db_name))
+        panic();
+
+      Map_put(plot_workers, arg->m_id, p_ctx);
+      Queue_lock(p_ctx->market_queue);
+      p_ctx->running = true;
+      thread_group_begin_thread(p_threads);
+      thread_create(&thrd, market_plot_func, p_ctx);
+      thread_detach(thrd);
+    }
+
+    Queue_enqueue_await(p_ctx->market_queue, arg);
+
+    if (!p_ctx->running) {
+      // market_plot_func may have stopped during await
+      Queue_unlock(p_ctx->market_queue);
+      goto again;
+    }
+
+    if (Queue_enqueue_timedout(p_ctx->market_queue)) {
+      wout("%s: %s: Plot: Stalled: %zu/%zu %" PRIuMAX "s %" PRIuMAX "ns\n",
+           String_chars(p_ctx->e->nm), String_chars(p_ctx->m->nm),
+           Queue_size(p_ctx->market_queue), Queue_capacity(p_ctx->market_queue),
+           (uintmax_t)thread_timeout.tv_sec, (uintmax_t)thread_timeout.tv_nsec);
+
+      Queue_unlock(p_ctx->market_queue);
+      goto again;
+    }
+
+    Queue_unlock(p_ctx->market_queue);
+  }
+
+  if (!plot_queue_dequeueing)
+    Queue_unlock(plot_queue);
+
+  struct MapIterator *restrict it = MapIterator_new(plot_workers);
+  while (MapIterator_next(it))
+    Queue_stop(((struct market_plot_ctx *)MapIterator_value(it))->market_queue);
+  MapIterator_delete(it);
+
+  thread_group_join(p_threads);
+  thread_group_delete(p_threads);
+
+  Map_delete(plot_workers, market_plot_worker_delete);
+  thread_group_end_thread(threads);
+  thread_exit(EXIT_SUCCESS);
+}
+
+static void market_plot_enqueue(const struct Exchange *restrict const e,
+                                const struct Market *restrict const m,
+                                struct market_plot_arg *restrict const arg) {
+  thrd_t thrd;
+
+  Queue_lock(plot_queue);
+
+again:
+  if (!terminated) {
+    if (!plot_queue_dequeueing) {
+      plot_queue_dequeueing = true;
+      Queue_start(plot_queue);
+      thread_group_begin_thread(threads);
+      thread_create(&thrd, plot_func, NULL);
+      thread_detach(thrd);
+    }
+
+    Queue_enqueue_await(plot_queue, arg);
+
+    if (!plot_queue_dequeueing) {
+      // plot_func may have stopped during await
+      goto again;
+    }
+
+    if (Queue_enqueue_timedout(plot_queue)) {
+      wout("%s: %s: Plot: Stalled: %zu/%zu %" PRIuMAX "s %" PRIuMAX "ns\n",
+           String_chars(e->nm), String_chars(m->nm), Queue_size(plot_queue),
+           Queue_capacity(plot_queue), (uintmax_t)thread_timeout.tv_sec,
+           (uintmax_t)thread_timeout.tv_nsec);
+
+      goto again;
+    }
+  }
+
+  Queue_unlock(plot_queue);
+}
+
 static struct Position *trend_position_open(
     const void *restrict const db, const struct Exchange *restrict const e,
     const struct Market *restrict const m, struct Trade *restrict const t,
@@ -297,10 +625,8 @@ static struct Position *trend_position_open(
   struct Candle *restrict const cd_cur = tls->trend_position_open.cd_cur;
   struct Candle *restrict const cd_first = tls->trend_position_open.cd_first;
   struct Candle *restrict const cd_last = tls->trend_position_open.cd_last;
-  struct db_plot_rec *restrict const db_plot = tls->trend_position_open.db_plot;
   struct db_trend_state_rec *restrict const db_st =
       tls->trend_position_open.db_st;
-  struct db_candle_rec db_candle = {0};
   struct trend_state *restrict const st = trend_state(db, e->id, m->id);
   struct Position *restrict p = NULL;
   void *const *restrict items;
@@ -436,55 +762,6 @@ static struct Position *trend_position_open(
 
   Numeric_copy_to(r1, st->cd_langle);
   Numeric_copy_to(st->cd_langle, cd_first->a);
-
-  if (cnf->plts_dir) {
-    Numeric_copy_to(((struct Sample *)Array_head(samples))->nanos,
-                    db_plot->snanos);
-    Numeric_copy_to(cd_first->cnanos, db_plot->enanos);
-
-    db_tx_begin(db);
-    db_tx_trend_plot(db_plot, db, String_chars(e->id), String_chars(m->id));
-
-    items = Array_items(samples);
-    for (size_t i = Array_size(samples);
-         i-- > 0 && Numeric_cmp(((struct Sample *)items[i])->nanos,
-                                db_plot->enanos) > 0;) {
-      db_tx_plot_datapoint(db, db_plot->id, ((struct Sample *)items[i])->nanos,
-                           ((struct Sample *)items[i])->price);
-    }
-
-    db_tx_plot_enanos(db, db_plot->id, sample->nanos);
-
-    db_candle.o = cd_first->o;
-    db_candle.h = cd_first->h;
-    db_candle.l = cd_first->l;
-    db_candle.c = cd_first->c;
-    db_candle.onanos = cd_first->onanos;
-    db_candle.hnanos = cd_first->hnanos;
-    db_candle.lnanos = cd_first->lnanos;
-    db_candle.cnanos = cd_first->cnanos;
-
-    db_tx_trend_plot_candle(db, String_chars(e->id), String_chars(m->id),
-                            &db_candle);
-
-    db_tx_trend_plot_marker(db, String_chars(e->id), String_chars(m->id),
-                            cd_first->hnanos, cd_first->h, "UP");
-
-    db_tx_trend_plot_marker(db, String_chars(e->id), String_chars(m->id),
-                            cd_first->lnanos, cd_first->l, "DOWN");
-
-    db_tx_trend_plot_marker(db, String_chars(e->id), String_chars(m->id),
-                            ((struct Sample *)Array_head(samples))->nanos,
-                            ((struct Sample *)Array_head(samples))->price,
-                            "RIGHT");
-
-    db_tx_trend_plot_marker(
-        db, String_chars(e->id), String_chars(m->id), sample->nanos,
-        ((struct Sample *)Array_head(samples))->price, "LEFT");
-
-    db_tx_commit(db);
-  }
-
   Candle_copy_to(cd_first, &t->open_cd);
 
   switch (t->open_cd.t) {
@@ -511,6 +788,34 @@ static struct Position *trend_position_open(
   db_trend_state_update(db, String_chars(e->id), String_chars(m->id), db_st);
 
   mutex_unlock(&st->mtx);
+
+  if (cnf->plts_dir) {
+    struct market_plot_arg *restrict const plot_arg =
+        heap_calloc(1, sizeof(*plot_arg));
+
+    struct Sample *restrict const head = Array_head(samples);
+    plot_arg->s_ns = Numeric_copy(head->nanos);
+    plot_arg->s_pr = Numeric_copy(head->price);
+    plot_arg->e_ns = Numeric_copy(sample->nanos);
+    plot_arg->e_pr = Numeric_copy(sample->price);
+    plot_arg->dp = Array_new(Array_size(samples));
+    plot_arg->cd = Candle_new();
+    Candle_copy_to(&t->open_cd, plot_arg->cd);
+
+    items = Array_items(samples);
+    for (size_t i = Array_size(samples); i-- > 0;) {
+      struct Sample *restrict const s = items[i];
+      struct db_datapoint_rec *restrict const dp_rec =
+          heap_calloc(1, sizeof(*dp_rec));
+
+      dp_rec->x = Numeric_copy(s->nanos);
+      dp_rec->y = Numeric_copy(s->price);
+      Array_add_tail(plot_arg->dp, dp_rec);
+    }
+
+    market_plot_enqueue(e, m, plot_arg);
+  }
+
   return p;
 }
 

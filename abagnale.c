@@ -41,10 +41,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#ifndef DEFAULT_ABAG_THREAD_TIMEOUT_MILLIS
-#define DEFAULT_ABAG_THREAD_TIMEOUT_MILLIS 100
-#endif
-
 #ifndef nitems
 #define nitems(_a) (sizeof((_a)) / sizeof((_a)[0]))
 #endif
@@ -56,12 +52,6 @@
 #define TRADE_IS_ENQUEUED(t) (Numeric_cmp((t)->tp_pc, n_two) == 0)
 #define TRADE_SET_ENQUEUED(t) (Numeric_copy_to(n_two, (t)->tp_pc))
 #define TRADE_RESET(t) (Numeric_copy_to(zero, (t)->tp_pc))
-
-#define MARKETS_MAP_CAPACITY 2048
-#define MARKETS_QUEUE_CAPACITY 2048
-#define MARKET_TRADE_QUEUE_CAPACITY 64
-#define MARKET_TICKER_QUEUE_CAPACITY 512
-#define MARKET_ORDER_QUEUE_CAPACITY 32
 
 struct worker_ctx {
   void *restrict db;
@@ -181,6 +171,7 @@ extern const struct Config *restrict const cnf;
 extern const struct String *restrict const process_id;
 extern const bool ticker_exporter;
 extern const bool verbose;
+extern const struct timespec thread_timeout;
 
 extern const struct Numeric *restrict const zero;
 extern const struct Numeric *restrict const one;
@@ -198,18 +189,16 @@ static struct Map *restrict market_trades;
 static struct Map *restrict market_configs;
 static tss_t abag_tls_key;
 static struct thread_group *restrict worker;
-static struct timespec thread_timeout;
 static struct Numeric *restrict ninety_percent_factor;
 static struct Queue *restrict trade_volatility_queue;
 static _Atomic bool trade_volatility_queue_dequeueing;
 
 int abagnale(int argc, char *argv[]);
-static void
-trade_volatility_enqueue_await(const struct Exchange *restrict const,
-                               const struct Market *restrict const m,
-                               struct Trade *restrict const);
+static void trade_volatility_enqueue(const struct Exchange *restrict const,
+                                     const struct Market *restrict const m,
+                                     struct Trade *restrict const);
 
-const struct Algorithm *algorithm(const struct String *restrict const nm) {
+const struct Algorithm *algorithm_nm(const struct String *restrict const nm) {
   void *const *restrict items = Array_items(algorithms);
   for (size_t i = Array_size(algorithms); i-- > 0;)
     if (String_equals(nm, ((struct Algorithm *)items[i])->nm))
@@ -218,7 +207,16 @@ const struct Algorithm *algorithm(const struct String *restrict const nm) {
   return NULL;
 }
 
-const struct Exchange *exchange(const struct String *restrict const nm) {
+const struct Algorithm *algorithm_id(const struct String *restrict const id) {
+  void *const *restrict items = Array_items(algorithms);
+  for (size_t i = Array_size(algorithms); i-- > 0;)
+    if (String_equals(id, ((struct Algorithm *)items[i])->id))
+      return items[i];
+
+  return NULL;
+}
+
+const struct Exchange *exchange_nm(const struct String *restrict const nm) {
   void *const *restrict items = Array_items(exchanges);
   for (size_t i = Array_size(exchanges); i-- > 0;)
     if (String_equals(nm, ((struct Exchange *)items[i])->nm))
@@ -227,8 +225,7 @@ const struct Exchange *exchange(const struct String *restrict const nm) {
   return NULL;
 }
 
-static const struct Exchange *
-exchange_id(const struct String *restrict const id) {
+const struct Exchange *exchange_id(const struct String *restrict const id) {
   void *const *restrict items = Array_items(exchanges);
   for (size_t i = Array_size(exchanges); i-- > 0;)
     if (String_equals(id, ((struct Exchange *)items[i])->id))
@@ -2701,7 +2698,7 @@ static void trade_pricing(const struct worker_ctx *restrict const w_ctx,
   if (w_ctx->m_cnf->v_pc == NULL) {
     if (!(TRADE_IS_ENQUEUED(t) || TRADE_IS_DELETED(t))) {
       TRADE_SET_ENQUEUED(t);
-      trade_volatility_enqueue_await(w_ctx->e, w_ctx->m, t);
+      trade_volatility_enqueue(w_ctx->e, w_ctx->m, t);
     }
     goto ret;
   } else
@@ -2742,19 +2739,6 @@ static void trade_pricing(const struct worker_ctx *restrict const w_ctx,
   Numeric_add_to(r0, one, t->tp_pf);
 ret:
   String_delete(pr_nm);
-}
-
-static void trade_plot(const struct worker_ctx *restrict const w_ctx,
-                       struct Trade *restrict const t) {
-  char plot_fn[BUFSIZ] = {0};
-  int r = snprintf(plot_fn, sizeof(plot_fn), "%s/%s/%s/%s.m",
-                   String_chars(cnf->plts_dir), String_chars(w_ctx->e->nm),
-                   String_chars(t->a->nm), String_chars(w_ctx->m->nm));
-
-  if (r < 0 || (size_t)r >= sizeof(plot_fn))
-    panic();
-
-  t->a->market_plot(w_ctx->db, w_ctx->e, w_ctx->m, plot_fn);
 }
 
 static void trade_bet(const struct worker_ctx *restrict const w_ctx,
@@ -2813,9 +2797,6 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
 
   if (!t->open_trg.set)
     return;
-
-  if (cnf->plts_dir != NULL)
-    trade_plot(w_ctx, t);
 
   struct Account *restrict const q_acct = w_ctx->e->account(w_ctx->m->qa_id);
 
@@ -3372,7 +3353,7 @@ static int market_order_func(void *restrict const arg) {
     if (w_ctx->m_cnf != NULL) {
       if (t->status == TRADE_STATUS_BUYING ||
           t->status == TRADE_STATUS_SELLING) {
-        t->a = algorithm(w_ctx->m_cnf->a_nm);
+        t->a = algorithm_nm(w_ctx->m_cnf->a_nm);
         Array_lock(samples);
         if (Array_size(samples) > 1) {
           const struct Sample *restrict const s = Array_tail(samples);
@@ -3530,7 +3511,7 @@ static int market_sample_func(void *restrict const arg) {
       struct Trade *restrict const t = items[i];
 
       if (has_config) {
-        t->a = algorithm(w_ctx->m_cnf->a_nm);
+        t->a = algorithm_nm(w_ctx->m_cnf->a_nm);
 
         if (t->status == TRADE_STATUS_NEW)
           Numeric_copy_to(q_return, t->q_return);
@@ -3777,9 +3758,7 @@ static int exchange_sample_func(void *restrict const arg) {
       if (!m_ctx->running) {
         Map_remove(ticker_workers, sample->m_id);
         Queue_unlock(m_ctx->market_queue);
-        Queue_delete(m_ctx->market_queue, Sample_delete);
-        Market_delete(m_ctx->m);
-        heap_free(m_ctx);
+        ticker_worker_delete(m_ctx);
         m_ctx = NULL;
       }
     }
@@ -3896,9 +3875,7 @@ static int exchange_order_func(void *restrict const arg) {
       if (!m_ctx->running) {
         Map_remove(order_workers, order->m_id);
         Queue_unlock(m_ctx->market_queue);
-        Queue_delete(m_ctx->market_queue, Order_delete);
-        Market_delete(m_ctx->m);
-        heap_free(m_ctx);
+        order_worker_delete(m_ctx);
         m_ctx = NULL;
       }
     }
@@ -4037,9 +4014,7 @@ static int trade_volatility_func(void *restrict const arg) {
       if (!m_ctx->running) {
         Map_remove(trade_workers, trade->m_id);
         Queue_unlock(m_ctx->market_queue);
-        Queue_delete(m_ctx->market_queue, trade_volatility_queue_entry_delete);
-        Market_delete(m_ctx->m);
-        heap_free(m_ctx);
+        trade_volatility_worker_delete(m_ctx);
         m_ctx = NULL;
       }
     }
@@ -4133,10 +4108,9 @@ static int trade_volatility_func(void *restrict const arg) {
   thread_exit(EXIT_SUCCESS);
 }
 
-inline static void
-trade_volatility_enqueue_await(const struct Exchange *restrict const e,
-                               const struct Market *restrict const m,
-                               struct Trade *restrict const t) {
+static void trade_volatility_enqueue(const struct Exchange *restrict const e,
+                                     const struct Market *restrict const m,
+                                     struct Trade *restrict const t) {
   thrd_t thrd;
 
   Queue_lock(trade_volatility_queue);
@@ -4226,15 +4200,6 @@ int abagnale(int argc, char *argv[]) {
 
   trade_volatility_queue = Queue_new(MARKETS_QUEUE_CAPACITY, &thread_timeout);
   trade_volatility_queue_dequeueing = false;
-
-  const unsigned long thread_timeout_millis =
-      envul("ABAG_THREAD_TIMEOUT_MILLIS", DEFAULT_ABAG_THREAD_TIMEOUT_MILLIS);
-
-  thread_timeout.tv_sec = thread_timeout_millis / 1000;
-  thread_timeout.tv_nsec = thread_timeout_millis % 1000L * 1000000L;
-
-  if (verbose)
-    wout("\tABAG_THREAD_TIMEOUT_MILLIS=%lu\n", thread_timeout_millis);
 
   items = Array_items(exchanges);
   for (size_t i = Array_size(exchanges); i-- > 0 && !terminated;) {

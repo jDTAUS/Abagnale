@@ -44,6 +44,10 @@
 #define ABAGNALE "abagnale"
 #define ABAGNALECTL "abagnalectl"
 
+#ifndef DEFAULT_ABAG_THREAD_TIMEOUT_MILLIS
+#define DEFAULT_ABAG_THREAD_TIMEOUT_MILLIS 100
+#endif
+
 #ifndef nitems
 #define nitems(a) (sizeof((a)) / sizeof((a)[0]))
 #endif
@@ -95,6 +99,7 @@ struct Config *restrict cnf;
 struct String *restrict process_id;
 bool ticker_exporter;
 bool verbose;
+struct timespec thread_timeout;
 
 struct Array *restrict exchanges;
 struct Array *restrict algorithms;
@@ -130,6 +135,11 @@ int main(int argc, char *argv[]) {
   proc_init();
 
   const char *conffile = envs("ABAG_CONFIG_FILE", DEFAULT_ABAG_CONFIG_FILE);
+  const unsigned long thread_timeout_millis =
+      envul("ABAG_THREAD_TIMEOUT_MILLIS", DEFAULT_ABAG_THREAD_TIMEOUT_MILLIS);
+
+  thread_timeout.tv_sec = thread_timeout_millis / 1000;
+  thread_timeout.tv_nsec = thread_timeout_millis % 1000L * 1000000L;
 
   string_init();
   time_init();
@@ -214,6 +224,7 @@ int main(int argc, char *argv[]) {
   if (verbose) {
     wout("%s\n", ABAG_REVISION);
     wout("\tABAG_CONFIG_FILE=%s\n", conffile);
+    wout("\tABAG_THREAD_TIMEOUT_MILLIS=%lu\n", thread_timeout_millis);
   }
 
   prog_abagnale = String_cnew(ABAGNALE);

@@ -29,6 +29,14 @@
 
 #include <stdint.h>
 
+#define MARKETS_MAP_CAPACITY 2048
+#define MARKETS_QUEUE_CAPACITY 2048
+
+#define MARKET_ORDER_QUEUE_CAPACITY 32
+#define MARKET_PLOT_QUEUE_CAPACITY 64
+#define MARKET_TICKER_QUEUE_CAPACITY 512
+#define MARKET_TRADE_QUEUE_CAPACITY 64
+
 struct Algorithm;
 struct Trade;
 
@@ -149,8 +157,10 @@ void Candle_copy_to(const struct Candle *restrict const,
                     struct Candle *restrict const);
 void Candle_reset(struct Candle *restrict const);
 
-const struct Algorithm *algorithm(const struct String *restrict const);
-const struct Exchange *exchange(const struct String *restrict const);
+const struct Algorithm *algorithm_nm(const struct String *restrict const);
+const struct Algorithm *algorithm_id(const struct String *restrict const);
+const struct Exchange *exchange_nm(const struct String *restrict const);
+const struct Exchange *exchange_id(const struct String *restrict const);
 const struct MarketConfig *marketconfig(struct String *restrict const,
                                         struct String *restrict const);
 #endif

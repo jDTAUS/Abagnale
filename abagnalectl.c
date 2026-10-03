@@ -384,7 +384,7 @@ static int cmd_markets(int argc, char *argv[]) {
   if (argc > 0 || e_nm == NULL)
     usage();
 
-  const struct Exchange *restrict const e = exchange(e_nm);
+  const struct Exchange *restrict const e = exchange_nm(e_nm);
 
   if (e == NULL) {
     werr("%s: Exchange: Not found: %s\n", String_chars(progname),
@@ -444,7 +444,7 @@ static int cmd_market(int argc, char *argv[]) {
   if (argc > 0 || e_nm == NULL || m_id == NULL)
     usage();
 
-  const struct Exchange *restrict const e = exchange(e_nm);
+  const struct Exchange *restrict const e = exchange_nm(e_nm);
 
   if (e == NULL) {
     werr("%s: Exchange: Not found: %s\n", String_chars(progname),
@@ -510,7 +510,7 @@ static int cmd_accounts(int argc, char *argv[]) {
   if (argc > 0 || e_nm == NULL)
     usage();
 
-  const struct Exchange *restrict const e = exchange(e_nm);
+  const struct Exchange *restrict const e = exchange_nm(e_nm);
 
   if (e == NULL) {
     werr("%s: Exchange: Not found: %s\n", String_chars(progname),
@@ -567,7 +567,7 @@ static int cmd_account(int argc, char *argv[]) {
   if (argc > 0 || e_nm == NULL || a_id == NULL)
     usage();
 
-  const struct Exchange *restrict const e = exchange(e_nm);
+  const struct Exchange *restrict const e = exchange_nm(e_nm);
 
   if (e == NULL) {
     werr("%s: Exchange: Not found: %s\n", String_chars(progname),
@@ -638,7 +638,7 @@ static int cmd_order(int argc, char *argv[]) {
   if (argc > 0 || e_nm == NULL || m_nm == NULL || o_id == NULL)
     usage();
 
-  const struct Exchange *restrict const e = exchange(e_nm);
+  const struct Exchange *restrict const e = exchange_nm(e_nm);
 
   if (e == NULL) {
     werr("%s: Exchange: Not found: %s\n", String_chars(progname),
@@ -743,7 +743,7 @@ static int cmd_plot(int argc, char *argv[]) {
   if (argc > 0 || e_nm == NULL || m_nm == NULL || a_nm == NULL || f_nm == NULL)
     usage();
 
-  const struct Exchange *restrict const e = exchange(e_nm);
+  const struct Exchange *restrict const e = exchange_nm(e_nm);
 
   if (e == NULL) {
     werr("%s: Exchange: Not found: %s\n", String_chars(progname),
@@ -751,7 +751,7 @@ static int cmd_plot(int argc, char *argv[]) {
     goto ret;
   }
 
-  const struct Algorithm *restrict a = algorithm(a_nm);
+  const struct Algorithm *restrict a = algorithm_nm(a_nm);
 
   if (a == NULL) {
     werr("%s: Algorithm: Not found: %s\n", String_chars(progname),
@@ -833,7 +833,7 @@ static int cmd_volatility(int argc, char *argv[]) {
   if (argc > 0 || e_nm == NULL || m_nm == NULL)
     usage();
 
-  const struct Exchange *restrict const e = exchange(e_nm);
+  const struct Exchange *restrict const e = exchange_nm(e_nm);
 
   if (e == NULL) {
     werr("%s: Exchange: Not found: %s\n", String_chars(progname),
