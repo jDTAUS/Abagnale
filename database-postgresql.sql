@@ -18,10 +18,10 @@
 -- PostgreSQL database dump
 --
 
-\restrict UlMRe4Ju0BiuKjdygb4wkGmWRLha3RHSqIyth266MyYA9QNgkybTaag8PpbAint
+\restrict LKcQDEZWUokVKYGhbfG6rPUX1HW9HqY1OlyqU1gT1XQYViCSijsCI9bW1cvL3cd
 
--- Dumped from database version 17.10 (Debian 17.10-0+deb13u1)
--- Dumped by pg_dump version 17.10 (Debian 17.10-0+deb13u1)
+-- Dumped from database version 17.11 (Debian 17.11-0+deb13u1)
+-- Dumped by pg_dump version 17.11 (Debian 17.11-0+deb13u1)
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -44,9 +44,9 @@ CREATE DATABASE "ABAGNALE" WITH TEMPLATE = template0 ENCODING = 'UTF8' LOCALE_PR
 
 ALTER DATABASE "ABAGNALE" OWNER TO abagnale;
 
-\unrestrict UlMRe4Ju0BiuKjdygb4wkGmWRLha3RHSqIyth266MyYA9QNgkybTaag8PpbAint
+\unrestrict LKcQDEZWUokVKYGhbfG6rPUX1HW9HqY1OlyqU1gT1XQYViCSijsCI9bW1cvL3cd
 \connect "ABAGNALE"
-\restrict UlMRe4Ju0BiuKjdygb4wkGmWRLha3RHSqIyth266MyYA9QNgkybTaag8PpbAint
+\restrict LKcQDEZWUokVKYGhbfG6rPUX1HW9HqY1OlyqU1gT1XQYViCSijsCI9bW1cvL3cd
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -649,10 +649,10 @@ CREATE INDEX "PLOTS_SNANOS_idx" ON public."PLOTS" USING btree ("SNANOS");
 
 
 --
--- Name: SAMPLES_EXCHANGE_ID_MARKET_ID_NANOS_idx; Type: INDEX; Schema: public; Owner: abagnale
+-- Name: SAMPLES_EXCHANGE_ID_MARKET_ID_NANOS_PRICE_idx; Type: INDEX; Schema: public; Owner: abagnale
 --
 
-CREATE INDEX "SAMPLES_EXCHANGE_ID_MARKET_ID_NANOS_idx" ON public."SAMPLES" USING btree ("EXCHANGE_ID", "MARKET_ID", "NANOS");
+CREATE INDEX "SAMPLES_EXCHANGE_ID_MARKET_ID_NANOS_PRICE_idx" ON public."SAMPLES" USING btree ("EXCHANGE_ID", "MARKET_ID", "NANOS") INCLUDE ("PRICE");
 
 
 --
@@ -762,5 +762,5 @@ ALTER TABLE ONLY public."TREND_PLOTS"
 -- PostgreSQL database dump complete
 --
 
-\unrestrict UlMRe4Ju0BiuKjdygb4wkGmWRLha3RHSqIyth266MyYA9QNgkybTaag8PpbAint
+\unrestrict LKcQDEZWUokVKYGhbfG6rPUX1HW9HqY1OlyqU1gT1XQYViCSijsCI9bW1cvL3cd
 

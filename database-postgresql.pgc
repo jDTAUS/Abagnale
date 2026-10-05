@@ -637,9 +637,33 @@ void db_vacuum_plots(const void *const db, const char *const e_id,
       WHERE c."EXCHANGE_ID" = :sql_e_id
         AND c."MARKET_ID" = :sql_m_id
         AND c."CNANOS" < :sql_exp;
-    // clang-format on
   }
-  // clang-format off
+  EXEC SQL AT :con
+    UPDATE "PLOTS" p
+    SET
+      "SNANOS" = dp.min,
+      "ENANOS" = dp.max
+    FROM (
+      SELECT
+        "PLOT_ID",
+        MIN("X") AS "MIN_X",
+        MAX("X") AS "MAX_X"
+      FROM "PLOTS_DATAPOINTS"
+      GROUP BY "PLOT_ID"
+    ) dp
+    WHERE p."PLOT_ID" = dp."PLOT_ID";
+  EXEC SQL AT :con
+    UPDATE "PLOTS"
+    SET
+      "SNANOS" = 0,
+      "ENANOS" = 0
+    WHERE
+      "PLOT_ID" NOT IN (
+        SELECT
+          DISTINCT "PLOT_ID"
+        FROM
+          "PLOTS_DATAPOINTS"
+      );
   EXEC SQL AT :con COMMIT;
   // clang-format on
 #ifdef ABAG_SQL_DEBUG
