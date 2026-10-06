@@ -18,7 +18,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict LKcQDEZWUokVKYGhbfG6rPUX1HW9HqY1OlyqU1gT1XQYViCSijsCI9bW1cvL3cd
+\restrict lFSDhtPmGCf0RhMGANmt2z3MGuzzRxUO9pNwk1iKsfYCUdLT1bPdLYpBm8KgSu5
 
 -- Dumped from database version 17.11 (Debian 17.11-0+deb13u1)
 -- Dumped by pg_dump version 17.11 (Debian 17.11-0+deb13u1)
@@ -44,9 +44,9 @@ CREATE DATABASE "ABAGNALE" WITH TEMPLATE = template0 ENCODING = 'UTF8' LOCALE_PR
 
 ALTER DATABASE "ABAGNALE" OWNER TO abagnale;
 
-\unrestrict LKcQDEZWUokVKYGhbfG6rPUX1HW9HqY1OlyqU1gT1XQYViCSijsCI9bW1cvL3cd
+\unrestrict lFSDhtPmGCf0RhMGANmt2z3MGuzzRxUO9pNwk1iKsfYCUdLT1bPdLYpBm8KgSu5
 \connect "ABAGNALE"
-\restrict LKcQDEZWUokVKYGhbfG6rPUX1HW9HqY1OlyqU1gT1XQYViCSijsCI9bW1cvL3cd
+\restrict lFSDhtPmGCf0RhMGANmt2z3MGuzzRxUO9pNwk1iKsfYCUdLT1bPdLYpBm8KgSu5
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -628,10 +628,10 @@ CREATE INDEX "IDENTIFIERS_EXCHANGE_ID_SYMBOL_idx" ON public."IDENTIFIERS" USING 
 
 
 --
--- Name: PLOTS_DATAPOINTS_PLOTS_ID_idx; Type: INDEX; Schema: public; Owner: abagnale
+-- Name: PLOTS_DATAPOINTS_PLOT_ID_X_Y_idx; Type: INDEX; Schema: public; Owner: abagnale
 --
 
-CREATE INDEX "PLOTS_DATAPOINTS_PLOTS_ID_idx" ON public."PLOTS_DATAPOINTS" USING btree ("PLOT_ID");
+CREATE INDEX "PLOTS_DATAPOINTS_PLOT_ID_X_Y_idx" ON public."PLOTS_DATAPOINTS" USING btree ("PLOT_ID") INCLUDE ("X", "Y");
 
 
 --
@@ -762,5 +762,5 @@ ALTER TABLE ONLY public."TREND_PLOTS"
 -- PostgreSQL database dump complete
 --
 
-\unrestrict LKcQDEZWUokVKYGhbfG6rPUX1HW9HqY1OlyqU1gT1XQYViCSijsCI9bW1cvL3cd
+\unrestrict lFSDhtPmGCf0RhMGANmt2z3MGuzzRxUO9pNwk1iKsfYCUdLT1bPdLYpBm8KgSu5
 
