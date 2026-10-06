@@ -384,8 +384,6 @@ static int market_plot_func(void *restrict const a) {
                            ((struct db_datapoint_rec *)items[i])->y);
     }
 
-    db_tx_plot_enanos(p_ctx->db, db_plot.id, arg->e_ns);
-
     db_candle.o = arg->cd->o;
     db_candle.h = arg->cd->h;
     db_candle.l = arg->cd->l;

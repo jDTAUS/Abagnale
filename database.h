@@ -246,8 +246,6 @@ void db_trade_sfill(const void *const, const char *const, const char *const,
 
 void db_trade_delete(const void *const, const char *const);
 
-void db_tx_plot_enanos(const void *const, const char *const,
-                       const struct Numeric *const);
 void db_tx_plot_datapoint(const void *const, const char *const,
                           const struct Numeric *const,
                           const struct Numeric *const);

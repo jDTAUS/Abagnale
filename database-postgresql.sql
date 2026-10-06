@@ -18,7 +18,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict lFSDhtPmGCf0RhMGANmt2z3MGuzzRxUO9pNwk1iKsfYCUdLT1bPdLYpBm8KgSu5
+\restrict Xg4zwRemFIjutzdx5T9NwyzwLpxM5c8QAEDbs0WogIUYMh7EZN3ObhoyJUpcab1
 
 -- Dumped from database version 17.11 (Debian 17.11-0+deb13u1)
 -- Dumped by pg_dump version 17.11 (Debian 17.11-0+deb13u1)
@@ -44,9 +44,9 @@ CREATE DATABASE "ABAGNALE" WITH TEMPLATE = template0 ENCODING = 'UTF8' LOCALE_PR
 
 ALTER DATABASE "ABAGNALE" OWNER TO abagnale;
 
-\unrestrict lFSDhtPmGCf0RhMGANmt2z3MGuzzRxUO9pNwk1iKsfYCUdLT1bPdLYpBm8KgSu5
+\unrestrict Xg4zwRemFIjutzdx5T9NwyzwLpxM5c8QAEDbs0WogIUYMh7EZN3ObhoyJUpcab1
 \connect "ABAGNALE"
-\restrict lFSDhtPmGCf0RhMGANmt2z3MGuzzRxUO9pNwk1iKsfYCUdLT1bPdLYpBm8KgSu5
+\restrict Xg4zwRemFIjutzdx5T9NwyzwLpxM5c8QAEDbs0WogIUYMh7EZN3ObhoyJUpcab1
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -233,10 +233,7 @@ COMMENT ON TABLE public."IDENTIFIERS" IS 'Symbol to id mappings.';
 --
 
 CREATE TABLE public."PLOTS" (
-    "PLOT_ID" uuid DEFAULT gen_random_uuid() NOT NULL,
-    "SNANOS" numeric NOT NULL,
-    "ENANOS" numeric NOT NULL,
-    CONSTRAINT "PLOTS_check" CHECK (("SNANOS" <= "ENANOS"))
+    "PLOT_ID" uuid DEFAULT gen_random_uuid() NOT NULL
 );
 
 
@@ -635,20 +632,6 @@ CREATE INDEX "PLOTS_DATAPOINTS_PLOT_ID_X_Y_idx" ON public."PLOTS_DATAPOINTS" USI
 
 
 --
--- Name: PLOTS_ENANOS_idx; Type: INDEX; Schema: public; Owner: abagnale
---
-
-CREATE INDEX "PLOTS_ENANOS_idx" ON public."PLOTS" USING btree ("ENANOS");
-
-
---
--- Name: PLOTS_SNANOS_idx; Type: INDEX; Schema: public; Owner: abagnale
---
-
-CREATE INDEX "PLOTS_SNANOS_idx" ON public."PLOTS" USING btree ("SNANOS");
-
-
---
 -- Name: SAMPLES_EXCHANGE_ID_MARKET_ID_NANOS_PRICE_idx; Type: INDEX; Schema: public; Owner: abagnale
 --
 
@@ -762,5 +745,5 @@ ALTER TABLE ONLY public."TREND_PLOTS"
 -- PostgreSQL database dump complete
 --
 
-\unrestrict lFSDhtPmGCf0RhMGANmt2z3MGuzzRxUO9pNwk1iKsfYCUdLT1bPdLYpBm8KgSu5
+\unrestrict Xg4zwRemFIjutzdx5T9NwyzwLpxM5c8QAEDbs0WogIUYMh7EZN3ObhoyJUpcab1
 

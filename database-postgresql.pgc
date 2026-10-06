@@ -638,32 +638,6 @@ void db_vacuum_plots(const void *const db, const char *const e_id,
         AND c."MARKET_ID" = :sql_m_id
         AND c."CNANOS" < :sql_exp;
   }
-  EXEC SQL AT :con
-    UPDATE "PLOTS" p
-    SET
-      "SNANOS" = dp."MIN_X",
-      "ENANOS" = dp."MAX_X"
-    FROM (
-      SELECT
-        "PLOT_ID",
-        MIN("X") AS "MIN_X",
-        MAX("X") AS "MAX_X"
-      FROM "PLOTS_DATAPOINTS"
-      GROUP BY "PLOT_ID"
-    ) dp
-    WHERE p."PLOT_ID" = dp."PLOT_ID";
-  EXEC SQL AT :con
-    UPDATE "PLOTS"
-    SET
-      "SNANOS" = 0,
-      "ENANOS" = 0
-    WHERE
-      "PLOT_ID" NOT IN (
-        SELECT
-          DISTINCT "PLOT_ID"
-        FROM
-          "PLOTS_DATAPOINTS"
-      );
   EXEC SQL AT :con COMMIT;
   // clang-format on
 #ifdef ABAG_SQL_DEBUG
@@ -1659,33 +1633,6 @@ fatal:
         sqlca.sqlerrm.sqlerrmc);
 }
 
-void db_tx_plot_enanos(const void *const db, const char *const pl_id,
-                       const struct Numeric *const enanos) {
-#ifdef ABAG_SQL_DEBUG
-  ECPGdebug(1, stdout);
-#endif
-  // clang-format off
-  EXEC SQL BEGIN DECLARE SECTION;
-  const char *con = String_chars(db);
-  const char *sql_id = pl_id;
-  const numeric *sql_enanos = Numeric_db(enanos);
-  EXEC SQL END DECLARE SECTION;
-  EXEC SQL WHENEVER SQLWARNING CALL db_warn();
-  EXEC SQL WHENEVER SQLERROR GOTO fatal;
-  EXEC SQL WHENEVER NOT FOUND GOTO fatal;
-  EXEC SQL AT :con
-    UPDATE "PLOTS" SET "ENANOS" = :sql_enanos
-    WHERE "PLOT_ID" = :sql_id;
-  // clang-format on
-#ifdef ABAG_SQL_DEBUG
-  ECPGdebug(0, stdout);
-#endif
-  return;
-fatal:
-  fatal("%s: SQLSTATE %s: SQLCODE %ld: %s", con, sqlca.sqlstate, sqlca.sqlcode,
-        sqlca.sqlerrm.sqlerrmc);
-}
-
 void db_tx_plot_datapoint(const void *const db, const char *const pl_id,
                           const struct Numeric *const x,
                           const struct Numeric *const y) {
@@ -1733,13 +1680,15 @@ void db_tx_trend_plot(struct db_plot_rec *plot, const void *const db,
   EXEC SQL AT :con
     SELECT
       p."PLOT_ID",
-      p."SNANOS",
-      p."ENANOS"
+      COALESCE(MIN(dp."X"), 0),
+      COALESCE(MAX(dp."X"), 0)
     INTO :id, :snanos, :enanos
     FROM "TREND_PLOTS" t
       JOIN "PLOTS" p ON t."PLOT_ID" = p."PLOT_ID"
+      LEFT JOIN "PLOTS_DATAPOINTS" dp ON p."PLOT_ID" = dp."PLOT_ID"
     WHERE t."EXCHANGE_ID" = :sql_e_id
-      AND t."MARKET_ID" = :sql_m_id;
+      AND t."MARKET_ID" = :sql_m_id
+    GROUP BY p."PLOT_ID";
   // clang-format on
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(0, stdout);
@@ -1752,10 +1701,8 @@ not_found:
   EXEC SQL WHENEVER NOT FOUND GOTO fatal;
   EXEC SQL AT :con
     INSERT INTO "PLOTS"
-      ("SNANOS", "ENANOS")
-    VALUES
-      (:snanos, :enanos)
-    RETURNING "PLOT_ID", "SNANOS", "ENANOS" INTO :id, :snanos, :enanos;
+    DEFAULT VALUES
+    RETURNING "PLOT_ID" INTO :id;
   EXEC SQL AT :con
     INSERT INTO "PLOTS_DATAPOINTS"
       ("PLOT_ID", "X", "Y")
@@ -1770,20 +1717,12 @@ not_found:
     VALUES
       ( :sql_e_id, :sql_m_id, :id);
   EXEC SQL AT :con
-    UPDATE "PLOTS" p
-    SET
-      "SNANOS" = dp."MIN_X",
-      "ENANOS" = dp."MAX_X"
-    FROM (
-      SELECT
-        MIN("X") AS "MIN_X",
-        MAX("X") AS "MAX_X"
-      FROM "PLOTS_DATAPOINTS"
-      WHERE "PLOT_ID" = :id
-    ) dp
-    WHERE p."PLOT_ID" = :id
-    RETURNING p."SNANOS", p."ENANOS"
-    INTO :snanos, :enanos;
+    SELECT
+      COALESCE(MIN("X"), 0),
+      COALESCE(MAX("X"), 0)
+    INTO :snanos, :enanos
+    FROM "PLOTS_DATAPOINTS"
+    WHERE "PLOT_ID" = :id;
   // clang-format on
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(0, stdout);
@@ -1856,9 +1795,7 @@ void db_tx_trend_plot_marker(const void *const db, const char *const e_id,
   EXEC SQL WHENEVER NOT FOUND GOTO fatal;
   EXEC SQL AT :con
     INSERT INTO "PLOTS"
-      ("SNANOS", "ENANOS")
-    VALUES
-      (0, 0)
+    DEFAULT VALUES
     RETURNING "PLOT_ID" INTO :sql_id;
   EXEC SQL AT :con
     INSERT INTO "PLOTS_DATAPOINTS"
