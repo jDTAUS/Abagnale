@@ -1,4 +1,4 @@
-/* $JDTAUS$ */
+/* $JDTAUS: json.h 9643 2026-07-29 08:15:42Z schulte $ */
 
 /*
  * Copyright (c) 2026 Christian Schulte <cs@schulte.it>
