@@ -424,6 +424,17 @@ static int market_plot_func(void *restrict const a) {
 
     market_plot_arg_delete(arg);
     trend_market_plot(p_ctx->db, p_ctx->e, p_ctx->m, plot_fn);
+
+    if (verbose) {
+      char *restrict const s_iso = nanos_to_iso8601(arg->s_ns);
+      char *restrict const e_iso = nanos_to_iso8601(arg->e_ns);
+
+      wout("%s: %s: Plot: %s->%s (%s)\n", String_chars(p_ctx->e->nm),
+           String_chars(p_ctx->m->nm), s_iso, e_iso, plot_fn);
+
+      heap_free(s_iso);
+      heap_free(e_iso);
+    }
   } while (!terminated);
 
   db_disconnect(p_ctx->db);
