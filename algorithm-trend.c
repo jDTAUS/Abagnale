@@ -422,7 +422,6 @@ static int market_plot_func(void *restrict const a) {
     if (r < 0 || (size_t)r >= sizeof(plot_fn))
       panic();
 
-    market_plot_arg_delete(arg);
     trend_market_plot(p_ctx->db, p_ctx->e, p_ctx->m, plot_fn);
 
     if (verbose) {
@@ -435,6 +434,8 @@ static int market_plot_func(void *restrict const a) {
       heap_free(s_iso);
       heap_free(e_iso);
     }
+
+    market_plot_arg_delete(arg);
   } while (!terminated);
 
   db_disconnect(p_ctx->db);
