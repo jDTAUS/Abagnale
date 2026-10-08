@@ -1689,6 +1689,21 @@ void db_tx_trend_plot(struct db_plot_rec *plot, const void *const db,
     WHERE t."EXCHANGE_ID" = :sql_e_id
       AND t."MARKET_ID" = :sql_m_id
     GROUP BY p."PLOT_ID";
+  EXEC SQL AT :con
+    INSERT INTO "PLOTS_DATAPOINTS"
+      ("PLOT_ID", "X", "Y")
+      SELECT :id, "NANOS", "PRICE"
+      FROM "SAMPLES"
+      WHERE "EXCHANGE_ID" = :sql_e_id
+        AND "MARKET_ID" = :sql_m_id
+        AND "NANOS" >= :enanos;
+  EXEC SQL AT :con
+    SELECT
+      COALESCE(MIN("X"), 0),
+      COALESCE(MAX("X"), 0)
+    INTO :snanos, :enanos
+    FROM "PLOTS_DATAPOINTS"
+    WHERE "PLOT_ID" = :id;
   // clang-format on
 #ifdef ABAG_SQL_DEBUG
   ECPGdebug(0, stdout);
