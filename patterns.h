@@ -19,7 +19,7 @@
 
 /*
  * $SchulteIT: patterns.h 15199 2025-10-27 07:48:03Z schulte $
- * $JDTAUS$
+ * $JDTAUS: patterns.h 9714 2026-09-07 11:09:55Z schulte $
  * Origin: OpenBSD 7.8 httpd/patterns.h
  * Modifications: Use standard C intmax_t instead of POSIX off_t
  *                Use struct String instead of char
