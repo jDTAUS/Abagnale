@@ -205,6 +205,7 @@ static char coinbase_order_create_path[URL_MAX_LENGTH + 1];
 static char coinbase_products_path[URL_MAX_LENGTH + 1];
 static unsigned long coinbase_stall_ms;
 static void *restrict coinbase_db;
+static mtx_t coinbase_db_mtx;
 static struct String *restrict coinbase_authorization;
 
 static struct Array *restrict markets;
@@ -1213,6 +1214,7 @@ static void coinbase_init(void) {
   accounts_reload = true;
   pricing = NULL;
   mutex_init(&pricing_mutex);
+  mutex_init(&coinbase_db_mtx);
   tls_create(&coinbase_tls_key, coinbase_tls_dtor);
 }
 
@@ -1240,6 +1242,7 @@ static void coinbase_destroy(void) {
   Map_delete(accounts_by_symbol, NULL);
   Pricing_delete(pricing);
   mutex_destroy(&pricing_mutex);
+  mutex_destroy(&coinbase_db_mtx);
   tls_delete(coinbase_tls_key);
 }
 
@@ -1354,7 +1357,9 @@ parse_product(const struct wcjson_document *restrict const doc,
   if (errno)
     goto ret;
 
+  mutex_lock(&coinbase_db_mtx);
   db_symbol_to_id(m_id, coinbase_db, COINBASE_UUID, String_chars(j_product_id));
+  mutex_unlock(&coinbase_db_mtx);
 
   // Extract scale from price increment.
   const char *restrict const p_dot =
@@ -2196,7 +2201,9 @@ order_create_body(char *restrict const mb, size_t *restrict const mb_len,
   struct wcjson wc_json = WCJSON_INITIALIZER;
   int r = -1;
 
+  mutex_lock(&coinbase_db_mtx);
   db_uuid(cl_id, coinbase_db);
+  mutex_unlock(&coinbase_db_mtx);
 
   struct wcjson_document doc = {
       .values = (struct wcjson_value[24]){{0}},

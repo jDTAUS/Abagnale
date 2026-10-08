@@ -280,6 +280,7 @@ static struct {
 
 static const struct ExchangeConfig *restrict bitvavo_cnf;
 static void *restrict bitvavo_db;
+static mtx_t bitvavo_db_mtx;
 static char bitvavo_rest_uri[URI_MAX + 1];
 static char bitvavo_rest_accounts_path[URI_MAX + 1];
 static char bitvavo_rest_fees_path[URI_MAX + 1];
@@ -472,6 +473,7 @@ static void bitvavo_init(void) {
   }
 
   tss_create(&bitvavo_tls_key, bitvavo_tls_dtor);
+  mutex_init(&bitvavo_db_mtx);
 
   markets = Array_new(DEFAULT_BITVAVO_MARKETS_CAPACITY);
   markets_by_id = Map_new(StringMapOps, DEFAULT_BITVAVO_MARKETS_CAPACITY);
@@ -523,6 +525,7 @@ static void bitvavo_destroy(void) {
   Map_delete(pricings_by_id, Pricing_delete);
   Queue_delete(orders, Order_delete);
   Queue_delete(samples, Sample_delete);
+  mutex_destroy(&bitvavo_db_mtx);
 }
 
 static void bitvavo_start(void) {
@@ -639,7 +642,9 @@ bitvavo_parse_account(const struct wcjson_document *restrict const doc,
   if (errno)
     goto ret;
 
+  mutex_lock(&bitvavo_db_mtx);
   db_symbol_to_id(a_id, bitvavo_db, BITVAVO_UUID, String_chars(j_symbol));
+  mutex_unlock(&bitvavo_db_mtx);
 
   a = Account_new();
   a->id = String_cnew(a_id);
@@ -758,7 +763,9 @@ bitvavo_parse_market(const struct wcjson_document *restrict const doc,
   if (errno)
     goto ret;
 
+  mutex_lock(&bitvavo_db_mtx);
   db_symbol_to_id(m_id, bitvavo_db, BITVAVO_UUID, String_chars(j_market));
+  mutex_unlock(&bitvavo_db_mtx);
 
   // Extract price scale from tickSize
   const char *restrict const t_dot = strchr(String_chars(j_tickSize_s), '.');
@@ -1306,7 +1313,9 @@ bitvavo_account_by_symbol(struct String *restrict const sym) {
    */
 
   if (a == NULL) {
+    mutex_lock(&bitvavo_db_mtx);
     db_symbol_to_id(a_id, bitvavo_db, BITVAVO_UUID, String_chars(sym));
+    mutex_unlock(&bitvavo_db_mtx);
 
     a = Account_new();
     a->id = String_cnew(a_id);
