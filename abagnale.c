@@ -3274,7 +3274,6 @@ static int market_order_func(void *restrict const arg) {
     void *const *restrict items;
 
     Queue_lock(w_ctx->market_queue);
-    w_ctx->running = true;
 
     struct Order *restrict const order =
         Queue_dequeue_await(w_ctx->market_queue);
@@ -3426,7 +3425,6 @@ static int market_sample_func(void *restrict const arg) {
     bool market_ready = true;
 
     Queue_lock(w_ctx->market_queue);
-    w_ctx->running = true;
 
     struct Sample *restrict const sample =
         Queue_dequeue_await(w_ctx->market_queue);
@@ -3594,7 +3592,6 @@ static int market_trade_volatility_func(void *restrict const arg) {
     bool err = false;
 
     Queue_lock(w_ctx->market_queue);
-    w_ctx->running = true;
 
     struct Trade *restrict const t = Queue_dequeue_await(w_ctx->market_queue);
 
@@ -3721,6 +3718,9 @@ static int market_trade_volatility_func(void *restrict const arg) {
 }
 
 inline static void ticker_worker_delete(void *restrict const entry) {
+  if (entry == NULL)
+    return;
+
   struct worker_ctx *restrict const w_ctx = entry;
   Queue_delete(w_ctx->market_queue, Sample_delete);
   Market_delete(w_ctx->m);
@@ -3846,6 +3846,9 @@ static int exchange_sample_func(void *restrict const arg) {
 }
 
 inline static void order_worker_delete(void *restrict const entry) {
+  if (entry == NULL)
+    return;
+
   struct worker_ctx *restrict const w_ctx = entry;
   Queue_delete(w_ctx->market_queue, Order_delete);
   Market_delete(w_ctx->m);
@@ -3951,7 +3954,7 @@ static int exchange_order_func(void *restrict const arg) {
   thread_exit(EXIT_SUCCESS);
 }
 
-static inline void
+inline static void
 trade_volatility_queue_entry_delete(void *restrict const entry) {
   if (entry == NULL)
     return;
@@ -3968,6 +3971,9 @@ trade_volatility_queue_entry_delete(void *restrict const entry) {
 }
 
 inline static void trade_volatility_worker_delete(void *restrict const entry) {
+  if (entry == NULL)
+    return;
+
   struct worker_ctx *restrict const w_ctx = entry;
   Queue_delete(w_ctx->market_queue, trade_volatility_queue_entry_delete);
   Market_delete(w_ctx->m);
@@ -3993,7 +3999,7 @@ static int trade_volatility_func(void *restrict const arg) {
     if (trade == NULL) {
       if (Queue_dequeue_timedout(trade_volatility_queue) &&
           Queue_size(trade_volatility_queue) > 0) {
-        // trade_volatility_enqueue_await may have enqueued during await
+        // trade_volatility_enqueue may have enqueued during await
         Queue_unlock(trade_volatility_queue);
         continue;
       }
