@@ -348,7 +348,6 @@ static int market_plot_func(void *restrict const a) {
 
   do {
     Queue_lock(p_ctx->market_queue);
-    p_ctx->running = true;
 
     struct market_plot_arg *restrict const arg =
         Queue_dequeue_await(p_ctx->market_queue);
