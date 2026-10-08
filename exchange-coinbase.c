@@ -2430,22 +2430,19 @@ static struct Pricing *coinbase_pricing(const struct Market *restrict const m) {
 
   mutex_lock(&pricing_mutex);
 
-  if (pricing != NULL)
-    goto ret;
+  if (pricing == NULL) {
+    int r = snprintf(url, sizeof(url), "%s%s?product_type=SPOT",
+                     coinbase_rest_uri, coinbase_fees_path);
 
-  int r = snprintf(url, sizeof(url), "%s%s?product_type=SPOT",
-                   coinbase_rest_uri, coinbase_fees_path);
+    if (r < 0 || (size_t)r >= sizeof(url))
+      panic();
 
-  if (r < 0 || (size_t)r >= sizeof(url))
-    panic();
+    if (coinbase_rest_query(rsp_doc, url, "GET", coinbase_fees_path, NULL, 0) <
+        0)
+      goto ret;
 
-  if (coinbase_rest_query(rsp_doc, url, "GET", coinbase_fees_path, NULL, 0) <
-      0) {
-    pricing = NULL;
-    goto ret;
+    pricing = parse_pricing(rsp_doc, rsp_doc->values);
   }
-
-  pricing = parse_pricing(rsp_doc, rsp_doc->values);
 ret:
   if (pricing != NULL)
     pricing->mtx = &pricing_mutex;

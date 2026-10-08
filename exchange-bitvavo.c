@@ -1335,27 +1335,24 @@ static struct Pricing *bitvavo_pricing(const struct Market *restrict const m) {
   Map_lock(pricings_by_id);
   struct Pricing *restrict p = Map_get(pricings_by_id, m->id);
 
-  if (p != NULL) {
-    p->mtx = Map_mutex(pricings_by_id);
-    return p;
+  if (p == NULL) {
+    const struct bitvavo_tls *restrict const tls = bitvavo_tls();
+    struct wcjson_document *restrict rsp_doc = tls->bitvavo_pricing.rsp_doc;
+    char url[URI_MAX];
+    int r = snprintf(url, sizeof(url), "%s%s?market=%s", bitvavo_rest_uri,
+                     bitvavo_rest_fees_path, String_chars(m->sym));
+
+    if (r < 0 || (size_t)r >= sizeof(url))
+      panic();
+
+    // Rate limit weight points: 1
+    thread_sleep(&bitvavo_request_rate);
+
+    if (bitvavo_rest_query(rsp_doc, url, "GET", mg_url_uri(url), NULL, 0) < 0)
+      goto ret;
+
+    p = bitvavo_parse_fee(rsp_doc);
   }
-
-  const struct bitvavo_tls *restrict const tls = bitvavo_tls();
-  struct wcjson_document *restrict rsp_doc = tls->bitvavo_pricing.rsp_doc;
-  char url[URI_MAX];
-  int r = snprintf(url, sizeof(url), "%s%s?market=%s", bitvavo_rest_uri,
-                   bitvavo_rest_fees_path, String_chars(m->sym));
-
-  if (r < 0 || (size_t)r >= sizeof(url))
-    panic();
-
-  // Rate limit weight points: 1
-  thread_sleep(&bitvavo_request_rate);
-
-  if (bitvavo_rest_query(rsp_doc, url, "GET", mg_url_uri(url), NULL, 0) < 0)
-    goto ret;
-
-  p = bitvavo_parse_fee(rsp_doc);
 ret:
   if (p != NULL) {
     Map_put(pricings_by_id, m->id, p);
