@@ -1724,8 +1724,7 @@ not_found:
       SELECT :id, "NANOS", "PRICE"
       FROM "SAMPLES"
       WHERE "EXCHANGE_ID" = :sql_e_id
-        AND "MARKET_ID" = :sql_m_id
-        AND "NANOS" >= :snanos;
+        AND "MARKET_ID" = :sql_m_id;
   EXEC SQL AT :con
     INSERT INTO "TREND_PLOTS"
       ("EXCHANGE_ID", "MARKET_ID", "PLOT_ID")

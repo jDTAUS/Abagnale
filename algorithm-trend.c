@@ -353,9 +353,6 @@ static int market_plot_func(void *restrict const a) {
 
     Queue_unlock(p_ctx->market_queue);
 
-    Numeric_copy_to(arg->s_ns, db_plot.snanos);
-    Numeric_copy_to(arg->e_ns, db_plot.enanos);
-
     db_tx_begin(p_ctx->db);
     db_tx_trend_plot(&db_plot, p_ctx->db, String_chars(p_ctx->e->id),
                      String_chars(p_ctx->m->id));
