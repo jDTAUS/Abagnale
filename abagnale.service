@@ -23,8 +23,8 @@ StateDirectoryMode=0750
 WorkingDirectory=/var/lib/abagnale
 Environment=PATH=/usr/bin:/usr/local/bin
 Environment=LC_CTYPE=C.UTF-8
-#Environment=PGPASSFILE=/etc/abagnale/abagnale.pgpass
-#Environment=PGSERVICEFILE=/etc/abagnale/abagnale.pgservice
+#Environment=PGPASSFILE=~/.pgpass
+#Environment=PGSERVICEFILE=~/.pgservice
 #Environment=ABAG_CONFIG_FILE=/etc/abagnale/abagnale.conf
 #Environment=ABAG_DATABASE_TARGET=ABAGNALE
 #Environment=ABAG_DATABASE_USER=abagnale
