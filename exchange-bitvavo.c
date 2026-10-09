@@ -562,14 +562,14 @@ static void bitvavo_stop(void) {
   thread_join(mg_mgr_worker, NULL);
 }
 
-static void bitvavo_signature(char signature[65], const uintmax_t timestamp,
+static void bitvavo_signature(char signature[65], const time_t timestamp,
                               const char *restrict const method,
                               const char *restrict const path,
                               const char *restrict const body) {
   uint8_t digest[32];
   char data[URI_MAX];
   const char digits[] = "0123456789abcdef";
-  int r = snprintf(data, sizeof(data), "%" PRIuMAX "%s%s%s", timestamp, method,
+  int r = snprintf(data, sizeof(data), "%" PRIdMAX "%s%s%s", timestamp, method,
                    path, body != NULL ? body : "");
 
   if (r < 0 || (size_t)r >= sizeof(data))
@@ -596,12 +596,12 @@ static int bitvavo_rest_query(struct wcjson_document *restrict rsp_doc,
                               const size_t body_len) {
   char signature[65];
   char timestamp[32];
-  const uintmax_t now = (uintmax_t)time(NULL) * 1000;
+  const time_t now = time(NULL) * 1000;
   struct Map *restrict const headers = Map_new(StringMapOps, 4);
 
   bitvavo_signature(signature, now, method, path, body);
 
-  int r = snprintf(timestamp, sizeof(timestamp), "%" PRIuMAX, now);
+  int r = snprintf(timestamp, sizeof(timestamp), "%" PRIdMAX, now);
 
   if (r < 0 || (size_t)r >= sizeof(timestamp))
     panic();
@@ -1599,8 +1599,8 @@ static int bitvavo_ws_authenticate(struct mg_connection *restrict const c) {
   int ret = -1;
   struct wcjson wc_json = WCJSON_INITIALIZER;
   struct wcjson_document req_doc = WCJSON_DOCUMENT_INITIALIZER;
-  const uintmax_t now = (uintmax_t)time(NULL) * 1000;
-  int r = snprintf(timestamp, sizeof(timestamp), "%" PRIuMAX, now);
+  const time_t now = time(NULL) * 1000;
+  int r = snprintf(timestamp, sizeof(timestamp), "%" PRIdMAX, now);
 
   if (r < 0 || (size_t)r >= sizeof(timestamp))
     panic();
