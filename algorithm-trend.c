@@ -67,7 +67,6 @@ struct market_plot_arg {
   struct Numeric *restrict e_ns;
   struct Numeric *restrict e_pr;
   struct Candle *restrict cd;
-  struct Array *restrict dp;
 };
 
 struct trend_tls {
@@ -133,16 +132,6 @@ static void trend_state_delete(void *restrict const e) {
   heap_free(e);
 }
 
-static void db_datapoint_rec_delete(void *restrict const e) {
-  if (e == NULL)
-    return;
-
-  struct db_datapoint_rec *restrict rec = e;
-  Numeric_delete(rec->x);
-  Numeric_delete(rec->y);
-  heap_free(rec);
-}
-
 static void market_plot_arg_delete(void *restrict const e) {
   if (e == NULL)
     return;
@@ -155,7 +144,6 @@ static void market_plot_arg_delete(void *restrict const e) {
   Numeric_delete(arg->e_ns);
   Numeric_delete(arg->e_pr);
   Candle_delete(arg->cd);
-  Array_delete(arg->dp, db_datapoint_rec_delete);
   heap_free(arg);
 }
 
@@ -335,8 +323,6 @@ static struct trend_state *trend_state(const void *restrict const db,
 
 static int market_plot_func(void *restrict const a) {
   struct market_plot_ctx *restrict const p_ctx = a;
-  void *const *restrict items;
-
   struct db_candle_rec db_candle = {0};
   struct db_plot_rec db_plot = {0};
   char plot_fn[BUFSIZ] = {0};
@@ -373,15 +359,6 @@ static int market_plot_func(void *restrict const a) {
     db_tx_begin(p_ctx->db);
     db_tx_trend_plot(&db_plot, p_ctx->db, String_chars(p_ctx->e->id),
                      String_chars(p_ctx->m->id));
-
-    items = Array_items(arg->dp);
-    for (size_t i = Array_size(arg->dp);
-         i-- > 0 && Numeric_cmp(((struct db_datapoint_rec *)items[i])->x,
-                                db_plot.enanos) > 0;) {
-      db_tx_plot_datapoint(p_ctx->db, db_plot.id,
-                           ((struct db_datapoint_rec *)items[i])->x,
-                           ((struct db_datapoint_rec *)items[i])->y);
-    }
 
     db_candle.o = arg->cd->o;
     db_candle.h = arg->cd->h;
@@ -424,8 +401,8 @@ static int market_plot_func(void *restrict const a) {
     trend_market_plot(p_ctx->db, p_ctx->e, p_ctx->m, plot_fn);
 
     if (verbose) {
-      char *restrict const s_iso = nanos_to_iso8601(arg->s_ns);
-      char *restrict const e_iso = nanos_to_iso8601(arg->e_ns);
+      char *restrict const s_iso = nanos_to_iso8601(db_plot.snanos);
+      char *restrict const e_iso = nanos_to_iso8601(db_plot.enanos);
 
       wout("%s: %s: Plot: %s->%s (%s)\n", String_chars(p_ctx->e->nm),
            String_chars(p_ctx->m->nm), s_iso, e_iso, plot_fn);
@@ -810,20 +787,8 @@ static struct Position *trend_position_open(
     plot_arg->s_pr = Numeric_copy(head->price);
     plot_arg->e_ns = Numeric_copy(sample->nanos);
     plot_arg->e_pr = Numeric_copy(sample->price);
-    plot_arg->dp = Array_new(Array_size(samples));
     plot_arg->cd = Candle_new();
     Candle_copy_to(&t->open_cd, plot_arg->cd);
-
-    items = Array_items(samples);
-    for (size_t i = Array_size(samples); i-- > 0;) {
-      struct Sample *restrict const s = items[i];
-      struct db_datapoint_rec *restrict const dp_rec =
-          heap_calloc(1, sizeof(*dp_rec));
-
-      dp_rec->x = Numeric_copy(s->nanos);
-      dp_rec->y = Numeric_copy(s->price);
-      Array_add_tail(plot_arg->dp, dp_rec);
-    }
 
     market_plot_enqueue(e, m, plot_arg);
   }
