@@ -3404,11 +3404,10 @@ static int market_order_func(void *restrict const arg) {
 
   db_disconnect(w_ctx->db);
 
-  thread_group_end_thread(w_ctx->threads);
-
   if (!w_ctx->running)
     Queue_unlock(w_ctx->market_queue);
 
+  thread_group_end_thread(w_ctx->threads);
   thread_exit(EXIT_SUCCESS);
 }
 
@@ -3569,14 +3568,14 @@ static int market_sample_func(void *restrict const arg) {
 
   db_disconnect(w_ctx->db);
 
-  thread_group_end_thread(w_ctx->threads);
-
   if (!w_ctx->running)
     Queue_unlock(w_ctx->market_queue);
 
   Numeric_delete(q_return);
   Numeric_delete(nanos);
   Numeric_delete(outdated_ns);
+
+  thread_group_end_thread(w_ctx->threads);
   thread_exit(EXIT_SUCCESS);
 }
 
@@ -3707,13 +3706,13 @@ static int market_trade_volatility_func(void *restrict const arg) {
 
   db_disconnect(w_ctx->db);
 
-  thread_group_end_thread(w_ctx->threads);
-
   if (!w_ctx->running)
     Queue_unlock(w_ctx->market_queue);
 
   Numeric_delete(tp_pc);
   Numeric_delete(r0);
+
+  thread_group_end_thread(w_ctx->threads);
   thread_exit(EXIT_SUCCESS);
 }
 
@@ -3950,6 +3949,7 @@ static int exchange_order_func(void *restrict const arg) {
   heap_free(e_ctx);
 
   Map_delete(order_workers, order_worker_delete);
+
   thread_group_end_thread(worker);
   thread_exit(EXIT_SUCCESS);
 }
@@ -4110,6 +4110,7 @@ static int trade_volatility_func(void *restrict const arg) {
   heap_free(v_ctx);
 
   Map_delete(trade_workers, trade_volatility_worker_delete);
+
   thread_group_end_thread(worker);
   thread_exit(EXIT_SUCCESS);
 }
@@ -4168,6 +4169,7 @@ static int stop_func(void *restrict const arg) {
     ((struct Exchange *)items[i])->stop();
 
   Queue_stop(trade_volatility_queue);
+
   thread_group_end_thread(worker);
   thread_exit(EXIT_SUCCESS);
 }

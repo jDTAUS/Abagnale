@@ -413,13 +413,13 @@ static int market_plot_func(void *restrict const a) {
 
   db_disconnect(p_ctx->db);
 
-  thread_group_end_thread(p_ctx->threads);
-
   if (!p_ctx->running)
     Queue_unlock(p_ctx->market_queue);
 
   Numeric_delete(db_plot.snanos);
   Numeric_delete(db_plot.enanos);
+
+  thread_group_end_thread(p_ctx->threads);
   thread_exit(EXIT_SUCCESS);
 }
 
@@ -550,6 +550,7 @@ static int plot_func(void *restrict const a) {
   thread_group_delete(p_threads);
 
   Map_delete(plot_workers, market_plot_worker_delete);
+
   thread_group_end_thread(threads);
   thread_exit(EXIT_SUCCESS);
 }
