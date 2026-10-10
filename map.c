@@ -71,7 +71,7 @@ const struct MapOps *const IdentityMapOps = &(const struct MapOps){
 
 inline struct Map *Map_new(const struct MapOps *restrict const ops,
                            const size_t capacity) {
-  struct Map *restrict const m = heap_malloc(sizeof(struct Map));
+  struct Map *restrict const m = heap_calloc(1, sizeof(struct Map));
   m->ops = ops;
   m->capacity = ((capacity | !capacity) + 1) & ~1U;
   m->buckets = heap_calloc(m->capacity, sizeof(struct Entry *));

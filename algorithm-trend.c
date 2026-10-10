@@ -308,7 +308,7 @@ static struct trend_state *trend_state(const void *restrict const db,
   if (st == NULL) {
     db_trend_state(db_st, db, String_chars(e_id), String_chars(m_id));
 
-    st = heap_malloc(sizeof(struct trend_state));
+    st = heap_calloc(1, sizeof(struct trend_state));
     st->cd_lnanos = Numeric_copy(db_st->cd_lnanos);
     st->cd_langle = Numeric_copy(db_st->cd_langle);
     st->cd_ltrend = candle_trend_db(db_st->cd_ltrend);

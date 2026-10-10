@@ -44,7 +44,7 @@ void Array_grow(struct Array *restrict const);
 void Array_shrink(struct Array *restrict const);
 
 struct Array *Array_new(const size_t c) {
-  struct Array *restrict const a = heap_malloc(sizeof(struct Array));
+  struct Array *restrict const a = heap_calloc(1, sizeof(struct Array));
   a->size = 0;
   a->offset = 0;
   a->capacity = ((c | !c) + 1) & ~1U;

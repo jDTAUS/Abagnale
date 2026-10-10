@@ -80,7 +80,7 @@ inline struct String *String_cnew(const char *restrict s) {
   str = Map_get(strings, &k);
   if (str == NULL) {
 #endif
-    str = heap_malloc(sizeof(struct String));
+    str = heap_calloc(1, sizeof(struct String));
     str->len = s_p - s;
     str->hc = hc;
     str->r_cnt = 1;
@@ -124,7 +124,7 @@ inline struct String *String_cnnew(const char *restrict s, size_t maxlen) {
 
   if (str == NULL) {
 #endif
-    str = heap_malloc(sizeof(struct String));
+    str = heap_calloc(1, sizeof(struct String));
     str->len = s_p - s;
     str->hc = hc;
     str->r_cnt = 1;
@@ -153,7 +153,7 @@ inline struct String *String_new(const struct String *restrict s,
   if (i > SIZE_MAX - c - 1 || c > SIZE_MAX - i - 1 || i + c > s->len)
     panic();
 
-  struct String *restrict const str = heap_malloc(sizeof(struct String));
+  struct String *restrict const str = heap_calloc(1, sizeof(struct String));
   str->len = c;
   str->hc = 5381;
   str->r_cnt = 1;
@@ -247,7 +247,7 @@ inline struct String *String_tolower(const struct String *restrict s,
   if (i > SIZE_MAX - c - 1 || c > SIZE_MAX - i - 1 || i + c > s->len)
     panic();
 
-  struct String *restrict const str = heap_malloc(sizeof(struct String));
+  struct String *restrict const str = heap_calloc(1, sizeof(struct String));
   str->len = c;
   str->hc = 5381;
   str->r_cnt = 1;
@@ -275,7 +275,7 @@ inline struct String *String_toupper(const struct String *restrict s,
   if (i > SIZE_MAX - c - 1 || c > SIZE_MAX - i - 1 || i + c > s->len)
     panic();
 
-  struct String *restrict const str = heap_malloc(sizeof(struct String));
+  struct String *restrict const str = heap_calloc(1, sizeof(struct String));
   str->len = c;
   str->hc = 5381;
   str->r_cnt = 1;

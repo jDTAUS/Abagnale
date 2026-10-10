@@ -44,7 +44,7 @@ struct Queue {
 
 inline struct Queue *Queue_new(const size_t capacity,
                                const struct timespec *restrict const timeout) {
-  struct Queue *restrict q = heap_malloc(sizeof(struct Queue));
+  struct Queue *restrict q = heap_calloc(1, sizeof(struct Queue));
   q->items = heap_calloc(capacity, sizeof(void *));
   mutex_init(&q->mtx);
   condition_init(&q->not_empty);

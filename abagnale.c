@@ -969,7 +969,7 @@ static void trade_state_save(const void *restrict const db,
 
 static inline struct Trade *trade_new(struct String *restrict const e_id,
                                       struct String *restrict const m_id) {
-  struct Trade *restrict const t = heap_malloc(sizeof(struct Trade));
+  struct Trade *restrict const t = heap_calloc(1, sizeof(struct Trade));
   t->id = NULL;
   t->e_id = String_copy(e_id);
   t->m_id = String_copy(m_id);
