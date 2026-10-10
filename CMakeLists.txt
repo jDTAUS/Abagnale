@@ -34,6 +34,8 @@ if(MSVC)
 	set(CMAKE_C_STANDARD_REQUIRED	ON)
 	set(CMAKE_C_EXTENSIONS	OFF)
 	file(TO_CMAKE_PATH	"$ENV{ALLUSERSPROFILE}"	PROG_DATA_DIR)
+	# Enable MSVC Native C11/C17/C23 Atomics support
+	add_compile_options(/experimental:c11atomics)
 	add_compile_definitions(HAVE_HOST_H)
 	add_compile_definitions(
 		DEFAULT_ABAG_CONFIG_FILE="${PROG_DATA_DIR}/Abagnale/abagnale.conf"
