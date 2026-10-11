@@ -379,11 +379,11 @@ static int market_plot_func(void *restrict const a) {
 
     db_tx_trend_plot_marker(p_ctx->db, String_chars(p_ctx->e->id),
                             String_chars(p_ctx->m->id), arg->s_ns, arg->s_pr,
-                            "LEFT");
+                            "RIGHT");
 
     db_tx_trend_plot_marker(p_ctx->db, String_chars(p_ctx->e->id),
                             String_chars(p_ctx->m->id), arg->e_ns, arg->s_pr,
-                            "RIGHT");
+                            "LEFT");
 
     db_tx_commit(p_ctx->db);
 
