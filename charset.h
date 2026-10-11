@@ -1,4 +1,4 @@
-/* $JDTAUS$ */
+/* $JDTAUS: charset.h 9634 2026-07-22 02:43:37Z schulte $ */
 
 /*
  * Copyright (c) 2026 Christian Schulte <cs@schulte.it>
