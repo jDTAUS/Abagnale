@@ -118,7 +118,7 @@ static const struct {
   int (*cmd)(int, char *[]);
 } cmd_tab[] = {
     {"volatility", "-e exchange -m market [-w nanos]", cmd_volatility},
-    {"vacuum", "[-b backup-dir] [-a analyze]", cmd_vacuum},
+    {"vacuum", "[-b backup-dir] [-a]", cmd_vacuum},
     {"plot", "-e exchange -m market -a algorithm [-f file]", cmd_plot},
     {"order", "-e exchange [-h] -m market -i id", cmd_order},
     {"market", "-e exchange [-h] -i id", cmd_market},
