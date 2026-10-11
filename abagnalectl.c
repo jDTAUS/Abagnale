@@ -129,8 +129,8 @@ static const struct {
     {"account", "-e exchange [-h] -i id", cmd_account},
     {"accounts", "-e exchange [-h] [-t UNKNOWN|CRYPTO|FIAT|PERP_FUTURES|VAULT]",
      cmd_accounts},
-    {"algorithms", "", cmd_algorithms},
-    {"exchanges", "", cmd_exchanges},
+    {"algorithms", "[-h]", cmd_algorithms},
+    {"exchanges", "[-h]", cmd_exchanges},
 };
 
 static const char *market_type_name(const enum market_type type) {
@@ -322,18 +322,59 @@ static int cmd_vacuum(int argc, char *argv[]) {
 }
 
 static int cmd_algorithms(int argc, char *argv[]) {
-  if (argc > 1)
+  int ch;
+  struct optparse options = {0};
+  bool header = false;
+
+  optparse_init(&options, argv);
+
+  while ((ch = optparse(&options, "h")) != -1) {
+    switch (ch) {
+    case 'h':
+      header = true;
+      break;
+    default:
+      usage();
+    }
+  }
+  argc -= options.optind;
+
+  if (argc > 0)
     usage();
 
+  if (header)
+    printf("ID\tNAME\n");
+
   for (size_t i = all_algorithms_nitems; i-- > 0;)
-    printf("%s\n", String_chars(all_algorithms[i]->nm));
+    printf("%s\t%s\n", String_chars(all_algorithms[i]->id),
+           String_chars(all_algorithms[i]->nm));
 
   return EXIT_SUCCESS;
 }
 
 static int cmd_exchanges(int argc, char *argv[]) {
-  if (argc > 1)
+  int ch;
+  struct optparse options = {0};
+  bool header = false;
+
+  optparse_init(&options, argv);
+
+  while ((ch = optparse(&options, "h")) != -1) {
+    switch (ch) {
+    case 'h':
+      header = true;
+      break;
+    default:
+      usage();
+    }
+  }
+  argc -= options.optind;
+
+  if (argc > 0)
     usage();
+
+  if (header)
+    printf("ID\tNAME\n");
 
   for (size_t i = all_exchanges_nitems; i-- > 0;)
     printf("%s\t%s\n", String_chars(all_exchanges[i]->id),
