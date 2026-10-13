@@ -204,7 +204,13 @@ inline void String_delete(void *restrict const s) {
     return;
   }
 #ifdef STRING_INTERNING
+#ifdef MULTI_THREADED
+  Map_lock(strings);
+#endif
   Map_remove(strings, str);
+#ifdef MULTI_THREADED
+  Map_unlock(strings);
+#endif
 #endif
 #ifdef MULTI_THREADED
   mutex_unlock(&str->mtx);
