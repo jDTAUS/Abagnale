@@ -323,6 +323,7 @@ static struct trend_state *trend_state(const void *restrict const db,
 
 static int market_plot_func(void *restrict const a) {
   struct market_plot_ctx *restrict const p_ctx = a;
+  struct thread_group *restrict const threads = p_ctx->threads;
   struct db_candle_rec db_candle = {0};
   struct db_plot_rec db_plot = {0};
   char plot_fn[BUFSIZ] = {0};
@@ -419,7 +420,7 @@ static int market_plot_func(void *restrict const a) {
   Numeric_delete(db_plot.snanos);
   Numeric_delete(db_plot.enanos);
 
-  thread_group_end_thread(p_ctx->threads);
+  thread_group_end_thread(threads);
   thread_exit(EXIT_SUCCESS);
 }
 

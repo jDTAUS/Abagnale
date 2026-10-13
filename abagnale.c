@@ -3262,6 +3262,7 @@ static struct Array *trades_load(const struct worker_ctx *restrict const w_ctx,
 
 static int market_order_func(void *restrict const arg) {
   struct worker_ctx *restrict const w_ctx = arg;
+  struct thread_group *restrict const threads = w_ctx->threads;
 
   w_ctx->db = db_connect(w_ctx->db_name);
 
@@ -3407,7 +3408,7 @@ static int market_order_func(void *restrict const arg) {
   if (!w_ctx->running)
     Queue_unlock(w_ctx->market_queue);
 
-  thread_group_end_thread(w_ctx->threads);
+  thread_group_end_thread(threads);
   thread_exit(EXIT_SUCCESS);
 }
 
@@ -3417,6 +3418,7 @@ static int market_sample_func(void *restrict const arg) {
   struct Numeric *restrict const nanos = Numeric_new();
   struct Numeric *restrict const outdated_ns = Numeric_new();
   struct worker_ctx *restrict const w_ctx = arg;
+  struct thread_group *restrict const threads = w_ctx->threads;
 
   w_ctx->db = db_connect(w_ctx->db_name);
 
@@ -3575,12 +3577,13 @@ static int market_sample_func(void *restrict const arg) {
   Numeric_delete(nanos);
   Numeric_delete(outdated_ns);
 
-  thread_group_end_thread(w_ctx->threads);
+  thread_group_end_thread(threads);
   thread_exit(EXIT_SUCCESS);
 }
 
 static int market_trade_volatility_func(void *restrict const arg) {
   struct worker_ctx *restrict const w_ctx = arg;
+  struct thread_group *restrict const threads = w_ctx->threads;
   struct Numeric *restrict const tp_pc = Numeric_new();
   struct Numeric *restrict const r0 = Numeric_new();
   void *const *restrict items;
@@ -3712,7 +3715,7 @@ static int market_trade_volatility_func(void *restrict const arg) {
   Numeric_delete(tp_pc);
   Numeric_delete(r0);
 
-  thread_group_end_thread(w_ctx->threads);
+  thread_group_end_thread(threads);
   thread_exit(EXIT_SUCCESS);
 }
 
