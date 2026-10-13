@@ -1,5 +1,5 @@
 /* $SchulteIT: string.c 15189 2025-10-27 05:41:45Z schulte $ */
-/* $JDTAUS$ */
+/* $JDTAUS: string.c 9824 2026-10-13 09:24:58Z schulte $ */
 
 /*
  * Copyright (c) 2018 - 2026 Christian Schulte <cs@schulte.it>
