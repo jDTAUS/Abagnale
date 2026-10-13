@@ -16,7 +16,7 @@
  */
 
 /*
- * $JDTAUS$
+ * $JDTAUS: heap-reallocarray.c 9640 2026-07-22 06:47:01Z schulte $
  * Origin: OpenBSD 7.9 lib/libc/stdlib/reallocarray.c
  * Modifications: Instead of returning NULL the function panics.
  */
