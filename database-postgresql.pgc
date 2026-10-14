@@ -128,6 +128,7 @@ void db_disconnect(void *const db) {
   EXEC SQL WHENEVER SQLWARNING CALL db_warn();
   EXEC SQL WHENEVER SQLERROR GOTO fatal;
   EXEC SQL WHENEVER NOT FOUND GOTO fatal;
+  EXEC SQL AT :con ROLLBACK;
   EXEC SQL DISCONNECT :con;
   // clang-format on
   String_delete(db);
