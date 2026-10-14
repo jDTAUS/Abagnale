@@ -539,9 +539,6 @@ static int plot_func(void *restrict const a) {
     Queue_unlock(p_ctx->market_queue);
   }
 
-  if (!plot_queue_dequeueing)
-    Queue_unlock(plot_queue);
-
   struct MapIterator *restrict it = MapIterator_new(plot_workers);
   while (MapIterator_next(it))
     Queue_stop(((struct market_plot_ctx *)MapIterator_value(it))->market_queue);
@@ -551,6 +548,9 @@ static int plot_func(void *restrict const a) {
   thread_group_delete(p_threads);
 
   Map_delete(plot_workers, market_plot_worker_delete);
+
+  if (!plot_queue_dequeueing)
+    Queue_unlock(plot_queue);
 
   thread_group_end_thread(threads);
   thread_exit(EXIT_SUCCESS);

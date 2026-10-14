@@ -4100,9 +4100,6 @@ static int trade_volatility_func(void *restrict const arg) {
     Queue_unlock(m_ctx->market_queue);
   }
 
-  if (!trade_volatility_queue_dequeueing)
-    Queue_unlock(trade_volatility_queue);
-
   struct MapIterator *restrict it = MapIterator_new(trade_workers);
   while (MapIterator_next(it))
     Queue_stop(((struct worker_ctx *)MapIterator_value(it))->market_queue);
@@ -4113,6 +4110,9 @@ static int trade_volatility_func(void *restrict const arg) {
   heap_free(v_ctx);
 
   Map_delete(trade_workers, trade_volatility_worker_delete);
+
+  if (!trade_volatility_queue_dequeueing)
+    Queue_unlock(trade_volatility_queue);
 
   thread_group_end_thread(worker);
   thread_exit(EXIT_SUCCESS);
