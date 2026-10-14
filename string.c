@@ -53,9 +53,17 @@ const void *const StringMapOps = &(const struct MapOps){
 
 #ifdef STRING_INTERNING
 struct Map *restrict strings;
+_Atomic bool strings_destroy;
 
-void string_init(void) { strings = Map_new(StringMapOps, 524288); }
-void string_destroy(void) { Map_delete(strings, String_delete); }
+void string_init(void) {
+  strings_destroy = false;
+  strings = Map_new(StringMapOps, 524288);
+}
+
+void string_destroy(void) {
+  strings_destroy = true;
+  Map_delete(strings, String_delete);
+}
 #endif
 
 inline struct String *String_cnew(const char *restrict s) {
@@ -197,21 +205,23 @@ inline void String_delete(void *restrict const s) {
   if (str->r_cnt-- == 0)
     panic();
 
+#ifdef STRING_INTERNING
+#ifdef MULTI_THREADED
+  Map_lock(strings);
+#endif
+  if (!strings_destroy && str->r_cnt < 2 && Map_exists(strings, str))
+    panic();
+#ifdef MULTI_THREADED
+  Map_unlock(strings);
+#endif
+#endif
+
   if (str->r_cnt > 0) {
 #ifdef MULTI_THREADED
     mutex_unlock(&str->mtx);
 #endif
     return;
   }
-#ifdef STRING_INTERNING
-#ifdef MULTI_THREADED
-  Map_lock(strings);
-#endif
-  Map_remove(strings, str);
-#ifdef MULTI_THREADED
-  Map_unlock(strings);
-#endif
-#endif
 #ifdef MULTI_THREADED
   mutex_unlock(&str->mtx);
   mutex_destroy(&str->mtx);
