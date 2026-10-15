@@ -525,19 +525,21 @@ static int plot_func(void *restrict const a) {
 
     Queue_enqueue_await(p_ctx->market_queue, arg);
 
-    if (!p_ctx->running && !terminated) {
-      // market_plot_func may have stopped during await
-      Queue_unlock(p_ctx->market_queue);
-      goto again;
-    }
+    if (!terminated) {
+      if (!p_ctx->running) {
+        // market_plot_func may have stopped during await
+        Queue_unlock(p_ctx->market_queue);
+        goto again;
+      }
 
-    if (Queue_enqueue_timedout(p_ctx->market_queue)) {
-      wout("%s: %s: Plots: Stalled: %zu/%zu %" PRIuMAX "s %" PRIuMAX "ns\n",
-           String_chars(p_ctx->e->nm), String_chars(p_ctx->m->nm),
-           Queue_size(p_ctx->market_queue), Queue_capacity(p_ctx->market_queue),
-           (uintmax_t)thread_timeout.tv_sec, (uintmax_t)thread_timeout.tv_nsec);
+      if (Queue_enqueue_timedout(p_ctx->market_queue)) {
+        wout("%s: %s: Plots: Stalled: %zu/%zu %" PRIuMAX "s %" PRIuMAX "ns\n",
+             String_chars(p_ctx->e->nm), String_chars(p_ctx->m->nm),
+             Queue_size(p_ctx->market_queue),
+             Queue_capacity(p_ctx->market_queue),
+             (uintmax_t)thread_timeout.tv_sec,
+             (uintmax_t)thread_timeout.tv_nsec);
 
-      if (!terminated) {
         Queue_unlock(p_ctx->market_queue);
         goto again;
       }
