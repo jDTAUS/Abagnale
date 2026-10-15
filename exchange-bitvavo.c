@@ -43,11 +43,11 @@
 #define JSON_BODY_MAX (size_t)32767
 
 #ifndef BITVAVO_TICKER_SIZE
-#define BITVAVO_TICKER_SIZE (2 ^ 8)
+#define BITVAVO_TICKER_SIZE (1UL << 8)
 #endif
 
 #ifndef BITVAVO_TICKERS_DAY
-#define BITVAVO_TICKERS_DAY (2 ^ 18)
+#define BITVAVO_TICKERS_DAY (1UL << 18)
 #endif
 
 #ifndef DEFAULT_BITVAVO_REST_URI
