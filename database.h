@@ -35,6 +35,7 @@
 #define DATABASE_TRADE_STATUS_MAX_LENGTH (size_t)7
 #define DATABASE_CANDLE_TREND_MAX_LENGTH (size_t)4
 #define DATABASE_TREND_MARKER_TYPE_MAX_LENGTH (size_t)5
+#define DATABASE_SYMBOL_MAX_LENGTH (size_t)128
 
 struct db_sample_rec {
   struct Numeric *nanos;
@@ -178,6 +179,8 @@ void db_vacuum_plots(const void *const, const char *const, const char *const,
                      const struct Numeric *const, const char *const);
 
 void db_symbol_to_id(char *const, const void *const, const char *const,
+                     const char *const);
+void db_id_to_symbol(char *const, const void *const, const char *const,
                      const char *const);
 
 void db_sample_create(const void *const, const char *const, const char *const,

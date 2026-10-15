@@ -97,6 +97,12 @@ void *db_connect(const char *const cname) {
       $1, $2, gen_random_uuid()
     ) RETURNING "ID";
 
+
+  EXEC SQL AT :con PREPARE symbol AS
+    SELECT "SYMBOL" FROM "IDENTIFIERS"
+    WHERE "EXCHANGE_ID" = $1
+      AND "ID" = $2;
+
   EXEC SQL AT :con PREPARE plot_datapoint AS
     INSERT INTO "PLOTS_DATAPOINTS" (
       "PLOT_ID",
@@ -262,6 +268,35 @@ not_found:
   EXEC SQL WHENEVER NOT FOUND GOTO fatal;
   EXEC SQL AT :con
     EXECUTE id_create USING :sql_e_id, :sql_symbol INTO :sql_id;
+  EXEC SQL AT :con COMMIT;
+  // clang-format on
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(0, stdout);
+#endif
+  return;
+fatal:
+  fatal("%s: SQLSTATE %s: SQLCODE %ld: %s", con, sqlca.sqlstate, sqlca.sqlcode,
+        sqlca.sqlerrm.sqlerrmc);
+}
+
+void db_id_to_symbol(char *const sym, const void *const db,
+                     const char *const e_id, const char *const id) {
+#ifdef ABAG_SQL_DEBUG
+  ECPGdebug(1, stdout);
+#endif
+  // clang-format off
+  EXEC SQL BEGIN DECLARE SECTION;
+  const char *con = String_chars(db);
+  const char *sql_e_id = e_id;
+  const char *sql_id = id;
+  char *sql_sym = sym;
+  EXEC SQL END DECLARE SECTION;
+  EXEC SQL WHENEVER SQLWARNING CALL db_warn();
+  EXEC SQL WHENEVER SQLERROR GOTO fatal;
+  EXEC SQL WHENEVER NOT FOUND GOTO fatal;
+  EXEC SQL AT :con BEGIN TRANSACTION ISOLATION LEVEL READ COMMITTED;
+  EXEC SQL AT :con
+    EXECUTE symbol USING :sql_e_id, :sql_id INTO :sql_sym;
   EXEC SQL AT :con COMMIT;
   // clang-format on
 #ifdef ABAG_SQL_DEBUG
