@@ -15,7 +15,7 @@
  */
 
 /*
- * $JDTAUS$
+ * $JDTAUS: wcjson-document.c 9634 2026-07-22 02:43:37Z schulte $
  * Origin: https://github.com/wcjson/wcjson v0.40
  * Modifications: Changed to include wcjson-document.h from current directory.
  */
