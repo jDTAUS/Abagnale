@@ -27,7 +27,9 @@
 
 #include "array.h"
 #include "heap.h"
+#include "proc.h"
 
+#include <stdint.h>
 #include <string.h>
 
 struct Array {
@@ -143,6 +145,8 @@ inline void Array_grow(struct Array *restrict const a) {
       memmove(&a->items[0], &a->items[a->offset], sizeof(void *) * a->size);
       a->offset = 0;
     } else {
+      if (a->capacity > SIZE_MAX / 2)
+        panic();
       a->capacity <<= 1;
       a->items = heap_reallocarray(a->items, a->capacity, sizeof(void *));
       heap_trim(0);
