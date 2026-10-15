@@ -346,7 +346,6 @@ trade at bitvavo using trend return $eur_return window 72h\
 	market ACU@EUR\
 	market AKT@EUR\
 	market BABY@EUR\
-	market BICO@EUR\
 	market BNB@EUR\
 	market CC@EUR\
 	market DOT@EUR\
@@ -357,10 +356,8 @@ trade at bitvavo using trend return $eur_return window 72h\
 	market RAY@EUR\
 	market RENDER@EUR\
 	market TIA@EUR\
-	market TRX@EUR\
 	market USDC@EUR\
 	market USELESS@EUR\
-	market WAL@EUR\
 	market XLM@EUR\
 	market XPL@EUR\
 	demand-timeout-min 2h demand-timeout-max 18h\
@@ -395,10 +392,10 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market BAND@EUR\
 	market BAT@EUR\
 	market BEAM@EUR\
+	market BICO@EUR\
 	market BIGTIME@EUR\
 	market BIO@EUR\
 	market BIRB@EUR\
-	market BLEND@EUR\
 	market BLUR@EUR\
 	market BOME@EUR\
 	market BRETT@EUR\
@@ -417,6 +414,7 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market COW@EUR\
 	market CRO@EUR\
 	market CROSS@EUR\
+	market CRT@EUR\
 	market CRV@EUR\
 	market CSPR@EUR\
 	market CTR@EUR\
@@ -439,6 +437,7 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market ENS@EUR\
 	market ENSO@EUR\
 	market ETC@EUR\
+	market EUL@EUR\
 	market F@EUR\
 	market FIDA@EUR\
 	market FLOCK@EUR\
@@ -462,8 +461,8 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market GWEI@EUR\
 	market HAEDAL@EUR\
 	market HIGH@EUR\
-	market HMSTR@EUR\
 	market HNT@EUR\
+	market HOME@EUR\
 	market HUMA@EUR\
 	market ICP@EUR\
 	market ICX@EUR\
@@ -474,7 +473,6 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market INJ@EUR\
 	market INX@EUR\
 	market IOST@EUR\
-	market IQ@EUR\
 	market IRYS@EUR\
 	market JASMY@EUR\
 	market JTO@EUR\
@@ -536,6 +534,7 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market PROM@EUR\
 	market PROMPT@EUR\
 	market PROVE@EUR\
+	market PNT@EUR\
 	market PUFFER@EUR\
 	market PYR@EUR\
 	market QUID@EUR\
@@ -580,6 +579,7 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market TRAC@EUR\
 	market TRB@EUR\
 	market TREE@EUR\
+	market TRX@EUR\
 	market TURBO@EUR\
 	market TWT@EUR\
 	market UP@EUR\
@@ -618,6 +618,7 @@ trade at bitvavo using trend return $usdc_return window 324h\
 	market ADA@USDC\
 	market ETH@USDC\
 	market TIA@USDC\
+	market XRP@USDC\
 	demand-timeout-min 10h demand-timeout-max 81h\
 	supply-timeout-min 10h supply-timeout-max 81h\
 	stop-loss-delay 135m stop-loss-delays 1\
@@ -631,6 +632,7 @@ trade at bitvavo using trend return $eur_return window 648h\
 	market ANKR@EUR\
 	market ARPA@EUR\
 	market BEL@EUR\
+	market BLEND@EUR\
 	market CPOOL@EUR\
 	market CTK@EUR\
 	market CTSI@EUR\
@@ -639,8 +641,10 @@ trade at bitvavo using trend return $eur_return window 648h\
 	market DYM@EUR\
 	market GMT@EUR\
 	market HFT@EUR\
+	market HMSTR@EUR\
 	market HOT@EUR\
 	market ID@EUR\
+	market IQ@EUR\
 	market MAGIC@EUR\
 	market MANTA@EUR\
 	market MEW@EUR\
@@ -652,6 +656,7 @@ trade at bitvavo using trend return $eur_return window 648h\
 	market SWEAT@EUR\
 	market SXT@EUR\
 	market UMA@EUR\
+	market USDCV@EUR\
 	market ZRC@EUR\
 	demand-timeout-min 20h demand-timeout-max 162h\
 	supply-timeout-min 20h supply-timeout-max 162h\
@@ -752,6 +757,7 @@ trade at bitvavo using trend return $eur_return window 1296h\
 
 trade at bitvavo using trend return $usdc_return window 1296h\
 	market DOGE@USDC\
+	market EURC@USDC\
 	market SUI@USDC\
 	demand-timeout-min 40h demand-timeout-max 324h\
 	supply-timeout-min 40h supply-timeout-max 324h\
