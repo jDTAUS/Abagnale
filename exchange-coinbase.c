@@ -212,12 +212,12 @@ static struct Array *restrict markets;
 static struct Map *restrict markets_by_id;
 static struct Map *restrict markets_by_symbol;
 static struct Map *restrict market_prices;
-static _Atomic bool markets_reload;
+static bool markets_reload;
 
 static struct Array *restrict accounts;
 static struct Map *restrict accounts_by_id;
 static struct Map *restrict accounts_by_symbol;
-static _Atomic bool accounts_reload;
+static bool accounts_reload;
 
 static struct Pricing *restrict pricing;
 static mtx_t pricing_mutex;
@@ -1004,8 +1004,12 @@ static void ws_evt_handler(struct mg_connection *c, int ev, void *ev_data) {
     wout("%s: %s: %lu MG_EV_WS_OPEN\n", coinbase_ws_uri, channel->name, c->id);
 #endif
     if (running) {
+      Array_lock(markets);
       markets_reload = true;
+      Array_unlock(markets);
+      Array_lock(accounts);
       accounts_reload = true;
+      Array_unlock(accounts);
       ws_subscribe(c, channel);
     } else
       c->is_closing = 1;
@@ -1534,7 +1538,9 @@ static struct Array *coinbase_markets(void) {
   Array_lock(markets);
 
   if (markets_reload) {
+    Array_lock(accounts);
     accounts_reload = true;
+    Array_unlock(accounts);
     int r = snprintf(url, sizeof(url), "%s%s", coinbase_rest_uri,
                      coinbase_products_path);
 

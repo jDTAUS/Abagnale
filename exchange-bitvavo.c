@@ -306,12 +306,12 @@ static struct Array *restrict markets;
 static struct Map *restrict markets_by_id;
 static struct Map *restrict markets_by_symbol;
 static struct Map *restrict market_prices;
-static _Atomic bool markets_reload;
+static bool markets_reload;
 
 static struct Array *restrict accounts;
 static struct Map *restrict accounts_by_id;
 static struct Map *restrict accounts_by_symbol;
-static _Atomic bool accounts_reload;
+static bool accounts_reload;
 
 static struct Map *restrict pricings_by_id;
 
@@ -1167,7 +1167,9 @@ static struct Array *bitvavo_markets(void) {
   Array_lock(markets);
 
   if (markets_reload) {
+    Array_lock(accounts);
     accounts_reload = true;
+    Array_unlock(accounts);
     const size_t m_size = Array_size(markets);
     const size_t m_capacity =
         m_size == 0 ? DEFAULT_BITVAVO_MARKETS_CAPACITY : m_size;
@@ -1677,7 +1679,9 @@ static int bitvavo_ws_subscribe(struct mg_connection *restrict const c) {
   struct wcjson_document req_doc = WCJSON_DOCUMENT_INITIALIZER;
   int ret = -1;
 
+  Array_lock(markets);
   markets_reload = true;
+  Array_unlock(markets);
   struct Array *restrict const m_array = bitvavo_markets();
 
   req_doc.v_nitems = 16;
