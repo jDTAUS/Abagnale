@@ -25,6 +25,7 @@
 #include "http.h"
 #include "mongoose-ext.h"
 #include "proc.h"
+#include "thread.h"
 #include "version.h"
 
 #ifndef DEFAULT_ABAG_HTTP_TIMEOUT_MILLIS
@@ -34,6 +35,7 @@
 extern const bool verbose;
 
 static unsigned long http_timeout_ms;
+static struct timespec http_retry_rate;
 
 struct http_ctx {
   const char *restrict url;
@@ -46,6 +48,7 @@ struct http_ctx {
   uint64_t timeout_ms;
   bool success;
   bool done;
+  bool again;
 };
 
 void http_init(void) {
@@ -54,6 +57,9 @@ void http_init(void) {
 
   if (verbose)
     wout("\tABAG_HTTP_TIMEOUT_MILLIS=%lu\n", http_timeout_ms);
+
+  http_retry_rate.tv_sec = 2;
+  http_retry_rate.tv_nsec = 0;
 }
 
 void http_destroy(void) {}
@@ -66,7 +72,21 @@ static void http_evt_handler(struct mg_connection *c, int ev, void *ev_data) {
     http_ctx->timeout_ms = mg_millis() + http_timeout_ms;
     break;
   case MG_EV_CLOSE:
-    http_ctx->done = true;
+    if (http_ctx->again) {
+      struct mg_mgr *restrict const mgr = c->mgr;
+      size_t retries = 0;
+
+      do {
+        thread_sleep(&http_retry_rate);
+        c = mg_http_connect(mgr, http_ctx->url, http_evt_handler, http_ctx);
+      } while (!c && retries++ < 100);
+
+      if (!c)
+        fatal("%s: Failure retrying\n", http_ctx->url);
+
+    } else
+      http_ctx->done = true;
+
     break;
   case MG_EV_POLL: {
     if (mg_millis() > http_ctx->timeout_ms &&
@@ -120,6 +140,7 @@ static void http_evt_handler(struct mg_connection *c, int ev, void *ev_data) {
   }
   case MG_EV_HTTP_MSG: {
     struct mg_http_message *restrict const msg = ev_data;
+    http_ctx->again = false;
     http_ctx->success = mg_http_status(msg) == 200;
     c->is_draining = 1;
 
@@ -151,6 +172,7 @@ int http_request_json(struct wcjson_document *restrict rsp_doc,
   struct mg_mgr mgr = {0};
   struct mg_connection *restrict c = NULL;
   struct http_ctx http_ctx = {
+      .again = true,
       .success = false,
       .done = false,
       .url = url,
