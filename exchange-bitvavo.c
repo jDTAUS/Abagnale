@@ -773,14 +773,12 @@ bitvavo_parse_market(const struct wcjson_document *restrict const doc,
   String_delete(j_tickSize_s);
 
   // Find matching accounts required for trading.
-  const struct Account *restrict qa = bitvavo_account_by_symbol(j_quote);
-  const struct Account *restrict ba = bitvavo_account_by_symbol(j_base);
-
   struct String *restrict qa_id = NULL;
   struct String *restrict ba_id = NULL;
   bool qa_active_and_ready = false;
   bool ba_active_and_ready = false;
 
+  const struct Account *restrict qa = bitvavo_account_by_symbol(j_quote);
   if (qa != NULL) {
     qa_id = String_copy(qa->id);
     qa_active_and_ready = qa->is_active && qa->is_ready;
@@ -788,6 +786,7 @@ bitvavo_parse_market(const struct wcjson_document *restrict const doc,
     qa = NULL;
   }
 
+  const struct Account *restrict ba = bitvavo_account_by_symbol(j_base);
   if (ba != NULL) {
     ba_id = String_copy(ba->id);
     ba_active_and_ready = ba->is_active && ba->is_ready;

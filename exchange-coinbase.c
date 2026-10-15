@@ -1380,16 +1380,13 @@ parse_product(const struct wcjson_document *restrict const doc,
   String_delete(j_quote_increment_s);
 
   // Find matching accounts required for trading.
-  const struct Account *restrict qa =
-      coinbase_account_by_symbol(j_quote_currency_id);
-
-  const struct Account *restrict ba =
-      coinbase_account_by_symbol(j_base_currency_id);
-
   struct String *restrict qa_id = NULL;
   struct String *restrict ba_id = NULL;
   bool qa_active_and_ready = false;
   bool ba_active_and_ready = false;
+
+  const struct Account *restrict qa =
+      coinbase_account_by_symbol(j_quote_currency_id);
 
   if (qa != NULL) {
     qa_id = String_copy(qa->id);
@@ -1397,6 +1394,9 @@ parse_product(const struct wcjson_document *restrict const doc,
     mutex_unlock(qa->mtx);
     qa = NULL;
   }
+
+  const struct Account *restrict ba =
+      coinbase_account_by_symbol(j_base_currency_id);
 
   if (ba != NULL) {
     ba_id = String_copy(ba->id);
