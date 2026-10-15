@@ -209,7 +209,7 @@ inline void String_delete(void *restrict const s) {
 #ifdef MULTI_THREADED
   Map_lock(strings);
 #endif
-  if (str->r_cnt < 2 && Map_exists(strings, str) && !strings_destroy)
+  if (str->r_cnt < 2 && !strings_destroy && Map_exists(strings, str))
     panic();
 #ifdef MULTI_THREADED
   Map_unlock(strings);
