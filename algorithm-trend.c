@@ -448,12 +448,17 @@ static int plot_func(void *restrict const a) {
         Queue_dequeue_await(plot_queue);
 
     if (arg == NULL) {
-      if (Queue_dequeue_timedout(plot_queue) && Queue_size(plot_queue) > 0) {
+      thread_group_lock(p_threads);
+      if (Queue_dequeue_timedout(plot_queue) &&
+          (Queue_size(plot_queue) > 0 ||
+           thread_group_thread_count(p_threads) > 0)) {
         // market_plot_enqueue may have enqueued during await
+        thread_group_unlock(p_threads);
         Queue_unlock(plot_queue);
         continue;
       }
 
+      thread_group_unlock(p_threads);
       plot_queue_dequeueing = false;
       Queue_stop(plot_queue);
       break;

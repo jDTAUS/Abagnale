@@ -4000,13 +4000,17 @@ static int trade_volatility_func(void *restrict const arg) {
         Queue_dequeue_await(trade_volatility_queue);
 
     if (trade == NULL) {
+      thread_group_lock(v_ctx->threads);
       if (Queue_dequeue_timedout(trade_volatility_queue) &&
-          Queue_size(trade_volatility_queue) > 0) {
+          (Queue_size(trade_volatility_queue) > 0 ||
+           thread_group_thread_count(v_ctx->threads) > 0)) {
         // trade_volatility_enqueue may have enqueued during await
+        thread_group_unlock(v_ctx->threads);
         Queue_unlock(trade_volatility_queue);
         continue;
       }
 
+      thread_group_unlock(v_ctx->threads);
       trade_volatility_queue_dequeueing = false;
       Queue_stop(trade_volatility_queue);
       break;
