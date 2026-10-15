@@ -335,3 +335,16 @@ inline void thread_group_join(struct thread_group *restrict const tg) {
     condition_wait(&tg->cnd, &tg->mtx);
   mutex_unlock(&tg->mtx);
 }
+
+inline void thread_group_lock(struct thread_group *restrict const tg) {
+  mutex_lock(&tg->mtx);
+}
+
+inline void thread_group_unlock(struct thread_group *restrict const tg) {
+  mutex_unlock(&tg->mtx);
+}
+
+inline size_t
+thread_group_thread_count(struct thread_group *restrict const tg) {
+  return tg->cnt;
+}
