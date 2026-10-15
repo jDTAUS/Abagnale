@@ -1272,29 +1272,33 @@ ret:
 
 static struct Account *
 bitvavo_account(const struct String *restrict const a_id) {
-  struct Array *restrict const a_array = Array_new(2);
-  struct Array *restrict const bitvavo_accts = bitvavo_accounts();
-  struct Account *restrict const bitvavo_acct = Map_get(accounts_by_id, a_id);
+  char sym[DATABASE_SYMBOL_MAX_LENGTH + 1] = {0};
   struct Account *restrict a = NULL;
+  struct Array *restrict const rsp = Array_new(2);
 
-  if (bitvavo_acct == NULL)
+  mutex_lock(&bitvavo_db_mtx);
+  db_id_to_symbol(sym, bitvavo_db, BITVAVO_UUID, String_chars(a_id));
+  mutex_unlock(&bitvavo_db_mtx);
+
+  if (bitvavo_rest_query_accounts(rsp, sym) < 0)
     goto ret;
 
-  if (bitvavo_rest_query_accounts(a_array, String_chars(bitvavo_acct->sym)) < 0)
-    goto ret;
-
-  if (Array_size(a_array) > 1)
+  if (Array_size(rsp) > 1)
     panic();
 
-  a = Array_head(a_array);
+  a = Array_head(rsp);
 
-  // See comment in bitvavo_account_by_symbol
-  if (a == NULL)
-    a = Account_copy(bitvavo_acct);
+  if (a == NULL) {
+    // See comment in bitvavo_account_by_symbol
+    struct String *restrict const sym_str = String_cnew(sym);
+    struct Account *restrict const a_ref = bitvavo_account_by_symbol(sym_str);
+    a = Account_copy(a_ref);
+    mutex_unlock(a_ref->mtx);
+    String_delete(sym_str);
+  }
 
 ret:
-  Array_unlock(bitvavo_accts);
-  Array_delete(a_array, NULL);
+  Array_delete(rsp, NULL);
   return a;
 }
 
