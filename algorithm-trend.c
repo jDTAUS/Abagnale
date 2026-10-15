@@ -525,7 +525,7 @@ static int plot_func(void *restrict const a) {
 
     Queue_enqueue_await(p_ctx->market_queue, arg);
 
-    if (!p_ctx->running) {
+    if (!p_ctx->running && !terminated) {
       // market_plot_func may have stopped during await
       Queue_unlock(p_ctx->market_queue);
       goto again;
@@ -537,8 +537,10 @@ static int plot_func(void *restrict const a) {
            Queue_size(p_ctx->market_queue), Queue_capacity(p_ctx->market_queue),
            (uintmax_t)thread_timeout.tv_sec, (uintmax_t)thread_timeout.tv_nsec);
 
-      Queue_unlock(p_ctx->market_queue);
-      goto again;
+      if (!terminated) {
+        Queue_unlock(p_ctx->market_queue);
+        goto again;
+      }
     }
 
     Queue_unlock(p_ctx->market_queue);

@@ -3809,7 +3809,7 @@ static int exchange_sample_func(void *restrict const arg) {
 
     Queue_enqueue_await(m_ctx->market_queue, sample);
 
-    if (!m_ctx->running) {
+    if (!m_ctx->running && !terminated) {
       // market_sample_func may have stopped during await
       Queue_unlock(m_ctx->market_queue);
       goto again;
@@ -3821,8 +3821,10 @@ static int exchange_sample_func(void *restrict const arg) {
            Queue_size(m_ctx->market_queue), Queue_capacity(m_ctx->market_queue),
            (uintmax_t)thread_timeout.tv_sec, (uintmax_t)thread_timeout.tv_nsec);
 
-      Queue_unlock(m_ctx->market_queue);
-      goto again;
+      if (!terminated) {
+        Queue_unlock(m_ctx->market_queue);
+        goto again;
+      }
     }
 
     Queue_unlock(m_ctx->market_queue);
@@ -3923,7 +3925,7 @@ static int exchange_order_func(void *restrict const arg) {
 
     Queue_enqueue_await(m_ctx->market_queue, order);
 
-    if (!m_ctx->running) {
+    if (!m_ctx->running && !terminated) {
       // market_order_func may have stopped during await
       Queue_unlock(m_ctx->market_queue);
       goto again;
@@ -3935,8 +3937,10 @@ static int exchange_order_func(void *restrict const arg) {
            Queue_size(m_ctx->market_queue), Queue_capacity(m_ctx->market_queue),
            (uintmax_t)thread_timeout.tv_sec, (uintmax_t)thread_timeout.tv_nsec);
 
-      Queue_unlock(m_ctx->market_queue);
-      goto again;
+      if (!terminated) {
+        Queue_unlock(m_ctx->market_queue);
+        goto again;
+      }
     }
 
     Queue_unlock(m_ctx->market_queue);
@@ -4083,7 +4087,7 @@ static int trade_volatility_func(void *restrict const arg) {
 
     Queue_enqueue_await(m_ctx->market_queue, trade);
 
-    if (!m_ctx->running) {
+    if (!m_ctx->running && !terminated) {
       // market_trade_volatility_func may have stopped during await
       Queue_unlock(m_ctx->market_queue);
       goto again;
@@ -4097,8 +4101,10 @@ static int trade_volatility_func(void *restrict const arg) {
            Queue_capacity(m_ctx->market_queue),
            (uintmax_t)thread_timeout.tv_sec, (uintmax_t)thread_timeout.tv_nsec);
 
-      Queue_unlock(m_ctx->market_queue);
-      goto again;
+      if (!terminated) {
+        Queue_unlock(m_ctx->market_queue);
+        goto again;
+      }
     }
 
     Queue_unlock(m_ctx->market_queue);
