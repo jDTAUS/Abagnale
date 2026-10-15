@@ -345,6 +345,6 @@ inline void thread_group_unlock(struct thread_group *restrict const tg) {
 }
 
 inline size_t
-thread_group_thread_count(struct thread_group *restrict const tg) {
+thread_group_thread_count(const struct thread_group *restrict const tg) {
   return tg->cnt;
 }

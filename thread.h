@@ -66,6 +66,6 @@ void thread_group_end_thread(struct thread_group *restrict const);
 void thread_group_join(struct thread_group *restrict const);
 void thread_group_lock(struct thread_group *restrict const);
 void thread_group_unlock(struct thread_group *restrict const);
-size_t thread_group_thread_count(struct thread_group *restrict const);
+size_t thread_group_thread_count(const struct thread_group *restrict const);
 
 #endif
