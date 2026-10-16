@@ -28,6 +28,10 @@
 #include "thread.h"
 #include "version.h"
 
+#ifndef DEFAULT_ABAG_HTTP_RETRY_SECONDS
+#define DEFAULT_ABAG_HTTP_RETRY_SECONDS 3
+#endif
+
 #ifndef DEFAULT_ABAG_HTTP_TIMEOUT_MILLIS
 #define DEFAULT_ABAG_HTTP_TIMEOUT_MILLIS 60000L
 #endif
@@ -45,7 +49,8 @@ struct http_ctx {
   const size_t body_len;
   char *restrict rsp;
   size_t rsp_len;
-  uint64_t timeout_ms;
+  uint64_t connect_to;
+  uint64_t request_to;
   bool success;
   bool done;
   bool again;
@@ -55,44 +60,54 @@ void http_init(void) {
   http_timeout_ms =
       envul("ABAG_HTTP_TIMEOUT_MILLIS", DEFAULT_ABAG_HTTP_TIMEOUT_MILLIS);
 
-  if (verbose)
-    wout("\tABAG_HTTP_TIMEOUT_MILLIS=%lu\n", http_timeout_ms);
+  const unsigned long retry_secs =
+      envul("ABAG_HTTP_RETRY_SECONDS", DEFAULT_ABAG_HTTP_RETRY_SECONDS);
 
-  http_retry_rate.tv_sec = 2;
+  http_retry_rate.tv_sec = retry_secs;
   http_retry_rate.tv_nsec = 0;
+
+  if (verbose) {
+    wout("\tABAG_HTTP_RETRY_SECONDS=%lu\n", retry_secs);
+    wout("\tABAG_HTTP_TIMEOUT_MILLIS=%lu\n", http_timeout_ms);
+  }
 }
 
 void http_destroy(void) {}
 
 static void http_evt_handler(struct mg_connection *c, int ev, void *ev_data) {
   struct http_ctx *restrict const http_ctx = c->fn_data;
+  uint64_t now = mg_millis();
 
   switch (ev) {
   case MG_EV_OPEN:
-    http_ctx->timeout_ms = mg_millis() + http_timeout_ms;
+    http_ctx->connect_to = now + http_timeout_ms;
     break;
   case MG_EV_CLOSE:
     if (http_ctx->again) {
-      struct mg_mgr *restrict const mgr = c->mgr;
-      size_t retries = 0;
-
-      do {
+      if (now < http_ctx->request_to) {
         thread_sleep(&http_retry_rate);
-        c = mg_http_connect(mgr, http_ctx->url, http_evt_handler, http_ctx);
-      } while (!c && retries++ < 100);
+        struct mg_connection *restrict const retry_c =
+            mg_http_connect(c->mgr, http_ctx->url, http_evt_handler, http_ctx);
 
-      if (!c)
-        fatal("%s: Failure retrying\n", http_ctx->url);
-
+        if (!retry_c) {
+          http_ctx->done = true;
+          mg_error(c, "Failure creating connection");
+        }
+      } else {
+        http_ctx->done = true;
+        mg_error(c, "Request timeout");
+      }
     } else
       http_ctx->done = true;
 
     break;
   case MG_EV_POLL: {
-    if (mg_millis() > http_ctx->timeout_ms &&
-        (c->is_connecting || c->is_resolving)) {
+    if (now > http_ctx->connect_to && (c->is_connecting || c->is_resolving))
       mg_error(c, "Connect timeout");
-    }
+
+    if (now > http_ctx->request_to)
+      mg_error(c, "Request timeout");
+
     break;
   }
   case MG_EV_ERROR: {
@@ -182,6 +197,7 @@ int http_request_json(struct wcjson_document *restrict rsp_doc,
       .rsp = NULL,
       .rsp_len = 0,
       .headers = headers,
+      .request_to = mg_millis() + http_timeout_ms,
   };
 
 #ifdef ABAG_HTTP_DEBUG
