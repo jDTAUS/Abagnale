@@ -1,4 +1,4 @@
-/* $JDTAUS$ */
+/* $JDTAUS: http.c 9846 2026-10-16 03:01:40Z schulte $ */
 
 /*
  * Copyright (c) 2026 Christian Schulte <cs@schulte.it>
