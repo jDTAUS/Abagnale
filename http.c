@@ -83,23 +83,18 @@ static void http_evt_handler(struct mg_connection *c, int ev, void *ev_data) {
     http_ctx->connect_to = now + http_timeout_ms;
     break;
   case MG_EV_CLOSE:
-    if (http_ctx->again) {
-      if (now < http_ctx->request_to) {
-        thread_sleep(&http_retry_rate);
-        struct mg_connection *restrict const retry_c =
-            mg_http_connect(c->mgr, http_ctx->url, http_evt_handler, http_ctx);
+    if (http_ctx->again && now < http_ctx->request_to) {
+      thread_sleep(&http_retry_rate);
+      struct mg_connection *restrict const retry_c =
+          mg_http_connect(c->mgr, http_ctx->url, http_evt_handler, http_ctx);
 
-        if (!retry_c) {
-          http_ctx->done = true;
-          mg_error(c, "Failure creating connection");
-        }
-      } else {
-        http_ctx->done = true;
-        mg_error(c, "Request timeout");
-      }
-    } else
-      http_ctx->done = true;
+      if (retry_c)
+        break;
 
+      mg_error(c, "Failure creating connection");
+    }
+
+    http_ctx->done = true;
     break;
   case MG_EV_POLL: {
     if (now > http_ctx->connect_to && (c->is_connecting || c->is_resolving))
