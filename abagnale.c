@@ -1395,7 +1395,7 @@ static void position_pricing(const struct worker_ctx *restrict const w_ctx,
     Numeric_scale(p->b_ordered, w_ctx->m->b_sc);
 
     if (b_min != NULL || b_max != NULL || q_min != NULL || q_max != NULL) {
-      wout("%s: %s: Limited:", String_chars(w_ctx->e->nm),
+      wout("%s: %s: Limits:", String_chars(w_ctx->e->nm),
            String_chars(w_ctx->m->nm));
 
       if (b_min != NULL) {
@@ -2443,11 +2443,10 @@ trade:
         if (verbose) {
           char *restrict const pr = Numeric_to_char(o_pr, w_ctx->m->p_sc);
           char *restrict const limit = Numeric_to_char(r0, w_ctx->m->p_sc);
-          wout("%s: %s: Limited: 1%s@%s%s>1%s@%s%s\n",
-               String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
-               String_chars(w_ctx->m->b_id), pr, String_chars(w_ctx->m->q_id),
-               String_chars(w_ctx->m->b_id), limit,
-               String_chars(w_ctx->m->q_id));
+          wout("%s: %s: Limit: 1%s@%s%s>1%s@%s%s\n", String_chars(w_ctx->e->nm),
+               String_chars(w_ctx->m->nm), String_chars(w_ctx->m->b_id), pr,
+               String_chars(w_ctx->m->q_id), String_chars(w_ctx->m->b_id),
+               limit, String_chars(w_ctx->m->q_id));
           Numeric_char_free(pr);
           Numeric_char_free(limit);
         }
@@ -2482,11 +2481,10 @@ trade:
         if (verbose) {
           char *restrict const pr = Numeric_to_char(o_pr, w_ctx->m->p_sc);
           char *restrict const limit = Numeric_to_char(r0, w_ctx->m->p_sc);
-          wout("%s: %s: Limited: 1%s@%s%s<1%s@%s%s\n",
-               String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
-               String_chars(w_ctx->m->b_id), pr, String_chars(w_ctx->m->q_id),
-               String_chars(w_ctx->m->b_id), limit,
-               String_chars(w_ctx->m->q_id));
+          wout("%s: %s: Limit: 1%s@%s%s<1%s@%s%s\n", String_chars(w_ctx->e->nm),
+               String_chars(w_ctx->m->nm), String_chars(w_ctx->m->b_id), pr,
+               String_chars(w_ctx->m->q_id), String_chars(w_ctx->m->b_id),
+               limit, String_chars(w_ctx->m->q_id));
           Numeric_char_free(pr);
           Numeric_char_free(limit);
         }
