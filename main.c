@@ -105,8 +105,6 @@ struct Array *restrict exchanges;
 struct Array *restrict algorithms;
 struct Array *restrict volatility_windows;
 
-extern bool proc_prefix_systemd;
-
 int abagnale(int argc, char *argv[]);
 int abagnalectl(int argc, char *argv[]);
 
@@ -331,7 +329,6 @@ int main(int argc, char *argv[]) {
 
   if (!configtest) {
     if (String_equals(progname, prog_abagnale)) {
-      proc_prefix_systemd = true;
       r = abagnale(argc - options.optind, argv);
     } else if (String_equals(progname, prog_abagnalectl)) {
       r = abagnalectl(argc - options.optind, argv);

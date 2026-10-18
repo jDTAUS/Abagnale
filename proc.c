@@ -36,14 +36,12 @@ mtx_t stderr_mtx;
 #include <stdio.h>
 #include <string.h>
 
-bool proc_prefix_systemd = false;
-
 inline void wout(const char *restrict fmt, ...) {
   va_list ap;
 #ifdef MULTI_THREADED
   mutex_lock(&stdout_mtx);
 #endif
-  if (proc_prefix_systemd)
+  if (getenv("JOURNAL_STREAM") != NULL)
     (void)fprintf(stdout, "<6>");
   va_start(ap, fmt);
   (void)vfprintf(stdout, fmt, ap);
@@ -59,7 +57,7 @@ inline void werr(const char *restrict fmt, ...) {
 #ifdef MULTI_THREADED
   mutex_lock(&stderr_mtx);
 #endif
-  if (proc_prefix_systemd)
+  if (getenv("JOURNAL_STREAM") != NULL)
     (void)fprintf(stderr, "<3>");
   va_start(ap, fmt);
   (void)vfprintf(stderr, fmt, ap);
