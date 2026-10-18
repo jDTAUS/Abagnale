@@ -1,7 +1,7 @@
 #ifndef VERSION_H
 #define VERSION_H
 
-#define ABAG_REVISION "$Abagnale$"
+#define ABAG_REVISION "$Abagnale: v0/9849 2026-10-18 01:33:20Z $"
 
 /*
  * Copyright (c) 2018 - 2026 Christian Schulte <cs@schulte.it>
