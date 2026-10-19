@@ -3,6 +3,7 @@
 [Unit]
 Description=Abagnale Algorithmic Trading System
 After=postgresql.service
+PartOf=postgresql.service
 
 [Service]
 ExecStart=/usr/bin/abagnale -v -p /var/lib/abagnale/plots
