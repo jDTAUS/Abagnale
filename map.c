@@ -181,24 +181,20 @@ inline void *Map_remove(struct Map *restrict const m, void *const k) {
   return value;
 }
 
-inline bool Map_O1(const struct Map *restrict const m, const size_t capacity) {
-  bool O1 = true;
-  bool *restrict const buckets = heap_calloc(capacity, sizeof(bool));
+inline size_t Map_emax(struct Map *restrict const m, const size_t capacity) {
+  size_t e_max = 0;
+  size_t *restrict const entries = heap_calloc(capacity, sizeof(size_t));
 
-  for (size_t i = 0; O1 && i < m->capacity; i++)
+  for (size_t i = 0; i < m->capacity; i++)
     for (struct Entry *restrict e = m->buckets[i]; e != NULL; e = e->next) {
       const size_t j = m->ops->k_hash(e->key) % capacity;
 
-      if (buckets[j]) {
-        O1 = false;
-        break;
-      }
-
-      buckets[j] = true;
+      if (++entries[j] > e_max)
+        e_max = entries[j];
     }
 
-  heap_free(buckets);
-  return O1;
+  heap_free(entries);
+  return e_max;
 }
 
 inline void Map_optimize(struct Map *restrict const m) {
@@ -210,8 +206,21 @@ inline void Map_optimize(struct Map *restrict const m) {
 
   capacity = ((capacity | !capacity) + 1) & ~1U;
 
-  while (capacity < (SIZE_MAX >> 1UL) && !Map_O1(m, capacity))
-    capacity <<= 1UL;
+  // 8 times the number of current entries if that fits size_t, or half of
+  // size_t if the number of entries already is larger than SIZE_MAX / 8
+  const size_t limit =
+      capacity < (SIZE_MAX >> 3UL) ? capacity << 3UL : (SIZE_MAX >> 1UL);
+
+  size_t max = Map_emax(m, capacity);
+
+  for (size_t c = capacity; c < limit && max > 1; c <<= 1UL) {
+    const size_t c_max = Map_emax(m, c);
+
+    if (c_max < max) {
+      max = c_max;
+      capacity = c;
+    }
+  }
 
   if (capacity != m->capacity) {
     struct Entry **restrict const buckets =
@@ -227,7 +236,7 @@ inline void Map_optimize(struct Map *restrict const m) {
         e->prev = NULL;
 
         if ((e->next = buckets[j]) != NULL)
-          panic();
+          buckets[j]->prev = e;
 
         buckets[j] = e;
         e = next;
