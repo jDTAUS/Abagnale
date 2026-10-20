@@ -314,6 +314,8 @@ static struct Map *restrict accounts_by_symbol;
 static bool accounts_reload;
 
 static struct Map *restrict pricings_by_id;
+static mtx_t pricings_mtx;
+static bool pricings_reload;
 
 static _Atomic bool running;
 static struct Queue *restrict orders;
@@ -487,6 +489,8 @@ static void bitvavo_init(void) {
   accounts_reload = true;
 
   pricings_by_id = Map_new(StringMapOps, 0);
+  mutex_init(&pricings_mtx);
+  pricings_reload = true;
 
   orders = Queue_new(128, NULL);
   samples =
@@ -523,6 +527,7 @@ static void bitvavo_destroy(void) {
   Map_delete(accounts_by_id, NULL);
   Map_delete(accounts_by_symbol, NULL);
   Map_delete(pricings_by_id, Pricing_delete);
+  mutex_destroy(&pricings_mtx);
   Queue_delete(orders, Order_delete);
   Queue_delete(samples, Sample_delete);
   mutex_destroy(&bitvavo_db_mtx);
@@ -1346,8 +1351,14 @@ bitvavo_account_by_symbol(struct String *restrict const sym) {
 }
 
 static struct Pricing *bitvavo_pricing(const struct Market *restrict const m) {
+  mutex_lock(&pricings_mtx);
 
-  Map_lock(pricings_by_id);
+  if (pricings_reload) {
+    Map_delete(pricings_by_id, Pricing_delete);
+    pricings_by_id = Map_new(StringMapOps, 0);
+    pricings_reload = false;
+  }
+
   struct Pricing *restrict p = Map_get(pricings_by_id, m->id);
 
   if (p == NULL) {
@@ -1376,9 +1387,9 @@ static struct Pricing *bitvavo_pricing(const struct Market *restrict const m) {
 
 ret:
   if (p != NULL) {
-    p->mtx = Map_mutex(pricings_by_id);
+    p->mtx = &pricings_mtx;
   } else
-    Map_unlock(pricings_by_id);
+    mutex_unlock(&pricings_mtx);
 
   return p;
 }
@@ -1768,6 +1779,11 @@ static int bitvavo_ws_subscribe(struct mg_connection *restrict const c) {
 #ifdef ABAG_BITVAVO_DEBUG
   wout("%s: %.*s\n", String_chars(c->mgr->userdata), (int)req_len, req_body);
 #endif
+
+  mutex_lock(&pricings_mtx);
+  pricings_reload = true;
+  mutex_unlock(&pricings_mtx);
+
   errno = 0;
   ret = 0;
 ret:
