@@ -1205,15 +1205,14 @@ static void coinbase_init(void) {
       Queue_new(COINBASE_TICKERS_DAY, &coinbase_stall_timeout); // 64MB/128MB
 
   markets = Array_new(DEFAULT_COINBASE_MARKETS_CAPACITY);
-  markets_by_id = Map_new(StringMapOps, DEFAULT_COINBASE_MARKETS_CAPACITY);
-  markets_by_symbol = Map_new(StringMapOps, DEFAULT_COINBASE_MARKETS_CAPACITY);
+  markets_by_id = Map_new(StringMapOps, 0);
+  markets_by_symbol = Map_new(StringMapOps, 0);
   market_prices = Map_new(StringMapOps, DEFAULT_COINBASE_MARKETS_CAPACITY);
   markets_reload = true;
 
   accounts = Array_new(DEFAULT_COINBASE_ACCOUNTS_CAPACITY);
-  accounts_by_id = Map_new(StringMapOps, DEFAULT_COINBASE_ACCOUNTS_CAPACITY);
-  accounts_by_symbol =
-      Map_new(StringMapOps, DEFAULT_COINBASE_ACCOUNTS_CAPACITY);
+  accounts_by_id = Map_new(StringMapOps, 0);
+  accounts_by_symbol = Map_new(StringMapOps, 0);
 
   accounts_reload = true;
   pricing = NULL;
@@ -1576,6 +1575,9 @@ static struct Array *coinbase_markets(void) {
               String_chars(((struct Market *)items[i])->id));
     }
 
+    Map_optimize(markets_by_id);
+    Map_optimize(markets_by_symbol);
+
     markets_reload = false;
   }
 ret:
@@ -1803,14 +1805,10 @@ static struct Array *coinbase_accounts(void) {
   Array_lock(accounts);
 
   if (accounts_reload) {
-    const size_t a_size = Array_size(accounts);
-    const size_t a_capacity =
-        a_size == 0 ? DEFAULT_COINBASE_ACCOUNTS_CAPACITY : a_size;
-
     Map_delete(accounts_by_id, NULL);
     Map_delete(accounts_by_symbol, NULL);
-    accounts_by_id = Map_new(StringMapOps, a_capacity);
-    accounts_by_symbol = Map_new(StringMapOps, a_capacity);
+    accounts_by_id = Map_new(StringMapOps, Array_size(accounts));
+    accounts_by_symbol = Map_new(StringMapOps, Array_size(accounts));
     Array_clear(accounts, Account_delete);
 
     if (accounts_with_cursor(accounts, NULL) == 0)
@@ -1835,6 +1833,9 @@ static struct Array *coinbase_accounts(void) {
               coinbase_rest_uri,
               String_chars(((struct Account *)items[i])->id));
     }
+
+    Map_optimize(accounts_by_id);
+    Map_optimize(accounts_by_symbol);
   }
 
   return accounts;

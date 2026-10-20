@@ -298,6 +298,7 @@ const struct MarketConfig *marketconfig(struct String *restrict const e_nm,
       }
 
     Map_put(market_configs, &k, m_cnf);
+    Map_optimize(market_configs);
 
     if (m_cnf == NULL)
       wout("%s: Unconfigured: %s\n", String_chars(e_nm), String_chars(m_nm));
@@ -573,10 +574,7 @@ static void abag_tls_dtor(void *e) {
   tls_set(abag_tls_key, NULL);
 }
 
-void abagnale_init(void) {
-  market_configs = Map_new(MarketConfigKeyMapOps, MARKETS_MAP_CAPACITY);
-}
-
+void abagnale_init(void) { market_configs = Map_new(MarketConfigKeyMapOps, 0); }
 void abagnale_destroy(void) { Map_delete(market_configs, NULL); }
 
 static inline void trigger_init(struct Trigger *restrict const t) {
@@ -3452,6 +3450,7 @@ static int market_sample_func(void *restrict const arg) {
       samples = Array_new(524288);
       samples_init = true;
       Map_put(market_samples, w_ctx->m->id, samples);
+      Map_optimize(market_samples);
     }
     Map_unlock(market_samples);
 
@@ -3495,6 +3494,7 @@ static int market_sample_func(void *restrict const arg) {
     if (trades == NULL) {
       trades = trades_load(w_ctx, samples, sample);
       Map_put(market_trades, w_ctx->m->id, trades);
+      Map_optimize(market_trades);
     }
     Map_unlock(market_trades);
 
@@ -4215,8 +4215,8 @@ int abagnale(int argc, char *argv[]) {
 
   ninety_percent_factor = Numeric_from_char("0.9");
 
-  market_samples = Map_new(StringMapOps, MARKETS_MAP_CAPACITY);
-  market_trades = Map_new(StringMapOps, MARKETS_MAP_CAPACITY);
+  market_samples = Map_new(StringMapOps, 0);
+  market_trades = Map_new(StringMapOps, 0);
 
   tls_create(&abag_tls_key, abag_tls_dtor);
 

@@ -476,14 +476,14 @@ static void bitvavo_init(void) {
   mutex_init(&bitvavo_db_mtx);
 
   markets = Array_new(DEFAULT_BITVAVO_MARKETS_CAPACITY);
-  markets_by_id = Map_new(StringMapOps, DEFAULT_BITVAVO_MARKETS_CAPACITY);
-  markets_by_symbol = Map_new(StringMapOps, DEFAULT_BITVAVO_MARKETS_CAPACITY);
+  markets_by_id = Map_new(StringMapOps, 0);
+  markets_by_symbol = Map_new(StringMapOps, 0);
   market_prices = Map_new(StringMapOps, DEFAULT_BITVAVO_MARKETS_CAPACITY);
   markets_reload = true;
 
   accounts = Array_new(DEFAULT_BITVAVO_ACCOUNTS_CAPACITY);
-  accounts_by_id = Map_new(StringMapOps, DEFAULT_BITVAVO_ACCOUNTS_CAPACITY);
-  accounts_by_symbol = Map_new(StringMapOps, DEFAULT_BITVAVO_ACCOUNTS_CAPACITY);
+  accounts_by_id = Map_new(StringMapOps, 0);
+  accounts_by_symbol = Map_new(StringMapOps, 0);
   accounts_reload = true;
 
   pricings_by_id = Map_new(StringMapOps, DEFAULT_BITVAVO_MARKETS_CAPACITY);
@@ -1170,14 +1170,10 @@ static struct Array *bitvavo_markets(void) {
     Array_lock(accounts);
     accounts_reload = true;
     Array_unlock(accounts);
-    const size_t m_size = Array_size(markets);
-    const size_t m_capacity =
-        m_size == 0 ? DEFAULT_BITVAVO_MARKETS_CAPACITY : m_size;
-
     Map_delete(markets_by_symbol, NULL);
     Map_delete(markets_by_id, NULL);
-    markets_by_symbol = Map_new(StringMapOps, m_capacity);
-    markets_by_id = Map_new(StringMapOps, m_capacity);
+    markets_by_symbol = Map_new(StringMapOps, Array_size(markets));
+    markets_by_id = Map_new(StringMapOps, Array_size(markets));
     Array_clear(markets, Market_delete);
 
     if (bitvavo_rest_query_markets(markets) < 0)
@@ -1196,6 +1192,9 @@ static struct Array *bitvavo_markets(void) {
         fatal("%s: markets: Market id uniqueness constraint: %s",
               bitvavo_rest_uri, String_chars(((struct Market *)items[i])->id));
     }
+
+    Map_optimize(markets_by_id);
+    Map_optimize(markets_by_symbol);
 
     markets_reload = false;
   }
@@ -1236,14 +1235,10 @@ static struct Array *bitvavo_accounts(void) {
   Array_lock(accounts);
 
   if (accounts_reload) {
-    const size_t a_size = Array_size(accounts);
-    const size_t a_capacity =
-        a_size == 0 ? DEFAULT_BITVAVO_ACCOUNTS_CAPACITY : a_size;
-
     Map_delete(accounts_by_id, NULL);
     Map_delete(accounts_by_symbol, NULL);
-    accounts_by_id = Map_new(StringMapOps, a_capacity);
-    accounts_by_symbol = Map_new(StringMapOps, a_capacity);
+    accounts_by_id = Map_new(StringMapOps, Array_size(accounts));
+    accounts_by_symbol = Map_new(StringMapOps, Array_size(accounts));
     Array_clear(accounts, Account_delete);
 
     if (bitvavo_rest_query_accounts(accounts, NULL) < 0)
@@ -1264,6 +1259,9 @@ static struct Array *bitvavo_accounts(void) {
         fatal("%s: accounts: Account id uniqueness constraint: %s",
               bitvavo_rest_uri, String_chars(((struct Account *)items[i])->id));
     }
+
+    Map_optimize(accounts_by_id);
+    Map_optimize(accounts_by_symbol);
 
     accounts_reload = false;
   }
@@ -1338,6 +1336,9 @@ bitvavo_account_by_symbol(struct String *restrict const sym) {
 
     if (Map_put(accounts_by_id, a->id, a) != NULL)
       panic();
+
+    Map_optimize(accounts_by_id);
+    Map_optimize(accounts_by_symbol);
   }
 
   a->mtx = Array_mutex(a_array);

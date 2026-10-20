@@ -276,7 +276,7 @@ static void trend_init(void) {
   algorithm_trend.id = String_cnew(TREND_UUID);
   algorithm_trend.nm = String_cnew("trend");
   tls_create(&trend_tls_key, trend_tls_dtor);
-  states = Map_new(StringMapOps, all_exchanges_nitems * 2048);
+  states = Map_new(StringMapOps, 0);
   plot_queue = Queue_new(MARKETS_QUEUE_CAPACITY, &thread_timeout);
   plot_queue_dequeueing = false;
   threads = thread_group_new();
@@ -314,6 +314,7 @@ static struct trend_state *trend_state(const void *restrict const db,
     st->cd_ltrend = candle_trend_db(db_st->cd_ltrend);
     mutex_init(&st->mtx);
     Map_put(states, m_id, st);
+    Map_optimize(states);
   }
 
   Map_unlock(states);
