@@ -53,6 +53,8 @@ struct MapIterator {
   const struct Map *restrict m;
 };
 
+size_t Map_emax(struct Map *restrict const, const size_t);
+
 inline static void *id_copy(void *restrict const k) { return k; }
 inline static void id_delete(void *restrict const k) { (void)k; }
 
