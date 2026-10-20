@@ -27,6 +27,7 @@
 
 #include "heap.h"
 #include "map.h"
+#include "proc.h"
 
 #include <stdint.h>
 
@@ -54,9 +55,11 @@ struct MapIterator {
 
 inline static void *id_copy(void *restrict const k) { return k; }
 inline static void id_delete(void *restrict const k) { (void)k; }
+
 inline static size_t id_hash(const void *restrict const k) {
   return (size_t)(uintptr_t)k;
 }
+
 inline static bool id_equals(const void *restrict const k1,
                              const void *restrict const k2) {
   return k1 == k2;
@@ -176,6 +179,65 @@ inline void *Map_remove(struct Map *restrict const m, void *const k) {
   }
 
   return value;
+}
+
+inline bool Map_O1(const struct Map *restrict const m, const size_t capacity) {
+  bool O1 = true;
+  bool *restrict const buckets = heap_calloc(capacity, sizeof(bool));
+
+  for (size_t i = 0; O1 && i < m->capacity; i++)
+    for (struct Entry *restrict e = m->buckets[i]; e != NULL; e = e->next) {
+      const size_t j = m->ops->k_hash(e->key) % capacity;
+
+      if (buckets[j]) {
+        O1 = false;
+        break;
+      }
+
+      buckets[j] = true;
+    }
+
+  heap_free(buckets);
+  return O1;
+}
+
+inline void Map_optimize(struct Map *restrict const m) {
+  size_t capacity = 0;
+
+  for (size_t i = 0; i < m->capacity; i++)
+    for (struct Entry *restrict e = m->buckets[i]; e != NULL; e = e->next)
+      capacity++;
+
+  capacity = ((capacity | !capacity) + 1) & ~1U;
+
+  while (capacity < (SIZE_MAX >> 1UL) && !Map_O1(m, capacity))
+    capacity <<= 1UL;
+
+  if (capacity != m->capacity) {
+    struct Entry **restrict const buckets =
+        heap_calloc(capacity, sizeof(struct Entry *));
+
+    for (size_t i = 0; i < m->capacity; i++) {
+      struct Entry *restrict e = m->buckets[i];
+
+      while (e != NULL) {
+        struct Entry *restrict const next = e->next;
+        const size_t j = m->ops->k_hash(e->key) % capacity;
+
+        e->prev = NULL;
+
+        if ((e->next = buckets[j]) != NULL)
+          panic();
+
+        buckets[j] = e;
+        e = next;
+      }
+    }
+
+    heap_free(m->buckets);
+    m->buckets = buckets;
+    m->capacity = capacity;
+  }
 }
 
 inline struct MapIterator *MapIterator_new(const struct Map *restrict const m) {
