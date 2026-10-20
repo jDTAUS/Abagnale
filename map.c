@@ -206,8 +206,6 @@ inline void Map_optimize(struct Map *restrict const m) {
 
   capacity = ((capacity | !capacity) + 1) & ~1U;
 
-  // 8 times the number of current entries if that fits size_t, or half of
-  // size_t if the number of entries already is larger than SIZE_MAX / 8
   const size_t limit =
       capacity < (SIZE_MAX >> 3UL) ? capacity << 3UL : (SIZE_MAX >> 1UL);
 
