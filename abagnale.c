@@ -301,7 +301,8 @@ const struct MarketConfig *marketconfig(struct String *restrict const e_nm,
     Map_optimize(market_configs);
 
     if (m_cnf == NULL)
-      wout("%s: Unconfigured: %s\n", String_chars(e_nm), String_chars(m_nm));
+      wout("%s: %s: Configuration: Not included\n", String_chars(e_nm),
+           String_chars(m_nm));
     else if (verbose) {
       char *restrict const w_ns = nanos_string(m_cnf->wnanos);
       char *restrict const ret = Numeric_to_char_unscaled(m_cnf->r_amount);
@@ -3379,8 +3380,9 @@ static int market_order_func(void *restrict const arg) {
         Array_remove_idx(trades, i);
       }
     } else {
-      wout("%s: %s: Position: Unconfigured: %s\n", String_chars(w_ctx->e->nm),
-           String_chars(w_ctx->m->nm), String_chars(t->id));
+      wout("%s: %s: Configuration: Not included: %s\n",
+           String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
+           String_chars(t->id));
 
       mutex_lock(&t->mtx);
 
@@ -3545,8 +3547,9 @@ static int market_sample_func(void *restrict const arg) {
           mutex_unlock(&t->mtx);
         }
       } else {
-        wout("%s: %s: Position: Unconfigured: %s\n", String_chars(w_ctx->e->nm),
-             String_chars(w_ctx->m->nm), String_chars(t->id));
+        wout("%s: %s: Configuration: Not included: %s\n",
+             String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
+             String_chars(t->id));
 
         Array_remove_idx(trades, i);
         goto again;
