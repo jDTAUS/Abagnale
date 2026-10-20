@@ -478,7 +478,7 @@ static void bitvavo_init(void) {
   markets = Array_new(DEFAULT_BITVAVO_MARKETS_CAPACITY);
   markets_by_id = Map_new(StringMapOps, 0);
   markets_by_symbol = Map_new(StringMapOps, 0);
-  market_prices = Map_new(StringMapOps, DEFAULT_BITVAVO_MARKETS_CAPACITY);
+  market_prices = Map_new(StringMapOps, 0);
   markets_reload = true;
 
   accounts = Array_new(DEFAULT_BITVAVO_ACCOUNTS_CAPACITY);
@@ -486,7 +486,7 @@ static void bitvavo_init(void) {
   accounts_by_symbol = Map_new(StringMapOps, 0);
   accounts_reload = true;
 
-  pricings_by_id = Map_new(StringMapOps, DEFAULT_BITVAVO_MARKETS_CAPACITY);
+  pricings_by_id = Map_new(StringMapOps, 0);
 
   orders = Queue_new(128, NULL);
   samples =
@@ -1367,10 +1367,15 @@ static struct Pricing *bitvavo_pricing(const struct Market *restrict const m) {
       goto ret;
 
     p = bitvavo_parse_fee(rsp_doc);
+
+    if (p != NULL) {
+      Map_put(pricings_by_id, m->id, p);
+      Map_optimize(pricings_by_id);
+    }
   }
+
 ret:
   if (p != NULL) {
-    Map_put(pricings_by_id, m->id, p);
     p->mtx = Map_mutex(pricings_by_id);
   } else
     Map_unlock(pricings_by_id);
@@ -2000,6 +2005,7 @@ bitvavo_ws_ticker_evt_handler(struct mg_connection *restrict const c,
   if (pr == NULL) {
     pr = Numeric_new();
     Map_put(market_prices, m_id, pr);
+    Map_optimize(market_prices);
   } else if (Numeric_cmp(pr, j_lastPrice) == 0) {
     Map_unlock(market_prices);
     goto ok;

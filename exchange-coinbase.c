@@ -539,6 +539,7 @@ static void ws_ticker_update(const struct wcjson_document *restrict const doc,
   if (pr == NULL) {
     pr = Numeric_new();
     Map_put(market_prices, m_id, pr);
+    Map_optimize(market_prices);
   } else if (Numeric_cmp(pr, j_price) == 0) {
     Map_unlock(market_prices);
     goto ret;
@@ -1207,7 +1208,7 @@ static void coinbase_init(void) {
   markets = Array_new(DEFAULT_COINBASE_MARKETS_CAPACITY);
   markets_by_id = Map_new(StringMapOps, 0);
   markets_by_symbol = Map_new(StringMapOps, 0);
-  market_prices = Map_new(StringMapOps, DEFAULT_COINBASE_MARKETS_CAPACITY);
+  market_prices = Map_new(StringMapOps, 0);
   markets_reload = true;
 
   accounts = Array_new(DEFAULT_COINBASE_ACCOUNTS_CAPACITY);
