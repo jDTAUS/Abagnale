@@ -1755,7 +1755,7 @@ static int bitvavo_ws_subscribe(struct mg_connection *restrict const c) {
     goto ret;
 
   if (wcjson_document_build(&wc_json, &req_doc)) {
-    werr("%s: subscribe: %lu %s\n", String_chars(c->mgr->userdata), c->id,
+    werr("%s: %lu: subscribe: %s\n", String_chars(c->mgr->userdata), c->id,
          json_mbserror(&wc_json));
     goto ret;
   }
@@ -1769,8 +1769,8 @@ static int bitvavo_ws_subscribe(struct mg_connection *restrict const c) {
     goto ret;
 
   if (m_cnt == 0) {
-    werr("%s: subscribe: %lu Unconfigured\n", String_chars(c->mgr->userdata),
-         c->id);
+    werr("%s: %lu: subscribe: No market configurations\n",
+         String_chars(c->mgr->userdata), c->id);
     goto ret;
   }
 
@@ -1793,7 +1793,7 @@ ret:
   heap_free(req_doc.esc);
 
   if (errno)
-    werr("%s: subscribe: %lu %s\n", String_chars(c->mgr->userdata), c->id,
+    werr("%s: %lu: subscribe: %s\n", String_chars(c->mgr->userdata), c->id,
          strerror(errno));
 
   errno = saved_errno;

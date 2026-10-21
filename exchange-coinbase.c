@@ -953,7 +953,7 @@ static void ws_subscribe(struct mg_connection *restrict const c,
     goto ret;
 
   if (m_cnt == 0) {
-    werr("%s: %s: subscribe: %lu Unconfigured\n", coinbase_ws_uri,
+    werr("%s: %s: %lu: subscribe: No market configurations\n", coinbase_ws_uri,
          channel->name, c->id);
     goto ret;
   }
