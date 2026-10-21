@@ -44,7 +44,7 @@ static struct timespec http_retry_rate;
 struct http_ctx {
   const char *restrict url;
   const char *restrict method;
-  const struct Map *restrict headers;
+  struct Map *restrict headers;
   const char *restrict body;
   const size_t body_len;
   char *restrict rsp;
@@ -175,7 +175,7 @@ static void http_evt_handler(struct mg_connection *c, int ev, void *ev_data) {
 int http_request_json(struct wcjson_document *restrict rsp_doc,
                       const char *restrict const url,
                       const char *restrict const method,
-                      const struct Map *restrict const headers,
+                      struct Map *restrict const headers,
                       const char *restrict const body, const size_t body_len) {
   int r = -1;
   const int saved_errno = errno;

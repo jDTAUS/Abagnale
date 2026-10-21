@@ -33,7 +33,7 @@ void http_destroy(void);
 
 int http_request_json(struct wcjson_document *restrict,
                       const char *restrict const, const char *restrict const,
-                      const struct Map *restrict const,
-                      const char *restrict const, const size_t);
+                      struct Map *restrict const, const char *restrict const,
+                      const size_t);
 
 #endif

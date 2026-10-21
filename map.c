@@ -45,12 +45,13 @@ struct Map {
   mtx_t mtx;
 #endif
   size_t capacity;
+  size_t size;
 };
 
 struct MapIterator {
-  size_t i;
+  struct Map *restrict m;
   struct Entry *restrict e;
-  const struct Map *restrict m;
+  size_t i;
 };
 
 size_t Map_emax(struct Map *restrict const, const size_t);
@@ -132,6 +133,9 @@ inline void *Map_put(struct Map *restrict const m, void *const k,
       m->buckets[i]->prev = e;
 
     m->buckets[i] = e;
+
+    if (m->size++ == SIZE_MAX)
+      panic();
   }
 
   return value;
@@ -157,6 +161,8 @@ inline void *Map_get(const struct Map *restrict const m,
   return e != NULL ? e->value : NULL;
 }
 
+inline size_t Map_size(const struct Map *restrict const m) { return m->size; }
+
 inline void *Map_remove(struct Map *restrict const m, void *const k) {
   const size_t i = m->ops->k_hash(k) % m->capacity;
   struct Entry *restrict e = m->buckets[i];
@@ -178,6 +184,9 @@ inline void *Map_remove(struct Map *restrict const m, void *const k) {
       e->next->prev = e->prev;
 
     heap_free(e);
+
+    if (m->size-- == 0)
+      panic();
   }
 
   return value;
@@ -200,14 +209,7 @@ inline size_t Map_emax(struct Map *restrict const m, const size_t capacity) {
 }
 
 inline void Map_optimize(struct Map *restrict const m) {
-  size_t capacity = 0;
-
-  for (size_t i = 0; i < m->capacity; i++)
-    for (struct Entry *restrict e = m->buckets[i]; e != NULL; e = e->next)
-      capacity++;
-
-  capacity = ((capacity | !capacity) + 1) & ~1U;
-
+  size_t capacity = ((m->size | !m->size) + 1) & ~1U;
   const size_t limit =
       capacity < (SIZE_MAX >> 3UL) ? capacity << 3UL : (SIZE_MAX >> 1UL);
 
@@ -249,7 +251,7 @@ inline void Map_optimize(struct Map *restrict const m) {
   }
 }
 
-inline struct MapIterator *MapIterator_new(const struct Map *restrict const m) {
+inline struct MapIterator *MapIterator_new(struct Map *restrict const m) {
   struct MapIterator *restrict const it =
       heap_malloc(sizeof(struct MapIterator));
 
@@ -289,6 +291,10 @@ inline void *MapIterator_remove(struct MapIterator *restrict const it) {
 
     it->m->ops->k_delete(it->e->key);
     heap_free(it->e);
+
+    if (it->m->size-- == 0)
+      panic();
+
     it->e = NULL;
     it->i++;
   }
