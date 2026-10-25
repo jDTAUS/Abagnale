@@ -52,12 +52,14 @@ const void *const StringMapOps = &(const struct MapOps){
 };
 
 #ifdef STRING_INTERNING
+#define STRINGS_CAPACITY_DEFAULT 1024 // 4k/8k
+
 struct Map *restrict strings;
 _Atomic bool strings_destroy;
 
 void string_init(void) {
   strings_destroy = false;
-  strings = Map_new(StringMapOps, 0);
+  strings = Map_new(StringMapOps, STRINGS_CAPACITY_DEFAULT);
 }
 
 void string_destroy(void) {
@@ -99,7 +101,8 @@ inline struct String *String_cnew(const char *restrict s) {
 #endif
 #ifdef STRING_INTERNING
     Map_put(strings, str, str);
-    Map_optimize(strings);
+    if (Map_size(strings) > STRINGS_CAPACITY_DEFAULT)
+      Map_optimize(strings);
   }
 #ifdef MULTI_THREADED
   Map_unlock(strings);
@@ -144,7 +147,8 @@ inline struct String *String_cnnew(const char *restrict s, size_t maxlen) {
 #endif
 #ifdef STRING_INTERNING
     Map_put(strings, str, str);
-    Map_optimize(strings);
+    if (Map_size(strings) > STRINGS_CAPACITY_DEFAULT)
+      Map_optimize(strings);
   }
 #ifdef MULTI_THREADED
   Map_unlock(strings);
