@@ -116,7 +116,15 @@
 #define nitems(_a) (sizeof((_a)) / sizeof((_a)[0]))
 #endif
 
+#define _tostring(_x) #_x
+#define tostring(_x) _tostring(_x)
+
 struct coinbase_tls {
+  struct coinbase_rest_query_vars {
+    struct Numeric *restrict now_ns;
+    struct Numeric *restrict sleep_ns;
+    struct Numeric *restrict r0;
+  } coinbase_rest_query;
   struct ws_handle_message_vars {
     struct wcjson_document *restrict ws_doc;
   } ws_handle_message;
@@ -186,15 +194,17 @@ static const struct {
     {"delisted", MARKET_STATUS_DELISTED},
 };
 
-extern const struct Numeric *restrict const zero;
-extern const struct Numeric *restrict const hundred;
 extern const bool verbose;
 extern const bool ticker_exporter;
+
+extern const struct Numeric *restrict const zero;
+extern const struct Numeric *restrict const one;
+extern const struct Numeric *restrict const hundred;
+extern const struct Numeric *restrict const second_nanos;
 
 static const struct ExchangeConfig *restrict coinbase_cnf;
 static char coinbase_ws_uri[URL_MAX_LENGTH + 1];
 static char coinbase_rest_uri[URL_MAX_LENGTH + 1];
-static struct timespec coinbase_request_rate;
 static struct timespec coinbase_retry_rate;
 static char coinbase_account_path[URL_MAX_LENGTH + 1];
 static char coinbase_accounts_path[URL_MAX_LENGTH + 1];
@@ -203,6 +213,9 @@ static char coinbase_order_path[URL_MAX_LENGTH + 1];
 static char coinbase_order_cancel_path[URL_MAX_LENGTH + 1];
 static char coinbase_order_create_path[URL_MAX_LENGTH + 1];
 static char coinbase_products_path[URL_MAX_LENGTH + 1];
+static struct Numeric *restrict coinbase_rest_next_ns;
+static struct Numeric *restrict coinbase_rest_rate_ns;
+static mtx_t coinbase_rest_mtx;
 static unsigned long coinbase_stall_ms;
 static void *restrict coinbase_db;
 static mtx_t coinbase_db_mtx;
@@ -364,6 +377,9 @@ static struct coinbase_tls *const coinbase_tls(void) {
   struct coinbase_tls *restrict tls = tls_get(coinbase_tls_key);
   if (tls == NULL) {
     tls = heap_malloc(sizeof(struct coinbase_tls));
+    tls->coinbase_rest_query.now_ns = Numeric_new();
+    tls->coinbase_rest_query.sleep_ns = Numeric_new();
+    tls->coinbase_rest_query.r0 = Numeric_new();
     tls->ws_handle_message.ws_doc =
         heap_calloc(1, sizeof(struct wcjson_document));
     tls->coinbase_markets.rsp_doc =
@@ -388,6 +404,9 @@ static struct coinbase_tls *const coinbase_tls(void) {
 
 static void coinbase_tls_dtor(void *e) {
   struct coinbase_tls *restrict const tls = e;
+  Numeric_delete(tls->coinbase_rest_query.now_ns);
+  Numeric_delete(tls->coinbase_rest_query.sleep_ns);
+  Numeric_delete(tls->coinbase_rest_query.r0);
   tls_doc_free(tls->ws_handle_message.ws_doc);
   tls_doc_free(tls->coinbase_markets.rsp_doc);
   tls_doc_free(tls->accounts_with_cursor.rsp_doc);
@@ -1081,6 +1100,12 @@ static int coinbase_rest_query(struct wcjson_document *restrict rsp_doc,
                                const char *restrict const path,
                                const char *restrict const body,
                                const size_t body_len) {
+  const struct coinbase_tls *restrict const tls = coinbase_tls();
+  struct Numeric *restrict const now_ns = tls->coinbase_rest_query.now_ns;
+  struct Numeric *restrict const sleep_ns = tls->coinbase_rest_query.sleep_ns;
+  struct Numeric *restrict const r0 = tls->coinbase_rest_query.r0;
+  struct timespec ts = {0};
+  bool limit = false;
   struct mg_str host = mg_url_host(url);
   char uri[URL_MAX_LENGTH + 1] = {0};
   char auth[HTTP_HEADER_MAX + 1] = {0};
@@ -1103,11 +1128,28 @@ static int coinbase_rest_query(struct wcjson_document *restrict rsp_doc,
   struct Map *restrict const headers = Map_new(StringMapOps, 4);
   Map_put(headers, coinbase_authorization, auth);
 
-  thread_sleep(&coinbase_request_rate);
-
   rsp_doc->v_next = 0;
   rsp_doc->s_next = 0;
   rsp_doc->mb_next = 0;
+
+  mutex_lock(&coinbase_rest_mtx);
+  Numeric_copy_to(zero, sleep_ns);
+  nanos_now(now_ns);
+
+  if (Numeric_cmp(now_ns, coinbase_rest_next_ns) < 0) {
+    Numeric_sub_to(coinbase_rest_next_ns, now_ns, sleep_ns);
+    const long ns = Numeric_to_long(sleep_ns);
+    ts.tv_sec = ns / 1000000000;
+    ts.tv_nsec = ns % 1000000000;
+    limit = true;
+  }
+
+  Numeric_add_to(now_ns, sleep_ns, r0);
+  Numeric_add_to(r0, coinbase_rest_rate_ns, coinbase_rest_next_ns);
+  mutex_unlock(&coinbase_rest_mtx);
+
+  if (limit)
+    thread_sleep(&ts);
 
   r = http_request_json(rsp_doc, url, method, headers, body, body_len);
 
@@ -1161,14 +1203,24 @@ static void coinbase_init(void) {
   envurl(coinbase_order_create_path, sizeof(coinbase_order_create_path) - 1,
          "CDP_ORDER_CREATE_PATH", DEFAULT_CDP_ORDER_CREATE_PATH);
 
-  const unsigned long req_s = envul("CDP_HTTP_REQUESTS_PER_SECOND",
-                                    DEFAULT_CDP_HTTP_REQUESTS_PER_SECOND);
+  const char *restrict rest_rate_env =
+      envs("CDP_HTTP_REQUESTS_PER_SECOND",
+           tostring(DEFAULT_CDP_HTTP_REQUESTS_PER_SECOND));
 
-  if (req_s == 0)
-    fatal("%s == 0", "CDP_HTTP_REQUESTS_PER_SECOND");
+  struct Numeric *restrict const rest_rate = Numeric_from_char(rest_rate_env);
 
-  coinbase_request_rate.tv_sec = 0;
-  coinbase_request_rate.tv_nsec = 1000000000L / req_s;
+  if (rest_rate == NULL || Numeric_cmp(rest_rate, zero) <= 0)
+    fatal("CDP_HTTP_REQUESTS_PER_SECOND: %s", rest_rate_env);
+
+  coinbase_rest_next_ns = Numeric_copy(zero);
+  coinbase_rest_rate_ns = Numeric_new();
+  mutex_init(&coinbase_rest_mtx);
+
+  struct Numeric *restrict const r0 = Numeric_div(one, rest_rate);
+  Numeric_mul_to(second_nanos, r0, coinbase_rest_rate_ns);
+
+  Numeric_delete(r0);
+  Numeric_delete(rest_rate);
 
   const unsigned long ret_s =
       envul("CDP_HTTP_RETRY_SECONDS", DEFAULT_CDP_HTTP_RETRY_SECONDS);
@@ -1193,7 +1245,7 @@ static void coinbase_init(void) {
     wout("\tCDP_PRODUCTS_PATH=%s\n", coinbase_products_path);
     wout("\tCDP_ORDER_CANCEL_PATH=%s\n", coinbase_order_cancel_path);
     wout("\tCDP_ORDER_CREATE_PATH=%s\n", coinbase_order_create_path);
-    wout("\tCDP_HTTP_REQUESTS_PER_SECOND=%lu\n", req_s);
+    wout("\tCDP_HTTP_REQUESTS_PER_SECOND=%s\n", rest_rate_env);
     wout("\tCDP_HTTP_RETRY_SECONDS=%lu\n", ret_s);
     wout("\tCDP_HTTP_STALL_MILLIS=%lu\n", coinbase_stall_ms);
   }
@@ -1235,6 +1287,8 @@ static void coinbase_destroy(void) {
   String_delete(exchange_coinbase.id);
   String_delete(exchange_coinbase.nm);
   String_delete(coinbase_authorization);
+  Numeric_delete(coinbase_rest_next_ns);
+  Numeric_delete(coinbase_rest_rate_ns);
   Queue_delete(orders, Order_delete);
   Queue_delete(samples, Sample_delete);
   Array_delete(markets, Market_delete);
@@ -1247,6 +1301,7 @@ static void coinbase_destroy(void) {
   Pricing_delete(pricing);
   mutex_destroy(&pricing_mutex);
   mutex_destroy(&coinbase_db_mtx);
+  mutex_destroy(&coinbase_rest_mtx);
   tls_delete(coinbase_tls_key);
 }
 

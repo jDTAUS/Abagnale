@@ -115,12 +115,17 @@
 #define nitems(_a) (sizeof((_a)) / sizeof((_a)[0]))
 #endif
 
+#define _tostring(_x) #_x
+#define tostring(_x) _tostring(_x)
+
 extern const bool verbose;
 extern const bool ticker_exporter;
 
 extern const struct Numeric *restrict const zero;
 extern const struct Numeric *restrict const one;
+extern const struct Numeric *restrict const five;
 extern const struct Numeric *restrict const hundred;
+extern const struct Numeric *restrict const second_nanos;
 
 static void bitvavo_init(void);
 static void bitvavo_configure(const struct ExchangeConfig *restrict const);
@@ -169,6 +174,11 @@ struct Exchange exchange_bitvavo = {
 };
 
 struct bitvavo_tls {
+  struct bitvavo_rest_query {
+    struct Numeric *restrict now_ns;
+    struct Numeric *restrict sleep_ns;
+    struct Numeric *restrict r0;
+  } bitvavo_rest_query;
   struct bitvavo_query_accounts_vars {
     struct wcjson_document *restrict rsp_doc;
   } bitvavo_query_accounts;
@@ -288,12 +298,15 @@ static char bitvavo_rest_markets_path[URI_MAX + 1];
 static char bitvavo_rest_order_path[URI_MAX + 1];
 static char bitvavo_rest_order_create_path[URI_MAX + 1];
 static char bitvavo_rest_order_cancel_path[URI_MAX + 1];
-static struct timespec bitvavo_request_rate;
 static char bitvavo_ws_uri[URI_MAX + 1];
 static char bitvavo_ws_path[URI_MAX + 1];
 static char bitvavo_ws_authenticate_path[URI_MAX + 1];
 static unsigned long bitvavo_ws_stall_ms;
 static struct timespec bitvavo_ws_retry_rate;
+static struct Numeric *restrict bitvavo_rest_next_ns;
+static struct Numeric *restrict bitvavo_rest_1_wp_ns;
+static struct Numeric *restrict bitvavo_rest_5_wp_ns;
+static mtx_t bitvavo_rest_mtx;
 
 static struct String *restrict bitvavo_access_key;
 static struct String *restrict bitvavo_access_timestamp;
@@ -334,6 +347,9 @@ static struct bitvavo_tls *const bitvavo_tls(void) {
   struct bitvavo_tls *restrict tls = tss_get(bitvavo_tls_key);
   if (tls == NULL) {
     tls = heap_malloc(sizeof(struct bitvavo_tls));
+    tls->bitvavo_rest_query.now_ns = Numeric_new();
+    tls->bitvavo_rest_query.sleep_ns = Numeric_new();
+    tls->bitvavo_rest_query.r0 = Numeric_new();
     tls->bitvavo_query_accounts.rsp_doc =
         heap_calloc(1, sizeof(struct wcjson_document));
     tls->bitvavo_query_markets.rsp_doc =
@@ -355,6 +371,9 @@ static struct bitvavo_tls *const bitvavo_tls(void) {
 
 static void bitvavo_tls_dtor(void *e) {
   struct bitvavo_tls *restrict const tls = e;
+  Numeric_delete(tls->bitvavo_rest_query.now_ns);
+  Numeric_delete(tls->bitvavo_rest_query.sleep_ns);
+  Numeric_delete(tls->bitvavo_rest_query.r0);
   tls_doc_free(tls->bitvavo_query_accounts.rsp_doc);
   tls_doc_free(tls->bitvavo_query_markets.rsp_doc);
   tls_doc_free(tls->bitvavo_pricing.rsp_doc);
@@ -430,14 +449,25 @@ static void bitvavo_init(void) {
          sizeof(bitvavo_rest_order_cancel_path) - 1,
          "BITVAVO_ORDER_CANCEL_PATH", DEFAULT_BITVAVO_ORDER_CANCEL_PATH);
 
-  const unsigned long req_s =
-      envul("BITVAVO_REQUESTS_PER_SECOND", DEFAULT_BITVAVO_REQUESTS_PER_SECOND);
+  const char *restrict rest_rate_env =
+      envs("BITVAVO_REQUESTS_PER_SECOND",
+           tostring(DEFAULT_BITVAVO_REQUESTS_PER_SECOND));
 
-  if (req_s == 0)
-    fatal("%s == 0", "BITVAVO_REQUESTS_PER_SECOND");
+  struct Numeric *restrict const rest_rate = Numeric_from_char(rest_rate_env);
 
-  bitvavo_request_rate.tv_sec = 0;
-  bitvavo_request_rate.tv_nsec = 1000000000L / req_s;
+  if (rest_rate == NULL || Numeric_cmp(rest_rate, zero) <= 0)
+    fatal("BITVAVO_REQUESTS_PER_SECOND: %s", rest_rate_env);
+
+  bitvavo_rest_next_ns = Numeric_copy(zero);
+  bitvavo_rest_1_wp_ns = Numeric_new();
+  bitvavo_rest_5_wp_ns = Numeric_new();
+  mutex_init(&bitvavo_rest_mtx);
+
+  Numeric_div_to(one, rest_rate, bitvavo_rest_5_wp_ns);
+  Numeric_mul_to(second_nanos, bitvavo_rest_5_wp_ns, bitvavo_rest_1_wp_ns);
+  Numeric_mul_to(five, bitvavo_rest_1_wp_ns, bitvavo_rest_5_wp_ns);
+
+  Numeric_delete(rest_rate);
 
   envurl(bitvavo_ws_path, sizeof(bitvavo_ws_path) - 1, "BITVAVO_WS_PATH",
          DEFAULT_BITVAVO_WS_PATH);
@@ -466,7 +496,7 @@ static void bitvavo_init(void) {
     wout("\tBITVAVO_ORDER_PATH=%s\n", bitvavo_rest_order_path);
     wout("\tBITVAVO_ORDER_CREATE_PATH=%s\n", bitvavo_rest_order_create_path);
     wout("\tBITVAVO_ORDER_CANCEL_PATH=%s\n", bitvavo_rest_order_cancel_path);
-    wout("\tBITVAVO_REQUESTS_PER_SECOND=%lu\n", req_s);
+    wout("\tBITVAVO_REQUESTS_PER_SECOND=%s\n", rest_rate_env);
     wout("\tBITVAVO_WS_URI=%s\n", bitvavo_ws_uri);
     wout("\tBITVAVO_WS_PATH=%s\n", bitvavo_ws_path);
     wout("\tBITVAVO_WS_AUTHENTICATE_PATH=%s\n", bitvavo_ws_authenticate_path);
@@ -518,6 +548,9 @@ static void bitvavo_destroy(void) {
   String_delete(bitvavo_access_timestamp);
   String_delete(bitvavo_access_signature);
   String_delete(bitvavo_access_window);
+  Numeric_delete(bitvavo_rest_next_ns);
+  Numeric_delete(bitvavo_rest_1_wp_ns);
+  Numeric_delete(bitvavo_rest_5_wp_ns);
   tss_delete(bitvavo_tls_key);
   Array_delete(markets, Market_delete);
   Map_delete(markets_by_id, NULL);
@@ -531,6 +564,7 @@ static void bitvavo_destroy(void) {
   Queue_delete(orders, Order_delete);
   Queue_delete(samples, Sample_delete);
   mutex_destroy(&bitvavo_db_mtx);
+  mutex_destroy(&bitvavo_rest_mtx);
 }
 
 static void bitvavo_start(void) {
@@ -598,11 +632,18 @@ static int bitvavo_rest_query(struct wcjson_document *restrict rsp_doc,
                               const char *restrict const method,
                               const char *restrict const path,
                               const char *restrict const body,
-                              const size_t body_len) {
+                              const size_t body_len,
+                              const struct Numeric *restrict const wp_ns) {
   char signature[65];
   char timestamp[32];
+  const struct bitvavo_tls *restrict const tls = bitvavo_tls();
+  struct Numeric *restrict const now_ns = tls->bitvavo_rest_query.now_ns;
+  struct Numeric *restrict const sleep_ns = tls->bitvavo_rest_query.sleep_ns;
+  struct Numeric *restrict const r0 = tls->bitvavo_rest_query.r0;
   const time_t now = time(NULL) * 1000;
   struct Map *restrict const headers = Map_new(StringMapOps, 4);
+  bool limit = false;
+  struct timespec ts = {0};
 
   bitvavo_signature(signature, now, method, path, body);
 
@@ -621,6 +662,25 @@ static int bitvavo_rest_query(struct wcjson_document *restrict rsp_doc,
   rsp_doc->v_next = 0;
   rsp_doc->s_next = 0;
   rsp_doc->mb_next = 0;
+
+  mutex_lock(&bitvavo_rest_mtx);
+  Numeric_copy_to(zero, sleep_ns);
+  nanos_now(now_ns);
+
+  if (Numeric_cmp(now_ns, bitvavo_rest_next_ns) < 0) {
+    Numeric_sub_to(bitvavo_rest_next_ns, now_ns, sleep_ns);
+    const long ns = Numeric_to_long(sleep_ns);
+    ts.tv_sec = ns / 1000000000;
+    ts.tv_nsec = ns % 1000000000;
+    limit = true;
+  }
+
+  Numeric_add_to(now_ns, sleep_ns, r0);
+  Numeric_add_to(r0, wp_ns, bitvavo_rest_next_ns);
+  mutex_unlock(&bitvavo_rest_mtx);
+
+  if (limit)
+    thread_sleep(&ts);
 
   r = http_request_json(rsp_doc, url, method, headers, body, body_len);
 
@@ -1127,13 +1187,8 @@ static int bitvavo_rest_query_accounts(struct Array *restrict const a,
     panic();
 
   // Rate limit weight points: 5
-  thread_sleep(&bitvavo_request_rate);
-  thread_sleep(&bitvavo_request_rate);
-  thread_sleep(&bitvavo_request_rate);
-  thread_sleep(&bitvavo_request_rate);
-  thread_sleep(&bitvavo_request_rate);
-
-  if (bitvavo_rest_query(rsp_doc, url, "GET", mg_url_uri(url), NULL, 0) < 0)
+  if (bitvavo_rest_query(rsp_doc, url, "GET", mg_url_uri(url), NULL, 0,
+                         bitvavo_rest_5_wp_ns) < 0)
     return -1;
 
   if (bitvavo_rest_parse_entities(a, "accounts", rsp_doc,
@@ -1154,9 +1209,8 @@ static int bitvavo_rest_query_markets(struct Array *restrict const m) {
     panic();
 
   // Rate limit weight points: 1
-  thread_sleep(&bitvavo_request_rate);
-
-  if (bitvavo_rest_query(rsp_doc, url, "GET", mg_url_uri(url), NULL, 0) < 0)
+  if (bitvavo_rest_query(rsp_doc, url, "GET", mg_url_uri(url), NULL, 0,
+                         bitvavo_rest_1_wp_ns) < 0)
     return -1;
 
   if (bitvavo_rest_parse_entities(m, "markets", rsp_doc, bitvavo_parse_market) <
@@ -1372,9 +1426,8 @@ static struct Pricing *bitvavo_pricing(const struct Market *restrict const m) {
       panic();
 
     // Rate limit weight points: 1
-    thread_sleep(&bitvavo_request_rate);
-
-    if (bitvavo_rest_query(rsp_doc, url, "GET", mg_url_uri(url), NULL, 0) < 0)
+    if (bitvavo_rest_query(rsp_doc, url, "GET", mg_url_uri(url), NULL, 0,
+                           bitvavo_rest_1_wp_ns) < 0)
       goto ret;
 
     p = bitvavo_parse_fee(rsp_doc);
@@ -1407,9 +1460,8 @@ static struct Order *bitvavo_order(const struct Market *restrict const m,
     panic();
 
   // Rate limit weight points: 1
-  thread_sleep(&bitvavo_request_rate);
-
-  if (bitvavo_rest_query(rsp_doc, url, "GET", mg_url_uri(url), NULL, 0) < 0)
+  if (bitvavo_rest_query(rsp_doc, url, "GET", mg_url_uri(url), NULL, 0,
+                         bitvavo_rest_1_wp_ns) < 0)
     return NULL;
 
   return bitvavo_parse_order(rsp_doc, rsp_doc->values);
@@ -1507,12 +1559,11 @@ static struct String *bitvavo_order_post(const char *restrict const m_sym,
                                    strlen(price)) < 0)
     goto ret;
 
-  // Rate limit weight points: 1
-  thread_sleep(&bitvavo_request_rate);
-
   errno = 0;
 
-  if (bitvavo_rest_query(rsp_doc, url, "POST", mg_url_uri(url), mb, mb_len) < 0)
+  // Rate limit weight points: 1
+  if (bitvavo_rest_query(rsp_doc, url, "POST", mg_url_uri(url), mb, mb_len,
+                         bitvavo_rest_1_wp_ns) < 0)
     goto ret;
 
   j_orderId = json_obj_get_string(rsp_doc, rsp_doc->values, L"orderId", 7);
@@ -1564,7 +1615,9 @@ static bool bitvavo_order_cancel(const struct Market *restrict const m,
   if (r < 0 || (size_t)r >= sizeof(url))
     panic();
 
-  if (bitvavo_rest_query(rsp_doc, url, "DELETE", mg_url_uri(url), NULL, 0) < 0)
+  // Rate limit weight points: 1
+  if (bitvavo_rest_query(rsp_doc, url, "DELETE", mg_url_uri(url), NULL, 0,
+                         bitvavo_rest_1_wp_ns) < 0)
     goto ret;
 
   errno = 0;

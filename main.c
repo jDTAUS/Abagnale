@@ -80,6 +80,7 @@ struct Numeric *restrict n_one;
 struct Numeric *restrict two;
 struct Numeric *restrict n_two;
 struct Numeric *restrict four;
+struct Numeric *restrict five;
 struct Numeric *restrict seven;
 struct Numeric *restrict ten;
 struct Numeric *restrict twenty_four;
@@ -233,6 +234,7 @@ int main(int argc, char *argv[]) {
   two = Numeric_from_int(2);
   n_two = Numeric_from_int(-2);
   four = Numeric_from_int(4);
+  five = Numeric_from_int(5);
   seven = Numeric_from_int(7);
   ten = Numeric_from_int(10);
   twenty_four = Numeric_from_int(24);
@@ -353,6 +355,7 @@ int main(int argc, char *argv[]) {
   Numeric_delete(two);
   Numeric_delete(n_two);
   Numeric_delete(four);
+  Numeric_delete(five);
   Numeric_delete(seven);
   Numeric_delete(ten);
   Numeric_delete(twenty_four);

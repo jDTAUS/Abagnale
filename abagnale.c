@@ -4217,6 +4217,8 @@ int abagnale(int argc, char *argv[]) {
   }
 
   ninety_percent_factor = Numeric_from_char("0.9");
+  if (ninety_percent_factor == NULL)
+    panic();
 
   market_samples = Map_new(StringMapOps, 0);
   market_trades = Map_new(StringMapOps, 0);
