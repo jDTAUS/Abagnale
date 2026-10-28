@@ -1132,9 +1132,10 @@ static int coinbase_rest_query(struct wcjson_document *restrict rsp_doc,
   rsp_doc->s_next = 0;
   rsp_doc->mb_next = 0;
 
-  mutex_lock(&coinbase_rest_mtx);
   Numeric_copy_to(zero, sleep_ns);
   nanos_now(now_ns);
+
+  mutex_lock(&coinbase_rest_mtx);
 
   if (Numeric_cmp(now_ns, coinbase_rest_next_ns) < 0) {
     Numeric_sub_to(coinbase_rest_next_ns, now_ns, sleep_ns);
@@ -1148,7 +1149,7 @@ static int coinbase_rest_query(struct wcjson_document *restrict rsp_doc,
   Numeric_add_to(r0, coinbase_rest_rate_ns, coinbase_rest_next_ns);
   mutex_unlock(&coinbase_rest_mtx);
 
-  if (limit && (ts.tv_sec > 0 || ts.tv_nsec > 0))
+  if (limit && (ts.tv_nsec > 0 || ts.tv_sec > 0))
     thread_sleep(&ts);
 
   r = http_request_json(rsp_doc, url, method, headers, body, body_len);
