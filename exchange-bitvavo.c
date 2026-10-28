@@ -679,7 +679,7 @@ static int bitvavo_rest_query(struct wcjson_document *restrict rsp_doc,
   Numeric_add_to(r0, wp_ns, bitvavo_rest_next_ns);
   mutex_unlock(&bitvavo_rest_mtx);
 
-  if (limit)
+  if (limit && (ts.tv_sec > 0 || ts.tv_nsec > 0))
     thread_sleep(&ts);
 
   r = http_request_json(rsp_doc, url, method, headers, body, body_len);
