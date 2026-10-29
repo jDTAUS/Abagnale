@@ -18,7 +18,7 @@
 -- PostgreSQL database dump
 --
 
-\restrict Xg4zwRemFIjutzdx5T9NwyzwLpxM5c8QAEDbs0WogIUYMh7EZN3ObhoyJUpcab1
+\restrict b9qZgrjJ7uxqkUWRTi9HxhZXga5zGiEhqoCZLYQcXuAshXMuEcHoYQDbHWzGToO
 
 -- Dumped from database version 17.11 (Debian 17.11-0+deb13u1)
 -- Dumped by pg_dump version 17.11 (Debian 17.11-0+deb13u1)
@@ -44,9 +44,9 @@ CREATE DATABASE "ABAGNALE" WITH TEMPLATE = template0 ENCODING = 'UTF8' LOCALE_PR
 
 ALTER DATABASE "ABAGNALE" OWNER TO abagnale;
 
-\unrestrict Xg4zwRemFIjutzdx5T9NwyzwLpxM5c8QAEDbs0WogIUYMh7EZN3ObhoyJUpcab1
+\unrestrict b9qZgrjJ7uxqkUWRTi9HxhZXga5zGiEhqoCZLYQcXuAshXMuEcHoYQDbHWzGToO
 \connect "ABAGNALE"
-\restrict Xg4zwRemFIjutzdx5T9NwyzwLpxM5c8QAEDbs0WogIUYMh7EZN3ObhoyJUpcab1
+\restrict b9qZgrjJ7uxqkUWRTi9HxhZXga5zGiEhqoCZLYQcXuAshXMuEcHoYQDbHWzGToO
 
 SET statement_timeout = 0;
 SET lock_timeout = 0;
@@ -316,7 +316,6 @@ COMMENT ON TABLE public."POSITION_STATES" IS 'Position state the application per
 --
 
 CREATE TABLE public."SAMPLES" (
-    "SAMPLE_ID" uuid DEFAULT gen_random_uuid() NOT NULL,
     "EXCHANGE_ID" uuid NOT NULL,
     "MARKET_ID" uuid NOT NULL,
     "NANOS" numeric NOT NULL,
@@ -570,14 +569,6 @@ ALTER TABLE ONLY public."POSITION_STATES"
 
 
 --
--- Name: SAMPLES SAMPLES_pkey; Type: CONSTRAINT; Schema: public; Owner: abagnale
---
-
-ALTER TABLE ONLY public."SAMPLES"
-    ADD CONSTRAINT "SAMPLES_pkey" PRIMARY KEY ("SAMPLE_ID");
-
-
---
 -- Name: STATISTICS STATISTICS_pkey; Type: CONSTRAINT; Schema: public; Owner: abagnale
 --
 
@@ -745,5 +736,5 @@ ALTER TABLE ONLY public."TREND_PLOTS"
 -- PostgreSQL database dump complete
 --
 
-\unrestrict Xg4zwRemFIjutzdx5T9NwyzwLpxM5c8QAEDbs0WogIUYMh7EZN3ObhoyJUpcab1
+\unrestrict b9qZgrjJ7uxqkUWRTi9HxhZXga5zGiEhqoCZLYQcXuAshXMuEcHoYQDbHWzGToO
 
