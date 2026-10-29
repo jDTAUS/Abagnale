@@ -88,8 +88,9 @@
 #define DEFAULT_CDP_PRODUCTS_PATH "/api/v3/brokerage/products"
 #endif
 
+// Rate limited to 10,000 requests per hour.
 #ifndef DEFAULT_CDP_HTTP_REQUESTS_PER_SECOND
-#define DEFAULT_CDP_HTTP_REQUESTS_PER_SECOND 30
+#define DEFAULT_CDP_HTTP_REQUESTS_PER_SECOND 3
 #endif
 
 #ifndef DEFAULT_CDP_HTTP_RETRY_SECONDS
