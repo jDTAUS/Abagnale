@@ -2675,8 +2675,6 @@ static void trade_pricing(const struct worker_ctx *restrict const w_ctx,
     return;
   }
 
-  bool err = false;
-
   Numeric_copy_to(pricing->ef_pc, ef_pc);
   struct String *restrict const pr_nm = String_copy(pricing->nm);
   mutex_unlock(pricing->mtx);
@@ -2701,32 +2699,13 @@ static void trade_pricing(const struct worker_ctx *restrict const w_ctx,
   } else
     Numeric_copy_to(w_ctx->m_cnf->v_pc, t->tp_pc);
 
-  if (Numeric_cmp(t->tp_pc, t->fee_pc) < 0) {
-    char *restrict const stddev = Numeric_to_char_unscaled(t->tp_pc);
-    char *restrict const fee = Numeric_to_char_unscaled(t->fee_pc);
-
-    werr("%s: %s: Pricing: Volatility fee constraint: %s%%<%s%%\n",
-         String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm), stddev, fee);
-
-    Numeric_char_free(stddev);
-    Numeric_char_free(fee);
-
-    Numeric_copy_to(t->fee_pc, t->tp_pc);
-    err = true;
-  }
-
-  if (verbose || err) {
+  if (verbose) {
     char *restrict const fee = Numeric_to_char_unscaled(t->fee_pc);
     char *restrict const v = Numeric_to_char_unscaled(t->tp_pc);
 
-    if (err)
-      werr("%s: %s: Pricing: name: %s, fee: %s%%, volatility: %s%%\n",
-           String_chars(pr_nm), String_chars(w_ctx->e->nm),
-           String_chars(w_ctx->m->nm), fee, v);
-    else
-      wout("%s: %s: Pricing: name: %s, fee: %s%%, volatility: %s%%\n",
-           String_chars(pr_nm), String_chars(w_ctx->e->nm),
-           String_chars(w_ctx->m->nm), fee, v);
+    wout("%s: %s: Pricing: name: %s, fee: %s%%, volatility: %s%%\n",
+         String_chars(pr_nm), String_chars(w_ctx->e->nm),
+         String_chars(w_ctx->m->nm), fee, v);
 
     Numeric_char_free(fee);
     Numeric_char_free(v);
@@ -3592,8 +3571,6 @@ static int market_trade_volatility_func(void *restrict const arg) {
   w_ctx->db = db_connect(w_ctx->db_name);
 
   do {
-    bool err = false;
-
     Queue_lock(w_ctx->market_queue);
 
     struct Trade *restrict const t = Queue_dequeue_await(w_ctx->market_queue);
@@ -3661,34 +3638,15 @@ static int market_trade_volatility_func(void *restrict const arg) {
 
     db_volatility_close(w_ctx->db);
 
-    if (Numeric_cmp(tp_pc, t->fee_pc) < 0) {
-      char *restrict const stddev = Numeric_to_char_unscaled(tp_pc);
-      char *restrict const fee = Numeric_to_char_unscaled(t->fee_pc);
-
-      werr("%s: %s: Pricing: Volatility fee constraint: %s%%<%s%%\n",
-           String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm), stddev, fee);
-
-      Numeric_char_free(stddev);
-      Numeric_char_free(fee);
-
-      Numeric_copy_to(t->fee_pc, tp_pc);
-      err = true;
-    }
-
-    if (verbose || err) {
+    if (verbose) {
       char *restrict const fee = Numeric_to_char_unscaled(t->fee_pc);
       char *restrict const v = Numeric_to_char_unscaled(tp_pc);
       const struct Pricing *restrict const pricing =
           w_ctx->e->pricing(w_ctx->m);
 
-      if (err)
-        werr("%s: %s: Pricing: name: %s, fee: %s%%, volatility: %s%%\n",
-             String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
-             String_chars(pricing->nm), fee, v);
-      else
-        wout("%s: %s: Pricing: name: %s, fee: %s%%, volatility: %s%%\n",
-             String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
-             String_chars(pricing->nm), fee, v);
+      wout("%s: %s: Pricing: name: %s, fee: %s%%, volatility: %s%%\n",
+           String_chars(w_ctx->e->nm), String_chars(w_ctx->m->nm),
+           String_chars(pricing->nm), fee, v);
 
       mutex_unlock(pricing->mtx);
       Numeric_char_free(fee);
