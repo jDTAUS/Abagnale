@@ -88,7 +88,6 @@ trade at coinbase using trend return $eur_return window 144h\
 
 # abagnale-coinbase-180h.conf
 trade at coinbase using trend return $eur_return window 180h\
-	market BAT@EUR\
 	market UNI@EUR\
 	demand-timeout-min 5h demand-timeout-max 45h\
 	supply-timeout-min 5h supply-timeout-max 45h\
@@ -108,6 +107,7 @@ trade at coinbase using trend return $btc_return window 324h\
 
 trade at coinbase using trend return $eur_return window 324h\
 	market ALGO@EUR\
+	market BAT@EUR\
 	market BCH@EUR\
 	market ETH@EUR\
 	market LTC@EUR\
@@ -331,7 +331,7 @@ trade at coinbase using trend return $brl_return window 36h\
 	take-loss-delay 18h take-loss-delays 1
 
 # abagnale-coinbase-all-btc.conf
-trade at coinbase using trend return $btc_return window 36h\
+trade at coinbase using trend return $btc_return window 180h\
 	market\
 		not 1INCH@EUR\
 		not AAVE@BTC\
@@ -382,9 +382,9 @@ trade at coinbase using trend return $btc_return window 36h\
 		not XLM@EUR\
 		not YFI@BTC\
 		match @BTC$\
-	stop-loss-delay 15m stop-loss-delays 1\
-	take-profit-delay 3m take-profit-delays 1\
-	take-loss-delay 18h take-loss-delays 1
+	stop-loss-delay 75m stop-loss-delays 1\
+	take-profit-delay 15m take-profit-delays 1\
+	take-loss-delay 90h take-loss-delays 1
 
 # abagnale-coinbase-all-cad.conf
 trade at coinbase using trend return $cad_return window 36h\
@@ -443,7 +443,7 @@ trade at coinbase using trend return $cad_return window 36h\
 	take-loss-delay 18h take-loss-delays 1
 
 # abagnale-coinbase-all-eth.conf
-trade at coinbase using trend return $eth_return window 36h\
+trade at coinbase using trend return $eth_return window 180h\
 	market\
 		not 1INCH@EUR\
 		not AAVE@BTC\
@@ -494,12 +494,12 @@ trade at coinbase using trend return $eth_return window 36h\
 		not XLM@EUR\
 		not YFI@BTC\
 		match @ETH$\
-	stop-loss-delay 15m stop-loss-delays 1\
-	take-profit-delay 3m take-profit-delays 1\
-	take-loss-delay 18h take-loss-delays 1
+	stop-loss-delay 75m stop-loss-delays 1\
+	take-profit-delay 15m take-profit-delays 1\
+	take-loss-delay 90h take-loss-delays 1
 
 # abagnale-coinbase-all-eur.conf
-trade at coinbase using trend return $eur_return window 36h\
+trade at coinbase using trend return $eur_return window 180h\
 	market\
 		not 1INCH@EUR\
 		not AAVE@BTC\
@@ -550,9 +550,9 @@ trade at coinbase using trend return $eur_return window 36h\
 		not XLM@EUR\
 		not YFI@BTC\
 		match @EUR$\
-	stop-loss-delay 15m stop-loss-delays 1\
-	take-profit-delay 3m take-profit-delays 1\
-	take-loss-delay 18h take-loss-delays 1
+	stop-loss-delay 75m stop-loss-delays 1\
+	take-profit-delay 15m take-profit-delays 1\
+	take-loss-delay 90h take-loss-delays 1
 
 # abagnale-coinbase-all-gbp.conf
 trade at coinbase using trend return $gbp_return window 36h\
@@ -723,7 +723,7 @@ trade at coinbase using trend return $sgd_return window 36h\
 	take-loss-delay 18h take-loss-delays 1
 
 # abagnale-coinbase-all-usdc.conf
-trade at coinbase using trend return $usdc_return window 36h\
+trade at coinbase using trend return $usdc_return window 180h\
 	market\
 		not 1INCH@EUR\
 		not AAVE@BTC\
@@ -774,9 +774,9 @@ trade at coinbase using trend return $usdc_return window 36h\
 		not XLM@EUR\
 		not YFI@BTC\
 		match @USDC$\
-	stop-loss-delay 15m stop-loss-delays 1\
-	take-profit-delay 3m take-profit-delays 1\
-	take-loss-delay 18h take-loss-delays 1
+	stop-loss-delay 75m stop-loss-delays 1\
+	take-profit-delay 15m take-profit-delays 1\
+	take-loss-delay 90h take-loss-delays 1
 
 # abagnale-coinbase-all-usdt.conf
 trade at coinbase using trend return $usdt_return window 36h\
@@ -904,15 +904,9 @@ trade at bitvavo using trend return $eur_return window 36h\
 # abagnale-bitvavo-72h.conf
 trade at bitvavo using trend return $eur_return window 72h\
 	market AKT@EUR\
-	market BABY@EUR\
-	market BNB@EUR\
-	market CC@EUR\
 	market DOT@EUR\
 	market LTC@EUR\
-	market PHA@EUR\
 	market QNT@EUR\
-	market RAY@EUR\
-	market TIA@EUR\
 	market USELESS@EUR\
 	market XLM@EUR\
 	demand-timeout-min 2h demand-timeout-max 18h\
@@ -923,12 +917,12 @@ trade at bitvavo using trend return $eur_return window 72h\
 
 # abagnale-bitvavo-324h.conf
 trade at bitvavo using trend return $eur_return window 324h\
+	market ACE@EUR\
 	market ACT@EUR\
-	market AGI@EUR\
 	market AERGO@EUR\
-	market AGLD@EUR\
 	market AIOZ@EUR\
 	market AIXBT@EUR\
+	market ALGO@EUR\
 	market ALICE@EUR\
 	market ALIGN@EUR\
 	market API3@EUR\
@@ -937,7 +931,6 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market ARX@EUR\
 	market ATH@EUR\
 	market ATOM@EUR\
-	market AUCTION@EUR\
 	market AVNT@EUR\
 	market AXL@EUR\
 	market AXS@EUR\
@@ -946,16 +939,13 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market BAND@EUR\
 	market BAT@EUR\
 	market BEAM@EUR\
-	market BICO@EUR\
 	market BIGTIME@EUR\
 	market BIO@EUR\
 	market BIRB@EUR\
 	market BLUR@EUR\
-	market BOME@EUR\
 	market BRETT@EUR\
 	market C98@EUR\
 	market C@EUR\
-	market CAKE@EUR\
 	market CARV@EUR\
 	market CATI@EUR\
 	market CELR@EUR\
@@ -965,7 +955,6 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market CHR@EUR\
 	market CHZ@EUR\
 	market COMP@EUR\
-	market COW@EUR\
 	market CRO@EUR\
 	market CROSS@EUR\
 	market CRT@EUR\
@@ -990,21 +979,19 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market ENJ@EUR\
 	market ENS@EUR\
 	market ENSO@EUR\
+	market ESP@EUR\
 	market ETC@EUR\
 	market EUL@EUR\
 	market F@EUR\
 	market FIDA@EUR\
 	market FLOCK@EUR\
-	market FLOKI@EUR\
 	market FLR@EUR\
 	market FLUID@EUR\
 	market FLUX@EUR\
 	market FORM@EUR\
 	market GALA@EUR\
 	market GAS@EUR\
-	market GLM@EUR\
 	market GLMR@EUR\
-	market GMX@EUR\
 	market GOAT@EUR\
 	market GRAM@EUR\
 	market GRASS@EUR\
@@ -1033,15 +1020,11 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market KERNEL@EUR\
 	market KITE@EUR\
 	market KMNO@EUR\
-	market KNC@EUR\
 	market KSM@EUR\
 	market LAPTOP@EUR\
-	market LAYER@EUR\
 	market LDO@EUR\
 	market LIGHTER@EUR\
 	market LINEA@EUR\
-	market LISTA@EUR\
-	market LMWR@EUR\
 	market LQTY@EUR\
 	market LRC@EUR\
 	market LSK@EUR\
@@ -1049,13 +1032,13 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market LUNA@EUR\
 	market MANA@EUR\
 	market MASK@EUR\
-	market ME@EUR\
 	market MEGA@EUR\
 	market MEME@EUR\
 	market MERL@EUR\
 	market MET@EUR\
 	market METIS@EUR\
 	market MIOTA@EUR\
+	market MIRA@EUR\
 	market MLN@EUR\
 	market MMT@EUR\
 	market MOG@EUR\
@@ -1063,7 +1046,6 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market MOVR@EUR\
 	market MTL@EUR\
 	market NEIRO@EUR\
-	market NEWT@EUR\
 	market NEX@EUR\
 	market NMR@EUR\
 	market NOM@EUR\
@@ -1087,16 +1069,15 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market PORTAL@EUR\
 	market PROM@EUR\
 	market PROMPT@EUR\
-	market PROVE@EUR\
 	market PTB@EUR\
 	market PUFFER@EUR\
 	market PYR@EUR\
 	market QUID@EUR\
+	market RE@EUR\
 	market ROBO@EUR\
 	market RON@EUR\
 	market RSR@EUR\
 	market RLC@EUR\
-	market RUNE@EUR\
 	market RVN@EUR\
 	market S@EUR\
 	market SAFE@EUR\
@@ -1104,22 +1085,19 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market SAND@EUR\
 	market SCR@EUR\
 	market SEI@EUR\
-	market SFP@EUR\
 	market SHELL@EUR\
 	market SIGN@EUR\
 	market SLP@EUR\
+	market SNX@EUR\
 	market SOMI@EUR\
 	market SOPH@EUR\
 	market SOSO@EUR\
-	market SPK@EUR\
 	market SSV@EUR\
 	market STO@EUR\
 	market STORJ@EUR\
-	market STRAX@EUR\
 	market STRK@EUR\
 	market STX@EUR\
 	market SUPER@EUR\
-	market SUSHI@EUR\
 	market SYN@EUR\
 	market T@EUR\
 	market TAI@EUR\
@@ -1133,7 +1111,6 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market TREE@EUR\
 	market TRX@EUR\
 	market TURBO@EUR\
-	market TWT@EUR\
 	market UP@EUR\
 	market USDC@EUR\
 	market VELO@EUR\
@@ -1145,7 +1122,7 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market WIF@EUR\
 	market WOO@EUR\
 	market XAI@EUR\
-	market XDC@EUR\
+	market XDP@EUR\
 	market XPL@EUR\
 	market XVG@EUR\
 	market XYO@EUR\
@@ -1157,7 +1134,6 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market ZEN@EUR\
 	market ZK@EUR\
 	market ZKC@EUR\
-	market ZKP@EUR\
 	market ZORA@EUR\
 	market ZRO@EUR\
 	market ZRX@EUR\
@@ -1181,13 +1157,18 @@ trade at bitvavo using trend return $usdc_return window 324h\
 # abagnale-bitvavo-648h.conf
 trade at bitvavo using trend return $eur_return window 648h\
 	market A@EUR\
+	market AGLD@EUR\
 	market ALT@EUR\
 	market ANKR@EUR\
 	market ARPA@EUR\
 	market ASTER@EUR\
+	market AUCTION@EUR\
 	market BEL@EUR\
+	market BICO@EUR\
 	market BLEND@EUR\
 	market BOB@EUR\
+	market BOME@EUR\
+	market CAKE@EUR\
 	market CPOOL@EUR\
 	market CTK@EUR\
 	market CTSI@EUR\
@@ -1195,28 +1176,45 @@ trade at bitvavo using trend return $eur_return window 648h\
 	market DEEP@EUR\
 	market DYDX@EUR\
 	market DYM@EUR\
+	market FLOKI@EUR\
 	market FOLD@EUR\
-	market GMT@EUR\
+	market GLM@EUR\
+	market GMX@EUR\
 	market HFT@EUR\
 	market HMSTR@EUR\
 	market HOT@EUR\
 	market IOST@EUR\
 	market IQ@EUR\
+	market KNC@EUR\
+	market LAYER@EUR\
+	market LMWR@EUR\
+	market LISTA@EUR\
 	market MAGIC@EUR\
 	market MANTA@EUR\
+	market ME@EUR\
 	market MEW@EUR\
 	market MORPHO@EUR\
 	market NEO@EUR\
 	market NES@EUR\
+	market NEWT@EUR\
 	market OGN@EUR\
 	market PIXEL@EUR\
+	market PROVE@EUR\
+	market RUNE@EUR\
+	market SFP@EUR\
+	market SPK@EUR\
+	market STRAX@EUR\
+	market SUSHI@EUR\
 	market SWEAT@EUR\
 	market SXT@EUR\
 	market THQ@EUR\
 	market TRAC@EUR\
+	market TWT@EUR\
 	market UMA@EUR\
 	market USDCV@EUR\
 	market WELL@EUR\
+	market XDC@EUR\
+	market ZKP@EUR\
 	market ZRC@EUR\
 	demand-timeout-min 20h demand-timeout-max 162h\
 	supply-timeout-min 20h supply-timeout-max 162h\
@@ -1233,6 +1231,7 @@ trade at bitvavo using trend return $eur_return window 1296h\
 	market ACX@EUR\
 	market ADX@EUR\
 	market AEVO@EUR\
+	market AGI@EUR\
 	market AMP@EUR\
 	market ANIME@EUR\
 	market APE@EUR\
@@ -1248,6 +1247,7 @@ trade at bitvavo using trend return $eur_return window 1296h\
 	market CAT@EUR\
 	market CELO@EUR\
 	market CETUS@EUR\
+	market COW@EUR\
 	market CTC@EUR\
 	market CVC@EUR\
 	market CYBER@EUR\
@@ -1259,6 +1259,7 @@ trade at bitvavo using trend return $eur_return window 1296h\
 	market FUEL@EUR\
 	market G@EUR\
 	market GIGA@EUR\
+	market GMT@EUR\
 	market GNO@EUR\
 	market GNS@EUR\
 	market ICNT@EUR\
@@ -1341,6 +1342,7 @@ trade at bitvavo using trend return $eur_return window 180h\
 		not 1INCH@EUR\
 		not 2Z@EUR\
 		not A@EUR\
+		not ACE@EUR\
 		not ACH@EUR\
 		not ACT@EUR\
 		not ACX@EUR\
@@ -1353,6 +1355,7 @@ trade at bitvavo using trend return $eur_return window 180h\
 		not AIOZ@EUR\
 		not AIXBT@EUR\
 		not AKT@EUR\
+		not ALGO@EUR\
 		not ALICE@EUR\
 		not ALIGN@EUR\
 		not ALT@EUR\
@@ -1377,7 +1380,6 @@ trade at bitvavo using trend return $eur_return window 180h\
 		not AXL@EUR\
 		not AXS@EUR\
 		not AZTEC@EUR\
-		not BABY@EUR\
 		not BANANA@EUR\
 		not BAND@EUR\
 		not BAT@EUR\
@@ -1406,7 +1408,6 @@ trade at bitvavo using trend return $eur_return window 180h\
 		not CARV@EUR\
 		not CAT@EUR\
 		not CATI@EUR\
-		not CC@EUR\
 		not CELO@EUR\
 		not CELR@EUR\
 		not CETUS@EUR\
@@ -1454,6 +1455,7 @@ trade at bitvavo using trend return $eur_return window 180h\
 		not ENJ@EUR\
 		not ENS@EUR\
 		not ENSO@EUR\
+		not ESP@EUR\
 		not ETC@EUR\
 		not ETH@EUR\
 		not ETH@USDC\
@@ -1553,6 +1555,7 @@ trade at bitvavo using trend return $eur_return window 180h\
 		not METIS@EUR\
 		not MEW@EUR\
 		not MIOTA@EUR\
+		not MIRA@EUR\
 		not MLN@EUR\
 		not MMT@EUR\
 		not MOCA@EUR\
@@ -1586,7 +1589,6 @@ trade at bitvavo using trend return $eur_return window 180h\
 		not PEOPLE@EUR\
 		not PEPE@EUR\
 		not PEPE@USDC\
-		not PHA@EUR\
 		not PIXEL@EUR\
 		not PLUME@EUR\
 		not PNT@EUR\
@@ -1611,6 +1613,7 @@ trade at bitvavo using trend return $eur_return window 180h\
 		not RAD@EUR\
 		not RARE@EUR\
 		not RAY@EUR\
+		not RE@EUR\
 		not RED@EUR\
 		not REQ@EUR\
 		not REZ@EUR\
@@ -1637,6 +1640,7 @@ trade at bitvavo using trend return $eur_return window 180h\
 		not SKY@EUR\
 		not SLP@EUR\
 		not SLX@EUR\
+		not SNX@EUR\
 		not SOLV@EUR\
 		not SOMI@EUR\
 		not SOON@EUR\
@@ -1701,6 +1705,7 @@ trade at bitvavo using trend return $eur_return window 180h\
 		not WOO@EUR\
 		not XAI@EUR\
 		not XDC@EUR\
+		not XDP@EUR\
 		not XLM@EUR\
 		not XMN@EUR\
 		not XNO@EUR\
@@ -1739,6 +1744,7 @@ trade at bitvavo using trend return $usdc_return window 72h\
 		not 1INCH@EUR\
 		not 2Z@EUR\
 		not A@EUR\
+		not ACE@EUR\
 		not ACH@EUR\
 		not ACT@EUR\
 		not ACX@EUR\
@@ -1751,6 +1757,7 @@ trade at bitvavo using trend return $usdc_return window 72h\
 		not AIOZ@EUR\
 		not AIXBT@EUR\
 		not AKT@EUR\
+		not ALGO@EUR\
 		not ALICE@EUR\
 		not ALIGN@EUR\
 		not ALT@EUR\
@@ -1775,7 +1782,6 @@ trade at bitvavo using trend return $usdc_return window 72h\
 		not AXL@EUR\
 		not AXS@EUR\
 		not AZTEC@EUR\
-		not BABY@EUR\
 		not BANANA@EUR\
 		not BAND@EUR\
 		not BAT@EUR\
@@ -1804,7 +1810,6 @@ trade at bitvavo using trend return $usdc_return window 72h\
 		not CARV@EUR\
 		not CAT@EUR\
 		not CATI@EUR\
-		not CC@EUR\
 		not CELO@EUR\
 		not CELR@EUR\
 		not CETUS@EUR\
@@ -1852,6 +1857,7 @@ trade at bitvavo using trend return $usdc_return window 72h\
 		not ENJ@EUR\
 		not ENS@EUR\
 		not ENSO@EUR\
+		not ESP@EUR\
 		not ETC@EUR\
 		not ETH@EUR\
 		not ETH@USDC\
@@ -1951,6 +1957,7 @@ trade at bitvavo using trend return $usdc_return window 72h\
 		not METIS@EUR\
 		not MEW@EUR\
 		not MIOTA@EUR\
+		not MIRA@EUR\
 		not MLN@EUR\
 		not MMT@EUR\
 		not MOCA@EUR\
@@ -1984,7 +1991,6 @@ trade at bitvavo using trend return $usdc_return window 72h\
 		not PEOPLE@EUR\
 		not PEPE@EUR\
 		not PEPE@USDC\
-		not PHA@EUR\
 		not PIXEL@EUR\
 		not PLUME@EUR\
 		not PNT@EUR\
@@ -2009,6 +2015,7 @@ trade at bitvavo using trend return $usdc_return window 72h\
 		not RAD@EUR\
 		not RARE@EUR\
 		not RAY@EUR\
+		not RE@EUR\
 		not RED@EUR\
 		not REQ@EUR\
 		not REZ@EUR\
@@ -2035,6 +2042,7 @@ trade at bitvavo using trend return $usdc_return window 72h\
 		not SKY@EUR\
 		not SLP@EUR\
 		not SLX@EUR\
+		not SNX@EUR\
 		not SOLV@EUR\
 		not SOMI@EUR\
 		not SOON@EUR\
@@ -2099,6 +2107,7 @@ trade at bitvavo using trend return $usdc_return window 72h\
 		not WOO@EUR\
 		not XAI@EUR\
 		not XDC@EUR\
+		not XDP@EUR\
 		not XLM@EUR\
 		not XMN@EUR\
 		not XNO@EUR\
