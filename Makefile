@@ -1,5 +1,5 @@
 # $SchulteIT: Makefile 15282 2025-11-05 22:54:21Z schulte $
-# $JDTAUS$
+# $JDTAUS: Makefile 9873 2026-11-02 00:24:51Z schulte $
 
 #
 # Copyright (c) 2018 - 2026 Christian Schulte <cs@schulte.it>
