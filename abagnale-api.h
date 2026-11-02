@@ -37,6 +37,7 @@
 
 #include <signal.h>
 
+// main.c: Type mismatches are intentional and of no interest to the linker.
 extern const struct Numeric *restrict const Numeric_0;
 extern const struct Numeric *restrict const Numeric_1;
 extern const struct Numeric *restrict const Numeric_neg1;
