@@ -24,6 +24,8 @@
 #include "abagnale-api.h"
 #include "mongoose-api.h"
 
+#include <inttypes.h>
+
 #define COINBASE_UUID "74cc13c5-4835-491b-95f2-6af672ad141a"
 #define COINBASE_DBCON "coinbase"
 
