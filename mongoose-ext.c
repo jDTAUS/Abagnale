@@ -1,4 +1,4 @@
-/* $JDTAUS$ */
+/* $JDTAUS: mongoose-ext.c 9871 2026-11-02 00:12:47Z schulte $ */
 
 /*
  * Copyright (c) 2026 Christian Schulte <cs@schulte.it>

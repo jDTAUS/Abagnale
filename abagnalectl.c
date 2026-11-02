@@ -1,5 +1,5 @@
 /* $SchulteIT: abagnalectl.c 15262 2025-11-04 03:42:05Z schulte $ */
-/* $JDTAUS$ */
+/* $JDTAUS: abagnalectl.c 9871 2026-11-02 00:12:47Z schulte $ */
 
 /*
  * Copyright (c) 2018 - 2026 Christian Schulte <cs@schulte.it>
