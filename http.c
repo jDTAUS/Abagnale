@@ -21,6 +21,7 @@
 #endif
 
 #include "abagnale-api.h"
+#include "mongoose-api.h"
 
 #ifndef DEFAULT_ABAG_HTTP_RETRY_SECONDS
 #define DEFAULT_ABAG_HTTP_RETRY_SECONDS 3

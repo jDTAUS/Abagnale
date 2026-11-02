@@ -25,6 +25,7 @@
 
 #include <pgtypes_numeric.h>
 
+#include <limits.h>
 #include <math.h>
 
 struct Numeric {

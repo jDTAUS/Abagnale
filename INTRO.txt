@@ -41,9 +41,9 @@ Abagnale - Algorithmic Trading System - https://github.com/jdtaus/Abagnale
 ./math.h                  - Math API header file
 ./math-postgresql.c       - PostgreSQL math implementation source code
 ./mongoose.h              - Mongoose.WS API header file
-./mongoose-ext.h          - Mongoose.WS extensions API header file
+./mongoose-api.h          - Mongoose.WS extensions API header file
 ./mongoose.c              - Mongoose.WS implementation source code
-./mongoose-ext.c          - Mongoose.WS extensions implementation source code
+./mongoose-api.c          - Mongoose.WS extensions implementation source code
 ./optparse.h              - Optparse API and implementation source code
 ./patterns.h              - Lua Patterns API header file
 ./patterns.c              - Lua Patterns implementation source code

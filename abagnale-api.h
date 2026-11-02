@@ -27,7 +27,6 @@
 #include "database.h"
 #include "heap.h"
 #include "http.h"
-#include "mongoose-ext.h"
 #include "patterns.h"
 #include "proc.h"
 #include "queue.h"
@@ -35,6 +34,8 @@
 #include "time.h"
 #include "version.h"
 #include "wcjson-document.h"
+
+#include <signal.h>
 
 extern const struct Numeric *restrict const Numeric_0;
 extern const struct Numeric *restrict const Numeric_1;

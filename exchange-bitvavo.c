@@ -21,6 +21,7 @@
 #endif
 
 #include "abagnale-api.h"
+#include "mongoose-api.h"
 
 #define BITVAVO_UUID "a92b69cd-7247-440d-ba97-65b47217b667"
 #define BITVAVO_OPERATOR_ID L"65666572"

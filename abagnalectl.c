@@ -24,6 +24,10 @@
 #include "abagnale-api.h"
 #include "optparse.h"
 
+#include <inttypes.h>
+#include <stddef.h>
+#include <string.h>
+
 #ifndef nitems
 #define nitems(_a) (sizeof((_a)) / sizeof((_a)[0]))
 #endif

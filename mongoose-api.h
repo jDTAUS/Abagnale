@@ -16,18 +16,11 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "abagnale-api.h"
+#ifndef MONGOOSE_API_H
+#define MONGOOSE_API_H
 
-void mg_mgr_config(struct mg_mgr *restrict const mgr) {
-  if (cnf->dns_v4)
-    mgr->dns4.url = String_chars(cnf->dns_v4);
+#include "mongoose.h"
 
-  if (cnf->dns_v6)
-    mgr->dns6.url = String_chars(cnf->dns_v6);
+void mg_mgr_config(struct mg_mgr *restrict const mgr);
 
-  if (cnf->dns_to) {
-    struct Numeric *restrict r0 = Numeric_div(cnf->dns_to, Numeric_msec_ns);
-    mgr->dnstimeout = Numeric_to_int(r0);
-    Numeric_delete(r0);
-  }
-}
+#endif
