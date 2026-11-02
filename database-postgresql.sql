@@ -1,4 +1,4 @@
--- $JDTAUS$
+-- $JDTAUS: database-postgresql.sql 9868 2026-10-29 10:04:12Z schulte $
 
 -- Copyright (c) 2018 - 2026 Christian Schulte <cs@schulte.it>
 --
