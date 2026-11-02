@@ -21,17 +21,7 @@
 #include "host.h"
 #endif
 
-#include "abagnale.h"
-#include "database.h"
-#include "exchange.h"
-#include "heap.h"
-#include "map.h"
-#include "math.h"
-#include "proc.h"
-#include "queue.h"
-#include "thread.h"
-#include "time.h"
-#include "version.h"
+#include "abagnale-api.h"
 
 #include <errno.h>
 #include <inttypes.h>
@@ -45,13 +35,13 @@
 #define nitems(_a) (sizeof((_a)) / sizeof((_a)[0]))
 #endif
 
-#define TRADE_IS_READY(t) (Numeric_cmp((t)->tp_pc, zero) > 0)
+#define TRADE_IS_READY(t) (Numeric_cmp((t)->tp_pc, Numeric_0) > 0)
 #define TRADE_SET_READY(t, tp_pc) (Numeric_copy_to((tp_pc), (t)->tp_pc))
-#define TRADE_IS_DELETED(t) (Numeric_cmp((t)->tp_pc, n_one) == 0)
-#define TRADE_SET_DELETED(t) (Numeric_copy_to(n_one, (t)->tp_pc))
-#define TRADE_IS_ENQUEUED(t) (Numeric_cmp((t)->tp_pc, n_two) == 0)
-#define TRADE_SET_ENQUEUED(t) (Numeric_copy_to(n_two, (t)->tp_pc))
-#define TRADE_RESET(t) (Numeric_copy_to(zero, (t)->tp_pc))
+#define TRADE_IS_DELETED(t) (Numeric_cmp((t)->tp_pc, Numeric_neg1) == 0)
+#define TRADE_SET_DELETED(t) (Numeric_copy_to(Numeric_neg1, (t)->tp_pc))
+#define TRADE_IS_ENQUEUED(t) (Numeric_cmp((t)->tp_pc, Numeric_neg2) == 0)
+#define TRADE_SET_ENQUEUED(t) (Numeric_copy_to(Numeric_neg2, (t)->tp_pc))
+#define TRADE_RESET(t) (Numeric_copy_to(Numeric_0, (t)->tp_pc))
 
 struct worker_ctx {
   void *restrict db;
@@ -159,30 +149,6 @@ struct abag_tls {
     struct db_trade_rec *restrict trade;
   } trades_load;
 };
-
-extern const struct String *restrict const progname;
-extern volatile sig_atomic_t terminated;
-
-extern const struct Array *restrict const algorithms;
-extern const struct Array *restrict const exchanges;
-extern const struct Array *restrict const volatility_windows;
-
-extern const struct Config *restrict const cnf;
-extern const struct String *restrict const process_id;
-extern const bool ticker_exporter;
-extern const bool verbose;
-extern const struct timespec thread_timeout;
-
-extern const struct Numeric *restrict const zero;
-extern const struct Numeric *restrict const one;
-extern const struct Numeric *restrict const n_one;
-extern const struct Numeric *restrict const two;
-extern const struct Numeric *restrict const n_two;
-extern const struct Numeric *restrict const four;
-extern const struct Numeric *restrict const hundred;
-extern const struct Numeric *restrict const second_nanos;
-extern const struct Numeric *restrict const minute_nanos;
-extern const struct Numeric *restrict const hour_nanos;
 
 static struct Map *restrict market_samples;
 static struct Map *restrict market_trades;
@@ -581,15 +547,15 @@ void abagnale_destroy(void) { Map_delete(market_configs, NULL); }
 static inline void trigger_init(struct Trigger *restrict const t) {
   t->cnt = 0;
   t->set = false;
-  t->nanos = Numeric_copy(zero);
-  t->price = Numeric_copy(zero);
+  t->nanos = Numeric_copy(Numeric_0);
+  t->price = Numeric_copy(Numeric_0);
 }
 
 static inline void trigger_reset(struct Trigger *restrict const tr) {
   tr->cnt = 0;
   tr->set = false;
-  Numeric_copy_to(zero, tr->nanos);
-  Numeric_copy_to(zero, tr->price);
+  Numeric_copy_to(Numeric_0, tr->nanos);
+  Numeric_copy_to(Numeric_0, tr->price);
 }
 
 static inline void trigger_delete(const struct Trigger *restrict const t) {
@@ -599,16 +565,16 @@ static inline void trigger_delete(const struct Trigger *restrict const t) {
 
 static inline void candle_init(struct Candle *restrict const c) {
   c->t = CANDLE_NONE;
-  c->o = Numeric_copy(zero);
-  c->c = Numeric_copy(zero);
-  c->h = Numeric_copy(zero);
-  c->l = Numeric_copy(zero);
-  c->pc = Numeric_copy(zero);
-  c->a = Numeric_copy(zero);
-  c->onanos = Numeric_copy(zero);
-  c->hnanos = Numeric_copy(zero);
-  c->lnanos = Numeric_copy(zero);
-  c->cnanos = Numeric_copy(zero);
+  c->o = Numeric_copy(Numeric_0);
+  c->c = Numeric_copy(Numeric_0);
+  c->h = Numeric_copy(Numeric_0);
+  c->l = Numeric_copy(Numeric_0);
+  c->pc = Numeric_copy(Numeric_0);
+  c->a = Numeric_copy(Numeric_0);
+  c->onanos = Numeric_copy(Numeric_0);
+  c->hnanos = Numeric_copy(Numeric_0);
+  c->lnanos = Numeric_copy(Numeric_0);
+  c->cnanos = Numeric_copy(Numeric_0);
 }
 
 struct Candle *Candle_new(void) {
@@ -636,16 +602,16 @@ void Candle_delete(void *restrict const c) {
 
 void Candle_reset(struct Candle *restrict const c) {
   c->t = CANDLE_NONE;
-  Numeric_copy_to(zero, c->o);
-  Numeric_copy_to(zero, c->h);
-  Numeric_copy_to(zero, c->l);
-  Numeric_copy_to(zero, c->c);
-  Numeric_copy_to(zero, c->pc);
-  Numeric_copy_to(zero, c->a);
-  Numeric_copy_to(zero, c->onanos);
-  Numeric_copy_to(zero, c->hnanos);
-  Numeric_copy_to(zero, c->lnanos);
-  Numeric_copy_to(zero, c->cnanos);
+  Numeric_copy_to(Numeric_0, c->o);
+  Numeric_copy_to(Numeric_0, c->h);
+  Numeric_copy_to(Numeric_0, c->l);
+  Numeric_copy_to(Numeric_0, c->c);
+  Numeric_copy_to(Numeric_0, c->pc);
+  Numeric_copy_to(Numeric_0, c->a);
+  Numeric_copy_to(Numeric_0, c->onanos);
+  Numeric_copy_to(Numeric_0, c->hnanos);
+  Numeric_copy_to(Numeric_0, c->lnanos);
+  Numeric_copy_to(Numeric_0, c->cnanos);
 }
 
 void Candle_copy_to(const struct Candle *restrict const src,
@@ -719,21 +685,21 @@ static inline void position_init(struct Position *restrict const p) {
   p->done = false;
   p->filled = false;
   p->id = NULL;
-  p->cnanos = Numeric_copy(zero);
-  p->dnanos = Numeric_copy(zero);
-  p->pnanos = Numeric_copy(zero);
-  p->price = Numeric_copy(zero);
-  p->sl_price = Numeric_copy(zero);
-  p->tp_price = Numeric_copy(zero);
-  p->b_ordered = Numeric_copy(zero);
-  p->b_filled = Numeric_copy(zero);
-  p->q_fees = Numeric_copy(zero);
-  p->q_filled = Numeric_copy(zero);
-  p->cl_samples = Numeric_copy(zero);
-  p->cl_factor = Numeric_copy(one);
-  p->sl_samples = Numeric_copy(zero);
-  p->tl_samples = Numeric_copy(zero);
-  p->tp_samples = Numeric_copy(zero);
+  p->cnanos = Numeric_copy(Numeric_0);
+  p->dnanos = Numeric_copy(Numeric_0);
+  p->pnanos = Numeric_copy(Numeric_0);
+  p->price = Numeric_copy(Numeric_0);
+  p->sl_price = Numeric_copy(Numeric_0);
+  p->tp_price = Numeric_copy(Numeric_0);
+  p->b_ordered = Numeric_copy(Numeric_0);
+  p->b_filled = Numeric_copy(Numeric_0);
+  p->q_fees = Numeric_copy(Numeric_0);
+  p->q_filled = Numeric_copy(Numeric_0);
+  p->cl_samples = Numeric_copy(Numeric_0);
+  p->cl_factor = Numeric_copy(Numeric_1);
+  p->sl_samples = Numeric_copy(Numeric_0);
+  p->tl_samples = Numeric_copy(Numeric_0);
+  p->tp_samples = Numeric_copy(Numeric_0);
   trigger_init(&p->sl_trg);
   trigger_init(&p->tl_trg);
   trigger_init(&p->tp_trg);
@@ -746,20 +712,20 @@ static inline void position_reset(struct Position *restrict const p) {
   String_delete(p->id);
   p->id = NULL;
 
-  Numeric_copy_to(zero, p->cnanos);
-  Numeric_copy_to(zero, p->dnanos);
-  Numeric_copy_to(zero, p->pnanos);
-  Numeric_copy_to(zero, p->price);
-  Numeric_copy_to(zero, p->sl_price);
-  Numeric_copy_to(zero, p->tp_price);
-  Numeric_copy_to(zero, p->b_ordered);
-  Numeric_copy_to(zero, p->b_filled);
-  Numeric_copy_to(zero, p->q_fees);
-  Numeric_copy_to(zero, p->q_filled);
-  Numeric_copy_to(zero, p->cl_samples);
-  Numeric_copy_to(zero, p->sl_samples);
-  Numeric_copy_to(zero, p->tl_samples);
-  Numeric_copy_to(zero, p->tp_samples);
+  Numeric_copy_to(Numeric_0, p->cnanos);
+  Numeric_copy_to(Numeric_0, p->dnanos);
+  Numeric_copy_to(Numeric_0, p->pnanos);
+  Numeric_copy_to(Numeric_0, p->price);
+  Numeric_copy_to(Numeric_0, p->sl_price);
+  Numeric_copy_to(Numeric_0, p->tp_price);
+  Numeric_copy_to(Numeric_0, p->b_ordered);
+  Numeric_copy_to(Numeric_0, p->b_filled);
+  Numeric_copy_to(Numeric_0, p->q_fees);
+  Numeric_copy_to(Numeric_0, p->q_filled);
+  Numeric_copy_to(Numeric_0, p->cl_samples);
+  Numeric_copy_to(Numeric_0, p->sl_samples);
+  Numeric_copy_to(Numeric_0, p->tl_samples);
+  Numeric_copy_to(Numeric_0, p->tp_samples);
   trigger_reset(&p->sl_trg);
   trigger_reset(&p->tl_trg);
   trigger_reset(&p->tp_trg);
@@ -860,7 +826,7 @@ static void position_state_load(const void *restrict const db,
       tls->position_state_load.p_state;
 
   if (p->id != NULL &&
-      db_position_state_restore(p_state, db, String_chars(process_id),
+      db_position_state_restore(p_state, db, String_chars(proc_id),
                                 String_chars(t->e_id), String_chars(t->m_id),
                                 String_chars(p->id))) {
 
@@ -916,9 +882,9 @@ static void position_state_save(const void *restrict const db,
     Numeric_copy_to(p->tp_samples, p_state->tp_samples);
     p_state->tp = p->tp_trg.set;
 
-    db_position_state_persist(db, String_chars(process_id),
-                              String_chars(t->e_id), String_chars(t->m_id),
-                              String_chars(p->id), p_state);
+    db_position_state_persist(db, String_chars(proc_id), String_chars(t->e_id),
+                              String_chars(t->m_id), String_chars(p->id),
+                              p_state);
   }
 }
 
@@ -930,17 +896,17 @@ static void trade_state_load(const void *restrict const db,
       tls->trade_state_load.t_state;
 
   if (t->id != NULL &&
-      db_trade_state_restore(t_state, db, String_chars(process_id),
+      db_trade_state_restore(t_state, db, String_chars(proc_id),
                              String_chars(t->id))) {
 
     Numeric_copy_to(t_state->fee_pc, t->fee_pc);
     Numeric_copy_to(t_state->tp_pc, t->tp_pc);
     Numeric_copy_to(t_state->pr_samples, t->pr_samples);
 
-    Numeric_div_to(t->fee_pc, hundred, r0);
-    Numeric_add_to(r0, one, t->fee_pf);
-    Numeric_div_to(t->tp_pc, hundred, r0);
-    Numeric_add_to(r0, one, t->tp_pf);
+    Numeric_div_to(t->fee_pc, Numeric_100, r0);
+    Numeric_add_to(r0, Numeric_1, t->fee_pf);
+    Numeric_div_to(t->tp_pc, Numeric_100, r0);
+    Numeric_add_to(r0, Numeric_1, t->tp_pf);
   }
 
   position_state_load(db, t, &t->p_long);
@@ -955,10 +921,10 @@ static void trade_state_save(const void *restrict const db,
 
   if (t->id != NULL) {
     Numeric_copy_to(t->fee_pc, t_state->fee_pc);
-    Numeric_copy_to(TRADE_IS_READY(t) ? t->tp_pc : zero, t_state->tp_pc);
+    Numeric_copy_to(TRADE_IS_READY(t) ? t->tp_pc : Numeric_0, t_state->tp_pc);
     Numeric_copy_to(t->pr_samples, t_state->pr_samples);
 
-    db_trade_state_persist(db, String_chars(process_id), String_chars(t->id),
+    db_trade_state_persist(db, String_chars(proc_id), String_chars(t->id),
                            t_state);
   }
 
@@ -973,12 +939,12 @@ static inline struct Trade *trade_new(struct String *restrict const e_id,
   t->e_id = String_copy(e_id);
   t->m_id = String_copy(m_id);
   t->status = TRADE_STATUS_NEW;
-  t->fee_pc = Numeric_copy(zero);
-  t->fee_pf = Numeric_copy(one);
-  t->tp_pc = Numeric_copy(zero);
-  t->tp_pf = Numeric_copy(one);
-  t->q_return = Numeric_copy(zero);
-  t->pr_samples = Numeric_copy(zero);
+  t->fee_pc = Numeric_copy(Numeric_0);
+  t->fee_pf = Numeric_copy(Numeric_1);
+  t->tp_pc = Numeric_copy(Numeric_0);
+  t->tp_pf = Numeric_copy(Numeric_1);
+  t->q_return = Numeric_copy(Numeric_0);
+  t->pr_samples = Numeric_copy(Numeric_0);
   t->a = NULL;
   mutex_init(&t->mtx);
   candle_init(&t->open_cd);
@@ -1027,13 +993,13 @@ samples_per_nano(struct Numeric *restrict const ret,
     Numeric_from_long_to(s_size, size);
     Numeric_sub_to(s_tail->nanos, s_head->nanos, duration);
 
-    if (Numeric_cmp(zero, duration) != 0)
+    if (Numeric_cmp(Numeric_0, duration) != 0)
       Numeric_div_to(size, duration, ret);
     else
-      Numeric_copy_to(zero, ret);
+      Numeric_copy_to(Numeric_0, ret);
 
   } else
-    Numeric_copy_to(zero, ret);
+    Numeric_copy_to(Numeric_0, ret);
 }
 
 inline static void
@@ -1043,7 +1009,7 @@ samples_per_hour(struct Numeric *restrict const ret,
   struct Numeric *restrict const rate = tls->samples_per_hour.rate;
 
   samples_per_nano(rate, samples);
-  Numeric_mul_to(rate, hour_nanos, ret);
+  Numeric_mul_to(rate, Numeric_hour_ns, ret);
 }
 
 static void samples_load(struct Array *restrict const a,
@@ -1164,7 +1130,7 @@ static bool quote_return(struct Numeric *restrict const q_return,
       q_sample = Array_tail(q_samples);
 
       if (q_sample != NULL) {
-        Numeric_div_to(one, q_sample->price, r0);
+        Numeric_div_to(Numeric_1, q_sample->price, r0);
         Numeric_mul_to(r0, w_ctx->m_cnf->r_amount, q_return);
         Numeric_scale(q_return, w_ctx->m->q_sc);
       }
@@ -1336,7 +1302,7 @@ static void position_pricing(const struct worker_ctx *restrict const w_ctx,
    */
 
   if (create) {
-    Numeric_sub_to(t->tp_pf, one, r0);
+    Numeric_sub_to(t->tp_pf, Numeric_1, r0);
     // r0 = tgt - 1
     Numeric_mul_to(p->price, t->fee_pf, r1);
     // r1 = p * fee
@@ -1421,9 +1387,9 @@ static void position_pricing(const struct worker_ctx *restrict const w_ctx,
     }
   }
 
-  Numeric_mul_to(t->fee_pf, two, r1);
+  Numeric_mul_to(t->fee_pf, Numeric_2, r1);
   // r1 = 2 * fee
-  Numeric_sub_to(r1, one, r0);
+  Numeric_sub_to(r1, Numeric_1, r0);
   // r0 = 2 * fee - 1
   Numeric_div_to(t->q_return, p->b_ordered, r1);
   // r1 = tp / b
@@ -1480,15 +1446,15 @@ static void position_pricing(const struct worker_ctx *restrict const w_ctx,
   // Ensure prices are multiples of the price increment
   Numeric_div_to(p->sl_price, w_ctx->m->p_inc, r0);
   Numeric_scale(r0, 0);
-  if (Numeric_cmp(r0, zero) == 0)
-    Numeric_copy_to(one, r0);
+  if (Numeric_cmp(r0, Numeric_0) == 0)
+    Numeric_copy_to(Numeric_1, r0);
   Numeric_mul_to(r0, w_ctx->m->p_inc, p->sl_price);
   Numeric_scale(p->sl_price, w_ctx->m->p_sc);
 
   Numeric_div_to(p->tp_price, w_ctx->m->p_inc, r0);
   Numeric_scale(r0, 0);
-  if (Numeric_cmp(r0, zero) == 0)
-    Numeric_copy_to(one, r0);
+  if (Numeric_cmp(r0, Numeric_0) == 0)
+    Numeric_copy_to(Numeric_1, r0);
   Numeric_mul_to(r0, w_ctx->m->p_inc, p->tp_price);
   Numeric_scale(p->tp_price, w_ctx->m->p_sc);
 
@@ -1598,9 +1564,9 @@ static void position_open(const struct worker_ctx *restrict const w_ctx,
   Numeric_copy_to(order->b_filled, p->b_filled);
   Numeric_copy_to(order->q_filled, p->q_filled);
   Numeric_copy_to(order->q_fees, p->q_fees);
-  p->filled = Numeric_cmp(zero, order->b_filled) != 0;
+  p->filled = Numeric_cmp(Numeric_0, order->b_filled) != 0;
 
-  Numeric_div_to(p->cnanos, second_nanos, csecs);
+  Numeric_div_to(p->cnanos, Numeric_sec_ns, csecs);
 
   switch (p->type) {
   case POSITION_TYPE_LONG:
@@ -1630,12 +1596,12 @@ static void position_fill(const struct worker_ctx *restrict const w_ctx,
   Numeric_copy_to(order->b_filled, p->b_filled);
   Numeric_copy_to(order->q_filled, p->q_filled);
   Numeric_copy_to(order->q_fees, p->q_fees);
-  p->filled = Numeric_cmp(zero, order->b_filled) != 0;
+  p->filled = Numeric_cmp(Numeric_0, order->b_filled) != 0;
 
   if (order->settled) {
     p->done = true;
     Numeric_copy_to(order->dnanos, p->dnanos);
-    Numeric_copy_to(one, p->cl_factor);
+    Numeric_copy_to(Numeric_1, p->cl_factor);
     trigger_reset(&p->sl_trg);
     trigger_reset(&p->tl_trg);
     trigger_reset(&p->tp_trg);
@@ -1643,8 +1609,8 @@ static void position_fill(const struct worker_ctx *restrict const w_ctx,
 
   const bool t_done = t->p_long.done && t->p_short.done;
 
-  Numeric_div_to(p->cnanos, second_nanos, csecs);
-  Numeric_div_to(p->dnanos, second_nanos, dsecs);
+  Numeric_div_to(p->cnanos, Numeric_sec_ns, csecs);
+  Numeric_div_to(p->dnanos, Numeric_sec_ns, dsecs);
 
   switch (p->type) {
   case POSITION_TYPE_LONG:
@@ -1690,7 +1656,7 @@ static void position_cancel(const struct worker_ctx *restrict const w_ctx,
   const struct abag_tls *restrict const tls = abag_tls();
   struct Numeric *restrict const r0 = tls->position_cancel.r0;
 
-  Numeric_mul_to(p->cl_factor, four, r0);
+  Numeric_mul_to(p->cl_factor, Numeric_4, r0);
   Numeric_copy_to(r0, p->cl_factor);
 
   switch (p->type) {
@@ -1796,11 +1762,11 @@ static void position_timeout(const struct worker_ctx *restrict const w_ctx,
   Numeric_sub_to(sample->nanos, p->cnanos, age);
   Numeric_sub_to(factor_to, age, total_to);
 
-  if (Numeric_cmp(total_to, zero) > 0) {
+  if (Numeric_cmp(total_to, Numeric_0) > 0) {
     samples_per_nano(r0, samples);
     Numeric_mul_to(r0, total_to, p->cl_samples);
   } else
-    Numeric_copy_to(zero, p->cl_samples);
+    Numeric_copy_to(Numeric_0, p->cl_samples);
 }
 
 static void position_maintain(const struct worker_ctx *restrict const w_ctx,
@@ -1836,7 +1802,7 @@ static void position_maintain(const struct worker_ctx *restrict const w_ctx,
     else
       cancel = false;
 
-    if (Numeric_cmp(p->cl_samples, zero) <= 0) {
+    if (Numeric_cmp(p->cl_samples, Numeric_0) <= 0) {
       cancel = true;
 
       if (verbose) {
@@ -2061,7 +2027,7 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
         samples_per_nano(sr, samples);
         Numeric_mul_to(sr, w_ctx->m_cnf->sl_dlnanos, p->sl_samples);
       } else
-        Numeric_copy_to(zero, p->sl_samples);
+        Numeric_copy_to(Numeric_0, p->sl_samples);
 
       position_state_save(w_ctx->db, t, p);
 
@@ -2086,13 +2052,13 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
         Numeric_char_free(s_pr);
       }
     } else if (w_ctx->m_cnf->sl_dlnanos != NULL && w_ctx->m_cnf->sl_dlcnt > 0) {
-      Numeric_sub_to(p->sl_samples, one, r0);
+      Numeric_sub_to(p->sl_samples, Numeric_1, r0);
       Numeric_copy_to(r0, p->sl_samples);
     }
   } else if (p->sl_trg.set) {
     p->sl_trg.set = false;
-    Numeric_copy_to(zero, p->sl_trg.nanos);
-    Numeric_copy_to(zero, p->sl_trg.price);
+    Numeric_copy_to(Numeric_0, p->sl_trg.nanos);
+    Numeric_copy_to(Numeric_0, p->sl_trg.price);
 
     position_state_save(w_ctx->db, t, p);
 
@@ -2129,7 +2095,7 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
         samples_per_nano(sr, samples);
         Numeric_mul_to(sr, w_ctx->m_cnf->tp_dlnanos, p->tp_samples);
       } else
-        Numeric_copy_to(zero, p->tp_samples);
+        Numeric_copy_to(Numeric_0, p->tp_samples);
 
       position_state_save(w_ctx->db, t, p);
 
@@ -2154,13 +2120,13 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
         Numeric_char_free(s_pr);
       }
     } else if (w_ctx->m_cnf->tp_dlnanos != NULL && w_ctx->m_cnf->tp_dlcnt > 0) {
-      Numeric_sub_to(p->tp_samples, one, r0);
+      Numeric_sub_to(p->tp_samples, Numeric_1, r0);
       Numeric_copy_to(r0, p->tp_samples);
     }
   } else if (p->tp_trg.set) {
     p->tp_trg.set = false;
-    Numeric_copy_to(zero, p->tp_trg.nanos);
-    Numeric_copy_to(zero, p->tp_trg.price);
+    Numeric_copy_to(Numeric_0, p->tp_trg.nanos);
+    Numeric_copy_to(Numeric_0, p->tp_trg.price);
 
     position_state_save(w_ctx->db, t, p);
 
@@ -2194,7 +2160,7 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
         samples_per_nano(sr, samples);
         Numeric_mul_to(sr, w_ctx->m_cnf->sl_dlnanos, p->sl_samples);
       } else
-        Numeric_copy_to(zero, p->sl_samples);
+        Numeric_copy_to(Numeric_0, p->sl_samples);
 
       position_state_save(w_ctx->db, t, p);
 
@@ -2232,7 +2198,7 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
         samples_per_nano(sr, samples);
         Numeric_mul_to(sr, w_ctx->m_cnf->tl_dlnanos, p->tl_samples);
       } else
-        Numeric_copy_to(zero, p->tl_samples);
+        Numeric_copy_to(Numeric_0, p->tl_samples);
 
       position_state_save(w_ctx->db, t, p);
 
@@ -2257,13 +2223,13 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
         Numeric_char_free(delay);
       }
     } else {
-      Numeric_sub_to(p->tl_samples, one, r0);
+      Numeric_sub_to(p->tl_samples, Numeric_1, r0);
       Numeric_copy_to(r0, p->tl_samples);
     }
   } else if (p->tl_trg.set) {
     p->tl_trg.set = false;
-    Numeric_copy_to(zero, p->tl_trg.nanos);
-    Numeric_copy_to(zero, p->tl_trg.price);
+    Numeric_copy_to(Numeric_0, p->tl_trg.nanos);
+    Numeric_copy_to(Numeric_0, p->tl_trg.price);
 
     position_state_save(w_ctx->db, t, p);
 
@@ -2297,7 +2263,7 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
         samples_per_nano(sr, samples);
         Numeric_mul_to(sr, w_ctx->m_cnf->sl_dlnanos, p->sl_samples);
       } else
-        Numeric_copy_to(zero, p->sl_samples);
+        Numeric_copy_to(Numeric_0, p->sl_samples);
 
       position_state_save(w_ctx->db, t, p);
 
@@ -2332,7 +2298,7 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
         samples_per_nano(sr, samples);
         Numeric_mul_to(sr, w_ctx->m_cnf->tp_dlnanos, p->tp_samples);
       } else
-        Numeric_copy_to(zero, p->tp_samples);
+        Numeric_copy_to(Numeric_0, p->tp_samples);
 
       position_state_save(w_ctx->db, t, p);
 
@@ -2377,7 +2343,7 @@ static void position_trade(const struct worker_ctx *restrict const w_ctx,
   const struct Numeric *restrict tr_nanos;
 
   if (p->tp_trg.set) {
-    if (Numeric_cmp(p->tp_samples, zero) <= 0 ||
+    if (Numeric_cmp(p->tp_samples, Numeric_0) <= 0 ||
         p->tp_trg.cnt > w_ctx->m_cnf->tp_dlcnt) {
       tr_info = "Take profit";
       tr_nanos = p->tp_trg.nanos;
@@ -2388,7 +2354,7 @@ static void position_trade(const struct worker_ctx *restrict const w_ctx,
   }
 
   if (p->sl_trg.set) {
-    if (Numeric_cmp(p->sl_samples, zero) <= 0 ||
+    if (Numeric_cmp(p->sl_samples, Numeric_0) <= 0 ||
         p->sl_trg.cnt > w_ctx->m_cnf->sl_dlcnt) {
       tr_info = "Stop loss";
       tr_nanos = p->sl_trg.nanos;
@@ -2399,7 +2365,7 @@ static void position_trade(const struct worker_ctx *restrict const w_ctx,
   }
 
   if (p->tl_trg.set) {
-    if (Numeric_cmp(p->tl_samples, zero) <= 0 ||
+    if (Numeric_cmp(p->tl_samples, Numeric_0) <= 0 ||
         p->tl_trg.cnt > w_ctx->m_cnf->tl_dlcnt) {
       tr_info = "Take loss";
       tr_nanos = p->tl_trg.nanos;
@@ -2500,8 +2466,8 @@ trade:
   // Ensure price is a multiple of the price increment
   Numeric_div_to(o_pr, w_ctx->m->p_inc, r0);
   Numeric_scale(r0, 0);
-  if (Numeric_cmp(r0, zero) == 0)
-    Numeric_copy_to(one, r0);
+  if (Numeric_cmp(r0, Numeric_0) == 0)
+    Numeric_copy_to(Numeric_1, r0);
   Numeric_mul_to(r0, w_ctx->m->p_inc, o_pr);
   Numeric_scale(o_pr, w_ctx->m->p_sc);
 
@@ -2648,8 +2614,8 @@ static void trade_create(const struct worker_ctx *restrict const w_ctx,
     Numeric_copy_to(stats->bcl_factor, t->p_long.cl_factor);
     Numeric_copy_to(stats->scl_factor, t->p_short.cl_factor);
   } else {
-    Numeric_copy_to(one, t->p_long.cl_factor);
-    Numeric_copy_to(one, t->p_short.cl_factor);
+    Numeric_copy_to(Numeric_1, t->p_long.cl_factor);
+    Numeric_copy_to(Numeric_1, t->p_short.cl_factor);
   }
 
   // XXX: Calls db_stats(...) again.
@@ -2680,15 +2646,15 @@ static void trade_pricing(const struct worker_ctx *restrict const w_ctx,
   mutex_unlock(pricing->mtx);
 
   if (Numeric_cmp(t->fee_pc, ef_pc) >= 0 &&
-      Numeric_cmp(t->pr_samples, zero) > 0 && TRADE_IS_READY(t))
+      Numeric_cmp(t->pr_samples, Numeric_0) > 0 && TRADE_IS_READY(t))
     goto ret;
 
   if (!(TRADE_IS_ENQUEUED(t) || TRADE_IS_DELETED(t)))
     trade_timeout(w_ctx, t, samples, sample);
 
   Numeric_copy_to(ef_pc, t->fee_pc);
-  Numeric_div_to(t->fee_pc, hundred, r0);
-  Numeric_add_to(r0, one, t->fee_pf);
+  Numeric_div_to(t->fee_pc, Numeric_100, r0);
+  Numeric_add_to(r0, Numeric_1, t->fee_pf);
 
   if (w_ctx->m_cnf->v_pc == NULL) {
     if (!(TRADE_IS_ENQUEUED(t) || TRADE_IS_DELETED(t))) {
@@ -2711,8 +2677,8 @@ static void trade_pricing(const struct worker_ctx *restrict const w_ctx,
     Numeric_char_free(v);
   }
 
-  Numeric_div_to(t->tp_pc, hundred, r0);
-  Numeric_add_to(r0, one, t->tp_pf);
+  Numeric_div_to(t->tp_pc, Numeric_100, r0);
+  Numeric_add_to(r0, Numeric_1, t->tp_pf);
 ret:
   String_delete(pr_nm);
 }
@@ -2755,8 +2721,8 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
     }
   } else if (t->open_trg.set) {
     t->open_trg.set = false;
-    Numeric_copy_to(zero, t->open_trg.nanos);
-    Numeric_copy_to(zero, t->open_trg.price);
+    Numeric_copy_to(Numeric_0, t->open_trg.nanos);
+    Numeric_copy_to(Numeric_0, t->open_trg.price);
 
     if (verbose) {
       char *restrict const s_pr =
@@ -2829,7 +2795,7 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
 
   Numeric_mul_to(p->b_ordered, p->price, q_ordered);
   Numeric_scale(q_ordered, w_ctx->m->q_sc);
-  Numeric_sub_to(t->fee_pf, one, r0);
+  Numeric_sub_to(t->fee_pf, Numeric_1, r0);
   Numeric_mul_to(r0, q_ordered, q_fees);
   Numeric_scale(q_fees, w_ctx->m->q_sc);
 
@@ -2858,7 +2824,7 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
    * position yields an error response like "INSUFFICIENT_FUND" or to set the
    * status to "SUSPENDED" of the corresponding trade in the "TRADES" table.
    */
-  Numeric_mul_to(two, q_fees, q_costs);
+  Numeric_mul_to(Numeric_2, q_fees, q_costs);
   Numeric_sub_to(q_avail, q_costs, r0);
   Numeric_mul_to(r0, ninety_percent_factor, q_avail);
 
@@ -2899,7 +2865,7 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
       heap_free(c);
 
       trigger_reset(&t->open_trg);
-      Numeric_copy_to(zero, t->pr_samples);
+      Numeric_copy_to(Numeric_0, t->pr_samples);
       goto ret;
     }
 
@@ -2970,7 +2936,7 @@ static void trade_bet(const struct worker_ctx *restrict const w_ctx,
       heap_free(c);
 
       trigger_reset(&t->open_trg);
-      Numeric_copy_to(zero, t->pr_samples);
+      Numeric_copy_to(Numeric_0, t->pr_samples);
       goto ret;
     }
 
@@ -3149,7 +3115,7 @@ static struct Array *trades_load(const struct worker_ctx *restrict const w_ctx,
 
     if (!trade->b_b_filled_null) {
       Numeric_copy_to(trade->b_b_filled, t->p_long.b_filled);
-      t->p_long.filled = Numeric_cmp(zero, t->p_long.b_filled) != 0;
+      t->p_long.filled = Numeric_cmp(Numeric_0, t->p_long.b_filled) != 0;
     } else
       t->p_long.filled = false;
 
@@ -3180,7 +3146,7 @@ static struct Array *trades_load(const struct worker_ctx *restrict const w_ctx,
 
     if (!trade->s_b_filled_null) {
       Numeric_copy_to(trade->s_b_filled, t->p_short.b_filled);
-      t->p_short.filled = Numeric_cmp(zero, t->p_short.b_filled) != 0;
+      t->p_short.filled = Numeric_cmp(Numeric_0, t->p_short.b_filled) != 0;
     } else
       t->p_short.filled = false;
 
@@ -3227,8 +3193,8 @@ static struct Array *trades_load(const struct worker_ctx *restrict const w_ctx,
   for (size_t i = Array_size(trades); i-- > 0;) {
     struct Trade *restrict const t = items[i];
     trade_state_load(w_ctx->db, t);
-    Numeric_copy_to(zero, t->p_long.pnanos);
-    Numeric_copy_to(zero, t->p_short.pnanos);
+    Numeric_copy_to(Numeric_0, t->p_long.pnanos);
+    Numeric_copy_to(Numeric_0, t->p_short.pnanos);
     if (w_ctx->m_cnf != NULL)
       trade_create(w_ctx, t, samples, sample);
   }
@@ -3611,7 +3577,7 @@ static int market_trade_volatility_func(void *restrict const arg) {
                        String_chars(w_ctx->m->id), w_ctx->m_cnf->wnanos);
 
     if (w_ctx->m_cnf->v_wnanos == NULL) {
-      Numeric_copy_to(zero, tp_pc);
+      Numeric_copy_to(Numeric_0, tp_pc);
 
       items = Array_items(volatility_windows);
       for (size_t i = Array_size(volatility_windows); !terminated && i-- > 0;) {
@@ -3659,8 +3625,8 @@ static int market_trade_volatility_func(void *restrict const arg) {
       trade_delete(t);
     } else {
       TRADE_SET_READY(t, tp_pc);
-      Numeric_div_to(t->tp_pc, hundred, r0);
-      Numeric_add_to(r0, one, t->tp_pf);
+      Numeric_div_to(t->tp_pc, Numeric_100, r0);
+      Numeric_add_to(r0, Numeric_1, t->tp_pf);
       trade_state_save(w_ctx->db, t);
       mutex_unlock(&t->mtx);
     }
@@ -4170,7 +4136,7 @@ int abagnale(int argc, char *argv[]) {
   void *const *restrict items;
 
   if (Array_size(exchanges) == 0) {
-    werr("%s: No exchanges configured\n", String_chars(progname));
+    werr("%s: No exchanges configured\n", String_chars(app_nm));
     return (EXIT_FAILURE);
   }
 
@@ -4221,7 +4187,7 @@ int abagnale(int argc, char *argv[]) {
   thread_group_join(worker);
   thread_group_delete(worker);
 
-  void *restrict const state_db = db_connect(String_chars(progname));
+  void *restrict const state_db = db_connect(String_chars(app_nm));
   struct MapIterator *restrict const it = MapIterator_new(market_trades);
   while (MapIterator_next(it)) {
     const struct Array *restrict const trades = MapIterator_value(it);

@@ -21,18 +21,7 @@
 #include "host.h"
 #endif
 
-#include "abagnale.h"
-#include "charset.h"
-#include "config.h"
-#include "database.h"
-#include "heap.h"
-#include "http.h"
-#include "mongoose-ext.h"
-#include "proc.h"
-#include "queue.h"
-#include "thread.h"
-#include "time.h"
-#include "version.h"
+#include "abagnale-api.h"
 
 #include <errno.h>
 #include <inttypes.h>
@@ -194,14 +183,6 @@ static const struct {
     {"online", MARKET_STATUS_ONLINE},
     {"delisted", MARKET_STATUS_DELISTED},
 };
-
-extern const bool verbose;
-extern const bool ticker_exporter;
-
-extern const struct Numeric *restrict const zero;
-extern const struct Numeric *restrict const one;
-extern const struct Numeric *restrict const hundred;
-extern const struct Numeric *restrict const second_nanos;
 
 static const struct ExchangeConfig *restrict coinbase_cnf;
 static char coinbase_ws_uri[URL_MAX_LENGTH + 1];
@@ -671,7 +652,7 @@ static void ws_user_update(const struct wcjson_document *restrict const doc,
 
   if ((status == ORDER_STATUS_CANCELLED || status == ORDER_STATUS_FAILED ||
        status == ORDER_STATUS_EXPIRED) &&
-      Numeric_cmp(j_outstanding_hold_amount, zero) != 0)
+      Numeric_cmp(j_outstanding_hold_amount, Numeric_0) != 0)
     goto ret;
 
   m = coinbase_market_by_symbol(j_product_id);
@@ -715,8 +696,8 @@ static void ws_user_update(const struct wcjson_document *restrict const doc,
   o->q_filled = j_filled_value;
   o->q_fees = j_total_fees;
   o->msg = msg;
-  o->settled = Numeric_cmp(j_leaves_quantity, zero) == 0 &&
-               Numeric_cmp(j_outstanding_hold_amount, zero) == 0 &&
+  o->settled = Numeric_cmp(j_leaves_quantity, Numeric_0) == 0 &&
+               Numeric_cmp(j_outstanding_hold_amount, Numeric_0) == 0 &&
                Numeric_cmp(o->b_ordered, o->b_filled) == 0;
   o->dnanos = o->settled ? Numeric_copy(nanos) : NULL;
 
@@ -1133,7 +1114,7 @@ static int coinbase_rest_query(struct wcjson_document *restrict rsp_doc,
   rsp_doc->s_next = 0;
   rsp_doc->mb_next = 0;
 
-  Numeric_copy_to(zero, sleep_ns);
+  Numeric_copy_to(Numeric_0, sleep_ns);
   nanos_now(now_ns);
 
   mutex_lock(&coinbase_rest_mtx);
@@ -1211,15 +1192,15 @@ static void coinbase_init(void) {
 
   struct Numeric *restrict const rest_rate = Numeric_from_char(rest_rate_env);
 
-  if (rest_rate == NULL || Numeric_cmp(rest_rate, zero) <= 0)
+  if (rest_rate == NULL || Numeric_cmp(rest_rate, Numeric_0) <= 0)
     fatal("CDP_HTTP_REQUESTS_PER_SECOND: %s", rest_rate_env);
 
-  coinbase_rest_next_ns = Numeric_copy(zero);
+  coinbase_rest_next_ns = Numeric_copy(Numeric_0);
   coinbase_rest_rate_ns = Numeric_new();
   mutex_init(&coinbase_rest_mtx);
 
-  struct Numeric *restrict const r0 = Numeric_div(one, rest_rate);
-  Numeric_mul_to(second_nanos, r0, coinbase_rest_rate_ns);
+  struct Numeric *restrict const r0 = Numeric_div(Numeric_1, rest_rate);
+  Numeric_mul_to(Numeric_sec_ns, r0, coinbase_rest_rate_ns);
 
   Numeric_delete(r0);
   Numeric_delete(rest_rate);
@@ -2472,9 +2453,9 @@ parse_pricing(const struct wcjson_document *restrict const doc,
 
   p = Pricing_new();
   p->nm = j_pricing_tier;
-  p->tf_pc = Numeric_mul(j_taker_fee_rate, hundred);
-  p->mf_pc = Numeric_mul(j_maker_fee_rate, hundred);
-  p->ef_pc = Numeric_mul(efr, hundred);
+  p->tf_pc = Numeric_mul(j_taker_fee_rate, Numeric_100);
+  p->mf_pc = Numeric_mul(j_maker_fee_rate, Numeric_100);
+  p->ef_pc = Numeric_mul(efr, Numeric_100);
 
   Numeric_delete(j_taker_fee_rate);
   Numeric_delete(j_maker_fee_rate);

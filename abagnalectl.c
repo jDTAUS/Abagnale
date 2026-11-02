@@ -21,15 +21,7 @@
 #include "host.h"
 #endif
 
-#include "abagnale.h"
-#include "array.h"
-#include "database.h"
-#include "heap.h"
-#include "math.h"
-#include "proc.h"
-#include "thread.h"
-#include "time.h"
-#include "version.h"
+#include "abagnale-api.h"
 
 #include <inttypes.h>
 #include <stdio.h>
@@ -41,24 +33,6 @@
 #ifndef nitems
 #define nitems(_a) (sizeof((_a)) / sizeof((_a)[0]))
 #endif
-
-extern const struct String *restrict const progname;
-
-extern const struct Numeric *restrict const zero;
-
-extern const struct Algorithm *restrict const all_algorithms[];
-extern const size_t all_algorithms_nitems;
-extern const struct Array *restrict const algorithms;
-
-extern const struct Exchange *restrict const all_exchanges[];
-extern const size_t all_exchanges_nitems;
-extern const struct Array *restrict const exchanges;
-
-extern const struct Array *restrict const volatility_windows;
-
-extern const struct Numeric *restrict const zero;
-
-extern const struct Config *restrict const cnf;
 
 static const struct {
   const enum market_type type;
@@ -241,7 +215,7 @@ static void print_market(const struct Market *restrict const m) {
 static _Noreturn void usage(void) {
   werr("Usage: %s [-Dmacro=value ... ] [-f config-file] [-I entity] [-i "
        "process-uuid] [-n] [-p plots-dir] [-v]\n",
-       String_chars(progname));
+       String_chars(app_nm));
 
   for (size_t i = nitems(cmd_tab); i-- > 0;) {
     werr("\t%s\n", cmd_tab[i].name);
@@ -279,7 +253,7 @@ static int cmd_vacuum(int argc, char *argv[]) {
   if (argc > 0)
     usage();
 
-  void *restrict const db = db_connect(String_chars(progname));
+  void *restrict const db = db_connect(String_chars(app_nm));
 
   e_items = Array_items(exchanges);
   for (size_t i = Array_size(exchanges); i-- > 0;) {
@@ -304,10 +278,10 @@ static int cmd_vacuum(int argc, char *argv[]) {
       }
 
       db_vacuum_plots(db, String_chars(e->id), String_chars(m->id),
-                      m_cnf != NULL ? m_cnf->wnanos : zero, fname);
+                      m_cnf != NULL ? m_cnf->wnanos : Numeric_0, fname);
 
       db_vacuum_samples(db, String_chars(e->id), String_chars(m->id),
-                        m_cnf != NULL ? m_cnf->wnanos : zero, fname);
+                        m_cnf != NULL ? m_cnf->wnanos : Numeric_0, fname);
     }
 
     Array_unlock(markets);
@@ -345,7 +319,7 @@ static int cmd_algorithms(int argc, char *argv[]) {
   if (header)
     printf("ID\tNAME\n");
 
-  for (size_t i = all_algorithms_nitems; i-- > 0;)
+  for (size_t i = 0; all_algorithms[i] != NULL; i++)
     printf("%s\t%s\n", String_chars(all_algorithms[i]->id),
            String_chars(all_algorithms[i]->nm));
 
@@ -376,7 +350,7 @@ static int cmd_exchanges(int argc, char *argv[]) {
   if (header)
     printf("ID\tNAME\n");
 
-  for (size_t i = all_exchanges_nitems; i-- > 0;)
+  for (size_t i = 0; all_exchanges[i] != NULL; i++)
     printf("%s\t%s\n", String_chars(all_exchanges[i]->id),
            String_chars(all_exchanges[i]->nm));
 
@@ -428,7 +402,7 @@ static int cmd_markets(int argc, char *argv[]) {
   const struct Exchange *restrict const e = exchange_nm(e_nm);
 
   if (e == NULL) {
-    werr("%s: Exchange: Not found: %s\n", String_chars(progname),
+    werr("%s: Exchange: Not found: %s\n", String_chars(app_nm),
          String_chars(e_nm));
     goto ret;
   }
@@ -488,7 +462,7 @@ static int cmd_market(int argc, char *argv[]) {
   const struct Exchange *restrict const e = exchange_nm(e_nm);
 
   if (e == NULL) {
-    werr("%s: Exchange: Not found: %s\n", String_chars(progname),
+    werr("%s: Exchange: Not found: %s\n", String_chars(app_nm),
          String_chars(e_nm));
     goto ret;
   }
@@ -496,7 +470,7 @@ static int cmd_market(int argc, char *argv[]) {
   m = e->market(m_id);
 
   if (m == NULL) {
-    werr("%s: %s: Market: Not found: %s\n", String_chars(progname),
+    werr("%s: %s: Market: Not found: %s\n", String_chars(app_nm),
          String_chars(e_nm), String_chars(m_id));
     goto ret;
   }
@@ -554,7 +528,7 @@ static int cmd_accounts(int argc, char *argv[]) {
   const struct Exchange *restrict const e = exchange_nm(e_nm);
 
   if (e == NULL) {
-    werr("%s: Exchange: Not found: %s\n", String_chars(progname),
+    werr("%s: Exchange: Not found: %s\n", String_chars(app_nm),
          String_chars(e_nm));
     goto ret;
   }
@@ -611,7 +585,7 @@ static int cmd_account(int argc, char *argv[]) {
   const struct Exchange *restrict const e = exchange_nm(e_nm);
 
   if (e == NULL) {
-    werr("%s: Exchange: Not found: %s\n", String_chars(progname),
+    werr("%s: Exchange: Not found: %s\n", String_chars(app_nm),
          String_chars(e_nm));
     goto ret;
   }
@@ -619,7 +593,7 @@ static int cmd_account(int argc, char *argv[]) {
   a = e->account(a_id);
 
   if (a == NULL) {
-    werr("%s: %s: Account: Not found: %s\n", String_chars(progname),
+    werr("%s: %s: Account: Not found: %s\n", String_chars(app_nm),
          String_chars(e_nm), String_chars(a_id));
     goto ret;
   }
@@ -682,7 +656,7 @@ static int cmd_order(int argc, char *argv[]) {
   const struct Exchange *restrict const e = exchange_nm(e_nm);
 
   if (e == NULL) {
-    werr("%s: Exchange: Not found: %s\n", String_chars(progname),
+    werr("%s: Exchange: Not found: %s\n", String_chars(app_nm),
          String_chars(e_nm));
     goto ret;
   }
@@ -699,7 +673,7 @@ static int cmd_order(int argc, char *argv[]) {
   }
 
   if (m == NULL) {
-    werr("%s: %s: Market: Not found: %s\n", String_chars(progname),
+    werr("%s: %s: Market: Not found: %s\n", String_chars(app_nm),
          String_chars(e_nm), String_chars(m_nm));
     goto unlock;
   }
@@ -707,13 +681,13 @@ static int cmd_order(int argc, char *argv[]) {
   o = e->order(m, o_id);
 
   if (o == NULL) {
-    werr("%s: %s: %s: Order: Not found: %s\n", String_chars(progname),
+    werr("%s: %s: %s: Order: Not found: %s\n", String_chars(app_nm),
          String_chars(e_nm), String_chars(m_nm), String_chars(o_id));
     goto unlock;
   }
 
   c_iso8601 = nanos_to_iso8601(o->cnanos);
-  d_iso8601 = nanos_to_iso8601(o->dnanos != NULL ? o->dnanos : zero);
+  d_iso8601 = nanos_to_iso8601(o->dnanos != NULL ? o->dnanos : Numeric_0);
   b_ordered = Numeric_to_char(o->b_ordered, m->b_sc);
   p_ordered = Numeric_to_char(o->p_ordered, m->p_sc);
   b_filled = Numeric_to_char(o->b_filled, m->b_sc);
@@ -787,7 +761,7 @@ static int cmd_plot(int argc, char *argv[]) {
   const struct Exchange *restrict const e = exchange_nm(e_nm);
 
   if (e == NULL) {
-    werr("%s: Exchange: Not found: %s\n", String_chars(progname),
+    werr("%s: Exchange: Not found: %s\n", String_chars(app_nm),
          String_chars(e_nm));
     goto ret;
   }
@@ -795,7 +769,7 @@ static int cmd_plot(int argc, char *argv[]) {
   const struct Algorithm *restrict a = algorithm_nm(a_nm);
 
   if (a == NULL) {
-    werr("%s: Algorithm: Not found: %s\n", String_chars(progname),
+    werr("%s: Algorithm: Not found: %s\n", String_chars(app_nm),
          String_chars(a_nm));
     goto ret;
   }
@@ -812,15 +786,15 @@ static int cmd_plot(int argc, char *argv[]) {
   }
 
   if (m == NULL) {
-    werr("%s: %s: Market: Not found: %s\n", String_chars(progname),
+    werr("%s: %s: Market: Not found: %s\n", String_chars(app_nm),
          String_chars(e_nm), String_chars(m_nm));
     goto unlock;
   }
 
-  void *restrict const db = db_connect(String_chars(progname));
+  void *restrict const db = db_connect(String_chars(app_nm));
 
   if (!a->market_plot(db, e, m, f_nm)) {
-    werr("%s: %s: %s: %s: Plot: Not plotted\n", String_chars(progname),
+    werr("%s: %s: %s: %s: Plot: Not plotted\n", String_chars(app_nm),
          String_chars(e_nm), String_chars(m->nm), String_chars(a_nm));
     goto disconnect;
   }
@@ -877,7 +851,7 @@ static int cmd_volatility(int argc, char *argv[]) {
   const struct Exchange *restrict const e = exchange_nm(e_nm);
 
   if (e == NULL) {
-    werr("%s: Exchange: Not found: %s\n", String_chars(progname),
+    werr("%s: Exchange: Not found: %s\n", String_chars(app_nm),
          String_chars(e_nm));
     goto ret;
   }
@@ -894,12 +868,12 @@ static int cmd_volatility(int argc, char *argv[]) {
   }
 
   if (m == NULL) {
-    werr("%s: %s: Market: Not found: %s\n", String_chars(progname),
+    werr("%s: %s: Market: Not found: %s\n", String_chars(app_nm),
          String_chars(e_nm), String_chars(m_nm));
     goto unlock;
   }
 
-  void *restrict const db = db_connect(String_chars(progname));
+  void *restrict const db = db_connect(String_chars(app_nm));
 
   db_volatility_open(db, String_chars(e->id), String_chars(m->id), NULL);
 

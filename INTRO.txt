@@ -11,7 +11,7 @@ Abagnale - Algorithmic Trading System - https://github.com/jdtaus/Abagnale
 ./abagnale.conf           - Configuration file format documentation
 ./abagnale.demo           - Configuration file format demonstration
 ./abagnale.service        - systemd service file
-./abagnale.h              - Abagnale API header file
+./abagnale-api.h          - Abagnale API header file
 ./abagnale.c              - Trading application source code
 ./abagnalectl.c           - Maintenance application source code
 ./algorithm-trend.c       - Trend algorithm source code

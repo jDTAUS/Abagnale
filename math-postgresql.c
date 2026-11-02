@@ -21,9 +21,7 @@
 #include "host.h"
 #endif
 
-#include "heap.h"
-#include "math.h"
-#include "proc.h"
+#include "abagnale-api.h"
 
 #include <limits.h>
 #include <math.h>
@@ -35,10 +33,6 @@ struct Numeric {
   char *restrict s;
 #endif
 };
-
-extern const struct Numeric *restrict const zero;
-extern const struct Numeric *restrict const one;
-extern const struct Numeric *restrict const n_one;
 
 inline struct Numeric *Numeric_new(void) {
   numeric *res = PGTYPESnumeric_new();
@@ -271,8 +265,8 @@ inline double Numeric_to_double(const struct Numeric *restrict const n) {
 }
 
 inline void Numeric_abs(struct Numeric *restrict const n) {
-  if (Numeric_cmp(n, zero) < 0) {
-    const int ret = PGTYPESnumeric_mul(n_one->n, n->n, n->n);
+  if (Numeric_cmp(n, Numeric_0) < 0) {
+    const int ret = PGTYPESnumeric_mul(Numeric_neg1->n, n->n, n->n);
     if (ret < 0)
       panic();
   }
@@ -293,7 +287,7 @@ inline void Numeric_scale(struct Numeric *restrict const n, const int scale) {
 }
 
 inline void Numeric_inc(struct Numeric *restrict const n) {
-  const int ret = PGTYPESnumeric_add(n->n, one->n, n->n);
+  const int ret = PGTYPESnumeric_add(n->n, Numeric_1->n, n->n);
   if (ret < 0)
     panic();
 #ifdef ABAG_MATH_DEBUG
@@ -303,7 +297,7 @@ inline void Numeric_inc(struct Numeric *restrict const n) {
 }
 
 inline void Numeric_dec(struct Numeric *restrict const n) {
-  const int ret = PGTYPESnumeric_sub(n->n, one->n, n->n);
+  const int ret = PGTYPESnumeric_sub(n->n, Numeric_1->n, n->n);
   if (ret < 0)
     panic();
 #ifdef ABAG_MATH_DEBUG

@@ -29,13 +29,7 @@
 #include "host.h"
 #endif
 
-#include "abagnale.h"
-#include "config.h"
-#include "heap.h"
-#include "patterns.h"
-#include "proc.h"
-#include "string.h"
-#include "wcjson-document.h"
+#include "abagnale-api.h"
 
 #include <ctype.h>
 #include <errno.h>
@@ -43,25 +37,8 @@
 #include <string.h>
 #include <stdlib.h>
 
-extern const bool verbose;
-
 extern const struct Exchange exchange_bitvavo;
 extern const struct Exchange exchange_coinbase;
-extern const struct Exchange *restrict const all_exchanges[];
-extern const size_t all_exchanges_nitems;
-
-extern const struct Algorithm *restrict const all_algorithms[];
-extern const size_t all_algorithms_nitems;
-
-extern const struct Numeric *restrict const zero;
-extern const struct Numeric *restrict const one;
-extern const struct Numeric *restrict const second_nanos;
-extern const struct Numeric *restrict const minute_nanos;
-extern const struct Numeric *restrict const hour_nanos;
-extern const struct Numeric *restrict const day_nanos;
-extern const struct Numeric *restrict const week_nanos;
-
-static struct Numeric *restrict thirty_six_hours;
 
 static struct file {
   FILE *stream;
@@ -455,7 +432,7 @@ conf_exchange : CDP STRING {
 
 exchange  : EXCHANGE STRING {
             bool e_found = false;
-            for (size_t i = all_exchanges_nitems; i-- > 0;)
+            for (size_t i = 0; all_exchanges[i] != NULL; i++)
               if (String_equals($2, all_exchanges[i]->nm)) {
                 e_found = true;
                 break;
@@ -609,7 +586,7 @@ opt_trade : TAKELOSSDELAY nanos {
             }
             m_cnf->v_pc = $2;
 
-            if (Numeric_cmp(m_cnf->v_pc, zero) <= 0) {
+            if (Numeric_cmp(m_cnf->v_pc, Numeric_0) <= 0) {
               Numeric_delete(m_cnf->v_pc);
               yyerror("volatility must be positive\n");
               YYERROR;
@@ -628,7 +605,7 @@ opt_trade : TAKELOSSDELAY nanos {
             }
             m_cnf->v_wnanos = $2;
 
-            if (Numeric_cmp(m_cnf->v_wnanos, zero) <= 0) {
+            if (Numeric_cmp(m_cnf->v_wnanos, Numeric_0) <= 0) {
               Numeric_delete(m_cnf->v_wnanos);
               yyerror("volatility must be positive\n");
               YYERROR;
@@ -658,7 +635,7 @@ conf_trade  : RETURN NUMBER STRING {
               m_cnf->r_amount = $2;
               m_cnf->r_id = $3;
 
-              if (Numeric_cmp(m_cnf->r_amount, zero) <= 0) {
+              if (Numeric_cmp(m_cnf->r_amount, Numeric_0) <= 0) {
                 Numeric_delete(m_cnf->r_amount);
                 String_delete(m_cnf->r_id);
                 yyerror("return must be positive\n");
@@ -674,7 +651,7 @@ conf_trade  : RETURN NUMBER STRING {
               m_cnf->a_nm = $2;
 
               bool a_found = false;
-              for (size_t i = all_algorithms_nitems; i-- > 0;)
+              for (size_t i = 0; all_algorithms[i] != NULL; i++)
                 if (String_equals(m_cnf->a_nm, all_algorithms[i]->nm)) {
                   a_found = true;
                   break;
@@ -698,7 +675,7 @@ trade : TRADE AT STRING {
         m_cnf->e_nm = $3;
 
         bool e_found = false;
-        for (size_t i = all_exchanges_nitems; i-- > 0;)
+        for (size_t i = 0; all_exchanges[i] != NULL; i++)
           if (String_equals(m_cnf->e_nm, all_exchanges[i]->nm)) {
             e_found = true;
             break;
@@ -722,7 +699,7 @@ trade : TRADE AT STRING {
         }
       } tradeopts {
         if (m_cnf->wnanos == NULL)
-          m_cnf->wnanos = Numeric_copy(thirty_six_hours);
+          m_cnf->wnanos = Numeric_copy(Numeric_36hours_ns);
 
         m_cnf = NULL;
       }
@@ -1120,15 +1097,15 @@ int config_fparse(struct Config *const x_conf,
   it = MapIterator_new(conf->e_cnf);
   while(MapIterator_next(it)) {
     const struct String *restrict const nm = MapIterator_key(it);
-    const struct ExchangeConfig *restrict const cnf = MapIterator_value(it);
+    const struct ExchangeConfig *restrict const ecnf = MapIterator_value(it);
     if(String_equals(nm, exchange_bitvavo.nm) &&
-       (cnf->api_key == NULL || cnf->api_secret == NULL)) {
+       (ecnf->api_key == NULL || ecnf->api_secret == NULL)) {
        werr("%s: %s: api-key and api-secret required\n", filename,
             String_chars(nm));
        errors++;
     }
     if(String_equals(nm, exchange_coinbase.nm) &&
-       (cnf->jwt_kid == NULL || cnf->jwt_key == NULL)) {
+       (ecnf->jwt_kid == NULL || ecnf->jwt_key == NULL)) {
        werr("%s: %s: cdp-api-key required\n", filename,
             String_chars(nm));
        errors++;
@@ -1218,7 +1195,7 @@ struct String *symget(const struct String *restrict const nam) {
 
 struct Numeric *config_nsparse(const struct String *restrict const str) {
   struct Numeric *restrict r = NULL;
-  const struct Numeric *restrict f = one;
+  const struct Numeric *restrict f = Numeric_1;
   struct Numeric *restrict r0 = NULL;
   const size_t l = String_length(str);
   const char *s = String_chars(str);
@@ -1232,7 +1209,7 @@ struct Numeric *config_nsparse(const struct String *restrict const str) {
     if (r == NULL)
       return NULL;
 
-    if (Numeric_cmp(r, zero) <= 0) {
+    if (Numeric_cmp(r, Numeric_0) <= 0) {
       Numeric_delete(r);
       return NULL;
     }
@@ -1245,19 +1222,19 @@ struct Numeric *config_nsparse(const struct String *restrict const str) {
 
   switch (s[l - 1]) {
   case 's':
-    f = second_nanos;
+    f = Numeric_sec_ns;
     break;
   case 'm':
-    f = minute_nanos;
+    f = Numeric_min_ns;
     break;
   case 'h':
-    f = hour_nanos;
+    f = Numeric_hour_ns;
     break;
   case 'd':
-    f = day_nanos;
+    f = Numeric_day_ns;
     break;
   case 'w':
-    f = week_nanos;
+    f = Numeric_week_ns;
     break;
   default:
     return NULL;
@@ -1274,7 +1251,7 @@ struct Numeric *config_nsparse(const struct String *restrict const str) {
   r0 = Numeric_mul(r, f);
   Numeric_delete(r);
 
-  if (Numeric_cmp(r0, zero) <= 0) {
+  if (Numeric_cmp(r0, Numeric_0) <= 0) {
     Numeric_delete(r0);
     return NULL;
   }
@@ -1285,13 +1262,11 @@ struct Numeric *config_nsparse(const struct String *restrict const str) {
 void config_init(void) {
   symbols = Map_new(StringMapOps, 64);
   files = Array_new(64);
-  thirty_six_hours = Numeric_from_long(36 * 60 * 60 * 1000000000L);
 }
 
 void config_destroy(void) {
   Array_delete(files, file_delete);
   Map_delete(symbols, sym_delete);
-  Numeric_delete(thirty_six_hours);
 }
 
 struct Config *Config_new(void) {

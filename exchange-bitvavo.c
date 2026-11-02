@@ -20,16 +20,7 @@
 #include "host.h"
 #endif
 
-#include "abagnale.h"
-#include "database.h"
-#include "heap.h"
-#include "http.h"
-#include "mongoose-ext.h"
-#include "proc.h"
-#include "queue.h"
-#include "thread.h"
-#include "time.h"
-#include "version.h"
+#include "abagnale-api.h"
 
 #include <inttypes.h>
 #include <stdio.h>
@@ -117,15 +108,6 @@
 
 #define _tostring(_x) #_x
 #define tostring(_x) _tostring(_x)
-
-extern const bool verbose;
-extern const bool ticker_exporter;
-
-extern const struct Numeric *restrict const zero;
-extern const struct Numeric *restrict const one;
-extern const struct Numeric *restrict const five;
-extern const struct Numeric *restrict const hundred;
-extern const struct Numeric *restrict const second_nanos;
 
 static void bitvavo_init(void);
 static void bitvavo_configure(const struct ExchangeConfig *restrict const);
@@ -455,17 +437,17 @@ static void bitvavo_init(void) {
 
   struct Numeric *restrict const rest_rate = Numeric_from_char(rest_rate_env);
 
-  if (rest_rate == NULL || Numeric_cmp(rest_rate, zero) <= 0)
+  if (rest_rate == NULL || Numeric_cmp(rest_rate, Numeric_0) <= 0)
     fatal("BITVAVO_REQUESTS_PER_SECOND: %s", rest_rate_env);
 
-  bitvavo_rest_next_ns = Numeric_copy(zero);
+  bitvavo_rest_next_ns = Numeric_copy(Numeric_0);
   bitvavo_rest_1_wp_ns = Numeric_new();
   bitvavo_rest_5_wp_ns = Numeric_new();
   mutex_init(&bitvavo_rest_mtx);
 
-  Numeric_div_to(one, rest_rate, bitvavo_rest_5_wp_ns);
-  Numeric_mul_to(second_nanos, bitvavo_rest_5_wp_ns, bitvavo_rest_1_wp_ns);
-  Numeric_mul_to(five, bitvavo_rest_1_wp_ns, bitvavo_rest_5_wp_ns);
+  Numeric_div_to(Numeric_1, rest_rate, bitvavo_rest_5_wp_ns);
+  Numeric_mul_to(Numeric_sec_ns, bitvavo_rest_5_wp_ns, bitvavo_rest_1_wp_ns);
+  Numeric_mul_to(Numeric_5, bitvavo_rest_1_wp_ns, bitvavo_rest_5_wp_ns);
 
   Numeric_delete(rest_rate);
 
@@ -663,7 +645,7 @@ static int bitvavo_rest_query(struct wcjson_document *restrict rsp_doc,
   rsp_doc->s_next = 0;
   rsp_doc->mb_next = 0;
 
-  Numeric_copy_to(zero, sleep_ns);
+  Numeric_copy_to(Numeric_0, sleep_ns);
   nanos_now(now_ns);
 
   mutex_lock(&bitvavo_rest_mtx);
@@ -756,8 +738,8 @@ bitvavo_parse_fee(const struct wcjson_document *restrict const doc) {
 
   p = Pricing_new();
   p->nm = j_tier;
-  p->tf_pc = Numeric_mul(j_taker, hundred);
-  p->mf_pc = Numeric_mul(j_maker, hundred);
+  p->tf_pc = Numeric_mul(j_taker, Numeric_100);
+  p->mf_pc = Numeric_mul(j_maker, Numeric_100);
   p->ef_pc = Numeric_cmp(p->tf_pc, p->mf_pc) > 0 ? Numeric_copy(p->tf_pc)
                                                  : Numeric_copy(p->mf_pc);
 
@@ -878,7 +860,7 @@ bitvavo_parse_market(const struct wcjson_document *restrict const doc,
       panic();
 
   } else
-    quoteIncrement = Numeric_copy(one);
+    quoteIncrement = Numeric_copy(Numeric_1);
 
   if (baseScale > 0) {
     r = snprintf(inc, sizeof(inc), "0.%.*" PRIuMAX "1", (int)(baseScale - 1),
@@ -893,7 +875,7 @@ bitvavo_parse_market(const struct wcjson_document *restrict const doc,
       panic();
 
   } else
-    baseIncrement = Numeric_copy(one);
+    baseIncrement = Numeric_copy(Numeric_1);
 
   r = snprintf(nm, sizeof(nm), "%s@%s", String_chars(j_base),
                String_chars(j_quote));
@@ -1385,7 +1367,7 @@ bitvavo_account_by_symbol(struct String *restrict const sym) {
     a->nm = String_copy(sym);
     a->sym = String_copy(sym);
     a->type = ACCOUNT_TYPE_NONE;
-    a->avail = Numeric_copy(zero);
+    a->avail = Numeric_copy(Numeric_0);
     a->is_active = true;
     a->is_ready = true;
 
@@ -2055,7 +2037,7 @@ bitvavo_ws_ticker_evt_handler(struct mg_connection *restrict const c,
   if (errno)
     goto ret;
 
-  if (j_lastPrice == NULL || Numeric_cmp(j_lastPrice, zero) == 0)
+  if (j_lastPrice == NULL || Numeric_cmp(j_lastPrice, Numeric_0) == 0)
     goto ok;
 
   struct Market *restrict const m = bitvavo_market_by_symbol(j_market);

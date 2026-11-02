@@ -20,13 +20,7 @@
 #include "host.h"
 #endif
 
-#include "charset.h"
-#include "heap.h"
-#include "http.h"
-#include "mongoose-ext.h"
-#include "proc.h"
-#include "thread.h"
-#include "version.h"
+#include "abagnale-api.h"
 
 #ifndef DEFAULT_ABAG_HTTP_RETRY_SECONDS
 #define DEFAULT_ABAG_HTTP_RETRY_SECONDS 3
@@ -35,8 +29,6 @@
 #ifndef DEFAULT_ABAG_HTTP_TIMEOUT_MILLIS
 #define DEFAULT_ABAG_HTTP_TIMEOUT_MILLIS 60000L
 #endif
-
-extern const bool verbose;
 
 static unsigned long http_timeout_ms;
 static struct timespec http_retry_rate;

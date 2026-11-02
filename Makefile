@@ -157,6 +157,7 @@ YACCFLAGS=
 YACCFLAGS+=-o
 
 HEADERS=abagnale.h
+HEADERS=abagnale-api.h
 HEADERS+=array.h
 HEADERS+=charset.h
 HEADERS+=config.h

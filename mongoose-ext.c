@@ -16,13 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "mongoose-ext.h"
-
-#include "config.h"
-#include "string.h"
-
-extern const struct Numeric *restrict const milli_nanos;
-extern const struct Config *restrict const cnf;
+#include "abagnale-api.h"
 
 void mg_mgr_config(struct mg_mgr *restrict const mgr) {
   if (cnf->dns_v4)
@@ -32,7 +26,7 @@ void mg_mgr_config(struct mg_mgr *restrict const mgr) {
     mgr->dns6.url = String_chars(cnf->dns_v6);
 
   if (cnf->dns_to) {
-    struct Numeric *restrict r0 = Numeric_div(cnf->dns_to, milli_nanos);
+    struct Numeric *restrict r0 = Numeric_div(cnf->dns_to, Numeric_msec_ns);
     mgr->dnstimeout = Numeric_to_int(r0);
     Numeric_delete(r0);
   }

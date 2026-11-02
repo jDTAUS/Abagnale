@@ -21,11 +21,7 @@
 #include "host.h"
 #endif
 
-#include "heap.h"
-#include "math.h"
-#include "proc.h"
-#include "thread.h"
-#include "time.h"
+#include "abagnale-api.h"
 
 #include <errno.h>
 #include <stdint.h>
@@ -58,13 +54,6 @@ struct time_tls {
     struct Numeric *restrict r2;
   } nanos_string;
 };
-
-extern const struct Numeric *restrict const zero;
-extern const struct Numeric *restrict const second_nanos;
-extern const struct Numeric *restrict const minute_nanos;
-extern const struct Numeric *restrict const hour_nanos;
-extern const struct Numeric *restrict const day_nanos;
-extern const struct Numeric *restrict const week_nanos;
 
 static tss_t time_tls_key;
 
@@ -206,10 +195,10 @@ bool nanos_from_iso8601(const char *restrict const iso, const size_t len,
     fatal("%s", strerror(errno));
 
   Numeric_from_long_to(time, secs);
-  Numeric_mul_to(secs, second_nanos, s_ns);
+  Numeric_mul_to(secs, Numeric_sec_ns, s_ns);
 
   if (fraction != NULL) {
-    Numeric_mul_to(fraction, second_nanos, f_ns);
+    Numeric_mul_to(fraction, Numeric_sec_ns, f_ns);
     Numeric_delete(fraction);
     Numeric_add_to(s_ns, f_ns, res);
   } else
@@ -227,7 +216,7 @@ static inline void nanos_from_ts(struct Numeric *restrict const res,
 
   Numeric_from_long_to(ts->tv_sec, s);
   Numeric_from_long_to(ts->tv_nsec, ns);
-  Numeric_mul_to(s, second_nanos, s_ns);
+  Numeric_mul_to(s, Numeric_sec_ns, s_ns);
   Numeric_add_to(s_ns, ns, res);
 }
 
@@ -243,7 +232,7 @@ char *nanos_to_iso8601(const struct Numeric *restrict const nanos) {
   struct Numeric *restrict const s = tls->nanos_to_iso8601.s;
   struct tm t = {0};
 
-  Numeric_div_to(nanos, second_nanos, s);
+  Numeric_div_to(nanos, Numeric_sec_ns, s);
   time_t time = Numeric_to_long(s);
 
 #if defined(_MSC_VER)
@@ -269,34 +258,34 @@ char *nanos_string(const struct Numeric *restrict const nanos) {
   struct Numeric *restrict const r1 = tls->nanos_string.r1;
   struct Numeric *restrict const r2 = tls->nanos_string.r2;
 
-  Numeric_div_to(nanos, week_nanos, r0);
+  Numeric_div_to(nanos, Numeric_week_ns, r0);
   Numeric_scale(r0, 0);
   char *restrict const weeks = Numeric_to_char(r0, 0);
-  Numeric_mul_to(r0, week_nanos, r1);
+  Numeric_mul_to(r0, Numeric_week_ns, r1);
   Numeric_sub_to(nanos, r1, r0);
 
-  Numeric_div_to(r0, day_nanos, r1);
+  Numeric_div_to(r0, Numeric_day_ns, r1);
   Numeric_scale(r1, 0);
   char *restrict const days = Numeric_to_char(r1, 0);
-  Numeric_mul_to(r1, day_nanos, r2);
+  Numeric_mul_to(r1, Numeric_day_ns, r2);
   Numeric_sub_to(r0, r2, r1);
 
-  Numeric_div_to(r1, hour_nanos, r0);
+  Numeric_div_to(r1, Numeric_hour_ns, r0);
   Numeric_scale(r0, 0);
   char *restrict const hours = Numeric_to_char(r0, 0);
-  Numeric_mul_to(r0, hour_nanos, r2);
+  Numeric_mul_to(r0, Numeric_hour_ns, r2);
   Numeric_sub_to(r1, r2, r0);
 
-  Numeric_div_to(r0, minute_nanos, r1);
+  Numeric_div_to(r0, Numeric_min_ns, r1);
   Numeric_scale(r1, 0);
   char *restrict const minutes = Numeric_to_char(r1, 0);
-  Numeric_mul_to(r1, minute_nanos, r2);
+  Numeric_mul_to(r1, Numeric_min_ns, r2);
   Numeric_sub_to(r0, r2, r1);
 
-  Numeric_div_to(r1, second_nanos, r0);
+  Numeric_div_to(r1, Numeric_sec_ns, r0);
   Numeric_scale(r0, 0);
   char *restrict const seconds = Numeric_to_char(r0, 0);
-  Numeric_mul_to(r0, second_nanos, r2);
+  Numeric_mul_to(r0, Numeric_sec_ns, r2);
   Numeric_sub_to(r1, r2, r0);
 
   char *restrict const ns = Numeric_to_char(r0, 0);

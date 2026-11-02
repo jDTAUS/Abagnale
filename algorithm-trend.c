@@ -21,14 +21,7 @@
 #include "host.h"
 #endif
 
-#include "abagnale.h"
-#include "config.h"
-#include "database.h"
-#include "heap.h"
-#include "proc.h"
-#include "queue.h"
-#include "thread.h"
-#include "time.h"
+#include "abagnale-api.h"
 
 #include <errno.h>
 #include <inttypes.h>
@@ -104,16 +97,6 @@ static const struct {
     {CANDLE_DOWN, "DOWN", 4},
     {CANDLE_NONE, "NONE", 4},
 };
-
-extern volatile sig_atomic_t terminated;
-extern const struct Numeric *restrict const zero;
-extern const struct Numeric *restrict const n_one;
-extern const struct Numeric *restrict const hundred;
-
-extern const struct Config *restrict const cnf;
-extern const bool verbose;
-extern const struct timespec thread_timeout;
-extern const size_t all_exchanges_nitems;
 
 static tss_t trend_tls_key;
 static struct Map *restrict states;
@@ -628,7 +611,7 @@ static struct Position *trend_position_open(
   void *const *restrict items;
 
   Numeric_copy_to(t->tp_pc, cd_pc);
-  Numeric_mul_to(t->tp_pc, n_one, r0);
+  Numeric_mul_to(t->tp_pc, Numeric_neg1, r0);
   Numeric_copy_to(r0, cd_n_pc);
 
   Candle_reset(cd_cur);
@@ -668,9 +651,9 @@ static struct Position *trend_position_open(
     }
 
     // (100 / open * close) - 100
-    Numeric_div_to(hundred, cd_cur->o, r0);
+    Numeric_div_to(Numeric_100, cd_cur->o, r0);
     Numeric_mul_to(r0, sample->price, r1);
-    Numeric_sub_to(r1, hundred, cd_cur->pc);
+    Numeric_sub_to(r1, Numeric_100, cd_cur->pc);
 
     if (Numeric_cmp(cd_cur->pc, cd_n_pc) <= 0) {
       cd_cur->t = CANDLE_DOWN;
@@ -722,7 +705,7 @@ static struct Position *trend_position_open(
   // duration percent = 100 / window duration * duration
   Numeric_sub_to(((struct Sample *)Array_tail(samples))->nanos,
                  ((struct Sample *)Array_head(samples))->nanos, r0);
-  Numeric_div_to(hundred, r0, r1);
+  Numeric_div_to(Numeric_100, r0, r1);
   Numeric_sub_to(cd_first->cnanos, cd_first->onanos, r0);
   Numeric_mul_to(r1, r0, d_pc);
 
@@ -739,7 +722,7 @@ static struct Position *trend_position_open(
 
   // spread percent = 100 / window spread * spread
   Numeric_sub_to(pr_max, pr_min, r0);
-  Numeric_div_to(hundred, r0, r1);
+  Numeric_div_to(Numeric_100, r0, r1);
   Numeric_sub_to(cd_first->c, cd_first->o, r0);
   Numeric_abs(r0);
   Numeric_mul_to(r1, r0, s_pc);
