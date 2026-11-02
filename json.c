@@ -129,7 +129,7 @@ wcjson_document_grow_strings(struct wcjson_document *restrict const doc) {
     if ((wc_value->is_string || wc_value->is_pair || wc_value->is_number) &&
         wc_value->string >= doc->strings &&
         wc_value->string < doc->strings + doc->s_next) {
-      // XXX UB
+      // XXX UB: An architecture may trap on illegal addresses
       wc_value->string =
           (const wchar_t *)(size_t)(uintptr_t)(wc_value->string - doc->strings);
 
@@ -159,7 +159,7 @@ wcjson_document_grow_mbstrings(struct wcjson_document *restrict const doc) {
     if ((wc_value->is_string || wc_value->is_pair || wc_value->is_number) &&
         wc_value->mbstring >= doc->mbstrings &&
         wc_value->mbstring < doc->mbstrings + doc->mb_next) {
-      // XXX UB
+      // XXX UB: An architecture may trap on illegal addresses
       wc_value->mbstring =
           (const char *)(size_t)(uintptr_t)(wc_value->mbstring -
                                             doc->mbstrings);

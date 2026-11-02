@@ -188,6 +188,7 @@ inline void Numeric_from_int_to(const signed int i,
   if (ret < 0)
     panic();
 #ifdef ABAG_MATH_DEBUG
+  Numeric_char_free(res->s);
   res->s = Numeric_to_char_unscaled(res);
 #endif
 }
@@ -212,6 +213,7 @@ inline void Numeric_from_long_to(const signed long int l,
   if (ret < 0)
     panic();
 #ifdef ABAG_MATH_DEBUG
+  Numeric_char_free(res->s);
   res->s = Numeric_to_char_unscaled(res);
 #endif
 }
@@ -253,6 +255,7 @@ inline void Numeric_from_double_to(const double d,
   if (ret < 0)
     panic();
 #ifdef ABAG_MATH_DEBUG
+  Numeric_char_free(res->s);
   res->s = Numeric_to_char_unscaled(res);
 #endif
 }
