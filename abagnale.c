@@ -23,14 +23,6 @@
 
 #include "abagnale-api.h"
 
-#include <errno.h>
-#include <inttypes.h>
-#include <limits.h>
-#include <signal.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 #ifndef nitems
 #define nitems(_a) (sizeof((_a)) / sizeof((_a)[0]))
 #endif

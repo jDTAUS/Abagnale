@@ -23,11 +23,6 @@
 
 #include "abagnale-api.h"
 
-#include <errno.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <string.h>
-
 #define TIME_ISO8601_MAX_LENGTH (size_t)128
 #define TIME_NANOS_CHARS_MAX_LENGTH (size_t)128
 

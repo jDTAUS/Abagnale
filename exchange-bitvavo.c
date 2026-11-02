@@ -22,9 +22,6 @@
 
 #include "abagnale-api.h"
 
-#include <inttypes.h>
-#include <stdio.h>
-
 #define BITVAVO_UUID "a92b69cd-7247-440d-ba97-65b47217b667"
 #define BITVAVO_OPERATOR_ID L"65666572"
 #define BITVAVO_OPERATOR_ID_LEN (size_t)8

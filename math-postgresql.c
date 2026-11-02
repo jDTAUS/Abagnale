@@ -23,9 +23,9 @@
 
 #include "abagnale-api.h"
 
-#include <limits.h>
-#include <math.h>
 #include <pgtypes_numeric.h>
+
+#include <math.h>
 
 struct Numeric {
   numeric *restrict n;

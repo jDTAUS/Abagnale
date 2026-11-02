@@ -22,12 +22,6 @@
 #endif
 
 #include "abagnale-api.h"
-
-#include <inttypes.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-
 #include "optparse.h"
 
 #ifndef nitems
