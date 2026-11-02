@@ -1,4 +1,4 @@
-/* $JDTAUS$ */
+/* $JDTAUS: abagnale-api.h 9876 2026-11-02 01:14:15Z schulte $ */
 
 /*
  * Copyright (c) 2026 Christian Schulte <cs@schulte.it>
