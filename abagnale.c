@@ -2590,9 +2590,15 @@ static void trade_timeout(const struct worker_ctx *restrict const w_ctx,
                           const struct Sample *restrict const sample) {
   const struct abag_tls *restrict const tls = abag_tls();
   struct Numeric *restrict const r0 = tls->trade_timeout.r0;
+  const struct Numeric *restrict const vwin_max_ns =
+      Array_tail(volatility_windows);
 
   samples_per_nano(r0, samples);
-  Numeric_mul_to(r0, w_ctx->m_cnf->wnanos, t->pr_samples);
+  Numeric_mul_to(r0,
+                 Numeric_cmp(w_ctx->m_cnf->wnanos, vwin_max_ns) > 0
+                     ? vwin_max_ns
+                     : w_ctx->m_cnf->wnanos,
+                 t->pr_samples);
 }
 
 static void trade_create(const struct worker_ctx *restrict const w_ctx,
