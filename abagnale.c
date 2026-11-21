@@ -1157,11 +1157,8 @@ static bool quote_return(struct Numeric *restrict const q_return,
   } else
     Numeric_copy_to(w_ctx->m_cnf->r_amount, q_return);
 
-  if (Numeric_cmp(q_return, w_ctx->m->q_inc) < 0) {
-    Numeric_add_to(q_return, w_ctx->m->q_inc, r0);
-    Numeric_copy_to(r0, q_return);
-    Numeric_scale(q_return, w_ctx->m->q_sc);
-  }
+  if (Numeric_cmp(q_return, w_ctx->m->q_inc) < 0)
+    Numeric_copy_to(w_ctx->m->q_inc, q_return);
 
   return true;
 }
