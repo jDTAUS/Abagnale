@@ -1,5 +1,5 @@
 /* $SchulteIT: proc.c 15189 2025-10-27 05:41:45Z schulte $ */
-/* $JDTAUS$ */
+/* $JDTAUS: proc.c 9849 2026-10-18 01:33:20Z schulte $ */
 
 /*
  * Copyright (c) 2018 - 2026 Christian Schulte <cs@schulte.it>
