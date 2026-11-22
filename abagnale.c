@@ -1304,10 +1304,8 @@ static void position_pricing(const struct worker_ctx *restrict const w_ctx,
     Numeric_div_to(t->q_return, r2, p->b_ordered);
     Numeric_scale(p->b_ordered, w_ctx->m->b_sc);
 
-    if (Numeric_cmp(p->b_ordered, w_ctx->m->b_inc) < 0) {
-      Numeric_add_to(p->b_ordered, w_ctx->m->b_inc, r0);
-      Numeric_copy_to(r0, p->b_ordered);
-    }
+    if (Numeric_cmp(p->b_ordered, w_ctx->m->b_inc) < 0)
+      Numeric_copy_to(w_ctx->m->b_inc, p->b_ordered);
 
     // Apply exchange limits
     char *restrict b_min = NULL;
