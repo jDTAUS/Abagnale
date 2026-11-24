@@ -86,13 +86,13 @@ inline unsigned long envul(const char *restrict const nm,
   const long v = strtol(env, &ep, 0);
 
   if (env[0] == '\0' || *ep != '\0')
-    fatal("%s: %s: %s", nm, env, ep);
+    fail("%s: %s: %s", nm, env, ep);
 
   if (errno == EINVAL || (errno == ERANGE && (v == LONG_MAX || v == LONG_MIN)))
-    fatal("%s: %s: %s", nm, env, strerror(errno));
+    fail("%s: %s: %s", nm, env, strerror(errno));
 
   if (v < 0)
-    fatal("%s: %s < 0", nm, env);
+    fail("%s: %s < 0", nm, env);
 
   return v;
 }
@@ -109,7 +109,7 @@ inline const char *envuri(const char *restrict nm, const char *restrict dflt) {
 
   for (const char *restrict p = env; *p; p++)
     if (!allowed_in_uri(*p))
-      fatal("%s: %s", nm, env);
+      fail("%s: %s", nm, env);
 
   return env;
 }

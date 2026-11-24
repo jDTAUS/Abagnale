@@ -87,19 +87,19 @@ inline void thread_create(thrd_t *restrict const t, int (*entry)(void *),
                           void *arg) {
   int r = thrd_create(t, entry, arg);
   if (r != thrd_success)
-    fatal("%s", strthrd(r));
+    fail("%s", strthrd(r));
 }
 
 inline void thread_detach(thrd_t t) {
   int r = thrd_detach(t);
   if (r != thrd_success)
-    fatal("%s", strthrd(r));
+    fail("%s", strthrd(r));
 }
 
 inline void thread_join(const thrd_t t, int *restrict const res) {
   int r = thrd_join(t, res);
   if (r != thrd_success)
-    fatal("%s", strthrd(r));
+    fail("%s", strthrd(r));
 }
 
 inline void thread_sleep(const struct timespec *restrict const duration) {
@@ -115,7 +115,7 @@ inline void thread_sleep(const struct timespec *restrict const duration) {
 
     if (r < 0) {
       if (rmng.tv_sec == -1 && rmng.tv_nsec == -1)
-        fatal("%d", r);
+        fail("%d", r);
 
       drtn = rmng;
     }
@@ -135,7 +135,7 @@ _Noreturn void thread_exit(const int res) { thrd_exit(res); }
 inline void mutex_init(mtx_t *restrict const m) {
   int r = mtx_init(m, mtx_plain | mtx_recursive);
   if (r != thrd_success)
-    fatal("%s", strthrd(r));
+    fail("%s", strthrd(r));
 }
 
 inline void mutex_destroy(mtx_t *restrict const m) { mtx_destroy(m); }
@@ -146,7 +146,7 @@ inline void mutex_lock(mtx_t *restrict const m) {
 
   int r = mtx_lock(m);
   if (r != thrd_success)
-    fatal("%s", strthrd(r));
+    fail("%s", strthrd(r));
 
   if (Map_exists(mutexes, m)) {
     unsigned depth = (unsigned)(uintptr_t)Map_get(mutexes, m);
@@ -168,7 +168,7 @@ inline bool mutex_trylock(mtx_t *restrict const m) {
     return false;
 
   if (r != thrd_success)
-    fatal("%s", strthrd(r));
+    fail("%s", strthrd(r));
 
   if (Map_exists(mutexes, m)) {
     unsigned depth = (unsigned)(uintptr_t)Map_get(mutexes, m);
@@ -198,13 +198,13 @@ inline void mutex_unlock(mtx_t *restrict const m) {
 
   int r = mtx_unlock(m);
   if (r != thrd_success)
-    fatal("%s", strthrd(r));
+    fail("%s", strthrd(r));
 }
 
 inline void tls_create(tss_t *restrict const key, tss_dtor_t dtor) {
   int r = tss_create(key, dtor);
   if (r != thrd_success)
-    fatal("%s", strthrd(r));
+    fail("%s", strthrd(r));
 }
 
 inline void tls_delete(const tss_t key) { tss_delete(key); }
@@ -214,13 +214,13 @@ inline void *tls_get(const tss_t key) { return tss_get(key); }
 inline void tls_set(const tss_t key, void *restrict const val) {
   int r = tss_set(key, val);
   if (r != thrd_success)
-    fatal("%s", strthrd(r));
+    fail("%s", strthrd(r));
 }
 
 inline void condition_init(cnd_t *restrict const cond) {
   int r = cnd_init(cond);
   if (r != thrd_success)
-    fatal("%s", strthrd(r));
+    fail("%s", strthrd(r));
 }
 
 inline void condition_destroy(cnd_t *restrict const cond) { cnd_destroy(cond); }
@@ -228,13 +228,13 @@ inline void condition_destroy(cnd_t *restrict const cond) { cnd_destroy(cond); }
 inline void condition_broadcast(cnd_t *restrict const cond) {
   int r = cnd_broadcast(cond);
   if (r != thrd_success)
-    fatal("%s", strthrd(r));
+    fail("%s", strthrd(r));
 }
 
 inline void condition_signal(cnd_t *restrict const cond) {
   int r = cnd_signal(cond);
   if (r != thrd_success)
-    fatal("%s", strthrd(r));
+    fail("%s", strthrd(r));
 }
 
 inline bool condition_timedwait(cnd_t *restrict const cond,
@@ -261,7 +261,7 @@ inline bool condition_timedwait(cnd_t *restrict const cond,
     return false;
   default:
     if (r != thrd_success)
-      fatal("%s", strthrd(r));
+      fail("%s", strthrd(r));
   }
 
   return true;
@@ -286,7 +286,7 @@ inline void condition_wait(cnd_t *restrict const cond,
   Map_put(mutexes, mtx, (void *)(uintptr_t)1);
 
   if (r != thrd_success)
-    fatal("%s", strthrd(r));
+    fail("%s", strthrd(r));
 }
 
 inline struct thread_group *thread_group_new(void) {

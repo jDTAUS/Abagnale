@@ -393,7 +393,7 @@ inline static void envurl(char *restrict d, size_t len, const char *restrict nm,
     *d++ = *env++;
 
   if (len == SIZE_MAX && *env)
-    fatal("%s: %s", nm, env);
+    panic();
 
   *d = '\0';
 }
@@ -440,7 +440,7 @@ static void bitvavo_init(void) {
   struct Numeric *restrict const rest_rate = Numeric_from_char(rest_rate_env);
 
   if (rest_rate == NULL || Numeric_cmp(rest_rate, Numeric_0) <= 0)
-    fatal("BITVAVO_REQUESTS_PER_SECOND: %s", rest_rate_env);
+    fail("BITVAVO_REQUESTS_PER_SECOND: %s", rest_rate_env);
 
   bitvavo_rest_next_ns = Numeric_copy(Numeric_0);
   bitvavo_rest_1_wp_ns = Numeric_new();
@@ -573,7 +573,7 @@ static void bitvavo_start(void) {
                     "User-Agent: %s\r\n", ABAG_USER_AGENT);
 
   if (!c)
-    fatal("%s: Failure starting websocket\n", url);
+    fail("%s: Connecting\n", url);
 
   thread_create(&mg_mgr_worker, bitvavo_ws_worker_func, mgr);
 }
@@ -1229,12 +1229,12 @@ static struct Array *bitvavo_markets(void) {
     for (size_t i = Array_size(markets); i-- > 0;) {
       if (Map_put(markets_by_symbol, ((struct Market *)items[i])->sym,
                   items[i]))
-        fatal("%s: markets: Market symbol uniqueness constraint: %s",
-              bitvavo_rest_uri, String_chars(((struct Market *)items[i])->sym));
+        fail("%s: markets: Market symbol uniqueness constraint: %s",
+             bitvavo_rest_uri, String_chars(((struct Market *)items[i])->sym));
 
       if (Map_put(markets_by_id, ((struct Market *)items[i])->id, items[i]))
-        fatal("%s: markets: Market id uniqueness constraint: %s",
-              bitvavo_rest_uri, String_chars(((struct Market *)items[i])->id));
+        fail("%s: markets: Market id uniqueness constraint: %s",
+             bitvavo_rest_uri, String_chars(((struct Market *)items[i])->id));
     }
 
     Map_optimize(markets_by_id);
@@ -1294,14 +1294,13 @@ static struct Array *bitvavo_accounts(void) {
     for (size_t i = Array_size(accounts); i-- > 0;) {
       if (Map_put(accounts_by_symbol, ((struct Account *)items[i])->sym,
                   items[i]) != NULL)
-        fatal("%s: accounts: Account symbol uniqueness constraint: %s",
-              bitvavo_rest_uri,
-              String_chars(((struct Account *)items[i])->sym));
+        fail("%s: accounts: Account symbol uniqueness constraint: %s",
+             bitvavo_rest_uri, String_chars(((struct Account *)items[i])->sym));
 
       if (Map_put(accounts_by_id, ((struct Account *)items[i])->id, items[i]) !=
           NULL)
-        fatal("%s: accounts: Account id uniqueness constraint: %s",
-              bitvavo_rest_uri, String_chars(((struct Account *)items[i])->id));
+        fail("%s: accounts: Account id uniqueness constraint: %s",
+             bitvavo_rest_uri, String_chars(((struct Account *)items[i])->id));
     }
 
     Map_optimize(accounts_by_id);

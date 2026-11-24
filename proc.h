@@ -29,7 +29,7 @@
 #define panic()                                                                \
   (werr("%s: Abort: %s: %d\n", __func__, __FILE__, __LINE__), abort())
 
-#define fatal(_fmt, ...)                                                       \
+#define fail(_fmt, ...)                                                        \
   (werr("%s: Failure: " _fmt "\n", __func__, __VA_ARGS__), exit(EXIT_FAILURE))
 
 void wout(const char *, ...) __attribute__((__format__(printf, 1, 2)));

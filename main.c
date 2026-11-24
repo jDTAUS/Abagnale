@@ -327,10 +327,10 @@ int main(int argc, char *argv[]) {
   Array_compact(exchanges);
 
   if (signal(SIGTERM, terminate) == SIG_ERR)
-    fatal("%s", strerror(errno));
+    fail("%s", strerror(errno));
 
   if (signal(SIGINT, terminate) == SIG_ERR)
-    fatal("%s", strerror(errno));
+    fail("%s", strerror(errno));
 
   if (!configtest) {
     if (String_equals(app_nm, app_abagnale)) {
@@ -338,7 +338,7 @@ int main(int argc, char *argv[]) {
     } else if (String_equals(app_nm, app_abagnalectl)) {
       r = abagnalectl(argc - options.optind, argv);
     } else
-      fatal("%s", String_chars(app_nm));
+      fail("%s", String_chars(app_nm));
   } else
     r = EXIT_SUCCESS;
 

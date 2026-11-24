@@ -34,7 +34,7 @@
 inline void *heap_malloc(const size_t size) {
   void *restrict const ptr = malloc(size);
   if (ptr == NULL)
-    fatal("%s", strerror(errno));
+    fail("%s", strerror(errno));
   //  memset(ptr, 0xff, size);
   return ptr;
 }
@@ -42,14 +42,14 @@ inline void *heap_malloc(const size_t size) {
 inline void *heap_calloc(const size_t nmemb, const size_t size) {
   void *restrict const ptr = calloc(nmemb, size);
   if (ptr == NULL)
-    fatal("%s", strerror(errno));
+    fail("%s", strerror(errno));
   return ptr;
 }
 
 inline void *heap_realloc(void *restrict const p, const size_t size) {
   void *restrict const ptr = realloc(p, size);
   if (ptr == NULL)
-    fatal("%s", strerror(errno));
+    fail("%s", strerror(errno));
   return ptr;
 }
 

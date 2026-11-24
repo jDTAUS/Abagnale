@@ -96,7 +96,7 @@ void time_destroy(void) { tls_delete(time_tls_key); }
 
 inline void time_now(struct timespec *restrict const ts) {
   if (timespec_get(ts, TIME_UTC) == 0)
-    fatal("%s", "timespec_get");
+    fail("%s", "timespec_get");
 }
 
 bool nanos_from_iso8601(const char *restrict const iso, const size_t len,
@@ -190,7 +190,7 @@ bool nanos_from_iso8601(const char *restrict const iso, const size_t len,
 
   time_t time = timegm(&t);
   if (time == (time_t)-1)
-    fatal("%s", strerror(errno));
+    fail("%s", strerror(errno));
 
   Numeric_from_long_to(time, secs);
   Numeric_mul_to(secs, Numeric_sec_ns, s_ns);
@@ -237,10 +237,10 @@ char *nanos_to_iso8601(const struct Numeric *restrict const nanos) {
   // This is not errno_t and localtime_s from C Annex K
   errno_t lt_s = localtime_s(&t, &time);
   if (lt_s != 0)
-    fatal("%s", strerror(lt_s));
+    fail("%s", strerror(lt_s));
 #else
   if (localtime_r(&time, &t) == NULL)
-    fatal("%s", "localtime_r");
+    fail("%s", "localtime_r");
 #endif
 
   char *restrict const r = heap_malloc(TIME_ISO8601_MAX_LENGTH + 1);
