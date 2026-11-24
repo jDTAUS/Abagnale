@@ -29,6 +29,7 @@ sgd_return="0.25 SGD"
 aud_return="0.25 AUD"
 
 # abagnalectl.conf
+#include /etc/abagnale/abagnale-coinbase-4h.conf
 #include /etc/abagnale/abagnale-coinbase-72h.conf
 #include /etc/abagnale/abagnale-coinbase-108h.conf
 #include /etc/abagnale/abagnale-coinbase-144h.conf
@@ -49,7 +50,8 @@ aud_return="0.25 AUD"
 #include /etc/abagnale/abagnale-coinbase-all-usdc.conf
 #include /etc/abagnale/abagnale-coinbase-all-usdt.conf
 #include /etc/abagnale/abagnale-coinbase-all-usd.conf
-#include /etc/abagnale/abagnale-bitvavo-36h.conf
+#include /etc/abagnale/abagnale-bitvavo-1h.conf
+#include /etc/abagnale/abagnale-bitvavo-4h.conf
 #include /etc/abagnale/abagnale-bitvavo-72h.conf
 #include /etc/abagnale/abagnale-bitvavo-324h.conf
 #include /etc/abagnale/abagnale-bitvavo-648h.conf
@@ -57,52 +59,48 @@ aud_return="0.25 AUD"
 #include /etc/abagnale/abagnale-bitvavo-all-eur.conf
 #include /etc/abagnale/abagnale-bitvavo-all-usdc.conf
 
+# abagnale-coinbase-4h.conf
+trade at coinbase using trend return 0.01 EUR window 4h\
+	market BTC@EUR\
+	stop-loss-delay 30m stop-loss-delays 8\
+	take-profit-delay 15m take-profit-delays 16\
+	take-loss-delay 2h take-loss-delays 2
+
 # abagnale-coinbase-72h.conf
 trade at coinbase using trend return $eur_return window 72h\
-	market BTC@EUR\
 	market USDC@EUR\
-	demand-timeout-min 2h demand-timeout-max 18h\
-	supply-timeout-min 2h supply-timeout-max 18h\
-	stop-loss-delay 30m stop-loss-delays 2\
-	take-profit-delay 7.5m take-profit-delays 1\
-	take-loss-delay 36h take-loss-delays 1
+	stop-loss-delay 9h stop-loss-delays 8\
+	take-profit-delay 4.5h take-profit-delays 16\
+	take-loss-delay 36h take-loss-delays 2
 
 # abagnale-coinbase-108h.conf
 trade at coinbase using trend return $eur_return window 108h\
 	market ADA@EUR\
-	demand-timeout-min 3h demand-timeout-max 27h\
-	supply-timeout-min 3h supply-timeout-max 27h\
-	stop-loss-delay 45m stop-loss-delays 2\
-	take-profit-delay 9m take-profit-delays 1\
-	take-loss-delay 54h take-loss-delays 1
+	stop-loss-delay 13.5h stop-loss-delays 8\
+	take-profit-delay 6.75h take-profit-delays 16\
+	take-loss-delay 54h take-loss-delays 2
 
 # abagnale-coinbase-144h.conf
 trade at coinbase using trend return $eur_return window 144h\
 	market ICP@EUR\
-	demand-timeout-min 4h demand-timeout-max 36h\
-	supply-timeout-min 4h supply-timeout-max 36h\
-	stop-loss-delay 1h stop-loss-delays 2\
-	take-profit-delay 12m take-profit-delays 1\
-	take-loss-delay 72h take-loss-delays 1
+	stop-loss-delay 18h stop-loss-delays 8\
+	take-profit-delay 9h take-profit-delays 16\
+	take-loss-delay 72h take-loss-delays 2
 
 # abagnale-coinbase-180h.conf
 trade at coinbase using trend return $eur_return window 180h\
 	market UNI@EUR\
-	demand-timeout-min 5h demand-timeout-max 45h\
-	supply-timeout-min 5h supply-timeout-max 45h\
-	stop-loss-delay 75m stop-loss-delays 2\
-	take-profit-delay 15m take-profit-delays 1\
-	take-loss-delay 90h take-loss-delays 1
+	stop-loss-delay 22.5h stop-loss-delays 8\
+	take-profit-delay 11.25h take-profit-delays 16\
+	take-loss-delay 90h take-loss-delays 2
 
 # abagnale-coinbase-324h.conf
 trade at coinbase using trend return $btc_return window 324h\
 	market ETH@BTC\
 	market YFI@BTC\
-	demand-timeout-min 10h demand-timeout-max 81h\
-	supply-timeout-min 10h supply-timeout-max 81h\
-	stop-loss-delay 135m stop-loss-delays 2\
-	take-profit-delay 27m take-profit-delays 1\
-	take-loss-delay 162h take-loss-delays 1
+	stop-loss-delay 40.5h stop-loss-delays 8\
+	take-profit-delay 20.25h take-profit-delays 16\
+	take-loss-delay 162h take-loss-delays 2
 
 trade at coinbase using trend return $eur_return window 324h\
 	market AAVE@EUR\
@@ -112,19 +110,15 @@ trade at coinbase using trend return $eur_return window 324h\
 	market ETH@EUR\
 	market LTC@EUR\
 	market XLM@EUR\
-	demand-timeout-min 10h demand-timeout-max 81h\
-	supply-timeout-min 10h supply-timeout-max 81h\
-	stop-loss-delay 135m stop-loss-delays 2\
-	take-profit-delay 27m take-profit-delays 1\
-	take-loss-delay 162h take-loss-delays 1
+	stop-loss-delay 40.5h stop-loss-delays 8\
+	take-profit-delay 20.25h take-profit-delays 16\
+	take-loss-delay 162h take-loss-delays 2
 
 trade at coinbase using trend return 10 DOGE window 324h\
 	market DOGE@EUR\
-	demand-timeout-min 10h demand-timeout-max 81h\
-	supply-timeout-min 10h supply-timeout-max 81h\
-	stop-loss-delay 135m stop-loss-delays 2\
-	take-profit-delay 27m take-profit-delays 1\
-	take-loss-delay 162h take-loss-delays 1
+	stop-loss-delay 40.5h stop-loss-delays 8\
+	take-profit-delay 20.25h take-profit-delays 16\
+	take-loss-delay 162h take-loss-delays 2
 
 # abagnale-coinbase-648h.conf
 trade at coinbase using trend return $btc_return window 648h\
@@ -134,11 +128,9 @@ trade at coinbase using trend return $btc_return window 648h\
 	market COMP@BTC\
 	market SOL@BTC\
 	market XLM@BTC\
-	demand-timeout-min 20h demand-timeout-max 162h\
-	supply-timeout-min 20h supply-timeout-max 162h\
-	stop-loss-delay 270m stop-loss-delays 2\
-	take-profit-delay 54m take-profit-delays 1\
-	take-loss-delay 324h take-loss-delays 1
+	stop-loss-delay 81h stop-loss-delays 8\
+	take-profit-delay 40.5h take-profit-delays 16\
+	take-loss-delay 324h take-loss-delays 2
 
 trade at coinbase using trend return $eur_return window 648h\
 	market AVAX@EUR\
@@ -147,11 +139,9 @@ trade at coinbase using trend return $eur_return window 648h\
 	market SHIB@EUR\
 	market SNX@EUR\
 	market SOL@EUR\
-	demand-timeout-min 20h demand-timeout-max 162h\
-	supply-timeout-min 20h supply-timeout-max 162h\
-	stop-loss-delay 270m stop-loss-delays 2\
-	take-profit-delay 54m take-profit-delays 1\
-	take-loss-delay 324h take-loss-delays 1
+	stop-loss-delay 81h stop-loss-delays 8\
+	take-profit-delay 40.5h take-profit-delays 16\
+	take-loss-delay 324h take-loss-delays 2
 
 # abagnale-coinbase-1296h.conf
 trade at coinbase using trend return $btc_return window 1296h\
@@ -164,28 +154,22 @@ trade at coinbase using trend return $btc_return window 1296h\
 	market ICP@BTC\
 	market LTC@BTC\
 	market UNI@BTC\
-	demand-timeout-min 40h demand-timeout-max 324h\
-	supply-timeout-min 40h supply-timeout-max 324h\
-	stop-loss-delay 540m stop-loss-delays 2\
-	take-profit-delay 108m take-profit-delays 1\
-	take-loss-delay 648h take-loss-delays 1
+	stop-loss-delay 192h stop-loss-delays 8\
+	take-profit-delay 81h take-profit-delays 16\
+	take-loss-delay 648h take-loss-delays 2
 
 trade at coinbase using trend return 30 DOGE window 1296h\
 	market DOGE@BTC\
-	demand-timeout-min 40h demand-timeout-max 324h\
-	supply-timeout-min 40h supply-timeout-max 324h\
-	stop-loss-delay 540m stop-loss-delays 2\
-	take-profit-delay 108m take-profit-delays 1\
-	take-loss-delay 648h take-loss-delays 1
+	stop-loss-delay 192h stop-loss-delays 8\
+	take-profit-delay 81h take-profit-delays 16\
+	take-loss-delay 648h take-loss-delays 2
 
 trade at coinbase using trend return $eth_return window 1296h\
 	market ADA@ETH\
 	market BAT@ETH\
-	demand-timeout-min 40h demand-timeout-max 324h\
-	supply-timeout-min 40h supply-timeout-max 324h\
-	stop-loss-delay 540m stop-loss-delays 2\
-	take-profit-delay 108m take-profit-delays 1\
-	take-loss-delay 648h take-loss-delays 1
+	stop-loss-delay 192h stop-loss-delays 8\
+	take-profit-delay 81h take-profit-delays 16\
+	take-loss-delay 648h take-loss-delays 2
 
 trade at coinbase using trend return $eur_return window 1296h\
 	market 1INCH@EUR\
@@ -194,29 +178,23 @@ trade at coinbase using trend return $eur_return window 1296h\
 	market FIL@EUR\
 	market GRT@EUR\
 	market MANA@EUR\
-	demand-timeout-min 40h demand-timeout-max 324h\
-	supply-timeout-min 40h supply-timeout-max 324h\
-	stop-loss-delay 540m stop-loss-delays 2\
-	take-profit-delay 108m take-profit-delays 1\
-	take-loss-delay 648h take-loss-delays 1
+	stop-loss-delay 192h stop-loss-delays 8\
+	take-profit-delay 81h take-profit-delays 16\
+	take-loss-delay 648h take-loss-delays 2
 
 # abagnale-coinbase-2592h.conf
 trade at coinbase using trend return $btc_return window 2592h\
 	market BAT@BTC\
 	market FIL@BTC\
-	demand-timeout-min 80h demand-timeout-max 648h\
-	supply-timeout-min 80h supply-timeout-max 648h\
-	stop-loss-delay 1080m stop-loss-delays 2\
-	take-profit-delay 216m take-profit-delays 1\
-	take-loss-delay 1296h take-loss-delays 1
+	stop-loss-delay 324h stop-loss-delays 8\
+	take-profit-delay 162h take-profit-delays 16\
+	take-loss-delay 1296h take-loss-delays 2
 
 trade at coinbase using trend return $eth_return window 2592h\
 	market SOL@ETH\
-	demand-timeout-min 80h demand-timeout-max 648h\
-	supply-timeout-min 80h supply-timeout-max 648h\
-	stop-loss-delay 1080m stop-loss-delays 2\
-	take-profit-delay 216m take-profit-delays 1\
-	take-loss-delay 1296h take-loss-delays 1
+	stop-loss-delay 324h stop-loss-delays 8\
+	take-profit-delay 162h take-profit-delays 16\
+	take-loss-delay 1296h take-loss-delays 2
 
 # abagnale-coinbase-all-aud.conf
 trade at coinbase using trend return $aud_return window 36h\
@@ -270,9 +248,9 @@ trade at coinbase using trend return $aud_return window 36h\
 		not XLM@EUR\
 		not YFI@BTC\
 		match @AUD$\
-	stop-loss-delay 15m stop-loss-delays 1\
-	take-profit-delay 3m take-profit-delays 1\
-	take-loss-delay 18h take-loss-delays 1
+	stop-loss-delay 4.5h stop-loss-delays 8\
+	take-profit-delay 2.25h take-profit-delays 16\
+	take-loss-delay 18h take-loss-delays 2
 
 # abagnale-coinbase-all-brl.conf
 trade at coinbase using trend return $brl_return window 36h\
@@ -326,9 +304,9 @@ trade at coinbase using trend return $brl_return window 36h\
 		not XLM@EUR\
 		not YFI@BTC\
 		match @BRL$\
-	stop-loss-delay 15m stop-loss-delays 1\
-	take-profit-delay 3m take-profit-delays 1\
-	take-loss-delay 18h take-loss-delays 1
+	stop-loss-delay 4.5h stop-loss-delays 8\
+	take-profit-delay 2.25h take-profit-delays 16\
+	take-loss-delay 18h take-loss-delays 2
 
 # abagnale-coinbase-all-btc.conf
 trade at coinbase using trend return $btc_return window 180h\
@@ -382,9 +360,9 @@ trade at coinbase using trend return $btc_return window 180h\
 		not XLM@EUR\
 		not YFI@BTC\
 		match @BTC$\
-	stop-loss-delay 75m stop-loss-delays 1\
-	take-profit-delay 15m take-profit-delays 1\
-	take-loss-delay 90h take-loss-delays 1
+	stop-loss-delay 22.5h stop-loss-delays 8\
+	take-profit-delay 11.25h take-profit-delays 16\
+	take-loss-delay 90h take-loss-delays 2
 
 # abagnale-coinbase-all-cad.conf
 trade at coinbase using trend return $cad_return window 36h\
@@ -438,9 +416,9 @@ trade at coinbase using trend return $cad_return window 36h\
 		not XLM@EUR\
 		not YFI@BTC\
 		match @CAD$\
-	stop-loss-delay 15m stop-loss-delays 1\
-	take-profit-delay 3m take-profit-delays 1\
-	take-loss-delay 18h take-loss-delays 1
+	stop-loss-delay 4.5h stop-loss-delays 8\
+	take-profit-delay 2.25h take-profit-delays 16\
+	take-loss-delay 18h take-loss-delays 2
 
 # abagnale-coinbase-all-eth.conf
 trade at coinbase using trend return $eth_return window 180h\
@@ -494,9 +472,9 @@ trade at coinbase using trend return $eth_return window 180h\
 		not XLM@EUR\
 		not YFI@BTC\
 		match @ETH$\
-	stop-loss-delay 75m stop-loss-delays 1\
-	take-profit-delay 15m take-profit-delays 1\
-	take-loss-delay 90h take-loss-delays 1
+	stop-loss-delay 22.5h stop-loss-delays 8\
+	take-profit-delay 11.25h take-profit-delays 16\
+	take-loss-delay 90h take-loss-delays 2
 
 # abagnale-coinbase-all-eur.conf
 trade at coinbase using trend return $eur_return window 180h\
@@ -550,9 +528,9 @@ trade at coinbase using trend return $eur_return window 180h\
 		not XLM@EUR\
 		not YFI@BTC\
 		match @EUR$\
-	stop-loss-delay 75m stop-loss-delays 1\
-	take-profit-delay 15m take-profit-delays 1\
-	take-loss-delay 90h take-loss-delays 1
+	stop-loss-delay 22.5h stop-loss-delays 8\
+	take-profit-delay 11.25h take-profit-delays 16\
+	take-loss-delay 90h take-loss-delays 2
 
 # abagnale-coinbase-all-gbp.conf
 trade at coinbase using trend return $gbp_return window 36h\
@@ -606,9 +584,9 @@ trade at coinbase using trend return $gbp_return window 36h\
 		not XLM@EUR\
 		not YFI@BTC\
 		match @GBP$\
-	stop-loss-delay 15m stop-loss-delays 1\
-	take-profit-delay 3m take-profit-delays 1\
-	take-loss-delay 18h take-loss-delays 1
+	stop-loss-delay 4.5h stop-loss-delays 8\
+	take-profit-delay 2.25h take-profit-delays 16\
+	take-loss-delay 18h take-loss-delays 2
 
 # abagnale-coinbase-all-inr.conf
 trade at coinbase using trend return $inr_return window 36h\
@@ -662,9 +640,9 @@ trade at coinbase using trend return $inr_return window 36h\
 		not XLM@EUR\
 		not YFI@BTC\
 		match @INR$\
-	stop-loss-delay 15m stop-loss-delays 1\
-	take-profit-delay 3m take-profit-delays 1\
-	take-loss-delay 18h take-loss-delays 1
+	stop-loss-delay 4.5h stop-loss-delays 8\
+	take-profit-delay 2.25h take-profit-delays 16\
+	take-loss-delay 18h take-loss-delays 2
 
 # abagnale-coinbase-all-sgd.conf
 trade at coinbase using trend return $sgd_return window 36h\
@@ -718,9 +696,9 @@ trade at coinbase using trend return $sgd_return window 36h\
 		not XLM@EUR\
 		not YFI@BTC\
 		match @SGD$\
-	stop-loss-delay 15m stop-loss-delays 1\
-	take-profit-delay 3m take-profit-delays 1\
-	take-loss-delay 18h take-loss-delays 1
+	stop-loss-delay 4.5h stop-loss-delays 8\
+	take-profit-delay 2.25h take-profit-delays 16\
+	take-loss-delay 18h take-loss-delays 2
 
 # abagnale-coinbase-all-usdc.conf
 trade at coinbase using trend return $usdc_return window 180h\
@@ -774,9 +752,9 @@ trade at coinbase using trend return $usdc_return window 180h\
 		not XLM@EUR\
 		not YFI@BTC\
 		match @USDC$\
-	stop-loss-delay 75m stop-loss-delays 1\
-	take-profit-delay 15m take-profit-delays 1\
-	take-loss-delay 90h take-loss-delays 1
+	stop-loss-delay 22.5h stop-loss-delays 8\
+	take-profit-delay 11.25h take-profit-delays 16\
+	take-loss-delay 90h take-loss-delays 2
 
 # abagnale-coinbase-all-usdt.conf
 trade at coinbase using trend return $usdt_return window 36h\
@@ -886,32 +864,33 @@ trade at coinbase using trend return $usd_return window 36h\
 		not XLM@EUR\
 		not YFI@BTC\
 		match @USD$\
-	stop-loss-delay 15m stop-loss-delays 1\
-	take-profit-delay 3m take-profit-delays 1\
-	take-loss-delay 18h take-loss-delays 1
+	stop-loss-delay 4.5h stop-loss-delays 8\
+	take-profit-delay 2.25h take-profit-delays 16\
+	take-loss-delay 18h take-loss-delays 2
 
-# abagnale-bitvavo-36h.conf
-trade at bitvavo using trend return $eur_return window 36h\
-	market HYPE@EUR\
-	demand-timeout-min 1h demand-timeout-max 9h\
-	supply-timeout-min 1h supply-timeout-max 9h\
-	stop-loss-delay 15m stop-loss-delays 1\
-	take-profit-delay 3m take-profit-delays 0\
-	take-loss-delay 18h take-loss-delays 1
+# abagnale-bitvavo-1h.conf
+trade at bitvavo using trend return 0.01 EUR window 1h\
+	market PROM@EUR\
+	stop-loss-delay 0.125h stop-loss-delays 8\
+	take-profit-delay 0.0625h take-profit-delays 16\
+	take-loss-delay 0.5h take-loss-delays 2
+
+# abagnale-bitvavo-4h.conf
+trade at bitvavo using trend return 0.01 EUR window 4h\
+	market BTC@EUR\
+	stop-loss-delay 30m stop-loss-delays 8\
+	take-profit-delay 15m take-profit-delays 16\
+	take-loss-delay 2h take-loss-delays 2
 
 # abagnale-bitvavo-72h.conf
 trade at bitvavo using trend return $eur_return window 72h\
 	market AKT@EUR\
-	market BTC@EUR\
 	market DOT@EUR\
-	market QNT@EUR\
 	market USELESS@EUR\
 	market XLM@EUR\
-	demand-timeout-min 2h demand-timeout-max 18h\
-	supply-timeout-min 2h supply-timeout-max 18h\
-	stop-loss-delay 30m stop-loss-delays 1\
-	take-profit-delay 7.5m take-profit-delays 0\
-	take-loss-delay 36h take-loss-delays 1
+	stop-loss-delay 9h stop-loss-delays 8\
+	take-profit-delay 4.5h take-profit-delays 16\
+	take-loss-delay 36h take-loss-delays 2
 
 # abagnale-bitvavo-324h.conf
 trade at bitvavo using trend return $eur_return window 324h\
@@ -1010,7 +989,6 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market IO@EUR\
 	market JASMY@EUR\
 	market JTO@EUR\
-	market JUP@EUR\
 	market KAT@EUR\
 	market KAVA@EUR\
 	market KERNEL@EUR\
@@ -1052,21 +1030,18 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market PARTI@EUR\
 	market PEAQ@EUR\
 	market PENDLE@EUR\
-	market PEOPLE@EUR\
 	market PLUME@EUR\
-	market PNT@EUR\
 	market PNUT@EUR\
 	market POL@EUR\
 	market POND@EUR\
 	market PONKE@EUR\
 	market POPCAT@EUR\
 	market PORTAL@EUR\
-	market PROM@EUR\
 	market PROMPT@EUR\
 	market PTB@EUR\
 	market PUFFER@EUR\
 	market PYR@EUR\
-	market QUID@EUR\
+	market QNT@EUR\
 	market RAY@EUR\
 	market RE@EUR\
 	market RECALL@EUR\
@@ -1083,7 +1058,6 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market SEI@EUR\
 	market SHELL@EUR\
 	market SLP@EUR\
-	market SNX@EUR\
 	market SOMI@EUR\
 	market SOPH@EUR\
 	market SOSO@EUR\
@@ -1094,7 +1068,6 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market STX@EUR\
 	market SYN@EUR\
 	market T@EUR\
-	market TAI@EUR\
 	market TAIKO@EUR\
 	market THE@EUR\
 	market TIA@EUR\
@@ -1114,7 +1087,6 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market W@EUR\
 	market WAXP@EUR\
 	market WCT@EUR\
-	market WHUF@EUR\
 	market WIF@EUR\
 	market WOO@EUR\
 	market XAI@EUR\
@@ -1132,22 +1104,18 @@ trade at bitvavo using trend return $eur_return window 324h\
 	market ZORA@EUR\
 	market ZRO@EUR\
 	market ZRX@EUR\
-	demand-timeout-min 10h demand-timeout-max 81h\
-	supply-timeout-min 10h supply-timeout-max 81h\
-	stop-loss-delay 135m stop-loss-delays 1\
-	take-profit-delay 27m take-profit-delays 0\
-	take-loss-delay 162h take-loss-delays 1
+	stop-loss-delay 40.5h stop-loss-delays 8\
+	take-profit-delay 20.25h take-profit-delays 16\
+	take-loss-delay 162h take-loss-delays 2
 
 trade at bitvavo using trend return $usdc_return window 324h\
 	market ADA@USDC\
 	market BTC@USDC\
 	market TIA@USDC\
 	market XRP@USDC\
-	demand-timeout-min 10h demand-timeout-max 81h\
-	supply-timeout-min 10h supply-timeout-max 81h\
-	stop-loss-delay 135m stop-loss-delays 1\
-	take-profit-delay 27m take-profit-delays 0\
-	take-loss-delay 162h take-loss-delays 1
+	stop-loss-delay 40.5h stop-loss-delays 8\
+	take-profit-delay 20.25h take-profit-delays 16\
+	take-loss-delay 162h take-loss-delays 2
 
 # abagnale-bitvavo-648h.conf
 trade at bitvavo using trend return $eur_return window 648h\
@@ -1182,11 +1150,11 @@ trade at bitvavo using trend return $eur_return window 648h\
 	market FOLD@EUR\
 	market GLM@EUR\
 	market GMX@EUR\
-	market GROVE@EUR\
-	market HFT@EUR\
+	market HYPE@EUR\
 	market HOT@EUR\
 	market IOST@EUR\
 	market IQ@EUR\
+	market JUP@EUR\
 	market KNC@EUR\
 	market LAYER@EUR\
 	market LMWR@EUR\
@@ -1208,6 +1176,7 @@ trade at bitvavo using trend return $eur_return window 648h\
 	market RUNE@EUR\
 	market SFP@EUR\
 	market SIGN@EUR\
+	market SNX@EUR\
 	market SPK@EUR\
 	market STRAX@EUR\
 	market SUPER@EUR\
@@ -1222,13 +1191,9 @@ trade at bitvavo using trend return $eur_return window 648h\
 	market WELL@EUR\
 	market XDC@EUR\
 	market YGG@EUR\
-	market ZKP@EUR\
-	market ZRC@EUR\
-	demand-timeout-min 20h demand-timeout-max 162h\
-	supply-timeout-min 20h supply-timeout-max 162h\
-	stop-loss-delay 270m stop-loss-delays 1\
-	take-profit-delay 54m take-profit-delays 0\
-	take-loss-delay 324h take-loss-delays 1
+	stop-loss-delay 81h stop-loss-delays 8\
+	take-profit-delay 40.5h take-profit-delays 16\
+	take-loss-delay 324h take-loss-delays 2
 
 # abagnale-bitvavo-1296h.conf
 trade at bitvavo using trend return $eur_return window 1296h\
@@ -1271,6 +1236,8 @@ trade at bitvavo using trend return $eur_return window 1296h\
 	market GMT@EUR\
 	market GNO@EUR\
 	market GNS@EUR\
+	market GROVE@EUR\
+	market HFT@EUR\
 	market HMSTR@EUR\
 	market ICNT@EUR\
 	market ID@EUR\
@@ -1287,11 +1254,14 @@ trade at bitvavo using trend return $eur_return window 1296h\
 	market ONT@EUR\
 	market OSMO@EUR\
 	market PENGU@EUR\
+	market PEOPLE@EUR\
 	market PEPE@EUR\
+	market PNT@EUR\
 	market POWR@EUR\
 	market PUMP@EUR\
 	market PUNDIX@EUR\
 	market QKC@EUR\
+	market QUID@EUR\
 	market RAD@EUR\
 	market RARE@EUR\
 	market RED@EUR\
@@ -1308,6 +1278,7 @@ trade at bitvavo using trend return $eur_return window 1296h\
 	market SOON@EUR\
 	market SPX@EUR\
 	market SWELL@EUR\
+	market TAI@EUR\
 	market TLM@EUR\
 	market TRIA@EUR\
 	market TRUST@EUR\
@@ -1317,6 +1288,7 @@ trade at bitvavo using trend return $eur_return window 1296h\
 	market VANRY@EUR\
 	market VERONA@EUR\
 	market VSN@EUR\
+	market WHUF@EUR\
 	market WIN@EUR\
 	market WLFI@EUR\
 	market WMTX@EUR\
@@ -1328,11 +1300,11 @@ trade at bitvavo using trend return $eur_return window 1296h\
 	market ZIL@EUR\
 	market ZKJ@EUR\
 	market ZIG@EUR\
-	demand-timeout-min 40h demand-timeout-max 324h\
-	supply-timeout-min 40h supply-timeout-max 324h\
-	stop-loss-delay 540m stop-loss-delays 1\
-	take-profit-delay 108m take-profit-delays 0\
-	take-loss-delay 648h take-loss-delays 1
+	market ZKP@EUR\
+	market ZRC@EUR\
+	stop-loss-delay 192h stop-loss-delays 8\
+	take-profit-delay 81h take-profit-delays 16\
+	take-loss-delay 648h take-loss-delays 2
 
 trade at bitvavo using trend return $usdc_return window 1296h\
 	market DOGE@USDC\
@@ -1340,11 +1312,9 @@ trade at bitvavo using trend return $usdc_return window 1296h\
 	market EURC@USDC\
 	market PEPE@USDC\
 	market SUI@USDC\
-	demand-timeout-min 40h demand-timeout-max 324h\
-	supply-timeout-min 40h supply-timeout-max 324h\
-	stop-loss-delay 540m stop-loss-delays 1\
-	take-profit-delay 108m take-profit-delays 0\
-	take-loss-delay 648h take-loss-delays 1
+	stop-loss-delay 192h stop-loss-delays 8\
+	take-profit-delay 81h take-profit-delays 16\
+	take-loss-delay 648h take-loss-delays 2
 
 # abagnale-bitvavo-all-eur.conf
 trade at bitvavo using trend return $eur_return window 180h\
@@ -1752,9 +1722,9 @@ trade at bitvavo using trend return $eur_return window 180h\
 		not ZRO@EUR\
 		not ZRX@EUR\
 		match @EUR$\
-	stop-loss-delay 75m stop-loss-delays 1\
-	take-profit-delay 15m take-profit-delays 1\
-	take-loss-delay 90h take-loss-delays 1
+	stop-loss-delay 22.5h stop-loss-delays 8\
+	take-profit-delay 11.25h take-profit-delays 16\
+	take-loss-delay 90h take-loss-delays 2
 
 # abagnale-bitvavo-all-usdc.conf
 trade at bitvavo using trend return $usdc_return window 72h\
@@ -2162,7 +2132,7 @@ trade at bitvavo using trend return $usdc_return window 72h\
 		not ZRO@EUR\
 		not ZRX@EUR\
 		match @USDC$\
-	stop-loss-delay 30m stop-loss-delays 1\
-	take-profit-delay 7.5m take-profit-delays 1\
-	take-loss-delay 36h take-loss-delays 1
+	stop-loss-delay 22.5h stop-loss-delays 8\
+	take-profit-delay 11.25h take-profit-delays 16\
+	take-loss-delay 90h take-loss-delays 2
 
