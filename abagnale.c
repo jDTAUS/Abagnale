@@ -1775,23 +1775,20 @@ static void position_maintain(const struct worker_ctx *restrict const w_ctx,
   Numeric_dec(p->cl_samples);
 
   if (!p->filled) {
-    switch (p->type) {
-    case POSITION_TYPE_LONG:
-      cancel = !(t->p_short.sl_trg.set || t->p_short.tp_trg.set ||
-                 t->p_short.tl_trg.set);
-      break;
-    case POSITION_TYPE_SHORT:
-      cancel = !(t->p_long.sl_trg.set || t->p_long.tp_trg.set ||
-                 t->p_long.tl_trg.set);
-      break;
-    default:
-      panic();
+    if (t->a != NULL) {
+      switch (p->type) {
+      case POSITION_TYPE_LONG:
+        if (t->p_short.id == NULL || p->tl_trg.set)
+          cancel = t->a->position_close(w_ctx->db, w_ctx->e, w_ctx->m, t, p);
+        break;
+      case POSITION_TYPE_SHORT:
+        if (t->p_long.id == NULL || p->tl_trg.set)
+          cancel = t->a->position_close(w_ctx->db, w_ctx->e, w_ctx->m, t, p);
+        break;
+      default:
+        panic();
+      }
     }
-
-    if (cancel && t->a != NULL)
-      cancel = t->a->position_close(w_ctx->db, w_ctx->e, w_ctx->m, t, p);
-    else
-      cancel = false;
 
     if (Numeric_cmp(p->cl_samples, Numeric_0) <= 0) {
       cancel = true;
