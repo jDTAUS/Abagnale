@@ -449,7 +449,7 @@ static int jwt_encode_cdp(char *restrict const jwt, size_t *restrict jwt_lenp,
   char claims[JSON_BODY_MAX + 1] = {0};
   const struct mg_str cnf_key = mg_str(String_chars(coinbase_cnf->jwt_key));
   const size_t key_len =
-      mg_uecc_parse_private_key(cnf_key, ec_key, sizeof(ec_key));
+      mg_p256_parse_private_key(cnf_key, ec_key, sizeof(ec_key));
 
   if (key_len == 0) {
     werr("%s: cdp-api-key: Unsupported private key\n", coinbase_rest_uri);

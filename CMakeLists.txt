@@ -27,7 +27,6 @@ add_compile_definitions(MULTI_THREADED)
 add_compile_definitions(STRING_INTERNING)
 add_compile_definitions(MG_TLS=MG_TLS_BUILTIN)
 add_compile_definitions(MG_MAX_RECV_SIZE=0x40000000UL)
-add_compile_definitions(MG_UECC_OPTIMIZATION_LEVEL=4)
 
 if(MSVC)
 	set(CMAKE_C_STANDARD	23)
