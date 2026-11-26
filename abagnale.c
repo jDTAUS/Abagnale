@@ -111,7 +111,6 @@ struct abag_tls {
   } position_maintain;
   struct position_trigger_vars {
     struct Numeric *restrict sr;
-    struct Numeric *restrict r0;
   } position_trigger;
   struct position_trade_vars {
     struct Numeric *restrict o_pr;
@@ -371,7 +370,6 @@ static struct abag_tls *const abag_tls(void) {
     tls->position_timeout.stats->scl_factor = Numeric_new();
     tls->position_maintain.m = Numeric_new();
     tls->position_trigger.sr = Numeric_new();
-    tls->position_trigger.r0 = Numeric_new();
     tls->position_trade.o_pr = Numeric_new();
     tls->position_trade.r0 = Numeric_new();
     tls->trade_create.stats = heap_malloc(sizeof(struct db_stats_rec));
@@ -490,7 +488,6 @@ static void abag_tls_dtor(void *e) {
   heap_free(tls->position_timeout.stats);
   Numeric_delete(tls->position_maintain.m);
   Numeric_delete(tls->position_trigger.sr);
-  Numeric_delete(tls->position_trigger.r0);
   Numeric_delete(tls->position_trade.o_pr);
   Numeric_delete(tls->position_trade.r0);
   Numeric_delete(tls->trade_create.stats->bd_min);
@@ -1963,7 +1960,6 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
                              const struct Sample *restrict const sample) {
   const struct abag_tls *restrict const tls = abag_tls();
   struct Numeric *restrict const sr = tls->position_trigger.sr;
-  struct Numeric *restrict const r0 = tls->position_trigger.r0;
   bool sl = false;
   bool tp = false;
   bool tl = false;
@@ -2027,10 +2023,8 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
         Numeric_char_free(delay);
         Numeric_char_free(s_pr);
       }
-    } else if (w_ctx->m_cnf->sl_dlnanos != NULL && w_ctx->m_cnf->sl_dlcnt > 0) {
-      Numeric_sub_to(p->sl_samples, Numeric_1, r0);
-      Numeric_copy_to(r0, p->sl_samples);
-    }
+    } else if (w_ctx->m_cnf->sl_dlnanos != NULL && w_ctx->m_cnf->sl_dlcnt > 0)
+      Numeric_dec(p->sl_samples);
   } else if (p->sl_trg.set) {
     p->sl_trg.set = false;
     Numeric_copy_to(Numeric_0, p->sl_trg.nanos);
@@ -2095,10 +2089,8 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
         Numeric_char_free(delay);
         Numeric_char_free(s_pr);
       }
-    } else if (w_ctx->m_cnf->tp_dlnanos != NULL && w_ctx->m_cnf->tp_dlcnt > 0) {
-      Numeric_sub_to(p->tp_samples, Numeric_1, r0);
-      Numeric_copy_to(r0, p->tp_samples);
-    }
+    } else if (w_ctx->m_cnf->tp_dlnanos != NULL && w_ctx->m_cnf->tp_dlcnt > 0)
+      Numeric_dec(p->tp_samples);
   } else if (p->tp_trg.set) {
     p->tp_trg.set = false;
     Numeric_copy_to(Numeric_0, p->tp_trg.nanos);
@@ -2198,10 +2190,8 @@ static void position_trigger(const struct worker_ctx *restrict const w_ctx,
         Numeric_char_free(s_pr);
         Numeric_char_free(delay);
       }
-    } else {
-      Numeric_sub_to(p->tl_samples, Numeric_1, r0);
-      Numeric_copy_to(r0, p->tl_samples);
-    }
+    } else
+      Numeric_dec(p->tl_samples);
   } else if (p->tl_trg.set) {
     p->tl_trg.set = false;
     Numeric_copy_to(Numeric_0, p->tl_trg.nanos);
