@@ -797,18 +797,15 @@ static bool trend_position_close(const void *restrict const db,
 
   switch (p->type) {
   case POSITION_TYPE_LONG:
-    close = st->cd_ltrend != CANDLE_UP;
+    close =
+        st->cd_ltrend != CANDLE_UP && (t->p_short.id == NULL || p->tl_trg.set);
     break;
   case POSITION_TYPE_SHORT:
-    close = st->cd_ltrend != CANDLE_DOWN;
+    close =
+        st->cd_ltrend != CANDLE_DOWN && (t->p_long.id == NULL || p->tl_trg.set);
     break;
   default:
     panic();
-  }
-
-  if (close && verbose && !p->tl_trg.set) {
-    wout("%s: %s: Position: Trend not confirmed: %s\n", String_chars(e->nm),
-         String_chars(m->nm), String_chars(t->id));
   }
 
   mutex_unlock(&st->mtx);
